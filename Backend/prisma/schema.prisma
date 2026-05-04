@@ -9,17 +9,18 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  firstName String
-  lastName  String
-  email     String    @unique
-  password  String
-  role      String
-  groupId   Int?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  employee  Employee?
-  group     Group?    @relation(fields: [groupId], references: [id])
+  id                 Int                 @id @default(autoincrement())
+  firstName          String
+  lastName           String
+  email              String              @unique
+  password           String
+  role               String
+  groupId            Int?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  employee           Employee?
+  group              Group?              @relation(fields: [groupId], references: [id])
+  serviceOrderTraces ServiceOrderTrace[]
 }
 
 model Group {
@@ -175,6 +176,9 @@ model Service {
 
 model ServiceOrder {
   id                 Int                    @id @default(autoincrement())
+  traceCode          String?                @unique
+  partCode           String?
+  batchCode          String?
   description        String?
   personId           Int?
   status             String
@@ -188,7 +192,21 @@ model ServiceOrder {
   person             Person?                @relation(fields: [personId], references: [id])
   materials          ServiceOrderMaterial[]
   services           ServiceOrderService[]
+  traces             ServiceOrderTrace[]
   transactions       Transaction[]
+}
+
+model ServiceOrderTrace {
+  id             Int           @id @default(autoincrement())
+  serviceOrderId Int?
+  serviceOrder   ServiceOrder? @relation(fields: [serviceOrderId], references: [id], onDelete: SetNull)
+  serviceOrderCode String?
+  action         String
+  changedByUserId Int?
+  changedBy      User?         @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+  changedByEmail String?
+  payload        Json?
+  createdAt      DateTime      @default(now())
 }
 
 model ServiceOrderService {

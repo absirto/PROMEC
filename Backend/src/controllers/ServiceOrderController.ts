@@ -1,5 +1,22 @@
 import { Request, Response } from 'express';
 import prisma from '../services/prisma';
+import { AuthRequest } from '../middleware/auth';
+
+function generateTraceCode() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `OS-${y}${m}${day}-${rand}`;
+}
+
+function getActor(req: Request) {
+  const authReq = req as AuthRequest;
+  const id = authReq.user?.id ? Number(authReq.user.id) : null;
+  const email = authReq.user?.email ? String(authReq.user.email) : null;
+  return { id, email };
+}
 
 export const ServiceOrderController = {
   async list(req: Request, res: Response) {
@@ -9,7 +26,17 @@ export const ServiceOrderController = {
           person: { include: { naturalPerson: true, legalPerson: true } },
           services: { include: { service: true, employee: true } },
           materials: { include: { material: true } },
-          qualityControls: true
+          qualityControls: true,
+          traces: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              action: true,
+              changedByEmail: true,
+              createdAt: true,
+            },
+          }
         },
         orderBy: { openingDate: 'desc' }
       });
@@ -28,7 +55,10 @@ export const ServiceOrderController = {
           person: { include: { naturalPerson: true, legalPerson: true } },
           services: { include: { service: true, employee: true } },
           materials: { include: { material: true } },
-          qualityControls: true
+          qualityControls: true,
+          traces: {
+            orderBy: { createdAt: 'desc' },
+          }
         }
       });
       if (!order) return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada' });
@@ -41,39 +71,73 @@ export const ServiceOrderController = {
   async create(req: Request, res: Response) {
     try {
       const data = req.body;
-      const order = await (prisma.serviceOrder as any).create({
-        data: {
-          description: data.description,
-          personId: Number(data.personId),
-          status: data.status,
-          openingDate: data.openingDate ? new Date(data.openingDate) : new Date(),
-          closingDate: data.closingDate ? new Date(data.closingDate) : undefined,
-          problemDescription: data.problemDescription,
-          technicalDiagnosis: data.technicalDiagnosis,
-          taxPercent: Number(data.taxPercent) || 0,
-          profitPercent: Number(data.profitPercent) || 0,
-          services: { create: (data.services || []).map((s: any) => ({
-            serviceId: Number(s.serviceId),
-            employeeId: s.employeeId ? Number(s.employeeId) : null,
-            description: s.description,
-            hoursWorked: Number(s.hoursWorked) || 0,
-            unitPrice: Number(s.unitPrice) || 0,
-            totalPrice: Number(s.totalPrice) || 0
-          })) },
-          materials: { create: (data.materials || []).map((m: any) => ({
-            materialId: Number(m.materialId),
-            quantity: Number(m.quantity) || 0,
-            unitPrice: Number(m.unitPrice) || 0,
-            totalPrice: Number(m.totalPrice) || 0
-          })) },
-        },
-        include: {
-          person: { include: { naturalPerson: true, legalPerson: true } },
-          services: { include: { service: true, employee: true } },
-          materials: { include: { material: true } },
-          qualityControls: true
-        }
+      const actor = getActor(req);
+      const traceCode = typeof data.traceCode === 'string' && data.traceCode.trim()
+        ? data.traceCode.trim().toUpperCase()
+        : generateTraceCode();
+
+      const order = await prisma.$transaction(async (tx) => {
+        const created = await (tx.serviceOrder as any).create({
+          data: {
+            traceCode,
+            partCode: data.partCode || null,
+            batchCode: data.batchCode || null,
+            description: data.description,
+            personId: Number(data.personId),
+            status: data.status,
+            openingDate: data.openingDate ? new Date(data.openingDate) : new Date(),
+            closingDate: data.closingDate ? new Date(data.closingDate) : undefined,
+            problemDescription: data.problemDescription,
+            technicalDiagnosis: data.technicalDiagnosis,
+            taxPercent: Number(data.taxPercent) || 0,
+            profitPercent: Number(data.profitPercent) || 0,
+            services: { create: (data.services || []).map((s: any) => ({
+              serviceId: Number(s.serviceId),
+              employeeId: s.employeeId ? Number(s.employeeId) : null,
+              description: s.description,
+              hoursWorked: Number(s.hoursWorked) || 0,
+              unitPrice: Number(s.unitPrice) || 0,
+              totalPrice: Number(s.totalPrice) || 0
+            })) },
+            materials: { create: (data.materials || []).map((m: any) => ({
+              materialId: Number(m.materialId),
+              quantity: Number(m.quantity) || 0,
+              unitPrice: Number(m.unitPrice) || 0,
+              totalPrice: Number(m.totalPrice) || 0
+            })) },
+          }
+        });
+
+        await (tx.serviceOrderTrace as any).create({
+          data: {
+            serviceOrderId: created.id,
+            serviceOrderCode: created.traceCode,
+            action: 'CREATE',
+            changedByUserId: actor.id,
+            changedByEmail: actor.email,
+            payload: {
+              status: created.status,
+              partCode: created.partCode,
+              batchCode: created.batchCode,
+            }
+          }
+        });
+
+        return tx.serviceOrder.findUnique({
+          where: { id: created.id },
+          include: {
+            person: { include: { naturalPerson: true, legalPerson: true } },
+            services: { include: { service: true, employee: true } },
+            materials: { include: { material: true } },
+            qualityControls: true,
+            traces: {
+              orderBy: { createdAt: 'desc' },
+              take: 10,
+            }
+          }
+        });
       });
+
       res.status(201).json(order);
     } catch (error: any) {
       console.error('Erro ao criar OS:', error);
@@ -85,11 +149,15 @@ export const ServiceOrderController = {
     try {
       const id = Number(req.params.id);
       const data = req.body;
+      const actor = getActor(req);
 
       const order = await prisma.$transaction(async (tx) => {
-        await (tx.serviceOrder as any).update({
+        const updated = await (tx.serviceOrder as any).update({
           where: { id },
           data: {
+            traceCode: data.traceCode ? String(data.traceCode).trim().toUpperCase() : undefined,
+            partCode: data.partCode !== undefined ? data.partCode : undefined,
+            batchCode: data.batchCode !== undefined ? data.batchCode : undefined,
             description: data.description,
             personId: Number(data.personId),
             status: data.status,
@@ -130,13 +198,32 @@ export const ServiceOrderController = {
           });
         }
 
+        await (tx.serviceOrderTrace as any).create({
+          data: {
+            serviceOrderId: id,
+            serviceOrderCode: updated.traceCode,
+            action: 'UPDATE',
+            changedByUserId: actor.id,
+            changedByEmail: actor.email,
+            payload: {
+              status: updated.status,
+              partCode: updated.partCode,
+              batchCode: updated.batchCode,
+            }
+          }
+        });
+
         return tx.serviceOrder.findUnique({
           where: { id },
           include: {
             person: { include: { naturalPerson: true, legalPerson: true } },
             services: { include: { service: true, employee: true } },
             materials: { include: { material: true } },
-            qualityControls: true
+            qualityControls: true,
+            traces: {
+              orderBy: { createdAt: 'desc' },
+              take: 20,
+            }
           }
         });
       });
@@ -151,9 +238,37 @@ export const ServiceOrderController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      await prisma.serviceOrder.delete({ where: { id } });
+      const actor = getActor(req);
+
+      await prisma.$transaction(async (tx) => {
+        const existing = await tx.serviceOrder.findUnique({ where: { id } });
+        if (!existing) {
+          throw new Error('NOT_FOUND');
+        }
+
+        await (tx.serviceOrderTrace as any).create({
+          data: {
+            serviceOrderId: id,
+            serviceOrderCode: existing.traceCode,
+            action: 'DELETE',
+            changedByUserId: actor.id,
+            changedByEmail: actor.email,
+            payload: {
+              status: existing.status,
+              partCode: existing.partCode,
+              batchCode: existing.batchCode,
+            }
+          }
+        });
+
+        await tx.serviceOrder.delete({ where: { id } });
+      });
+
       res.status(204).end();
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
+      }
       res.status(500).json({ status: 'error', message: 'Erro ao excluir ordem de serviço.' });
     }
   },
