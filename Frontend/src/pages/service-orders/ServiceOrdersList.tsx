@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, Eye, Edit2, Calendar, Filter, X } from 'lucide-react';
 import api from '../../services/api';
@@ -34,6 +34,7 @@ const ServiceOrdersList: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [showOnlyConflicts, setShowOnlyConflicts] = useState(false);
   const [pcpStartDate, setPcpStartDate] = useState(formatDateInput(new Date()));
   const [pcpEndDate, setPcpEndDate] = useState(formatDateInput(new Date(Date.now() + (6 * 24 * 60 * 60 * 1000))));
   const [dailyCapacityHours, setDailyCapacityHours] = useState(8);
@@ -220,6 +221,44 @@ const ServiceOrdersList: React.FC = () => {
     }
   };
 
+  const conflictOrderIds = useMemo(() => {
+    const conflictIds = new Set<number>();
+    const centers = Array.isArray(pcpOverview?.centers) ? pcpOverview.centers : [];
+
+    centers.forEach((center: any) => {
+      const centerOrders = Array.isArray(center?.orders)
+        ? center.orders.filter((order: any) => order?.plannedStartDate && order?.plannedEndDate)
+        : [];
+
+      for (let i = 0; i < centerOrders.length; i += 1) {
+        for (let j = i + 1; j < centerOrders.length; j += 1) {
+          const left = centerOrders[i];
+          const right = centerOrders[j];
+          const leftStart = new Date(left.plannedStartDate);
+          const leftEnd = new Date(left.plannedEndDate);
+          const rightStart = new Date(right.plannedStartDate);
+          const rightEnd = new Date(right.plannedEndDate);
+
+          if (
+            Number.isNaN(leftStart.getTime()) ||
+            Number.isNaN(leftEnd.getTime()) ||
+            Number.isNaN(rightStart.getTime()) ||
+            Number.isNaN(rightEnd.getTime())
+          ) {
+            continue;
+          }
+
+          if (leftStart <= rightEnd && leftEnd >= rightStart) {
+            conflictIds.add(Number(left.id));
+            conflictIds.add(Number(right.id));
+          }
+        }
+      }
+    });
+
+    return conflictIds;
+  }, [pcpOverview]);
+
   const filtered = orders.filter(order => {
     const matchSearch = order.person?.naturalPerson?.name?.toLowerCase().includes(search.toLowerCase()) || 
                       order.person?.legalPerson?.corporateName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -230,8 +269,9 @@ const ServiceOrdersList: React.FC = () => {
     const orderDate = new Date(order.openingDate).getTime();
     const matchStart = !startDate || orderDate >= new Date(startDate).getTime();
     const matchEnd = !endDate || orderDate <= new Date(endDate).getTime();
+    const matchConflict = !showOnlyConflicts || conflictOrderIds.has(Number(order.id));
 
-    return matchSearch && matchStatus && matchStart && matchEnd;
+    return matchSearch && matchStatus && matchStart && matchEnd && matchConflict;
   });
 
   const clearFilters = () => {
@@ -244,6 +284,7 @@ const ServiceOrdersList: React.FC = () => {
   const totalPlanned = (pcpOverview?.centers || []).reduce((acc: number, c: any) => acc + (c.plannedHours || 0), 0);
   const totalCapacity = (pcpOverview?.centers || []).reduce((acc: number, c: any) => acc + (c.capacityHours || 0), 0);
   const totalLoadPercent = totalCapacity > 0 ? (totalPlanned / totalCapacity) * 100 : 0;
+  const conflictCount = conflictOrderIds.size;
 
   return (
     <div className={styles.listContainer}>
@@ -271,6 +312,17 @@ const ServiceOrdersList: React.FC = () => {
             }}
           >
             Replanejar Lote ({selectedOrderIds.length})
+          </button>
+          <button
+            onClick={() => setShowOnlyConflicts((prev) => !prev)}
+            style={{
+              background: showOnlyConflicts ? 'rgba(239,68,68,0.18)' : 'rgba(255,255,255,0.02)',
+              color: showOnlyConflicts ? '#ef4444' : '#8a99a8',
+              border: 'none', padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700
+            }}
+          >
+            Só Conflitos ({conflictCount})
           </button>
         </div>
         <Link to="/service-orders/new" className={styles.newBtn}>
@@ -329,6 +381,12 @@ const ServiceOrdersList: React.FC = () => {
             <div style={{ color: '#94a3b8', fontSize: 11 }}>Ocupação Global</div>
             <div style={{ color: totalLoadPercent > 100 ? '#ef4444' : '#10b981', fontSize: 20, fontWeight: 900 }}>
               {totalLoadPercent.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
+            </div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12 }}>
+            <div style={{ color: '#94a3b8', fontSize: 11 }}>OS com Conflito</div>
+            <div style={{ color: conflictCount > 0 ? '#ef4444' : '#10b981', fontSize: 20, fontWeight: 900 }}>
+              {conflictCount}
             </div>
           </div>
         </div>
@@ -438,7 +496,11 @@ const ServiceOrdersList: React.FC = () => {
           </thead>
           <tbody>
             {filtered.map(order => (
-              <tr key={order.id} className={styles.tableRow}>
+              <tr
+                key={order.id}
+                className={styles.tableRow}
+                style={conflictOrderIds.has(Number(order.id)) ? { background: 'rgba(127,29,29,0.22)' } : undefined}
+              >
                 <td className={styles.tableCell} style={{ textAlign: 'center' }}>
                   <input
                     type="checkbox"
@@ -462,6 +524,21 @@ const ServiceOrdersList: React.FC = () => {
                     <span style={{ color: '#60a5fa', fontSize: 12 }}>
                       PCP: {(order.workCenter || 'Sem centro')} • {(order.plannedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h
                     </span>
+                    {conflictOrderIds.has(Number(order.id)) && (
+                      <span style={{
+                        display: 'inline-flex',
+                        width: 'fit-content',
+                        marginTop: 2,
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: 'rgba(239,68,68,0.2)',
+                        color: '#fecaca',
+                        fontSize: 11,
+                        fontWeight: 700,
+                      }}>
+                        Conflito de agenda
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className={styles.tableCell}>
