@@ -1,0 +1,16 @@
+# Dependencias
+Backend/node_modules/
+Frontend/node_modules/
+
+# Builds
+Backend/dist/
+Frontend/build/
+
+# Ambientes
+Backend/.env
+Backend/.env.production
+Frontend/.env
+
+# Logs e caches
+**/*.log
+.DS_Store

@@ -1,0 +1,303 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String    @unique
+  password  String
+  role      String
+  groupId   Int?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  employee  Employee?
+  group     Group?    @relation(fields: [groupId], references: [id])
+}
+
+model Group {
+  id          Int               @id @default(autoincrement())
+  name        String            @unique
+  description String?
+  permissions GroupPermission[]
+  users       User[]
+}
+
+model Permission {
+  id          Int               @id @default(autoincrement())
+  name        String            @unique
+  description String?
+  groups      GroupPermission[]
+}
+
+model GroupPermission {
+  id           Int        @id @default(autoincrement())
+  groupId      Int
+  permissionId Int
+  group        Group      @relation(fields: [groupId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([groupId, permissionId])
+}
+
+model Person {
+  id            Int            @id @default(autoincrement())
+  type          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  addresses     Address[]
+  contacts      Contact[]
+  employees     Employee?
+  legalPerson   LegalPerson?
+  naturalPerson NaturalPerson?
+  serviceOrders ServiceOrder[]
+}
+
+model NaturalPerson {
+  id          Int       @id @default(autoincrement())
+  cpf         String    @unique
+  name        String
+  rg          String?
+  orgEmissor  String?
+  ufRg        String?
+  birthDate   DateTime?
+  gender      String?
+  cnh         String?
+  cnhCategory String?
+  cnhValidity DateTime?
+  ctps        String?
+  ctpsSeries  String?
+  pis         String?
+  personId    Int       @unique
+  person      Person    @relation(fields: [personId], references: [id])
+}
+
+model LegalPerson {
+  id                    Int              @id @default(autoincrement())
+  cnpj                  String           @unique
+  corporateName         String
+  tradeName             String?
+  stateRegistration     String?
+  municipalRegistration String?
+  personId              Int              @unique
+  person                Person           @relation(fields: [personId], references: [id])
+  representatives       Representative[]
+}
+
+model Representative {
+  id            Int         @id @default(autoincrement())
+  name          String
+  cpf           String
+  function      String
+  legalPersonId Int
+  legalPerson   LegalPerson @relation(fields: [legalPersonId], references: [id])
+}
+
+model Address {
+  id          Int     @id @default(autoincrement())
+  cep         String
+  logradouro  String
+  numero      String
+  complemento String?
+  bairro      String
+  cidade      String
+  uf          String
+  type        String
+  personId    Int
+  person      Person  @relation(fields: [personId], references: [id])
+}
+
+model Contact {
+  id          Int     @id @default(autoincrement())
+  type        String
+  value       String
+  description String?
+  personId    Int
+  person      Person  @relation(fields: [personId], references: [id])
+}
+
+model Employee {
+  id                   Int                   @id @default(autoincrement())
+  personId             Int                   @unique
+  jobRoleId            Int?
+  workAreaId           Int?
+  userId               Int?                  @unique
+  matricula            String?
+  status               String
+  jobRole              JobRole?              @relation(fields: [jobRoleId], references: [id])
+  person               Person                @relation(fields: [personId], references: [id])
+  user                 User?                 @relation(fields: [userId], references: [id])
+  workArea             WorkArea?             @relation(fields: [workAreaId], references: [id])
+  qualityControls      QualityControl[]
+  serviceOrderServices ServiceOrderService[]
+}
+
+model JobRole {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  employees Employee[]
+}
+
+model WorkArea {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  employees Employee[]
+}
+
+model Material {
+  id                    Int                    @id @default(autoincrement())
+  name                  String
+  description           String?
+  price                 Float
+  unit                  String
+  active                Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  serviceOrderMaterials ServiceOrderMaterial[]
+  stockLogs             StockLog[]
+}
+
+model Service {
+  id                   Int                   @id @default(autoincrement())
+  name                 String
+  description          String?
+  price                Float
+  active               Boolean               @default(true)
+  serviceOrderServices ServiceOrderService[]
+}
+
+model ServiceOrder {
+  id                 Int                    @id @default(autoincrement())
+  description        String?
+  personId           Int?
+  status             String
+  openingDate        DateTime
+  closingDate        DateTime?
+  problemDescription String
+  technicalDiagnosis String?
+  profitPercent      Float?                 @default(0)
+  taxPercent         Float?                 @default(0)
+  qualityControls    QualityControl[]
+  person             Person?                @relation(fields: [personId], references: [id])
+  materials          ServiceOrderMaterial[]
+  services           ServiceOrderService[]
+  transactions       Transaction[]
+}
+
+model ServiceOrderService {
+  id             Int          @id @default(autoincrement())
+  serviceOrderId Int
+  serviceId      Int
+  employeeId     Int?
+  description    String?
+  hoursWorked    Float
+  unitPrice      Float
+  totalPrice     Float
+  employee       Employee?    @relation(fields: [employeeId], references: [id])
+  service        Service      @relation(fields: [serviceId], references: [id])
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+}
+
+model ServiceOrderMaterial {
+  id             Int          @id @default(autoincrement())
+  serviceOrderId Int
+  materialId     Int
+  quantity       Float
+  unitPrice      Float
+  totalPrice     Float
+  material       Material     @relation(fields: [materialId], references: [id])
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+}
+
+model QualityControl {
+  id              Int             @id @default(autoincrement())
+  serviceOrderId  Int?
+  inspectorId     Int?
+  inspectionDate  DateTime
+  status          String
+  finalVerdict    String?
+  measurements    Measurement[]
+  nonConformities NonConformity[]
+  inspector       Employee?       @relation(fields: [inspectorId], references: [id])
+  serviceOrder    ServiceOrder?   @relation(fields: [serviceOrderId], references: [id])
+  photos          QualityPhoto[]
+}
+
+model NonConformity {
+  id                 Int             @id @default(autoincrement())
+  type               String
+  problemDescription String
+  suggestedAction    String
+  responsibleId      Int
+  deadline           DateTime
+  status             String
+  qualityControlId   Int?
+  qualityControl     QualityControl? @relation(fields: [qualityControlId], references: [id])
+}
+
+model Measurement {
+  id               Int             @id @default(autoincrement())
+  itemMeasured     String
+  expectedValue    Float
+  toleranceMin     Float?
+  toleranceMax     Float?
+  measuredValue    Float
+  unit             String?
+  result           String?
+  qualityControlId Int?
+  qualityControl   QualityControl? @relation(fields: [qualityControlId], references: [id])
+}
+
+model QualityPhoto {
+  id               Int             @id @default(autoincrement())
+  description      String
+  base64           String?
+  fileName         String?
+  fileType         String?
+  uploadedAt       DateTime?
+  qualityControlId Int?
+  storagePath      String?
+  qualityControl   QualityControl? @relation(fields: [qualityControlId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  id                 Int      @id @default(1)
+  backgroundImageUrl String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  address            String?
+  cnpj               String?
+  companyName        String?
+  contactEmail       String?
+  logoUrl            String?
+  phone              String?
+  systemTheme        String?  @default("dark")
+}
+
+model StockLog {
+  id          Int      @id @default(autoincrement())
+  materialId  Int
+  quantity    Float
+  type        String
+  description String?
+  createdAt   DateTime @default(now())
+  material    Material @relation(fields: [materialId], references: [id])
+}
+
+model Transaction {
+  id           Int           @id @default(autoincrement())
+  type         String
+  amount       Float
+  category     String
+  date         DateTime      @default(now())
+  description  String?
+  orderId      Int?
+  serviceOrder ServiceOrder? @relation(fields: [orderId], references: [id])
+}

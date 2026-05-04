@@ -1,0 +1,660 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Wrench, User, ClipboardList, ArrowLeft, Save,
+  FileDown, Plus, Trash2,
+  Package, Hammer, Percent, TrendingUp
+} from 'lucide-react';
+import api from '../../services/api';
+import styles from '../../styles/common/BaseForm.module.css';
+import { useToast } from '../../components/ToastProvider';
+
+declare global {
+  interface Window {
+    jspdf: any;
+  }
+}
+
+interface ServiceOrderFormProps {
+  isEdit?: boolean;
+  isView?: boolean;
+}
+
+const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const { showToast } = useToast();
+  
+  const [formData, setFormData] = useState({
+    description: '',
+    problemDescription: '',
+    technicalDiagnosis: '',
+    status: 'Orçamento',
+    customerId: '',
+    orderDate: new Date().toISOString().split('T')[0],
+    estimatedFinishDate: '',
+    taxPercent: 0,
+    profitPercent: 0,
+  });
+
+  const [itemsMaterials, setItemsMaterials] = useState<any[]>([]);
+  const [itemsServices, setItemsServices] = useState<any[]>([]);
+  
+  const [people, setPeople] = useState<any[]>([]);
+  const [availableMaterials, setAvailableMaterials] = useState<any[]>([]);
+  const [availableServices, setAvailableServices] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    setLoading(true);
+    // Load lists for selection
+    Promise.all([
+      api.get('/people'),
+      api.get('/materials'),
+      api.get('/services'),
+      api.get('/employees')
+    ]).then(([p, m, s, e]: any[]) => {
+      setPeople(p);
+      setAvailableMaterials(m);
+      setAvailableServices(s);
+      setEmployees(e);
+    }).catch((err: any) => showToast('Erro ao carregar dados auxiliares.', 'error'));
+
+    if (id && (isEdit || isView)) {
+      api.get(`/service-orders/${id}`)
+        .then((data: any) => {
+          setFormData({
+            description: data.description || '',
+            problemDescription: data.problemDescription || '',
+            technicalDiagnosis: data.technicalDiagnosis || '',
+            status: data.status || 'Orçamento',
+            customerId: data.personId?.toString() || '',
+            orderDate: data.openingDate ? data.openingDate.split('T')[0] : '',
+            estimatedFinishDate: data.estimatedFinishDate ? data.estimatedFinishDate.split('T')[0] : '',
+            taxPercent: data.taxPercent || 0,
+            profitPercent: data.profitPercent || 0,
+          });
+          setItemsMaterials((data.materials || []).map((m: any) => ({
+            ...m,
+            materialId: m.materialId?.toString() || '',
+            quantity: m.quantity || 0,
+            unitPrice: m.unitPrice || 0,
+            totalPrice: m.totalPrice || 0
+          })));
+          setItemsServices((data.services || []).map((s: any) => ({
+            ...s,
+            serviceId: s.serviceId?.toString() || '',
+            employeeId: s.employeeId?.toString() || '',
+            hoursWorked: s.hoursWorked || 0,
+            unitPrice: s.unitPrice || 0,
+            totalPrice: s.totalPrice || 0
+          })));
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [id, isEdit, isView, showToast]);
+
+  const addMaterialItem = () => {
+    setItemsMaterials([...itemsMaterials, { materialId: '', quantity: 1, unitPrice: 0, totalPrice: 0 }]);
+  };
+
+  const removeMaterialItem = (index: number) => {
+    setItemsMaterials(itemsMaterials.filter((_, i) => i !== index));
+  };
+
+  const updateMaterialItem = (index: number, field: string, value: any) => {
+    const newItems = [...itemsMaterials];
+    newItems[index][field] = value;
+
+    if (field === 'materialId') {
+      const mat = availableMaterials.find(m => m.id.toString() === value);
+      if (mat) {
+        newItems[index].unitPrice = mat.price;
+      }
+    }
+
+    newItems[index].totalPrice = (Number(newItems[index].quantity) || 0) * (Number(newItems[index].unitPrice) || 0);
+    setItemsMaterials(newItems);
+  };
+
+  const addServiceItem = () => {
+    setItemsServices([...itemsServices, { serviceId: '', employeeId: '', hoursWorked: 1, unitPrice: 0, totalPrice: 0, description: '' }]);
+  };
+
+  const removeServiceItem = (index: number) => {
+    setItemsServices(itemsServices.filter((_, i) => i !== index));
+  };
+
+  const updateServiceItem = (index: number, field: string, value: any) => {
+    const newItems = [...itemsServices];
+    newItems[index][field] = value;
+
+    if (field === 'serviceId') {
+      const svc = availableServices.find(s => s.id.toString() === value);
+      if (svc) {
+        newItems[index].unitPrice = svc.price;
+      }
+    }
+
+    newItems[index].totalPrice = (Number(newItems[index].hoursWorked) || 0) * (Number(newItems[index].unitPrice) || 0);
+    setItemsServices(newItems);
+  };
+
+  const calculateTotal = () => {
+    const matTotal = itemsMaterials.reduce((acc, item) => acc + (item.totalPrice || 0), 0);
+    const svcTotal = itemsServices.reduce((acc, item) => acc + (item.totalPrice || 0), 0);
+    const subtotal = matTotal + svcTotal;
+    
+    const profitAmount = subtotal * (formData.profitPercent / 100);
+    const baseForTax = subtotal + profitAmount;
+    const taxAmount = baseForTax * (formData.taxPercent / 100);
+    
+    return baseForTax + taxAmount;
+  };
+
+  const validate = () => {
+    const newErrors: any = {};
+    if (!formData.description.trim()) newErrors.description = 'A descrição breve é obrigatória.';
+    if (!formData.customerId) newErrors.customerId = 'Selecione um cliente.';
+    
+    // Validar se há itens incompletos
+    const hasIncompleteMaterial = itemsMaterials.some(m => !m.materialId);
+    const hasIncompleteService = itemsServices.some(s => !s.serviceId);
+
+    if (hasIncompleteMaterial) showToast('Existem peças sem seleção.', 'warning');
+    if (hasIncompleteService) showToast('Existem serviços sem seleção.', 'warning');
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0 && !hasIncompleteMaterial && !hasIncompleteService;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isView) return;
+    
+    if (!validate()) {
+      showToast('Preencha os dados obrigatórios da OS.', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        personId: parseInt(formData.customerId),
+        openingDate: new Date(formData.orderDate).toISOString(),
+        // Filtra apenas itens válidos para garantir integridade
+        materials: itemsMaterials
+          .filter(m => m.materialId)
+          .map(m => ({
+            materialId: parseInt(m.materialId),
+            quantity: parseFloat(m.quantity) || 0,
+            unitPrice: parseFloat(m.unitPrice) || 0,
+            totalPrice: (parseFloat(m.quantity) || 0) * (parseFloat(m.unitPrice) || 0)
+          })),
+        services: itemsServices
+          .filter(s => s.serviceId)
+          .map(s => ({
+            serviceId: parseInt(s.serviceId),
+            employeeId: s.employeeId ? parseInt(s.employeeId) : null,
+            description: s.description || '',
+            hoursWorked: parseFloat(s.hoursWorked) || 0,
+            unitPrice: parseFloat(s.unitPrice) || 0,
+            totalPrice: (parseFloat(s.hoursWorked) || 0) * (parseFloat(s.unitPrice) || 0)
+          })),
+      };
+
+      if (isEdit) {
+        await api.put(`/service-orders/${id}`, payload);
+        showToast('Ordem de Serviço atualizada!');
+      } else {
+        await api.post('/service-orders', payload);
+        showToast('OS/Orçamento criado com sucesso!');
+      }
+      navigate('/service-orders');
+    } catch (err: any) {
+      console.error('Erro ao salvar OS:', err);
+      showToast(typeof err === 'string' ? err : 'Erro ao gravar Ordem de Serviço.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeneratePDF = () => {
+    const { jsPDF } = (window as any).jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.setTextColor(0, 230, 176);
+    doc.text('ProMEC Industrial - OS / ORÇAMENTO', 20, 20);
+    
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(8);
+    doc.text(`Identificador: #${id || 'NOVA'} | Emissão: ${new Date().toLocaleString()}`, 20, 28);
+    
+    doc.setDrawColor(230, 230, 230);
+    doc.line(20, 32, 190, 32);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('1. Informações do Cliente', 20, 42);
+    doc.setFontSize(9);
+    const person = people.find(p => p.id.toString() === formData.customerId);
+    doc.text(`Cliente: ${person?.naturalPerson?.name || person?.legalPerson?.corporateName || 'N/A'}`, 25, 50);
+    doc.text(`Data Abertura: ${formData.orderDate}`, 25, 55);
+    doc.text(`Status: ${formData.status}`, 140, 50);
+    
+    doc.setFontSize(12);
+    doc.text('2. Diagnóstico Técnico', 20, 70);
+    doc.setFontSize(9);
+    const diag = doc.splitTextToSize(formData.technicalDiagnosis || 'Nenhum diagnóstico registrado.', 160);
+    doc.text(diag, 25, 78);
+    
+    let currentY = 78 + (diag.length * 5) + 10;
+    
+    doc.setFontSize(12);
+    doc.text('3. Peças e Materiais', 20, currentY);
+    currentY += 8;
+    doc.setFontSize(9);
+    itemsMaterials.forEach((m, i) => {
+      const matName = availableMaterials.find(am => am.id.toString() === m.materialId.toString())?.name || 'Item';
+      doc.text(`${matName} (${m.quantity}x) - R$ ${m.totalPrice.toFixed(2)}`, 25, currentY);
+      currentY += 5;
+    });
+
+    currentY += 5;
+    doc.setFontSize(12);
+    doc.text('4. Mão de Obra e Serviços', 20, currentY);
+    currentY += 8;
+    doc.setFontSize(9);
+    itemsServices.forEach((s, i) => {
+      const svcName = availableServices.find(as => as.id.toString() === s.serviceId.toString())?.name || 'Serviço';
+      doc.text(`${svcName} (${s.hoursWorked}h) - R$ ${s.totalPrice.toFixed(2)}`, 25, currentY);
+      currentY += 5;
+    });
+
+    currentY += 10;
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const matTotal = itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0);
+    const svcTotal = itemsServices.reduce((acc, i) => acc + i.totalPrice, 0);
+    const subtotal = matTotal + svcTotal;
+    const profitAmt = subtotal * (formData.profitPercent / 100);
+    const baseForTax = subtotal + profitAmt;
+    const taxAmt = baseForTax * (formData.taxPercent / 100);
+
+    doc.text(`Subtotal: R$ ${subtotal.toFixed(2)}`, 20, currentY);
+    currentY += 5;
+    doc.text(`Lucro (${formData.profitPercent}%): R$ ${profitAmt.toFixed(2)}`, 20, currentY);
+    currentY += 5;
+    doc.text(`Impostos (${formData.taxPercent}% sobre Subtotal + Lucro): R$ ${taxAmt.toFixed(2)}`, 20, currentY);
+
+    currentY += 10;
+    doc.setFontSize(14);
+    doc.setTextColor(0, 230, 176);
+    doc.text(`VALOR TOTAL: R$ ${(baseForTax + taxAmt).toFixed(2)}`, 20, currentY);
+    
+    doc.save(`OS_ProMEC_${id || 'Nova'}.pdf`);
+  };
+
+  return (
+    <div className={styles.formContainer} style={{ animation: 'fadeIn 0.5s ease-out' }}>
+      <div className={styles.glassCard}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>
+            {isView ? 'Visualizar OS' : isEdit ? 'Editar Planejamento' : 'Novo Orçamento / OS'}
+          </h2>
+          <div style={{ display: 'flex', gap: 12 }}>
+            {id && (
+              <button className={styles.backBtn} onClick={handleGeneratePDF} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                <FileDown size={18} /> Exportar
+              </button>
+            )}
+            <button className={styles.backBtn} onClick={() => navigate('/service-orders')}>
+              <ArrowLeft size={18} /> Voltar
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.formGrid}>
+          {/* Sessão Cabeçalho */}
+          <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
+            <label className={styles.label}>Título / Descrição Breve</label>
+            <div className={`${styles.inputWrapper} ${errors.description ? styles.inputError : ''}`}>
+              <ClipboardList className={styles.inputIcon} size={18} />
+              <input
+                className={styles.formInput}
+                disabled={isView}
+                value={formData.description}
+                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Ex: Manutenção Preventiva Torno CNC"
+              />
+            </div>
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Cliente / Solicitante</label>
+            <div className={styles.inputWrapper}>
+              <User className={styles.inputIcon} size={18} />
+              <select
+                className={styles.formSelect}
+                disabled={isView}
+                value={formData.customerId}
+                onChange={e => setFormData({ ...formData, customerId: e.target.value })}
+              >
+                <option value="">Selecione...</option>
+                {people.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.naturalPerson?.name || p.legalPerson?.corporateName} ({p.type === 'F' ? `CPF: ${p.naturalPerson?.cpf}` : `CNPJ: ${p.legalPerson?.cnpj}`})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Status Geral</label>
+            <div className={styles.inputWrapper}>
+              <Wrench className={styles.inputIcon} size={18} />
+              <select
+                className={styles.formSelect}
+                disabled={isView}
+                value={formData.status}
+                onChange={e => setFormData({ ...formData, status: e.target.value })}
+              >
+                <option value="Orçamento">Orçamento / Aberto</option>
+                <option value="Aprovada">Aprovada / Aguardando</option>
+                <option value="Em Andamento">Em Execução</option>
+                <option value="Aguardando Material">Pendente Peças</option>
+                <option value="Concluída">Finalizada</option>
+                <option value="Cancelada">Cancelada</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Novos campos de detalhamento */}
+          <div className={styles.fullWidth} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Relato do Problema (Cliente)</label>
+              <textarea
+                className={styles.formTextarea}
+                disabled={isView}
+                value={formData.problemDescription}
+                onChange={e => setFormData({ ...formData, problemDescription: e.target.value })}
+                placeholder="O que o cliente relatou?"
+                style={{ minHeight: 100 }}
+              />
+            </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>Diagnóstico Técnico (Oficina)</label>
+              <textarea
+                className={styles.formTextarea}
+                disabled={isView}
+                value={formData.technicalDiagnosis}
+                onChange={e => setFormData({ ...formData, technicalDiagnosis: e.target.value })}
+                placeholder="Qual o diagnóstico técnico/solução?"
+                style={{ minHeight: 100 }}
+              />
+            </div>
+          </div>
+
+          {/* TABELA DE MATERIAIS */}
+          <div className={styles.fullWidth} style={{ marginTop: 30 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: '#00e6b0', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Package size={20} /> Peças e Materiais
+              </h3>
+              {!isView && (
+                <button type="button" onClick={addMaterialItem} style={{ background: 'rgba(0, 230, 176, 0.1)', color: '#00e6b0', border: 'none', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}>
+                  <Plus size={16} /> Adicionar Peça
+                </button>
+              )}
+            </div>
+            
+            <div style={{ background: 'rgba(0,0,0,0.1)', borderRadius: 12, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff', fontSize: 14 }}>
+                <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <tr>
+                    <th style={{ padding: 12, textAlign: 'left' }}>Item</th>
+                    <th style={{ padding: 12, textAlign: 'center', width: 100 }}>Qtd</th>
+                    <th style={{ padding: 12, textAlign: 'right', width: 150 }}>Unitário (R$)</th>
+                    <th style={{ padding: 12, textAlign: 'right', width: 150 }}>Total (R$)</th>
+                    {!isView && <th style={{ padding: 12, width: 50 }}></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {itemsMaterials.map((item, idx) => (
+                    <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                      <td style={{ padding: 8 }}>
+                        <select 
+                          className={`${styles.formSelect} ${styles.tableInput}`} disabled={isView}
+                          value={item.materialId} onChange={e => updateMaterialItem(idx, 'materialId', e.target.value)}
+                        >
+                          <option value="">Selecione...</option>
+                          {availableMaterials.map(m => (
+                            <option key={m.id} value={m.id.toString()}>{m.name}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td style={{ padding: 8 }}>
+                        <input 
+                          type="number" className={`${styles.formInput} ${styles.tableInput}`} disabled={isView}
+                          value={item.quantity} onChange={e => updateMaterialItem(idx, 'quantity', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: 8 }}>
+                        <input 
+                          type="number" className={`${styles.formInput} ${styles.tableInput}`} style={{ textAlign: 'right' }} disabled={isView}
+                          value={item.unitPrice} onChange={e => updateMaterialItem(idx, 'unitPrice', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: 8, textAlign: 'right', fontWeight: 700 }}>
+                        {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </td>
+                      {!isView && (
+                        <td style={{ padding: 8, textAlign: 'center' }}>
+                          <button type="button" onClick={() => removeMaterialItem(idx)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer' }}>
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                  {itemsMaterials.length === 0 && (
+                    <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#8a99a8' }}>Nenhuma peça adicionada.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TABELA DE MÃO DE OBRA */}
+          <div className={styles.fullWidth} style={{ marginTop: 30 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: '#3b82f6', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Hammer size={20} /> Mão de Obra e Serviços
+              </h3>
+              {!isView && (
+                <button type="button" onClick={addServiceItem} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}>
+                  <Plus size={16} /> Adicionar Serviço
+                </button>
+              )}
+            </div>
+
+            <div style={{ background: 'rgba(0,0,0,0.1)', borderRadius: 12, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff', fontSize: 14 }}>
+                <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <tr>
+                    <th style={{ padding: 12, textAlign: 'left' }}>Serviço</th>
+                    <th style={{ padding: 12, textAlign: 'left' }}>Responsável</th>
+                    <th style={{ padding: 12, textAlign: 'center', width: 80 }}>Horas</th>
+                    <th style={{ padding: 12, textAlign: 'right', width: 120 }}>Vl. Hora (R$)</th>
+                    <th style={{ padding: 12, textAlign: 'right', width: 120 }}>Total (R$)</th>
+                    {!isView && <th style={{ padding: 12, width: 50 }}></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {itemsServices.map((item, idx) => (
+                    <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                      <td style={{ padding: 8 }}>
+                        <select 
+                          className={`${styles.formSelect} ${styles.tableInput}`} disabled={isView}
+                          value={item.serviceId} onChange={e => updateServiceItem(idx, 'serviceId', e.target.value)}
+                        >
+                          <option value="">Selecione...</option>
+                          {availableServices.map(s => (
+                            <option key={s.id} value={s.id.toString()}>{s.name}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td style={{ padding: 8 }}>
+                        <select 
+                          className={`${styles.formSelect} ${styles.tableInput}`} disabled={isView}
+                          value={item.employeeId} onChange={e => updateServiceItem(idx, 'employeeId', e.target.value)}
+                        >
+                          <option value="">Selecione o técnico...</option>
+                          {employees.map(e => (
+                            <option key={e.id} value={e.id.toString()}>{e.person?.naturalPerson?.name || 'Funcionário'}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td style={{ padding: 8 }}>
+                        <input 
+                          type="number" className={`${styles.formInput} ${styles.tableInput}`} disabled={isView}
+                          value={item.hoursWorked} onChange={e => updateServiceItem(idx, 'hoursWorked', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: 8 }}>
+                        <input 
+                          type="number" className={`${styles.formInput} ${styles.tableInput}`} style={{ textAlign: 'right' }} disabled={isView}
+                          value={item.unitPrice} onChange={e => updateServiceItem(idx, 'unitPrice', e.target.value)}
+                        />
+                      </td>
+                      <td style={{ padding: 8, textAlign: 'right', fontWeight: 700 }}>
+                        {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </td>
+                      {!isView && (
+                        <td style={{ padding: 8, textAlign: 'center' }}>
+                          <button type="button" onClick={() => removeServiceItem(idx)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer' }}>
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                  {itemsServices.length === 0 && (
+                    <tr><td colSpan={6} style={{ padding: 20, textAlign: 'center', color: '#8a99a8' }}>Nenhum serviço adicionado.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* TOTALIZADOR PREMIUM */}
+          <div className={styles.fullWidth} style={{ 
+            marginTop: 50, 
+            padding: 40, 
+            background: 'rgba(15, 23, 42, 0.6)', 
+            borderRadius: 32, 
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            display: 'grid',
+            gridTemplateColumns: '1.2fr 1fr',
+            gap: 40,
+            alignItems: 'center'
+          }}>
+            {/* Controles de Margem */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, paddingRight: 40, borderRight: '1px solid rgba(255,255,255,0.1)' }}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label} style={{ color: '#94a3b8' }}>
+                  <Percent size={14} /> Impostos (%)
+                </label>
+                <div className={styles.inputWrapper}>
+                  <input 
+                    type="number" 
+                    className={`${styles.formInput} ${styles.tableInput}`}
+                    style={{ paddingLeft: 12, height: 50, fontSize: 18 }}
+                    value={formData.taxPercent}
+                    onChange={e => setFormData({...formData, taxPercent: parseFloat(e.target.value) || 0})}
+                  />
+                </div>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                  Equivale a: <span style={{ color: '#fff' }}>R$ {((itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0) + itemsServices.reduce((acc, i) => acc + i.totalPrice, 0)) * (1 + formData.profitPercent / 100) * formData.taxPercent / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label} style={{ color: '#94a3b8' }}>
+                  <TrendingUp size={14} /> Lucro (%)
+                </label>
+                <div className={styles.inputWrapper}>
+                  <input 
+                    type="number" 
+                    className={`${styles.formInput} ${styles.tableInput}`}
+                    style={{ paddingLeft: 12, height: 50, fontSize: 18 }}
+                    value={formData.profitPercent}
+                    onChange={e => setFormData({...formData, profitPercent: parseFloat(e.target.value) || 0})}
+                  />
+                </div>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+                  Equivale a: <span style={{ color: '#fff' }}>R$ {((itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0) + itemsServices.reduce((acc, i) => acc + i.totalPrice, 0)) * formData.profitPercent / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Resumo Financeiro */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: 14 }}>
+                <span>Subtotal (Itens + Serviços)</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>R$ {(itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0) + itemsServices.reduce((acc, i) => acc + i.totalPrice, 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8', fontSize: 14 }}>
+                <span>Total de Encargos / Lucro</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>
+                  R$ {((itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0) + itemsServices.reduce((acc, i) => acc + i.totalPrice, 0)) * (formData.profitPercent / 100) + 
+                       (itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0) + itemsServices.reduce((acc, i) => acc + i.totalPrice, 0)) * (1 + formData.profitPercent / 100) * (formData.taxPercent / 100)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div style={{ 
+                marginTop: 10,
+                padding: '24px 0',
+                borderTop: '2px dashed rgba(255,255,255,0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end'
+              }}>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 12, color: '#00e6b0', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2 }}>VALOR TOTAL FINAL</div>
+                  <div style={{ fontSize: 48, fontWeight: 900, color: '#00e6b0', lineHeight: 1 }}>
+                    R$ {calculateTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div style={{ color: '#475569', fontSize: 11, fontStyle: 'italic' }}>
+                  Valores em Reais (BRL)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {!isView && (
+            <div className={styles.fullWidth} style={{ marginTop: 32 }}>
+              <button className={styles.submitBtn} type="submit" disabled={loading}>
+                <Save size={18} style={{ marginRight: 8 }} />
+                {loading ? 'Sincronizando...' : id ? 'Salvar Alterações' : 'Gerar Orçamento / OS'}
+              </button>
+            </div>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ServiceOrderForm;

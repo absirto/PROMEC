@@ -1,0 +1,19 @@
+.reports-dashboard {
+  padding: 1rem 1.5rem;
+}
+
+.reports-dashboard h1 {
+  margin-bottom: 1rem;
+}
+
+.reports-dashboard nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.reports-dashboard nav a {
+  text-decoration: none;
+}
