@@ -74,6 +74,72 @@ export const DashboardController = {
         };
       }));
 
+      // 3.1 Operational Efficiency (industrial floor)
+      const operationsWhere: any = {};
+      if (startDate || endDate) {
+        operationsWhere.startAt = {
+          ...(startDate && { gte: new Date(startDate as string) }),
+          ...(endDate && { lte: new Date(endDate as string) })
+        };
+      }
+      if (personId) {
+        operationsWhere.serviceOrder = {
+          personId: Number(personId)
+        };
+      }
+
+      const operationLogs = await prisma.serviceOrderOperationLog.findMany({
+        where: operationsWhere,
+        include: {
+          serviceOrder: {
+            select: {
+              workCenter: true,
+            }
+          }
+        }
+      });
+
+      const efficiencyByCenterMap: Record<string, any> = {};
+      const downtimeByCategory: Record<string, number> = {};
+
+      operationLogs.forEach((log) => {
+        const center = log.serviceOrder?.workCenter?.trim() || 'Sem centro definido';
+        if (!efficiencyByCenterMap[center]) {
+          efficiencyByCenterMap[center] = {
+            workCenter: center,
+            workedHours: 0,
+            downtimeMinutes: 0,
+            logsCount: 0,
+            efficiencyPercent: 0,
+          };
+        }
+
+        const workedHours = Number(log.workedHours || 0);
+        const downtimeMinutes = Number(log.downtimeMinutes || 0);
+
+        efficiencyByCenterMap[center].workedHours += workedHours;
+        efficiencyByCenterMap[center].downtimeMinutes += downtimeMinutes;
+        efficiencyByCenterMap[center].logsCount += 1;
+
+        const category = (log.downtimeCategory || 'OUTROS').toUpperCase();
+        downtimeByCategory[category] = (downtimeByCategory[category] || 0) + downtimeMinutes;
+      });
+
+      const efficiencyByCenter = Object.values(efficiencyByCenterMap).map((row: any) => {
+        const downtimeHours = row.downtimeMinutes / 60;
+        const denominator = row.workedHours + downtimeHours;
+        return {
+          ...row,
+          efficiencyPercent: denominator > 0 ? (row.workedHours / denominator) * 100 : 0,
+        };
+      });
+
+      const totalWorkedHours = efficiencyByCenter.reduce((acc: number, row: any) => acc + Number(row.workedHours || 0), 0);
+      const totalDowntimeMinutes = efficiencyByCenter.reduce((acc: number, row: any) => acc + Number(row.downtimeMinutes || 0), 0);
+      const totalDowntimeHours = totalDowntimeMinutes / 60;
+      const efficiencyDenominator = totalWorkedHours + totalDowntimeHours;
+      const globalEfficiencyPercent = efficiencyDenominator > 0 ? (totalWorkedHours / efficiencyDenominator) * 100 : 0;
+
       // 4. Recent Activities
       const recentOrders = await prisma.serviceOrder.findMany({
         where: whereClause,
@@ -151,6 +217,14 @@ export const DashboardController = {
           lowStock: lowStockCount,
           totalOrders: ordersCount
         },
+        operationsKpi: {
+          workedHours: totalWorkedHours,
+          downtimeMinutes: totalDowntimeMinutes,
+          efficiencyPercent: globalEfficiencyPercent,
+          logsCount: operationLogs.length,
+        },
+        efficiencyByCenter,
+        downtimeByCategory,
         financialPerformance,
         distribution: ordersByStatus.map(s => ({
           label: s.status,

@@ -20,7 +20,10 @@ const Home: React.FC = () => {
     stats: { totalRevenue: 0, people: 0, activeOrders: 0, lowStock: 0, totalOrders: 0 },
     activities: [],
     financialPerformance: [],
-    distribution: []
+    distribution: [],
+    operationsKpi: { workedHours: 0, downtimeMinutes: 0, efficiencyPercent: 0, logsCount: 0 },
+    efficiencyByCenter: [],
+    downtimeByCategory: {}
   });
 
   const [loading, setLoading] = useState(true);
@@ -318,33 +321,76 @@ const Home: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
             <div className={styles.kpiCard}>
               <div className={styles.kpiHeader}>
-                <span style={{ color: '#94a3b8' }}>Conclusão de Ordens</span>
+                <span style={{ color: '#94a3b8' }}>Eficiência Global do Chão de Fábrica</span>
                 <span style={{ color: '#10b981', fontWeight: 800 }}>
-                  {dashboardData.stats.totalOrders > 0 
-                   ? Math.round(((dashboardData.stats.totalOrders - dashboardData.stats.activeOrders) / dashboardData.stats.totalOrders) * 100) 
-                   : 0}%
+                  {Number(dashboardData.operationsKpi?.efficiencyPercent || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
                 </span>
               </div>
               <div className={styles.progressBar}>
                 <div className={styles.progressFill} style={{ 
-                  width: `${dashboardData.stats.totalOrders > 0 ? ((dashboardData.stats.totalOrders - dashboardData.stats.activeOrders) / dashboardData.stats.totalOrders) * 100 : 0}%`, 
+                  width: `${Math.min(100, Number(dashboardData.operationsKpi?.efficiencyPercent || 0))}%`, 
                   background: 'linear-gradient(to right, #10b981, #34d399)',
                   boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)'
                 }} />
+              </div>
+              <div style={{ marginTop: 8, color: '#94a3b8', fontSize: 12 }}>
+                Horas Apontadas: {Number(dashboardData.operationsKpi?.workedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h •
+                Paradas: {Number(dashboardData.operationsKpi?.downtimeMinutes || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} min
               </div>
             </div>
 
             <div className={styles.kpiCard}>
               <div className={styles.kpiHeader}>
-                <span style={{ color: '#94a3b8' }}>Taxa de Retorno (Garantia)</span>
-                <span style={{ color: '#ef4444', fontWeight: 800 }}>4.2%</span>
+                <span style={{ color: '#94a3b8' }}>Paradas por Categoria</span>
+                <span style={{ color: '#ef4444', fontWeight: 800 }}>
+                  {Object.keys(dashboardData.downtimeByCategory || {}).length}
+                </span>
               </div>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ 
-                  width: '4.2%', 
-                  background: '#ef4444',
-                  boxShadow: '0 0 15px rgba(239, 68, 68, 0.4)'
-                }} />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {Object.entries(dashboardData.downtimeByCategory || {}).map(([category, minutes]: any) => (
+                  <span key={String(category)} style={{
+                    fontSize: 11,
+                    color: '#e2e8f0',
+                    background: 'rgba(239,68,68,0.15)',
+                    borderRadius: 999,
+                    padding: '4px 8px'
+                  }}>
+                    {String(category)}: {Number(minutes || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} min
+                  </span>
+                ))}
+                {Object.keys(dashboardData.downtimeByCategory || {}).length === 0 && (
+                  <span style={{ color: '#94a3b8', fontSize: 12 }}>Sem apontamentos de parada no período.</span>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.kpiCard}>
+              <div className={styles.kpiHeader}>
+                <span style={{ color: '#94a3b8' }}>Eficiência por Centro</span>
+                <span style={{ color: '#3b82f6', fontWeight: 800 }}>{(dashboardData.efficiencyByCenter || []).length}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflow: 'auto' }}>
+                {(dashboardData.efficiencyByCenter || []).map((row: any) => (
+                  <div key={row.workCenter} style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: 10,
+                    padding: 10,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 700 }}>{row.workCenter}</span>
+                      <span style={{ color: '#10b981', fontWeight: 800, fontSize: 12 }}>
+                        {Number(row.efficiencyPercent || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
+                      </span>
+                    </div>
+                    <div style={{ color: '#94a3b8', fontSize: 11 }}>
+                      {Number(row.workedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h • {Number(row.downtimeMinutes || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} min parada
+                    </div>
+                  </div>
+                ))}
+                {(dashboardData.efficiencyByCenter || []).length === 0 && (
+                  <span style={{ color: '#94a3b8', fontSize: 12 }}>Sem dados de eficiência no período selecionado.</span>
+                )}
               </div>
             </div>
           </div>
