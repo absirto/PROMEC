@@ -7,6 +7,7 @@ const router = Router();
 router.get('/', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.list);
 router.get('/pcp/overview', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpOverview);
 router.get('/pcp/calendar', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpCalendar);
+router.get('/operations/efficiency', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.operationsEfficiency);
 router.get('/:id/operations', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listOperations);
 router.get('/:id', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
 router.post('/', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.create);

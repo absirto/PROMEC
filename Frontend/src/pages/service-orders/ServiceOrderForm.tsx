@@ -53,6 +53,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [financials, setFinancials] = useState<any | null>(null);
   const [operationLogs, setOperationLogs] = useState<any[]>([]);
+  const [operationsEfficiency, setOperationsEfficiency] = useState<any | null>(null);
   const [operationForm, setOperationForm] = useState({
     operationType: 'USINAGEM',
     shift: 'MORNING',
@@ -60,6 +61,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
     startAt: '',
     endAt: '',
     downtimeMinutes: 0,
+    downtimeCategory: 'OUTROS',
     downtimeReason: '',
     notes: '',
   });
@@ -84,8 +86,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
       Promise.all([
         api.get(`/service-orders/${id}`),
         api.get(`/service-orders/${id}/operations`).catch(() => []),
+        api.get('/service-orders/operations/efficiency').catch(() => null),
       ])
-        .then(([data, operations]: any[]) => {
+        .then(([data, operations, efficiency]: any[]) => {
           setFormData({
             description: data.description || '',
             problemDescription: data.problemDescription || '',
@@ -118,6 +121,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
           })));
           setFinancials(data.financials || null);
           setOperationLogs(Array.isArray(operations) ? operations : []);
+          setOperationsEfficiency(efficiency || null);
         })
         .finally(() => setLoading(false));
     } else {
@@ -357,6 +361,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
         startAt: new Date(operationForm.startAt).toISOString(),
         endAt: operationForm.endAt ? new Date(operationForm.endAt).toISOString() : null,
         downtimeMinutes: Number(operationForm.downtimeMinutes) || 0,
+        downtimeCategory: operationForm.downtimeCategory || 'OUTROS',
         downtimeReason: operationForm.downtimeReason || null,
         notes: operationForm.notes || null,
       };
@@ -370,9 +375,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
         startAt: '',
         endAt: '',
         downtimeMinutes: 0,
+        downtimeCategory: 'OUTROS',
         downtimeReason: '',
         notes: '',
       });
+      const efficiency = await api.get('/service-orders/operations/efficiency').catch(() => null);
+      setOperationsEfficiency(efficiency || null);
       showToast('Apontamento operacional registrado.', 'success');
     } catch (err: any) {
       showToast(typeof err === 'string' ? err : 'Erro ao registrar apontamento operacional.', 'error');
@@ -810,6 +818,21 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                         onChange={(e) => setOperationForm({ ...operationForm, downtimeMinutes: parseFloat(e.target.value) || 0 })}
                       />
                     </div>
+                    <div>
+                      <label className={styles.label}>Categoria da Parada</label>
+                      <select
+                        className={styles.formSelect}
+                        value={operationForm.downtimeCategory}
+                        onChange={(e) => setOperationForm({ ...operationForm, downtimeCategory: e.target.value })}
+                      >
+                        <option value="MACHINE">Máquina</option>
+                        <option value="MATERIAL">Material</option>
+                        <option value="SETUP">Setup</option>
+                        <option value="RETRABALHO">Retrabalho</option>
+                        <option value="QUALIDADE">Qualidade</option>
+                        <option value="OUTROS">Outros</option>
+                      </select>
+                    </div>
                     <div style={{ gridColumn: 'span 2' }}>
                       <label className={styles.label}>Motivo da Parada</label>
                       <input
@@ -894,6 +917,46 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                     </tbody>
                   </table>
                 </div>
+
+                {operationsEfficiency && (
+                  <div style={{ marginTop: 14, background: 'rgba(2,6,23,0.42)', border: '1px solid rgba(148,163,184,0.18)', borderRadius: 10, padding: 12 }}>
+                    <div style={{ color: '#e2e8f0', fontWeight: 800, marginBottom: 8 }}>Eficiência Operacional (janela recente)</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8 }}>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12 }}>Horas trabalhadas</div>
+                        <div style={{ color: '#fff', fontWeight: 800 }}>
+                          {Number(operationsEfficiency?.totals?.workedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12 }}>Paradas</div>
+                        <div style={{ color: '#fff', fontWeight: 800 }}>
+                          {Number(operationsEfficiency?.totals?.downtimeMinutes || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })} min
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: 12 }}>Eficiência global</div>
+                        <div style={{ color: '#10b981', fontWeight: 900 }}>
+                          {Number(operationsEfficiency?.totals?.efficiencyPercent || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 10, color: '#94a3b8', fontSize: 12 }}>Paradas por categoria</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
+                      {Object.entries(operationsEfficiency?.downtimeByCategory || {}).map(([key, value]: any) => (
+                        <span key={String(key)} style={{
+                          background: 'rgba(148,163,184,0.15)',
+                          borderRadius: 999,
+                          padding: '4px 8px',
+                          fontSize: 11,
+                          color: '#e2e8f0'
+                        }}>
+                          {String(key)}: {Number(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })} min
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

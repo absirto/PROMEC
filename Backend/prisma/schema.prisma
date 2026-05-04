@@ -212,6 +212,7 @@ model ServiceOrderOperationLog {
   endAt           DateTime?
   workedHours     Float?
   downtimeMinutes Float        @default(0)
+  downtimeCategory String?
   downtimeReason  String?
   notes           String?
   createdAt       DateTime     @default(now())

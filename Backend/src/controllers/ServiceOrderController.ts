@@ -54,6 +54,7 @@ function parseShiftHours(req: Request) {
 
 const OPERATION_TYPES = ['USINAGEM', 'CALDEIRARIA', 'MONTAGEM'];
 const SHIFTS = ['MORNING', 'AFTERNOON', 'NIGHT'];
+const DOWNTIME_CATEGORIES = ['MACHINE', 'MATERIAL', 'SETUP', 'RETRABALHO', 'QUALIDADE', 'OUTROS'];
 
 function hasValidPlanWindow(workCenter: string | null, plannedStartDate: Date | null, plannedEndDate: Date | null) {
   return Boolean(workCenter && plannedStartDate && plannedEndDate);
@@ -141,6 +142,99 @@ function enrichFinancials(order: any) {
 }
 
 export const ServiceOrderController = {
+  async operationsEfficiency(req: Request, res: Response) {
+    try {
+      const startQuery = typeof req.query.startDate === 'string' ? req.query.startDate : '';
+      const endQuery = typeof req.query.endDate === 'string' ? req.query.endDate : '';
+
+      const periodStart = startQuery ? new Date(startQuery) : new Date(new Date().setDate(new Date().getDate() - 30));
+      const periodEnd = endQuery ? new Date(endQuery) : new Date();
+
+      if (Number.isNaN(periodStart.getTime()) || Number.isNaN(periodEnd.getTime())) {
+        return res.status(400).json({ status: 'error', message: 'Período inválido para eficiência operacional.' });
+      }
+
+      const logs = await prisma.serviceOrderOperationLog.findMany({
+        where: {
+          startAt: { gte: periodStart, lte: periodEnd },
+        },
+        include: {
+          serviceOrder: {
+            select: {
+              id: true,
+              workCenter: true,
+              status: true,
+            }
+          }
+        }
+      });
+
+      const groups: Record<string, any> = {};
+      const downtimeByCategory: Record<string, number> = {};
+
+      logs.forEach((log) => {
+        const workCenter = log.serviceOrder?.workCenter?.trim() || 'Sem centro definido';
+        const operationType = String(log.operationType || 'NAO_INFORMADO').toUpperCase();
+        const key = `${workCenter}::${operationType}`;
+
+        if (!groups[key]) {
+          groups[key] = {
+            workCenter,
+            operationType,
+            logsCount: 0,
+            workedHours: 0,
+            downtimeMinutes: 0,
+            efficiencyPercent: 0,
+            uniqueOrders: new Set<number>(),
+          };
+        }
+
+        groups[key].logsCount += 1;
+        groups[key].workedHours += toNumber(log.workedHours);
+        groups[key].downtimeMinutes += toNumber(log.downtimeMinutes);
+        if (log.serviceOrderId) groups[key].uniqueOrders.add(Number(log.serviceOrderId));
+
+        const downtimeCategory = log.downtimeCategory ? String(log.downtimeCategory).toUpperCase() : 'OUTROS';
+        downtimeByCategory[downtimeCategory] = (downtimeByCategory[downtimeCategory] || 0) + toNumber(log.downtimeMinutes);
+      });
+
+      const byCenterAndOperation = Object.values(groups).map((g: any) => {
+        const downtimeHours = g.downtimeMinutes / 60;
+        const denominator = g.workedHours + downtimeHours;
+        const efficiencyPercent = denominator > 0 ? (g.workedHours / denominator) * 100 : 0;
+        return {
+          workCenter: g.workCenter,
+          operationType: g.operationType,
+          logsCount: g.logsCount,
+          ordersCount: g.uniqueOrders.size,
+          workedHours: g.workedHours,
+          downtimeMinutes: g.downtimeMinutes,
+          efficiencyPercent,
+        };
+      });
+
+      const totalWorkedHours = byCenterAndOperation.reduce((acc: number, i: any) => acc + toNumber(i.workedHours), 0);
+      const totalDowntimeMinutes = byCenterAndOperation.reduce((acc: number, i: any) => acc + toNumber(i.downtimeMinutes), 0);
+      const totalDowntimeHours = totalDowntimeMinutes / 60;
+      const totalDenominator = totalWorkedHours + totalDowntimeHours;
+      const globalEfficiencyPercent = totalDenominator > 0 ? (totalWorkedHours / totalDenominator) * 100 : 0;
+
+      return res.json({
+        periodStart,
+        periodEnd,
+        totals: {
+          workedHours: totalWorkedHours,
+          downtimeMinutes: totalDowntimeMinutes,
+          efficiencyPercent: globalEfficiencyPercent,
+        },
+        downtimeByCategory,
+        byCenterAndOperation,
+      });
+    } catch (error) {
+      return res.status(500).json({ status: 'error', message: 'Erro ao gerar eficiência operacional.' });
+    }
+  },
+
   async listOperations(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
@@ -182,6 +276,7 @@ export const ServiceOrderController = {
       const actor = getActor(req);
       const operationType = String(data.operationType || '').toUpperCase();
       const shift = data.shift ? String(data.shift).toUpperCase() : null;
+      const downtimeCategory = data.downtimeCategory ? String(data.downtimeCategory).toUpperCase() : null;
       const startAt = data.startAt ? new Date(data.startAt) : null;
       const endAt = data.endAt ? new Date(data.endAt) : null;
       const downtimeMinutes = Math.max(0, toNumber(data.downtimeMinutes));
@@ -191,6 +286,9 @@ export const ServiceOrderController = {
       }
       if (shift && !SHIFTS.includes(shift)) {
         return res.status(400).json({ status: 'error', message: 'Turno inválido.' });
+      }
+      if (downtimeCategory && !DOWNTIME_CATEGORIES.includes(downtimeCategory)) {
+        return res.status(400).json({ status: 'error', message: 'Categoria de parada inválida.' });
       }
       if (!startAt || Number.isNaN(startAt.getTime())) {
         return res.status(400).json({ status: 'error', message: 'Data/hora de início inválida.' });
@@ -232,6 +330,7 @@ export const ServiceOrderController = {
               ? Math.max(0, toNumber(data.workedHours))
               : calculatedWorkedHours,
             downtimeMinutes,
+            downtimeCategory,
             downtimeReason: data.downtimeReason ? String(data.downtimeReason) : null,
             notes: data.notes ? String(data.notes) : null,
           },
@@ -258,6 +357,7 @@ export const ServiceOrderController = {
               endAt,
               workedHours: created.workedHours,
               downtimeMinutes,
+              downtimeCategory,
               employeeId,
             }
           }
