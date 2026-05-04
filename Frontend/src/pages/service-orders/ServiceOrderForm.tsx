@@ -54,6 +54,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
   const [financials, setFinancials] = useState<any | null>(null);
   const [materialsCoverage, setMaterialsCoverage] = useState<any | null>(null);
   const [checkingCoverage, setCheckingCoverage] = useState(false);
+  const [creatingPurchaseRequest, setCreatingPurchaseRequest] = useState(false);
   const [operationLogs, setOperationLogs] = useState<any[]>([]);
   const [operationsEfficiency, setOperationsEfficiency] = useState<any | null>(null);
   const [operationForm, setOperationForm] = useState({
@@ -192,6 +193,44 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
       showToast(typeof err === 'string' ? err : 'Erro ao verificar cobertura de materiais.', 'error');
     } finally {
       setCheckingCoverage(false);
+    }
+  };
+
+  const handleCreatePurchaseRequest = async () => {
+    if (!id) {
+      showToast('Salve a OS antes de gerar solicitação de compra.', 'warning');
+      return;
+    }
+
+    const shortageItems = (materialsCoverage?.items || [])
+      .filter((item: any) => item.status === 'SHORTAGE' && Number(item.shortageQty || 0) > 0)
+      .map((item: any) => ({
+        materialId: Number(item.materialId),
+        requestedQty: Number(item.requestedQty || 0),
+        stockQty: Number(item.stockQty || 0),
+        shortageQty: Number(item.shortageQty || 0),
+        unit: item.unit || null,
+      }))
+      .filter((item: any) => Number.isFinite(item.materialId) && item.materialId > 0 && item.shortageQty > 0);
+
+    if (!shortageItems.length) {
+      showToast('Não há ruptura de materiais para solicitar compra.', 'warning');
+      return;
+    }
+
+    setCreatingPurchaseRequest(true);
+    try {
+      const created = await api.post('/service-orders/purchase-requests', {
+        serviceOrderId: Number(id),
+        items: shortageItems,
+        notes: `Gerado automaticamente pela OS #${id} após análise de cobertura.`,
+      });
+
+      showToast(`Solicitação ${created?.code || ''} gerada com ${shortageItems.length} item(ns).`, 'success');
+    } catch (err: any) {
+      showToast(typeof err === 'string' ? err : 'Erro ao gerar solicitação de compra.', 'error');
+    } finally {
+      setCreatingPurchaseRequest(false);
     }
   };
 
@@ -678,6 +717,26 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                     </div>
                   ))}
                 </div>
+                {!isView && id && Number(materialsCoverage?.totals?.shortageQty || 0) > 0 && (
+                  <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={handleCreatePurchaseRequest}
+                      disabled={creatingPurchaseRequest}
+                      style={{
+                        background: 'rgba(248, 113, 113, 0.15)',
+                        color: '#fecaca',
+                        border: '1px solid rgba(248, 113, 113, 0.35)',
+                        borderRadius: 8,
+                        padding: '8px 14px',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {creatingPurchaseRequest ? 'Gerando Solicitação...' : 'Gerar Solicitação de Compra'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             

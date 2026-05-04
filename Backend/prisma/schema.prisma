@@ -163,6 +163,7 @@ model Material {
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   serviceOrderMaterials ServiceOrderMaterial[]
+  purchaseRequestItems  PurchaseRequestItem[]
   stockLogs             StockLog[]
 }
 
@@ -196,10 +197,45 @@ model ServiceOrder {
   qualityControls    QualityControl[]
   person             Person?                @relation(fields: [personId], references: [id])
   materials          ServiceOrderMaterial[]
+  purchaseRequests   PurchaseRequest[]
   operationLogs      ServiceOrderOperationLog[]
   services           ServiceOrderService[]
   traces             ServiceOrderTrace[]
   transactions       Transaction[]
+}
+
+model PurchaseRequest {
+  id             Int                 @id @default(autoincrement())
+  code           String              @unique
+  serviceOrderId Int?
+  status         String              @default("OPEN")
+  notes          String?
+  requestedByEmail String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  serviceOrder   ServiceOrder?       @relation(fields: [serviceOrderId], references: [id], onDelete: SetNull)
+  items          PurchaseRequestItem[]
+
+  @@index([serviceOrderId])
+  @@index([status])
+}
+
+model PurchaseRequestItem {
+  id                Int             @id @default(autoincrement())
+  purchaseRequestId Int
+  materialId        Int
+  requestedQty      Float
+  stockQty          Float
+  shortageQty       Float
+  unit              String?
+  status            String          @default("PENDING")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  material          Material        @relation(fields: [materialId], references: [id])
+  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseRequestId])
+  @@index([materialId])
 }
 
 model ServiceOrderOperationLog {

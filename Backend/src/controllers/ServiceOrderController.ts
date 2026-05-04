@@ -52,6 +52,17 @@ function parseShiftHours(req: Request) {
   ];
 }
 
+function generatePurchaseRequestCode() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const h = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `SC-${y}${m}${d}-${h}${min}-${rand}`;
+}
+
 const OPERATION_TYPES = ['USINAGEM', 'CALDEIRARIA', 'MONTAGEM'];
 const SHIFTS = ['MORNING', 'AFTERNOON', 'NIGHT'];
 const DOWNTIME_CATEGORIES = ['MACHINE', 'MATERIAL', 'SETUP', 'RETRABALHO', 'QUALIDADE', 'OUTROS'];
@@ -142,6 +153,115 @@ function enrichFinancials(order: any) {
 }
 
 export const ServiceOrderController = {
+  async createPurchaseRequest(req: Request, res: Response) {
+    try {
+      type PurchaseRequestInputItem = {
+        materialId: number;
+        requestedQty: number;
+        stockQty: number;
+        shortageQty: number;
+        unit: string | null;
+      };
+
+      const data = req.body || {};
+      const actor = getActor(req);
+      const serviceOrderId = data.serviceOrderId ? Number(data.serviceOrderId) : null;
+
+      const inputItems = Array.isArray(data.items) ? data.items : [];
+      const items: PurchaseRequestInputItem[] = inputItems
+        .map((item: any) => ({
+          materialId: Number(item.materialId),
+          requestedQty: Math.max(0, toNumber(item.requestedQty)),
+          stockQty: Math.max(0, toNumber(item.stockQty)),
+          shortageQty: Math.max(0, toNumber(item.shortageQty)),
+          unit: item.unit ? String(item.unit) : null,
+        }))
+        .filter((item: any) => Number.isFinite(item.materialId) && item.materialId > 0 && item.shortageQty > 0);
+
+      if (!items.length) {
+        return res.status(400).json({ status: 'error', message: 'Não há itens em ruptura para gerar solicitação de compra.' });
+      }
+
+      const created = await prisma.$transaction(async (tx) => {
+        if (serviceOrderId) {
+          const order = await tx.serviceOrder.findUnique({ where: { id: serviceOrderId }, select: { id: true, traceCode: true } });
+          if (!order) throw new Error('ORDER_NOT_FOUND');
+        }
+
+        const materialIds: number[] = Array.from(new Set(items.map((i) => i.materialId)));
+        const materialsFound = await tx.material.findMany({
+          where: { id: { in: materialIds } },
+          select: { id: true, unit: true }
+        });
+        const foundIds = materialsFound.map((m) => m.id);
+        const missingMaterial = materialIds.find((id) => !foundIds.includes(id));
+        if (missingMaterial) throw new Error('MATERIAL_NOT_FOUND');
+
+        const requestCode = generatePurchaseRequestCode();
+        const txAny = tx as any;
+
+        const createdRequest = await txAny.purchaseRequest.create({
+          data: {
+            code: requestCode,
+            serviceOrderId,
+            status: 'OPEN',
+            notes: data.notes ? String(data.notes) : null,
+            requestedByEmail: actor.email,
+            items: {
+              create: items.map((item: any) => {
+                const material = materialsFound.find((m) => m.id === item.materialId);
+                return {
+                  materialId: item.materialId,
+                  requestedQty: item.requestedQty,
+                  stockQty: item.stockQty,
+                  shortageQty: item.shortageQty,
+                  unit: item.unit || material?.unit || null,
+                  status: 'PENDING',
+                };
+              })
+            }
+          },
+          include: {
+            items: {
+              include: { material: true }
+            },
+            serviceOrder: {
+              select: { id: true, traceCode: true }
+            }
+          }
+        });
+
+        if (serviceOrderId) {
+          await (tx.serviceOrderTrace as any).create({
+            data: {
+              serviceOrderId,
+              serviceOrderCode: createdRequest.serviceOrder?.traceCode || null,
+              action: 'PURCHASE_REQUEST_CREATE',
+              changedByUserId: actor.id,
+              changedByEmail: actor.email,
+              payload: {
+                purchaseRequestCode: createdRequest.code,
+                items: createdRequest.items.map((i: any) => ({ materialId: i.materialId, shortageQty: i.shortageQty })),
+              }
+            }
+          });
+        }
+
+        return createdRequest;
+      });
+
+      return res.status(201).json(created);
+    } catch (error: any) {
+      if (error.message === 'ORDER_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'OS não encontrada para vincular solicitação de compra.' });
+      }
+      if (error.message === 'MATERIAL_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Um ou mais materiais não foram encontrados.' });
+      }
+      return res.status(400).json({ status: 'error', message: 'Erro ao gerar solicitação de compra.', details: error.message });
+    }
+  },
+
   async checkMaterialsCoverage(req: Request, res: Response) {
     try {
       const data = req.body || {};
