@@ -52,6 +52,18 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [financials, setFinancials] = useState<any | null>(null);
+  const [operationLogs, setOperationLogs] = useState<any[]>([]);
+  const [operationForm, setOperationForm] = useState({
+    operationType: 'USINAGEM',
+    shift: 'MORNING',
+    employeeId: '',
+    startAt: '',
+    endAt: '',
+    downtimeMinutes: 0,
+    downtimeReason: '',
+    notes: '',
+  });
+  const [savingOperation, setSavingOperation] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -69,8 +81,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
     }).catch((err: any) => showToast('Erro ao carregar dados auxiliares.', 'error'));
 
     if (id && (isEdit || isView)) {
-      api.get(`/service-orders/${id}`)
-        .then((data: any) => {
+      Promise.all([
+        api.get(`/service-orders/${id}`),
+        api.get(`/service-orders/${id}/operations`).catch(() => []),
+      ])
+        .then(([data, operations]: any[]) => {
           setFormData({
             description: data.description || '',
             problemDescription: data.problemDescription || '',
@@ -102,12 +117,20 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
             totalPrice: s.totalPrice || 0
           })));
           setFinancials(data.financials || null);
+          setOperationLogs(Array.isArray(operations) ? operations : []);
         })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, [id, isEdit, isView, showToast]);
+
+  const formatDateTimeLabel = (dateValue: string | Date | null | undefined) => {
+    if (!dateValue) return '-';
+    const d = new Date(dateValue);
+    if (Number.isNaN(d.getTime())) return '-';
+    return d.toLocaleString('pt-BR');
+  };
 
   const addMaterialItem = () => {
     setItemsMaterials([...itemsMaterials, { materialId: '', quantity: 1, unitPrice: 0, totalPrice: 0 }]);
@@ -315,6 +338,47 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
     doc.text(`VALOR TOTAL: R$ ${(baseForTax + taxAmt).toFixed(2)}`, 20, currentY);
     
     doc.save(`OS_ProMEC_${id || 'Nova'}.pdf`);
+  };
+
+  const handleAddOperationLog = async () => {
+    if (!id || isView) return;
+
+    if (!operationForm.startAt) {
+      showToast('Informe início real da operação.', 'warning');
+      return;
+    }
+
+    setSavingOperation(true);
+    try {
+      const payload = {
+        operationType: operationForm.operationType,
+        shift: operationForm.shift,
+        employeeId: operationForm.employeeId ? Number(operationForm.employeeId) : null,
+        startAt: new Date(operationForm.startAt).toISOString(),
+        endAt: operationForm.endAt ? new Date(operationForm.endAt).toISOString() : null,
+        downtimeMinutes: Number(operationForm.downtimeMinutes) || 0,
+        downtimeReason: operationForm.downtimeReason || null,
+        notes: operationForm.notes || null,
+      };
+
+      const created = await api.post(`/service-orders/${id}/operations`, payload);
+      setOperationLogs((prev) => [created, ...prev]);
+      setOperationForm({
+        operationType: operationForm.operationType,
+        shift: operationForm.shift,
+        employeeId: '',
+        startAt: '',
+        endAt: '',
+        downtimeMinutes: 0,
+        downtimeReason: '',
+        notes: '',
+      });
+      showToast('Apontamento operacional registrado.', 'success');
+    } catch (err: any) {
+      showToast(typeof err === 'string' ? err : 'Erro ao registrar apontamento operacional.', 'error');
+    } finally {
+      setSavingOperation(false);
+    }
   };
 
   return (
@@ -666,6 +730,173 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
               </table>
             </div>
           </div>
+
+          {id && (
+            <div className={styles.fullWidth} style={{ marginTop: 32 }}>
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.55)',
+                border: '1px solid rgba(148, 163, 184, 0.2)',
+                borderRadius: 16,
+                padding: 16,
+              }}>
+                <h3 style={{ margin: 0, marginBottom: 12, fontSize: 18, color: '#38bdf8' }}>Apontamento Real de Produção</h3>
+
+                {!isView && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 14 }}>
+                    <div>
+                      <label className={styles.label}>Operação</label>
+                      <select
+                        className={styles.formSelect}
+                        value={operationForm.operationType}
+                        onChange={(e) => setOperationForm({ ...operationForm, operationType: e.target.value })}
+                      >
+                        <option value="USINAGEM">Usinagem</option>
+                        <option value="CALDEIRARIA">Caldeiraria</option>
+                        <option value="MONTAGEM">Montagem</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={styles.label}>Turno</label>
+                      <select
+                        className={styles.formSelect}
+                        value={operationForm.shift}
+                        onChange={(e) => setOperationForm({ ...operationForm, shift: e.target.value })}
+                      >
+                        <option value="MORNING">Manhã</option>
+                        <option value="AFTERNOON">Tarde</option>
+                        <option value="NIGHT">Noite</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={styles.label}>Responsável</label>
+                      <select
+                        className={styles.formSelect}
+                        value={operationForm.employeeId}
+                        onChange={(e) => setOperationForm({ ...operationForm, employeeId: e.target.value })}
+                      >
+                        <option value="">Selecione...</option>
+                        {employees.map((emp) => (
+                          <option key={emp.id} value={emp.id.toString()}>
+                            {emp.person?.naturalPerson?.name || 'Funcionário'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={styles.label}>Início Real</label>
+                      <input
+                        type="datetime-local"
+                        className={styles.formInput}
+                        value={operationForm.startAt}
+                        onChange={(e) => setOperationForm({ ...operationForm, startAt: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.label}>Fim Real</label>
+                      <input
+                        type="datetime-local"
+                        className={styles.formInput}
+                        value={operationForm.endAt}
+                        onChange={(e) => setOperationForm({ ...operationForm, endAt: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className={styles.label}>Parada (min)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className={styles.formInput}
+                        value={operationForm.downtimeMinutes}
+                        onChange={(e) => setOperationForm({ ...operationForm, downtimeMinutes: parseFloat(e.target.value) || 0 })}
+                      />
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className={styles.label}>Motivo da Parada</label>
+                      <input
+                        className={styles.formInput}
+                        value={operationForm.downtimeReason}
+                        onChange={(e) => setOperationForm({ ...operationForm, downtimeReason: e.target.value })}
+                        placeholder="Ex: Falta de matéria-prima"
+                      />
+                    </div>
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label className={styles.label}>Observações</label>
+                      <input
+                        className={styles.formInput}
+                        value={operationForm.notes}
+                        onChange={(e) => setOperationForm({ ...operationForm, notes: e.target.value })}
+                        placeholder="Detalhes do apontamento"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {!isView && (
+                  <button
+                    type="button"
+                    onClick={handleAddOperationLog}
+                    disabled={savingOperation}
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.2)',
+                      color: '#38bdf8',
+                      border: '1px solid rgba(56, 189, 248, 0.45)',
+                      borderRadius: 10,
+                      padding: '10px 14px',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      marginBottom: 12,
+                    }}
+                  >
+                    {savingOperation ? 'Registrando...' : 'Registrar Apontamento'}
+                  </button>
+                )}
+
+                <div style={{ background: 'rgba(2,6,23,0.4)', borderRadius: 10, border: '1px solid rgba(148,163,184,0.16)', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff', fontSize: 13 }}>
+                    <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                      <tr>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Operação</th>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Responsável</th>
+                        <th style={{ padding: 10, textAlign: 'left' }}>Início/Fim</th>
+                        <th style={{ padding: 10, textAlign: 'right' }}>Horas</th>
+                        <th style={{ padding: 10, textAlign: 'right' }}>Parada</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {operationLogs.map((log) => (
+                        <tr key={log.id} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: 10 }}>
+                            <div>{log.operationType}</div>
+                            <div style={{ color: '#94a3b8', fontSize: 11 }}>{log.shift || '-'}</div>
+                          </td>
+                          <td style={{ padding: 10 }}>
+                            {log.employee?.person?.naturalPerson?.name || 'Não informado'}
+                          </td>
+                          <td style={{ padding: 10 }}>
+                            <div>{formatDateTimeLabel(log.startAt)}</div>
+                            <div style={{ color: '#94a3b8', fontSize: 11 }}>{formatDateTimeLabel(log.endAt)}</div>
+                          </td>
+                          <td style={{ padding: 10, textAlign: 'right', fontWeight: 700 }}>
+                            {Number(log.workedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}h
+                          </td>
+                          <td style={{ padding: 10, textAlign: 'right' }}>
+                            {Number(log.downtimeMinutes || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })} min
+                          </td>
+                        </tr>
+                      ))}
+                      {operationLogs.length === 0 && (
+                        <tr>
+                          <td colSpan={5} style={{ padding: 14, textAlign: 'center', color: '#94a3b8' }}>
+                            Nenhum apontamento operacional registrado.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* TOTALIZADOR PREMIUM */}
           <div className={styles.fullWidth} style={{ 

@@ -52,6 +52,9 @@ function parseShiftHours(req: Request) {
   ];
 }
 
+const OPERATION_TYPES = ['USINAGEM', 'CALDEIRARIA', 'MONTAGEM'];
+const SHIFTS = ['MORNING', 'AFTERNOON', 'NIGHT'];
+
 function hasValidPlanWindow(workCenter: string | null, plannedStartDate: Date | null, plannedEndDate: Date | null) {
   return Boolean(workCenter && plannedStartDate && plannedEndDate);
 }
@@ -138,6 +141,144 @@ function enrichFinancials(order: any) {
 }
 
 export const ServiceOrderController = {
+  async listOperations(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id) || id <= 0) {
+        return res.status(400).json({ status: 'error', message: 'ID de OS inválido.' });
+      }
+
+      const exists = await prisma.serviceOrder.findUnique({ where: { id }, select: { id: true } });
+      if (!exists) {
+        return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
+      }
+
+      const logs = await prisma.serviceOrderOperationLog.findMany({
+        where: { serviceOrderId: id },
+        include: {
+          employee: {
+            include: {
+              person: { include: { naturalPerson: true, legalPerson: true } }
+            }
+          }
+        },
+        orderBy: { startAt: 'desc' },
+      });
+
+      return res.json(logs);
+    } catch (error) {
+      return res.status(500).json({ status: 'error', message: 'Erro ao listar apontamentos operacionais.' });
+    }
+  },
+
+  async addOperation(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id) || id <= 0) {
+        return res.status(400).json({ status: 'error', message: 'ID de OS inválido.' });
+      }
+
+      const data = req.body || {};
+      const actor = getActor(req);
+      const operationType = String(data.operationType || '').toUpperCase();
+      const shift = data.shift ? String(data.shift).toUpperCase() : null;
+      const startAt = data.startAt ? new Date(data.startAt) : null;
+      const endAt = data.endAt ? new Date(data.endAt) : null;
+      const downtimeMinutes = Math.max(0, toNumber(data.downtimeMinutes));
+
+      if (!OPERATION_TYPES.includes(operationType)) {
+        return res.status(400).json({ status: 'error', message: 'Tipo de operação inválido.' });
+      }
+      if (shift && !SHIFTS.includes(shift)) {
+        return res.status(400).json({ status: 'error', message: 'Turno inválido.' });
+      }
+      if (!startAt || Number.isNaN(startAt.getTime())) {
+        return res.status(400).json({ status: 'error', message: 'Data/hora de início inválida.' });
+      }
+      if (endAt && Number.isNaN(endAt.getTime())) {
+        return res.status(400).json({ status: 'error', message: 'Data/hora de fim inválida.' });
+      }
+      if (endAt && endAt < startAt) {
+        return res.status(400).json({ status: 'error', message: 'Fim não pode ser menor que início.' });
+      }
+
+      const employeeId = data.employeeId ? Number(data.employeeId) : null;
+      if (employeeId && (!Number.isFinite(employeeId) || employeeId <= 0)) {
+        return res.status(400).json({ status: 'error', message: 'Funcionário inválido.' });
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const order = await tx.serviceOrder.findUnique({ where: { id } });
+        if (!order) throw new Error('NOT_FOUND');
+
+        if (employeeId) {
+          const employee = await tx.employee.findUnique({ where: { id: employeeId }, select: { id: true } });
+          if (!employee) throw new Error('EMPLOYEE_NOT_FOUND');
+        }
+
+        const calculatedWorkedHours = endAt
+          ? Math.max(0, ((endAt.getTime() - startAt.getTime()) / (1000 * 60 * 60)) - (downtimeMinutes / 60))
+          : null;
+
+        const created = await tx.serviceOrderOperationLog.create({
+          data: {
+            serviceOrderId: id,
+            employeeId,
+            operationType,
+            shift,
+            startAt,
+            endAt,
+            workedHours: data.workedHours !== undefined && data.workedHours !== null
+              ? Math.max(0, toNumber(data.workedHours))
+              : calculatedWorkedHours,
+            downtimeMinutes,
+            downtimeReason: data.downtimeReason ? String(data.downtimeReason) : null,
+            notes: data.notes ? String(data.notes) : null,
+          },
+          include: {
+            employee: {
+              include: {
+                person: { include: { naturalPerson: true, legalPerson: true } }
+              }
+            }
+          }
+        });
+
+        await (tx.serviceOrderTrace as any).create({
+          data: {
+            serviceOrderId: id,
+            serviceOrderCode: order.traceCode,
+            action: 'OP_LOG_CREATE',
+            changedByUserId: actor.id,
+            changedByEmail: actor.email,
+            payload: {
+              operationType,
+              shift,
+              startAt,
+              endAt,
+              workedHours: created.workedHours,
+              downtimeMinutes,
+              employeeId,
+            }
+          }
+        });
+
+        return created;
+      });
+
+      return res.status(201).json(result);
+    } catch (error: any) {
+      if (error.message === 'NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
+      }
+      if (error.message === 'EMPLOYEE_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Funcionário não encontrado.' });
+      }
+
+      return res.status(400).json({ status: 'error', message: 'Erro ao registrar apontamento operacional.', details: error.message });
+    }
+  },
+
   async pcpOverview(req: Request, res: Response) {
     try {
       const startQuery = typeof req.query.startDate === 'string' ? req.query.startDate : '';

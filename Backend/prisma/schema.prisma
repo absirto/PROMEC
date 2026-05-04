@@ -137,6 +137,7 @@ model Employee {
   user                 User?                 @relation(fields: [userId], references: [id])
   workArea             WorkArea?             @relation(fields: [workAreaId], references: [id])
   qualityControls      QualityControl[]
+  operationLogs        ServiceOrderOperationLog[]
   serviceOrderServices ServiceOrderService[]
 }
 
@@ -195,9 +196,32 @@ model ServiceOrder {
   qualityControls    QualityControl[]
   person             Person?                @relation(fields: [personId], references: [id])
   materials          ServiceOrderMaterial[]
+  operationLogs      ServiceOrderOperationLog[]
   services           ServiceOrderService[]
   traces             ServiceOrderTrace[]
   transactions       Transaction[]
+}
+
+model ServiceOrderOperationLog {
+  id              Int          @id @default(autoincrement())
+  serviceOrderId  Int
+  employeeId      Int?
+  operationType   String
+  shift           String?
+  startAt         DateTime
+  endAt           DateTime?
+  workedHours     Float?
+  downtimeMinutes Float        @default(0)
+  downtimeReason  String?
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  employee        Employee?    @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  serviceOrder    ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId])
+  @@index([operationType])
+  @@index([startAt])
 }
 
 model ServiceOrderTrace {
