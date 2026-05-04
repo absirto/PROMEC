@@ -167,20 +167,26 @@
 
 @media (max-width: 1024px) {
   .sidebar {
-    width: 80px;
+    width: 72px;
   }
-  .logoText, .navItem span {
+  .logoText, .navItem span, .sectionLabel {
     display: none;
   }
   .sidebarHeader {
-    padding: 24px 18px;
+    padding: 24px 14px;
+    justify-content: center;
   }
   .nav {
-    padding: 0 10px;
+    padding: 0 8px;
   }
   .navItem {
     justify-content: center;
-    padding: 14px;
+    padding: 13px;
+    gap: 0;
+    margin-bottom: 4px;
+  }
+  .navSection {
+    margin-bottom: 12px;
   }
 }
 
@@ -256,7 +262,23 @@
 }
 
 .navSection {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+}
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #475569;
+  padding: 0 18px;
+  margin-bottom: 6px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .sectionLabel {
