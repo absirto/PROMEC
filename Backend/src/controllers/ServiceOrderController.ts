@@ -66,6 +66,81 @@ function enrichFinancials(order: any) {
 }
 
 export const ServiceOrderController = {
+  async pcpOverview(req: Request, res: Response) {
+    try {
+      const startQuery = typeof req.query.startDate === 'string' ? req.query.startDate : '';
+      const endQuery = typeof req.query.endDate === 'string' ? req.query.endDate : '';
+      const dailyCapacityRaw = typeof req.query.dailyCapacityHours === 'string' ? Number(req.query.dailyCapacityHours) : 8;
+      const dailyCapacityHours = Number.isFinite(dailyCapacityRaw) && dailyCapacityRaw > 0 ? dailyCapacityRaw : 8;
+
+      const periodStart = startQuery ? new Date(startQuery) : new Date();
+      const periodEnd = endQuery ? new Date(endQuery) : new Date(periodStart.getTime() + (6 * 24 * 60 * 60 * 1000));
+
+      if (Number.isNaN(periodStart.getTime()) || Number.isNaN(periodEnd.getTime())) {
+        return res.status(400).json({ status: 'error', message: 'Período inválido para visão PCP.' });
+      }
+
+      const orders = await prisma.serviceOrder.findMany({
+        where: {
+          status: { notIn: ['Concluída', 'Cancelada'] },
+          plannedStartDate: { lte: periodEnd },
+          plannedEndDate: { gte: periodStart },
+        },
+        select: {
+          id: true,
+          traceCode: true,
+          description: true,
+          status: true,
+          workCenter: true,
+          plannedStartDate: true,
+          plannedEndDate: true,
+          plannedHours: true,
+        }
+      });
+
+      const days = Math.max(1, Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (24 * 60 * 60 * 1000)) + 1);
+      const overviewByCenter: Record<string, any> = {};
+
+      orders.forEach((order) => {
+        const centerName = order.workCenter?.trim() || 'Sem centro definido';
+        if (!overviewByCenter[centerName]) {
+          overviewByCenter[centerName] = {
+            workCenter: centerName,
+            ordersCount: 0,
+            plannedHours: 0,
+            capacityHours: days * dailyCapacityHours,
+            loadPercent: 0,
+            orders: [],
+          };
+        }
+
+        overviewByCenter[centerName].ordersCount += 1;
+        overviewByCenter[centerName].plannedHours += toNumber(order.plannedHours);
+        overviewByCenter[centerName].orders.push(order);
+      });
+
+      const centers = Object.values(overviewByCenter).map((center: any) => {
+        const loadPercent = center.capacityHours > 0
+          ? (center.plannedHours / center.capacityHours) * 100
+          : 0;
+        return {
+          ...center,
+          loadPercent,
+        };
+      });
+
+      return res.json({
+        periodStart,
+        periodEnd,
+        dailyCapacityHours,
+        days,
+        centers,
+      });
+    } catch (error) {
+      return res.status(500).json({ status: 'error', message: 'Erro ao gerar visão PCP.' });
+    }
+  },
+
   async list(req: Request, res: Response) {
     try {
       const orders = await prisma.serviceOrder.findMany({
@@ -131,6 +206,10 @@ export const ServiceOrderController = {
             traceCode,
             partCode: data.partCode || null,
             batchCode: data.batchCode || null,
+            workCenter: data.workCenter || null,
+            plannedStartDate: data.plannedStartDate ? new Date(data.plannedStartDate) : null,
+            plannedEndDate: data.plannedEndDate ? new Date(data.plannedEndDate) : null,
+            plannedHours: data.plannedHours !== undefined && data.plannedHours !== null ? Number(data.plannedHours) : null,
             description: data.description,
             personId: Number(data.personId),
             status: data.status,
@@ -168,6 +247,10 @@ export const ServiceOrderController = {
               status: created.status,
               partCode: created.partCode,
               batchCode: created.batchCode,
+              workCenter: created.workCenter,
+              plannedStartDate: created.plannedStartDate,
+              plannedEndDate: created.plannedEndDate,
+              plannedHours: created.plannedHours,
             }
           }
         });
@@ -208,6 +291,16 @@ export const ServiceOrderController = {
             traceCode: data.traceCode ? String(data.traceCode).trim().toUpperCase() : undefined,
             partCode: data.partCode !== undefined ? data.partCode : undefined,
             batchCode: data.batchCode !== undefined ? data.batchCode : undefined,
+            workCenter: data.workCenter !== undefined ? data.workCenter : undefined,
+            plannedStartDate: data.plannedStartDate !== undefined
+              ? (data.plannedStartDate ? new Date(data.plannedStartDate) : null)
+              : undefined,
+            plannedEndDate: data.plannedEndDate !== undefined
+              ? (data.plannedEndDate ? new Date(data.plannedEndDate) : null)
+              : undefined,
+            plannedHours: data.plannedHours !== undefined
+              ? (data.plannedHours !== null ? Number(data.plannedHours) : null)
+              : undefined,
             description: data.description,
             personId: Number(data.personId),
             status: data.status,
@@ -259,6 +352,10 @@ export const ServiceOrderController = {
               status: updated.status,
               partCode: updated.partCode,
               batchCode: updated.batchCode,
+              workCenter: updated.workCenter,
+              plannedStartDate: updated.plannedStartDate,
+              plannedEndDate: updated.plannedEndDate,
+              plannedHours: updated.plannedHours,
             }
           }
         });

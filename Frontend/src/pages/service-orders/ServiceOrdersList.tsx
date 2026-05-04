@@ -136,7 +136,7 @@ const ServiceOrdersList: React.FC = () => {
                 <td style={{ paddingLeft: 20, fontWeight: 700 }}>#{order.id}</td>
                 <td className={styles.tableCell}>
                   <div style={{ fontWeight: 600 }}>{order.person?.naturalPerson?.name || order.person?.legalPerson?.corporateName || 'N/A'}</div>
-                  <div style={{ fontSize: 12, color: '#8a99a8' }}>{order.description.substring(0, 40)}...</div>
+                  <div style={{ fontSize: 12, color: '#8a99a8' }}>{(order.description || '').substring(0, 40)}...</div>
                 </td>
                 <td className={styles.tableCell}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -145,6 +145,9 @@ const ServiceOrdersList: React.FC = () => {
                     </span>
                     <span style={{ color: '#10b981', fontWeight: 700 }}>
                       Total Previsto: R$ {(order.financials?.totalEstimated || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                    <span style={{ color: '#60a5fa', fontSize: 12 }}>
+                      PCP: {(order.workCenter || 'Sem centro')} • {(order.plannedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h
                     </span>
                   </div>
                 </td>

@@ -179,6 +179,10 @@ model ServiceOrder {
   traceCode          String?                @unique
   partCode           String?
   batchCode          String?
+  workCenter         String?
+  plannedStartDate   DateTime?
+  plannedEndDate     DateTime?
+  plannedHours       Float?
   description        String?
   personId           Int?
   status             String

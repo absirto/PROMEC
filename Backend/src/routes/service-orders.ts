@@ -5,6 +5,7 @@ import { authenticateToken, requirePermission } from '../middleware/auth';
 const router = Router();
 
 router.get('/', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.list);
+router.get('/pcp/overview', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpOverview);
 router.get('/:id', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
 router.post('/', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.create);
 router.put('/:id', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.update);

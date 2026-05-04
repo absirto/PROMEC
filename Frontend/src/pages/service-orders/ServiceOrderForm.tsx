@@ -33,6 +33,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
     customerId: '',
     orderDate: new Date().toISOString().split('T')[0],
     estimatedFinishDate: '',
+    workCenter: '',
+    plannedStartDate: '',
+    plannedEndDate: '',
+    plannedHours: 0,
     taxPercent: 0,
     profitPercent: 0,
   });
@@ -75,6 +79,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
             customerId: data.personId?.toString() || '',
             orderDate: data.openingDate ? data.openingDate.split('T')[0] : '',
             estimatedFinishDate: data.estimatedFinishDate ? data.estimatedFinishDate.split('T')[0] : '',
+            workCenter: data.workCenter || '',
+            plannedStartDate: data.plannedStartDate ? data.plannedStartDate.split('T')[0] : '',
+            plannedEndDate: data.plannedEndDate ? data.plannedEndDate.split('T')[0] : '',
+            plannedHours: Number(data.plannedHours) || 0,
             taxPercent: data.taxPercent || 0,
             profitPercent: data.profitPercent || 0,
           });
@@ -190,6 +198,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
         ...formData,
         personId: parseInt(formData.customerId),
         openingDate: new Date(formData.orderDate).toISOString(),
+        plannedStartDate: formData.plannedStartDate ? new Date(formData.plannedStartDate).toISOString() : null,
+        plannedEndDate: formData.plannedEndDate ? new Date(formData.plannedEndDate).toISOString() : null,
+        plannedHours: Number(formData.plannedHours) || 0,
         // Filtra apenas itens válidos para garantir integridade
         materials: itemsMaterials
           .filter(m => m.materialId)
@@ -378,6 +389,64 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                 <option value="Concluída">Finalizada</option>
                 <option value="Cancelada">Cancelada</option>
               </select>
+            </div>
+          </div>
+
+          <div className={styles.fullWidth} style={{ marginTop: 8 }}>
+            <div style={{
+              background: 'rgba(15, 23, 42, 0.45)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              borderRadius: 14,
+              padding: 16,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 12,
+            }}>
+              <div className={styles.fieldGroup} style={{ margin: 0 }}>
+                <label className={styles.label}>Centro de Trabalho (PCP)</label>
+                <input
+                  className={styles.formInput}
+                  disabled={isView}
+                  value={formData.workCenter}
+                  onChange={e => setFormData({ ...formData, workCenter: e.target.value })}
+                  placeholder="Ex: Torno CNC 1"
+                />
+              </div>
+
+              <div className={styles.fieldGroup} style={{ margin: 0 }}>
+                <label className={styles.label}>Início Planejado</label>
+                <input
+                  type="date"
+                  className={styles.formInput}
+                  disabled={isView}
+                  value={formData.plannedStartDate}
+                  onChange={e => setFormData({ ...formData, plannedStartDate: e.target.value })}
+                />
+              </div>
+
+              <div className={styles.fieldGroup} style={{ margin: 0 }}>
+                <label className={styles.label}>Fim Planejado</label>
+                <input
+                  type="date"
+                  className={styles.formInput}
+                  disabled={isView}
+                  value={formData.plannedEndDate}
+                  onChange={e => setFormData({ ...formData, plannedEndDate: e.target.value })}
+                />
+              </div>
+
+              <div className={styles.fieldGroup} style={{ margin: 0 }}>
+                <label className={styles.label}>Horas Planejadas</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  className={styles.formInput}
+                  disabled={isView}
+                  value={formData.plannedHours}
+                  onChange={e => setFormData({ ...formData, plannedHours: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
             </div>
           </div>
 
