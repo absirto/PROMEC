@@ -31,11 +31,19 @@ const ServiceOrdersList: React.FC = () => {
   const [pcpEndDate, setPcpEndDate] = useState(formatDateInput(new Date(Date.now() + (6 * 24 * 60 * 60 * 1000))));
   const [dailyCapacityHours, setDailyCapacityHours] = useState(8);
   const [planEditor, setPlanEditor] = useState<any | null>(null);
+  const [batchEditorOpen, setBatchEditorOpen] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
   const [planForm, setPlanForm] = useState({
     workCenter: '',
     plannedStartDate: '',
     plannedEndDate: '',
     plannedHours: 0,
+  });
+  const [batchPlanForm, setBatchPlanForm] = useState({
+    workCenter: '',
+    plannedStartDate: '',
+    plannedEndDate: '',
+    plannedHours: '',
   });
 
   const loadOrders = useCallback(() => {
@@ -86,6 +94,38 @@ const ServiceOrdersList: React.FC = () => {
     setPlanEditor(null);
   };
 
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrderIds((prev) => prev.includes(orderId)
+      ? prev.filter((id) => id !== orderId)
+      : [...prev, orderId]
+    );
+  };
+
+  const toggleSelectAllFiltered = () => {
+    const filteredIds = filtered.map((o) => Number(o.id));
+    const allSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedOrderIds.includes(id));
+
+    if (allSelected) {
+      setSelectedOrderIds((prev) => prev.filter((id) => !filteredIds.includes(id)));
+      return;
+    }
+
+    setSelectedOrderIds((prev) => Array.from(new Set([...prev, ...filteredIds])));
+  };
+
+  const openBatchEditor = () => {
+    if (!selectedOrderIds.length) {
+      showToast('Selecione ao menos uma OS para replanejar em lote.', 'warning');
+      return;
+    }
+    setBatchEditorOpen(true);
+  };
+
+  const closeBatchEditor = () => {
+    if (savingPlan) return;
+    setBatchEditorOpen(false);
+  };
+
   const saveQuickPlan = async () => {
     if (!planEditor) return;
 
@@ -104,6 +144,43 @@ const ServiceOrdersList: React.FC = () => {
       loadPcpOverview();
     } catch (error: any) {
       showToast(typeof error === 'string' ? error : 'Erro ao replanejar OS.', 'error');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const saveBatchPlan = async () => {
+    const payload: any = { ids: selectedOrderIds };
+
+    if (batchPlanForm.workCenter.trim() !== '') {
+      payload.workCenter = batchPlanForm.workCenter.trim();
+    }
+    if (batchPlanForm.plannedStartDate) {
+      payload.plannedStartDate = new Date(batchPlanForm.plannedStartDate).toISOString();
+    }
+    if (batchPlanForm.plannedEndDate) {
+      payload.plannedEndDate = new Date(batchPlanForm.plannedEndDate).toISOString();
+    }
+    if (batchPlanForm.plannedHours !== '') {
+      payload.plannedHours = Number(batchPlanForm.plannedHours) || 0;
+    }
+
+    if (Object.keys(payload).length === 1) {
+      showToast('Preencha ao menos um campo para aplicar no lote.', 'warning');
+      return;
+    }
+
+    setSavingPlan(true);
+    try {
+      const result = await api.patch('/service-orders/plan/batch', payload);
+      showToast(`Replanejamento em lote concluído: ${result?.updatedCount || selectedOrderIds.length} OS.`, 'success');
+      setBatchEditorOpen(false);
+      setSelectedOrderIds([]);
+      setBatchPlanForm({ workCenter: '', plannedStartDate: '', plannedEndDate: '', plannedHours: '' });
+      loadOrders();
+      loadPcpOverview();
+    } catch (error: any) {
+      showToast(typeof error === 'string' ? error : 'Erro ao replanejar lote de OS.', 'error');
     } finally {
       setSavingPlan(false);
     }
@@ -149,6 +226,17 @@ const ServiceOrdersList: React.FC = () => {
             }}
           >
             <Filter size={18} /> Filtros {filtered.length !== orders.length && '(Ativos)'}
+          </button>
+          <button
+            onClick={openBatchEditor}
+            style={{
+              background: selectedOrderIds.length ? 'rgba(16,185,129,0.16)' : 'rgba(255,255,255,0.02)',
+              color: selectedOrderIds.length ? '#10b981' : '#8a99a8',
+              border: 'none', padding: '8px 12px', borderRadius: 8, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700
+            }}
+          >
+            Replanejar Lote ({selectedOrderIds.length})
           </button>
         </div>
         <Link to="/service-orders/new" className={styles.newBtn}>
@@ -299,6 +387,13 @@ const ServiceOrdersList: React.FC = () => {
         <table className={styles.tableContainer}>
           <thead className={styles.tableHeader}>
             <tr>
+              <th style={{ width: 40, textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  onChange={toggleSelectAllFiltered}
+                  checked={filtered.length > 0 && filtered.every((o) => selectedOrderIds.includes(Number(o.id)))}
+                />
+              </th>
               <th style={{ paddingLeft: 20 }}>OS #</th>
               <th>Cliente</th>
               <th>Custos / Total</th>
@@ -310,6 +405,13 @@ const ServiceOrdersList: React.FC = () => {
           <tbody>
             {filtered.map(order => (
               <tr key={order.id} className={styles.tableRow}>
+                <td className={styles.tableCell} style={{ textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedOrderIds.includes(Number(order.id))}
+                    onChange={() => toggleOrderSelection(Number(order.id))}
+                  />
+                </td>
                 <td style={{ paddingLeft: 20, fontWeight: 700 }}>#{order.id}</td>
                 <td className={styles.tableCell}>
                   <div style={{ fontWeight: 600 }}>{order.person?.naturalPerson?.name || order.person?.legalPerson?.corporateName || 'N/A'}</div>
@@ -363,6 +465,113 @@ const ServiceOrdersList: React.FC = () => {
             ))}
           </tbody>
         </table>
+      )}
+
+      {batchEditorOpen && (
+        <div
+          onClick={closeBatchEditor}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 23, 0.72)',
+            zIndex: 51,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 580,
+              background: 'linear-gradient(180deg, rgba(15,23,42,0.96), rgba(2,6,23,0.96))',
+              border: '1px solid rgba(148,163,184,0.22)',
+              borderRadius: 18,
+              padding: 18,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, color: '#f8fafc' }}>Replanejamento em Lote ({selectedOrderIds.length} OS)</h3>
+              <button
+                onClick={closeBatchEditor}
+                disabled={savingPlan}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 20 }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 12 }}>
+              Preencha apenas os campos que deseja aplicar. Campos vazios serão ignorados.
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Centro de Trabalho</label>
+                <input
+                  className={styles.searchInput}
+                  value={batchPlanForm.workCenter}
+                  onChange={e => setBatchPlanForm({ ...batchPlanForm, workCenter: e.target.value })}
+                  placeholder="Ex: Corte Plasma"
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Horas Planejadas</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  className={styles.searchInput}
+                  value={batchPlanForm.plannedHours}
+                  onChange={e => setBatchPlanForm({ ...batchPlanForm, plannedHours: e.target.value })}
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Início Planejado</label>
+                <input
+                  type="date"
+                  className={styles.searchInput}
+                  value={batchPlanForm.plannedStartDate}
+                  onChange={e => setBatchPlanForm({ ...batchPlanForm, plannedStartDate: e.target.value })}
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Fim Planejado</label>
+                <input
+                  type="date"
+                  className={styles.searchInput}
+                  value={batchPlanForm.plannedEndDate}
+                  onChange={e => setBatchPlanForm({ ...batchPlanForm, plannedEndDate: e.target.value })}
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                onClick={closeBatchEditor}
+                disabled={savingPlan}
+                style={{ background: 'rgba(148,163,184,0.15)', color: '#cbd5e1', border: 'none', padding: '10px 14px', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={saveBatchPlan}
+                disabled={savingPlan}
+                style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', border: '1px solid rgba(16,185,129,0.4)', padding: '10px 14px', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}
+              >
+                {savingPlan ? 'Aplicando...' : 'Aplicar no Lote'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {planEditor && (

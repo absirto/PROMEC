@@ -457,6 +457,91 @@ export const ServiceOrderController = {
     }
   },
 
+  async updatePlanBatch(req: Request, res: Response) {
+    try {
+      const data = req.body || {};
+      const actor = getActor(req);
+      const idsInput = Array.isArray(data.ids) ? data.ids : [];
+      const parsedIds = idsInput
+        .map((v: unknown) => Number(v))
+        .filter((v: number) => Number.isFinite(v) && v > 0);
+      const ids: number[] = Array.from(new Set(parsedIds));
+
+      if (!ids.length) {
+        return res.status(400).json({ status: 'error', message: 'Informe ao menos uma OS para replanejamento em lote.' });
+      }
+
+      const updateData: any = {};
+      if (data.workCenter !== undefined) {
+        updateData.workCenter = data.workCenter || null;
+      }
+      if (data.plannedStartDate !== undefined) {
+        updateData.plannedStartDate = data.plannedStartDate ? new Date(data.plannedStartDate) : null;
+      }
+      if (data.plannedEndDate !== undefined) {
+        updateData.plannedEndDate = data.plannedEndDate ? new Date(data.plannedEndDate) : null;
+      }
+      if (data.plannedHours !== undefined) {
+        updateData.plannedHours = data.plannedHours !== null ? Number(data.plannedHours) : null;
+      }
+
+      if (!Object.keys(updateData).length) {
+        return res.status(400).json({ status: 'error', message: 'Nenhum campo de planejamento foi informado para atualização.' });
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const existing = await tx.serviceOrder.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, traceCode: true }
+        });
+
+        const existingIds = existing.map((o) => o.id);
+        const notFoundIds = ids.filter((id) => !existingIds.includes(id));
+
+        if (!existingIds.length) {
+          throw new Error('NOT_FOUND');
+        }
+
+        await tx.serviceOrder.updateMany({
+          where: { id: { in: existingIds } },
+          data: updateData,
+        });
+
+        await (tx.serviceOrderTrace as any).createMany({
+          data: existingIds.map((id) => {
+            const current = existing.find((o) => o.id === id);
+            return {
+              serviceOrderId: id,
+              serviceOrderCode: current?.traceCode || null,
+              action: 'PLAN_BATCH_UPDATE',
+              changedByUserId: actor.id,
+              changedByEmail: actor.email,
+              payload: {
+                workCenter: updateData.workCenter,
+                plannedStartDate: updateData.plannedStartDate,
+                plannedEndDate: updateData.plannedEndDate,
+                plannedHours: updateData.plannedHours,
+              }
+            };
+          })
+        });
+
+        return {
+          updatedCount: existingIds.length,
+          notFoundIds,
+        };
+      });
+
+      return res.json(result);
+    } catch (error: any) {
+      if (error.message === 'NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Nenhuma OS encontrada para os IDs enviados.' });
+      }
+
+      return res.status(400).json({ status: 'error', message: 'Erro ao atualizar planejamento em lote.', details: error.message });
+    }
+  },
+
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
