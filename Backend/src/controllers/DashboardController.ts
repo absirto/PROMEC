@@ -140,6 +140,88 @@ export const DashboardController = {
       const efficiencyDenominator = totalWorkedHours + totalDowntimeHours;
       const globalEfficiencyPercent = efficiencyDenominator > 0 ? (totalWorkedHours / efficiencyDenominator) * 100 : 0;
 
+      // 3.2 Weekly trend by work center (7 days)
+      const trendReferenceDate = endDate ? new Date(endDate as string) : new Date();
+      const trend7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = subDays(trendReferenceDate, i);
+        return {
+          start: startOfDay(date),
+          end: endOfDay(date),
+          key: format(date, 'yyyy-MM-dd'),
+          label: format(date, 'dd/MM')
+        };
+      }).reverse();
+
+      const trendStart = trend7Days[0].start;
+      const trendEnd = trend7Days[trend7Days.length - 1].end;
+
+      const trendWhere: any = {
+        startAt: {
+          gte: trendStart,
+          lte: trendEnd,
+        }
+      };
+      if (personId) {
+        trendWhere.serviceOrder = { personId: Number(personId) };
+      }
+
+      const trendLogs = await prisma.serviceOrderOperationLog.findMany({
+        where: trendWhere,
+        include: {
+          serviceOrder: {
+            select: {
+              workCenter: true,
+            }
+          }
+        }
+      });
+
+      const trendByCenterMap: Record<string, any> = {};
+
+      trendLogs.forEach((log) => {
+        const center = log.serviceOrder?.workCenter?.trim() || 'Sem centro definido';
+        const dayKey = format(log.startAt, 'yyyy-MM-dd');
+
+        if (!trendByCenterMap[center]) {
+          trendByCenterMap[center] = {
+            workCenter: center,
+            daily: {},
+          };
+        }
+
+        if (!trendByCenterMap[center].daily[dayKey]) {
+          trendByCenterMap[center].daily[dayKey] = {
+            workedHours: 0,
+            downtimeMinutes: 0,
+          };
+        }
+
+        trendByCenterMap[center].daily[dayKey].workedHours += Number(log.workedHours || 0);
+        trendByCenterMap[center].daily[dayKey].downtimeMinutes += Number(log.downtimeMinutes || 0);
+      });
+
+      const efficiencyTrendByCenter = Object.values(trendByCenterMap).map((row: any) => {
+        const trend = trend7Days.map((d) => {
+          const item = row.daily[d.key] || { workedHours: 0, downtimeMinutes: 0 };
+          const downtimeHours = item.downtimeMinutes / 60;
+          const denominator = item.workedHours + downtimeHours;
+          const efficiencyPercent = denominator > 0 ? (item.workedHours / denominator) * 100 : 0;
+
+          return {
+            day: d.label,
+            date: d.key,
+            efficiencyPercent,
+            workedHours: item.workedHours,
+            downtimeMinutes: item.downtimeMinutes,
+          };
+        });
+
+        return {
+          workCenter: row.workCenter,
+          trend,
+        };
+      });
+
       // 4. Recent Activities
       const recentOrders = await prisma.serviceOrder.findMany({
         where: whereClause,
@@ -224,6 +306,7 @@ export const DashboardController = {
           logsCount: operationLogs.length,
         },
         efficiencyByCenter,
+        efficiencyTrendByCenter,
         downtimeByCategory,
         financialPerformance,
         distribution: ordersByStatus.map(s => ({

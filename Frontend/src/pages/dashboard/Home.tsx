@@ -23,6 +23,7 @@ const Home: React.FC = () => {
     distribution: [],
     operationsKpi: { workedHours: 0, downtimeMinutes: 0, efficiencyPercent: 0, logsCount: 0 },
     efficiencyByCenter: [],
+    efficiencyTrendByCenter: [],
     downtimeByCategory: {}
   });
 
@@ -385,6 +386,26 @@ const Home: React.FC = () => {
                     </div>
                     <div style={{ color: '#94a3b8', fontSize: 11 }}>
                       {Number(row.workedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h • {Number(row.downtimeMinutes || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} min parada
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 30, marginTop: 8 }}>
+                      {((dashboardData.efficiencyTrendByCenter || []).find((t: any) => t.workCenter === row.workCenter)?.trend || []).map((point: any) => {
+                        const value = Number(point.efficiencyPercent || 0);
+                        const height = Math.max(3, Math.min(28, (value / 100) * 28));
+                        const barColor = value >= 85 ? '#10b981' : value >= 70 ? '#f59e0b' : '#ef4444';
+                        return (
+                          <div
+                            key={`${row.workCenter}-${point.date}`}
+                            title={`${point.day}: ${value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`}
+                            style={{
+                              width: 10,
+                              height,
+                              borderRadius: 2,
+                              background: barColor,
+                              opacity: 0.95,
+                            }}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
