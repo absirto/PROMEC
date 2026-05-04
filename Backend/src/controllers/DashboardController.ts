@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import prisma from '../services/prisma';
 import { startOfDay, subDays, endOfDay, format } from 'date-fns';
+import { logger } from '../utils/logger';
+
+function isSchemaDriftError(error: any) {
+  const code = error?.code;
+  const message = String(error?.message || '').toLowerCase();
+  return code === 'P2021' || code === 'P2022' || message.includes('does not exist') || message.includes('does not exist in the current database');
+}
 
 export const DashboardController = {
   async getStats(req: Request, res: Response) {
@@ -88,16 +95,26 @@ export const DashboardController = {
         };
       }
 
-      const operationLogs = await prisma.serviceOrderOperationLog.findMany({
-        where: operationsWhere,
-        include: {
-          serviceOrder: {
-            select: {
-              workCenter: true,
+      let operationLogs: any[] = [];
+      try {
+        operationLogs = await prisma.serviceOrderOperationLog.findMany({
+          where: operationsWhere,
+          include: {
+            serviceOrder: {
+              select: {
+                workCenter: true,
+              }
             }
           }
+        });
+      } catch (error: any) {
+        if (isSchemaDriftError(error)) {
+          logger.warn('Dashboard sem logs operacionais por drift de schema: %s', error?.message || 'erro desconhecido');
+          operationLogs = [];
+        } else {
+          throw error;
         }
-      });
+      }
 
       const efficiencyByCenterMap: Record<string, any> = {};
       const downtimeByCategory: Record<string, number> = {};
@@ -165,16 +182,26 @@ export const DashboardController = {
         trendWhere.serviceOrder = { personId: Number(personId) };
       }
 
-      const trendLogs = await prisma.serviceOrderOperationLog.findMany({
-        where: trendWhere,
-        include: {
-          serviceOrder: {
-            select: {
-              workCenter: true,
+      let trendLogs: any[] = [];
+      try {
+        trendLogs = await prisma.serviceOrderOperationLog.findMany({
+          where: trendWhere,
+          include: {
+            serviceOrder: {
+              select: {
+                workCenter: true,
+              }
             }
           }
+        });
+      } catch (error: any) {
+        if (isSchemaDriftError(error)) {
+          logger.warn('Dashboard sem tendência por drift de schema: %s', error?.message || 'erro desconhecido');
+          trendLogs = [];
+        } else {
+          throw error;
         }
-      });
+      }
 
       const trendByCenterMap: Record<string, any> = {};
 
@@ -248,12 +275,21 @@ export const DashboardController = {
 
       // Para cada material, busca os logs e calcula o estoque
       let lowStockCount = 0;
-      for (const m of materials) {
-        const stockLogs = await prisma.stockLog.findMany({ where: { materialId: m.id } });
-        const currentStock = stockLogs.reduce((acc: number, log) => {
-          return log.type === 'IN' ? acc + log.quantity : acc - log.quantity;
-        }, 0);
-        if (currentStock < 10) lowStockCount++;
+      try {
+        for (const m of materials) {
+          const stockLogs = await prisma.stockLog.findMany({ where: { materialId: m.id } });
+          const currentStock = stockLogs.reduce((acc: number, log) => {
+            return log.type === 'IN' ? acc + log.quantity : acc - log.quantity;
+          }, 0);
+          if (currentStock < 10) lowStockCount++;
+        }
+      } catch (error: any) {
+        if (isSchemaDriftError(error)) {
+          logger.warn('Dashboard sem cálculo de estoque por drift de schema: %s', error?.message || 'erro desconhecido');
+          lowStockCount = 0;
+        } else {
+          throw error;
+        }
       }
 
       // 6. Detailed Revenue Breakdown (Lifetime or filtered)
@@ -315,8 +351,8 @@ export const DashboardController = {
         })),
         activities
       });
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      logger.error('DashboardController.getStats falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       res.status(500).json({ error: 'Erro ao processar dados do dashboard' });
     }
   }

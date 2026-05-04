@@ -68,6 +68,12 @@ const OPERATION_TYPES = ['USINAGEM', 'CALDEIRARIA', 'MONTAGEM'];
 const SHIFTS = ['MORNING', 'AFTERNOON', 'NIGHT'];
 const DOWNTIME_CATEGORIES = ['MACHINE', 'MATERIAL', 'SETUP', 'RETRABALHO', 'QUALIDADE', 'OUTROS'];
 
+function isSchemaDriftError(error: any) {
+  const code = error?.code;
+  const message = String(error?.message || '').toLowerCase();
+  return code === 'P2021' || code === 'P2022' || message.includes('does not exist') || message.includes('does not exist in the current database');
+}
+
 function hasValidPlanWindow(workCenter: string | null, plannedStartDate: Date | null, plannedEndDate: Date | null) {
   return Boolean(workCenter && plannedStartDate && plannedEndDate);
 }
@@ -308,6 +314,10 @@ export const ServiceOrderController = {
 
       return res.json(requests);
     } catch (error: any) {
+      if (isSchemaDriftError(error)) {
+        logger.warn('ServiceOrderController.listPurchaseRequests retornando vazio por drift de schema: %s', error?.message || 'erro desconhecido');
+        return res.json([]);
+      }
       logger.error('ServiceOrderController.listPurchaseRequests falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       return res.status(500).json({ status: 'error', message: 'Erro ao listar solicitações de compra.' });
     }
