@@ -63,7 +63,7 @@ export async function seedGroupsAndPermissions(prisma: PrismaClient) {
       description: 'Grupo padrão para usuários',
       permissions: {
         create: [operacaoPerm, opView, qcView, dashboardView]
-          .filter((p): p is { id: number } => Boolean(p))
+          .filter((p): p is NonNullable<typeof p> => p !== null)
           .map((p) => ({ permissionId: p.id })),
       },
     },

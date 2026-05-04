@@ -12,8 +12,8 @@ Este guia centraliza o processo de publicação do backend em um VPS com Ubuntu,
 
 ## Arquitetura recomendada
 
-- Frontend: `https://seudominio.com.br` ou `https://www.seudominio.com.br`
-- API: `https://api.seudominio.com.br`
+- Frontend: `https://ucalcom.com` ou `https://www.ucalcom.com`
+- API: `https://api.ucalcom.com`
 - Backend exposto apenas localmente no VPS em `127.0.0.1:3001`
 - Nginx como proxy reverso público
 - PostgreSQL e Redis acessíveis apenas pela rede interna do Docker Compose
@@ -81,24 +81,24 @@ DATABASE_URL=postgresql://postgres:UMA_SENHA_FORTE_AQUI@db:5432/promec_db?schema
 REDIS_URL=redis://redis:6379
 REDIS_HOST=redis
 REDIS_PORT=6379
-ALLOWED_ORIGINS=https://seudominio.com.br,https://www.seudominio.com.br
+ALLOWED_ORIGINS=https://ucalcom.com,https://www.ucalcom.com
 ALLOW_PUBLIC_REGISTER=false
 ALLOW_PUBLIC_EXTERNAL_LOOKUP=false
 SENTRY_DSN=
-SWAGGER_SERVER_URL=https://api.seudominio.com.br
+SWAGGER_SERVER_URL=https://api.ucalcom.com
 QC_UPLOAD_DIR=/app/uploads/quality
 ```
 
 ## Etapa 4: ajustar o Nginx
 
-No arquivo `deploy/nginx/promec.conf`, troque `api.seudominio.com.br` pelo domínio real da API.
+No arquivo `deploy/nginx/promec.conf`, use `api.ucalcom.com` como domínio da API.
 
 Trecho esperado:
 
 ```nginx
 server {
     listen 80;
-    server_name api.seudominio.com.br;
+    server_name api.ucalcom.com;
 
     client_max_body_size 20m;
 
@@ -142,7 +142,7 @@ Esse processo faz:
 Depois que o DNS estiver propagado e o Nginx estiver respondendo em HTTP:
 
 ```bash
-sudo certbot --nginx -d api.seudominio.com.br
+sudo certbot --nginx -d api.ucalcom.com
 ```
 
 Se estiver usando Cloudflare, mantenha primeiro o proxy desligado no registro DNS até a emissão do certificado finalizar, ou garanta que o desafio HTTP esteja alcançando o servidor corretamente.
@@ -153,7 +153,7 @@ Valide pelo menos estes pontos:
 
 ```bash
 curl http://127.0.0.1:3001/health
-curl https://api.seudominio.com.br/health
+curl https://api.ucalcom.com/health
 docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml logs app --tail=100
 ```
@@ -184,26 +184,26 @@ Resultados esperados:
 6. Ajustar `deploy/nginx/promec.conf`.
 7. Rodar `sudo bash scripts/ops/setup-vps.sh`.
 8. Rodar `docker compose -f docker-compose.prod.yml up -d --build`.
-9. Rodar `sudo certbot --nginx -d api.seudominio.com.br`.
+9. Rodar `sudo certbot --nginx -d api.ucalcom.com`.
 10. Validar `/health` e logs.
 
 ## Integração Frontend + Backend
 
 Para frontend e backend em domínios separados:
 
-- Frontend: `https://seudominio.com.br`
-- API: `https://api.seudominio.com.br`
+- Frontend: `https://ucalcom.com`
+- API: `https://api.ucalcom.com`
 
 Configurações obrigatórias:
 
 1. No backend (`.env.production`):
-    - `ALLOWED_ORIGINS=https://seudominio.com.br,https://www.seudominio.com.br`
+    - `ALLOWED_ORIGINS=https://ucalcom.com,https://www.ucalcom.com`
 2. No frontend (`.env` de build):
-    - `REACT_APP_API_URL=https://api.seudominio.com.br/v1`
+    - `REACT_APP_API_URL=https://api.ucalcom.com/v1`
 
 Checklist rápido de validação cruzada:
 
 1. Login no frontend retorna token e navega para área autenticada.
 2. Endpoints protegidos funcionam sem erro de CORS.
 3. Página de relatórios carrega dados com usuário autenticado.
-4. `curl https://api.seudominio.com.br/health` responde com `ok: true`.
+4. `curl https://api.ucalcom.com/health` responde com `ok: true`.
