@@ -1,5 +1,4 @@
 import PDFDocument from 'pdfkit';
-import { addHeaderFooter } from './pdfCommon';
 
 function formatCurrency(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -34,16 +33,45 @@ export function generatePurchasesPDF(
   purchaseHistory: any[],
   filters: { start?: string; end?: string; status?: string; supplierName?: string },
   companyLogo?: string,
-  companyInfo?: { companyName?: string; cnpj?: string; phone?: string; contactEmail?: string; address?: string }
+  companyInfo?: { companyName?: string; cnpj?: string; phone?: string; contactEmail?: string; address?: string; emitterName?: string }
 ): Buffer {
-  const doc = new PDFDocument({ margin: 40, size: 'A4' });
+  const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
   if (companyLogo) (doc as any).companyLogo = companyLogo;
 
   const buffers: Buffer[] = [];
   doc.on('data', buffers.push.bind(buffers));
   doc.on('end', () => {});
 
-  addHeaderFooter(doc, 'Relatório de Compras');
+  const generatedAt = new Date().toLocaleString('pt-BR');
+
+  const renderHeader = () => {
+    if ((doc as any).companyLogo) {
+      try {
+        const logo = (doc as any).companyLogo as string;
+        if (logo.startsWith('data:image/')) {
+          const base64Data = logo.split(',')[1];
+          const buffer = Buffer.from(base64Data, 'base64');
+          doc.image(buffer, 40, 20, { width: 40 });
+        } else {
+          doc.image(logo, 40, 20, { width: 40 });
+        }
+      } catch {
+        // ignora erro de logo e segue o relatório
+      }
+    }
+
+    doc.fillColor('#1a237e').fontSize(20).text('Relatório de Compras', 90, 30, { align: 'left' });
+    doc.fontSize(10).fillColor('#64748b').text(companyInfo?.companyName || 'ProMEC', 90, 54, { align: 'left' });
+    doc.moveTo(40, 78).lineTo(555, 78).stroke('#cbd5e1');
+    doc.x = 40;
+    doc.y = 92;
+  };
+
+  doc.on('pageAdded', () => {
+    renderHeader();
+  });
+
+  renderHeader();
 
   const totalRequests = purchaseRequests.length;
   const openRequests = purchaseRequests.filter((request) => request.status !== 'CLOSED').length;
@@ -56,6 +84,7 @@ export function generatePurchasesPDF(
   doc.text(`Período: ${filters.start || '-'} a ${filters.end || '-'}`);
   doc.text(`Status solicitado: ${filters.status || 'Todos'}`);
   doc.text(`Fornecedor: ${filters.supplierName || 'Todos'}`);
+  doc.text(`Emitido em: ${generatedAt}`);
   doc.moveDown();
 
   const cardsY = doc.y;
@@ -145,10 +174,25 @@ export function generatePurchasesPDF(
   if (companyInfo?.phone || companyInfo?.contactEmail) {
     doc.text(`Contato: ${companyInfo?.phone || '-'} ${companyInfo?.contactEmail ? `| ${companyInfo.contactEmail}` : ''}`);
   }
+  if (companyInfo?.emitterName) {
+    doc.text(`Emitido por: ${companyInfo.emitterName}`);
+  }
   doc.moveDown(1.2);
   doc.moveTo(40, doc.y).lineTo(250, doc.y).stroke('#94a3b8');
   doc.moveDown(0.3);
-  doc.fontSize(10).fillColor('#475569').text('Assinatura / Responsável pela emissão do relatório', 40);
+  doc.fontSize(10).fillColor('#475569').text(`Assinatura / Responsável pela emissão do relatório${companyInfo?.emitterName ? `: ${companyInfo.emitterName}` : ''}`, 40);
+
+  const pageRange = doc.bufferedPageRange();
+  for (let pageIndex = pageRange.start; pageIndex < pageRange.start + pageRange.count; pageIndex += 1) {
+    doc.switchToPage(pageIndex);
+    const pageNumber = pageIndex - pageRange.start + 1;
+    doc.fontSize(9).fillColor('#64748b').text(
+      `Gerado em ${generatedAt} | Página ${pageNumber}/${pageRange.count}`,
+      40,
+      doc.page.height - 32,
+      { align: 'center', width: doc.page.width - 80 }
+    );
+  }
 
   doc.end();
   return Buffer.concat(buffers);

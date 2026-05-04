@@ -111,6 +111,17 @@ const PurchasesList: React.FC = () => {
   };
 
   const handleExportXlsx = () => {
+    const summaryRows = [
+      { Indicador: 'Solicitações totais', Valor: purchaseRequests.length },
+      { Indicador: 'Solicitações abertas/parciais', Valor: purchaseRequests.filter((request) => request.status !== 'CLOSED').length },
+      { Indicador: 'Compras registradas', Valor: purchaseHistory.length },
+      { Indicador: 'Valor total comprado', Valor: purchaseHistory.reduce((acc, log) => acc + Number(log.totalPaid || 0), 0) },
+      { Indicador: 'Período inicial', Valor: filters.startDate || '-' },
+      { Indicador: 'Período final', Valor: filters.endDate || '-' },
+      { Indicador: 'Status filtrado', Valor: filters.status || 'Todos' },
+      { Indicador: 'Fornecedor filtrado', Valor: people.find((person) => String(person.id) === filters.supplierPersonId)?.naturalPerson?.name || people.find((person) => String(person.id) === filters.supplierPersonId)?.legalPerson?.corporateName || 'Todos' },
+    ];
+
     const requestRows = purchaseRequests.flatMap((request) =>
       (request.items || []).map((item: any) => ({
         Codigo: request.code,
@@ -138,8 +149,33 @@ const PurchasesList: React.FC = () => {
     }));
 
     const workbook = XLSX.utils.book_new();
+    const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
     const requestsSheet = XLSX.utils.json_to_sheet(requestRows);
     const historySheet = XLSX.utils.json_to_sheet(historyRows);
+    summarySheet['!cols'] = [{ wch: 28 }, { wch: 24 }];
+    requestsSheet['!cols'] = [
+      { wch: 16 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 36 },
+      { wch: 28 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 10 },
+      { wch: 14 },
+      { wch: 22 },
+    ];
+    historySheet['!cols'] = [
+      { wch: 28 },
+      { wch: 30 },
+      { wch: 14 },
+      { wch: 10 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 36 },
+    ];
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
     XLSX.utils.book_append_sheet(workbook, requestsSheet, 'Solicitacoes');
     XLSX.utils.book_append_sheet(workbook, historySheet, 'Compras');
     XLSX.writeFile(workbook, 'relatorio_compras.xlsx');

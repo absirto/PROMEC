@@ -8,6 +8,7 @@ import { generateFinancialFlowPDF } from '../utils/pdfFinancialFlow';
 import { generateStockMovementsPDF } from '../utils/pdfStockMovements';
 import { generateServiceOrdersPDF } from '../utils/pdfServiceOrders';
 import { generatePurchasesPDF } from '../utils/pdfPurchases';
+import { AuthRequest } from '../middleware/auth';
 
 export const ReportsController = {
   async operationalPurchases(req: Request, res: Response) {
@@ -85,6 +86,8 @@ export const ReportsController = {
 
   async operationalPurchasesPDF(req: Request, res: Response) {
     try {
+      const authReq = req as AuthRequest;
+      const emitterName = [authReq.user?.firstName, authReq.user?.lastName].filter(Boolean).join(' ').trim() || authReq.user?.email || 'Usuário autenticado';
       const { start, end, status, supplierPersonId } = req.query;
       const requestWhere: any = {};
       const historyWhere: any = { type: 'IN', unitCost: { not: null } };
@@ -172,6 +175,7 @@ export const ReportsController = {
           phone: settings?.phone ?? undefined,
           contactEmail: settings?.contactEmail ?? undefined,
           address: settings?.address ?? undefined,
+          emitterName,
         }
       );
 

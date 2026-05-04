@@ -8,6 +8,8 @@ export interface AuthRequest extends Request {
     id?: number;
     role?: string;
     email?: string;
+    firstName?: string;
+    lastName?: string;
     permissions?: string[];
     [key: string]: unknown;
   };
@@ -103,6 +105,9 @@ export async function authenticateToken(req: AuthRequest, res: Response, next: N
         const names = dbUser.group.permissions.map((gp) => gp.permission.name);
         authUser.permissions = expandLegacyPermissions(names);
       }
+      if (dbUser?.firstName) authUser.firstName = dbUser.firstName;
+      if (dbUser?.lastName) authUser.lastName = dbUser.lastName;
+      if (dbUser?.email) authUser.email = dbUser.email;
     }
 
     req.user = authUser;
