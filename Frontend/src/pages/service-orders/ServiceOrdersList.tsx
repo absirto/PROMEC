@@ -25,7 +25,9 @@ const ServiceOrdersList: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pcpOverview, setPcpOverview] = useState<any>({ centers: [], days: 0, dailyCapacityHours: 8 });
+  const [pcpCalendar, setPcpCalendar] = useState<any>({ days: [], centers: [], shiftConfig: [] });
   const [pcpLoading, setPcpLoading] = useState(false);
+  const [pcpCalendarLoading, setPcpCalendarLoading] = useState(false);
   const [savingPlan, setSavingPlan] = useState(false);
   
   // Filtros
@@ -79,6 +81,22 @@ const ServiceOrdersList: React.FC = () => {
       .finally(() => setPcpLoading(false));
   }, [pcpStartDate, pcpEndDate, dailyCapacityHours]);
 
+  const loadPcpCalendar = useCallback(() => {
+    setPcpCalendarLoading(true);
+    api.get('/service-orders/pcp/calendar', {
+      params: {
+        startDate: pcpStartDate,
+        endDate: pcpEndDate,
+        morningHours: dailyCapacityHours / 2,
+        afternoonHours: dailyCapacityHours / 2,
+        nightHours: 0,
+      }
+    })
+      .then((data: any) => setPcpCalendar(data || { days: [], centers: [], shiftConfig: [] }))
+      .catch(() => setPcpCalendar({ days: [], centers: [], shiftConfig: [] }))
+      .finally(() => setPcpCalendarLoading(false));
+  }, [pcpStartDate, pcpEndDate, dailyCapacityHours]);
+
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
@@ -86,6 +104,10 @@ const ServiceOrdersList: React.FC = () => {
   useEffect(() => {
     loadPcpOverview();
   }, [loadPcpOverview]);
+
+  useEffect(() => {
+    loadPcpCalendar();
+  }, [loadPcpCalendar]);
 
   const handleView = (id: number) => navigate(`/service-orders/${id}`);
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
@@ -425,6 +447,60 @@ const ServiceOrdersList: React.FC = () => {
             );
           })}
         </div>
+      </div>
+
+      <div style={{
+        background: 'rgba(15,23,42,0.75)',
+        border: '1px solid rgba(148,163,184,0.2)',
+        borderRadius: 18,
+        padding: 16,
+        marginBottom: 22,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 8, flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0, color: '#e2e8f0', fontSize: 16 }}>Calendário PCP por Turno</h3>
+          <span style={{ color: '#94a3b8', fontSize: 12 }}>
+            Janela: {formatDateLabel(pcpStartDate)} até {formatDateLabel(pcpEndDate)}
+          </span>
+        </div>
+
+        {pcpCalendarLoading && <div style={{ color: '#94a3b8', fontSize: 13 }}>Gerando calendário por turno...</div>}
+
+        {!pcpCalendarLoading && (!pcpCalendar?.centers || pcpCalendar.centers.length === 0) && (
+          <div style={{ color: '#94a3b8', fontSize: 13 }}>Sem carga planejada para montar calendário no período.</div>
+        )}
+
+        {!pcpCalendarLoading && (pcpCalendar?.centers || []).map((center: any) => (
+          <div key={`calendar-${center.workCenter}`} style={{ marginBottom: 14 }}>
+            <div style={{ color: '#f8fafc', fontWeight: 800, marginBottom: 8 }}>{center.workCenter}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${(pcpCalendar?.days || []).length || 1}, minmax(120px, 1fr))`, gap: 8 }}>
+              {(center.days || []).map((day: any) => {
+                const load = Number(day.loadPercent || 0);
+                const tone = load > 100 ? '#ef4444' : load > 85 ? '#f59e0b' : '#10b981';
+                return (
+                  <div key={`${center.workCenter}-${day.date}`} style={{
+                    border: '1px solid rgba(148,163,184,0.2)',
+                    borderRadius: 10,
+                    padding: 8,
+                    background: 'rgba(2,6,23,0.4)'
+                  }}>
+                    <div style={{ color: '#94a3b8', fontSize: 11 }}>{formatDateLabel(day.date)}</div>
+                    <div style={{ color: tone, fontSize: 15, fontWeight: 900 }}>{load.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}%</div>
+                    <div style={{ color: '#cbd5e1', fontSize: 11, marginTop: 2 }}>
+                      {Number(day.plannedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h / {Number(day.capacityHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h
+                    </div>
+                    <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {(day.shifts || []).map((shift: any) => (
+                        <div key={`${day.date}-${shift.key}`} style={{ fontSize: 10, color: '#94a3b8' }}>
+                          {shift.label}: {Number(shift.plannedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h/{Number(shift.capacityHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {showFilters && (

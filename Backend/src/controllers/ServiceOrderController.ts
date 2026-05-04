@@ -23,6 +23,35 @@ function toNumber(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function startOfDay(date: Date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatDayKey(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseShiftHours(req: Request) {
+  const morningRaw = typeof req.query.morningHours === 'string' ? Number(req.query.morningHours) : 4;
+  const afternoonRaw = typeof req.query.afternoonHours === 'string' ? Number(req.query.afternoonHours) : 4;
+  const nightRaw = typeof req.query.nightHours === 'string' ? Number(req.query.nightHours) : 0;
+
+  const morningHours = Number.isFinite(morningRaw) && morningRaw >= 0 ? morningRaw : 4;
+  const afternoonHours = Number.isFinite(afternoonRaw) && afternoonRaw >= 0 ? afternoonRaw : 4;
+  const nightHours = Number.isFinite(nightRaw) && nightRaw >= 0 ? nightRaw : 0;
+
+  return [
+    { key: 'morning', label: 'Manha', hours: morningHours },
+    { key: 'afternoon', label: 'Tarde', hours: afternoonHours },
+    { key: 'night', label: 'Noite', hours: nightHours },
+  ];
+}
+
 function hasValidPlanWindow(workCenter: string | null, plannedStartDate: Date | null, plannedEndDate: Date | null) {
   return Boolean(workCenter && plannedStartDate && plannedEndDate);
 }
@@ -181,6 +210,139 @@ export const ServiceOrderController = {
       });
     } catch (error) {
       return res.status(500).json({ status: 'error', message: 'Erro ao gerar visão PCP.' });
+    }
+  },
+
+  async pcpCalendar(req: Request, res: Response) {
+    try {
+      const startQuery = typeof req.query.startDate === 'string' ? req.query.startDate : '';
+      const endQuery = typeof req.query.endDate === 'string' ? req.query.endDate : '';
+
+      const periodStart = startOfDay(startQuery ? new Date(startQuery) : new Date());
+      const periodEnd = startOfDay(endQuery ? new Date(endQuery) : new Date(periodStart.getTime() + (6 * 24 * 60 * 60 * 1000)));
+
+      if (Number.isNaN(periodStart.getTime()) || Number.isNaN(periodEnd.getTime())) {
+        return res.status(400).json({ status: 'error', message: 'Período inválido para calendário PCP.' });
+      }
+      if (periodStart > periodEnd) {
+        return res.status(400).json({ status: 'error', message: 'Período inválido: início maior que fim.' });
+      }
+
+      const shiftConfig = parseShiftHours(req);
+      const dailyCapacity = shiftConfig.reduce((acc, s) => acc + s.hours, 0);
+
+      const orders = await prisma.serviceOrder.findMany({
+        where: {
+          status: { notIn: ['Concluída', 'Cancelada'] },
+          plannedStartDate: { not: null, lte: periodEnd },
+          plannedEndDate: { not: null, gte: periodStart },
+        },
+        select: {
+          id: true,
+          traceCode: true,
+          description: true,
+          status: true,
+          workCenter: true,
+          plannedStartDate: true,
+          plannedEndDate: true,
+          plannedHours: true,
+        },
+      });
+
+      const dayKeys: string[] = [];
+      const dayDates: Date[] = [];
+      for (let cursor = new Date(periodStart); cursor <= periodEnd; cursor = new Date(cursor.getTime() + (24 * 60 * 60 * 1000))) {
+        dayKeys.push(formatDayKey(cursor));
+        dayDates.push(new Date(cursor));
+      }
+
+      const centersMap: Record<string, any> = {};
+
+      const ensureCenter = (workCenter: string) => {
+        if (!centersMap[workCenter]) {
+          centersMap[workCenter] = {
+            workCenter,
+            days: dayKeys.map((dayKey) => ({
+              date: dayKey,
+              plannedHours: 0,
+              capacityHours: dailyCapacity,
+              loadPercent: 0,
+              shifts: shiftConfig.map((shift) => ({
+                key: shift.key,
+                label: shift.label,
+                capacityHours: shift.hours,
+                plannedHours: 0,
+                loadPercent: 0,
+              })),
+              orderIds: [] as number[],
+            })),
+          };
+        }
+        return centersMap[workCenter];
+      };
+
+      orders.forEach((order) => {
+        const workCenter = order.workCenter?.trim() || 'Sem centro definido';
+        const center = ensureCenter(workCenter);
+        const orderStart = startOfDay(order.plannedStartDate as Date);
+        const orderEnd = startOfDay(order.plannedEndDate as Date);
+        const overlapStart = orderStart > periodStart ? orderStart : periodStart;
+        const overlapEnd = orderEnd < periodEnd ? orderEnd : periodEnd;
+
+        if (overlapStart > overlapEnd) return;
+
+        const spanDays = Math.max(1, Math.ceil((orderEnd.getTime() - orderStart.getTime()) / (24 * 60 * 60 * 1000)) + 1);
+        const dailyPlannedHours = toNumber(order.plannedHours) / spanDays;
+
+        for (let cursor = new Date(overlapStart); cursor <= overlapEnd; cursor = new Date(cursor.getTime() + (24 * 60 * 60 * 1000))) {
+          const key = formatDayKey(cursor);
+          const dayIndex = dayKeys.indexOf(key);
+          if (dayIndex < 0) continue;
+          const day = center.days[dayIndex];
+          day.plannedHours += dailyPlannedHours;
+          if (!day.orderIds.includes(order.id)) {
+            day.orderIds.push(order.id);
+          }
+
+          day.shifts.forEach((shift: any) => {
+            if (dailyCapacity <= 0 || shift.capacityHours <= 0) {
+              return;
+            }
+            shift.plannedHours += dailyPlannedHours * (shift.capacityHours / dailyCapacity);
+          });
+        }
+      });
+
+      const centers = Object.values(centersMap).map((center: any) => {
+        const days = center.days.map((day: any) => {
+          const loadPercent = day.capacityHours > 0 ? (day.plannedHours / day.capacityHours) * 100 : 0;
+          const shifts = day.shifts.map((shift: any) => ({
+            ...shift,
+            loadPercent: shift.capacityHours > 0 ? (shift.plannedHours / shift.capacityHours) * 100 : 0,
+          }));
+
+          return {
+            ...day,
+            loadPercent,
+            shifts,
+          };
+        });
+
+        return {
+          workCenter: center.workCenter,
+          days,
+        };
+      });
+
+      return res.json({
+        periodStart,
+        periodEnd,
+        days: dayDates.map((d) => formatDayKey(d)),
+        shiftConfig,
+        centers,
+      });
+    } catch (error) {
+      return res.status(500).json({ status: 'error', message: 'Erro ao gerar calendário PCP.' });
     }
   },
 
