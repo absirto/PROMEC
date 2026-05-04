@@ -23,6 +23,49 @@ function toNumber(value: unknown) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function hasValidPlanWindow(workCenter: string | null, plannedStartDate: Date | null, plannedEndDate: Date | null) {
+  return Boolean(workCenter && plannedStartDate && plannedEndDate);
+}
+
+function overlaps(startA: Date, endA: Date, startB: Date, endB: Date) {
+  return startA <= endB && endA >= startB;
+}
+
+async function findPlanConflicts(
+  tx: any,
+  params: {
+    workCenter: string;
+    plannedStartDate: Date;
+    plannedEndDate: Date;
+    excludeIds?: number[];
+  }
+) {
+  return tx.serviceOrder.findMany({
+    where: {
+      id: { notIn: params.excludeIds || [] },
+      status: { notIn: ['Concluída', 'Cancelada'] },
+      workCenter: params.workCenter,
+      plannedStartDate: {
+        not: null,
+        lte: params.plannedEndDate,
+      },
+      plannedEndDate: {
+        not: null,
+        gte: params.plannedStartDate,
+      },
+    },
+    select: {
+      id: true,
+      traceCode: true,
+      description: true,
+      plannedStartDate: true,
+      plannedEndDate: true,
+      workCenter: true,
+      status: true,
+    }
+  });
+}
+
 function enrichFinancials(order: any) {
   const materials = Array.isArray(order.materials) ? order.materials : [];
   const services = Array.isArray(order.services) ? order.services : [];
@@ -399,6 +442,33 @@ export const ServiceOrderController = {
           throw new Error('NOT_FOUND');
         }
 
+        const targetWorkCenter = data.workCenter !== undefined ? (data.workCenter || null) : (existing.workCenter || null);
+        const targetPlannedStartDate = data.plannedStartDate !== undefined
+          ? (data.plannedStartDate ? new Date(data.plannedStartDate) : null)
+          : existing.plannedStartDate;
+        const targetPlannedEndDate = data.plannedEndDate !== undefined
+          ? (data.plannedEndDate ? new Date(data.plannedEndDate) : null)
+          : existing.plannedEndDate;
+
+        if (targetPlannedStartDate && targetPlannedEndDate && targetPlannedStartDate > targetPlannedEndDate) {
+          throw new Error('INVALID_PLAN_WINDOW');
+        }
+
+        if (hasValidPlanWindow(targetWorkCenter, targetPlannedStartDate, targetPlannedEndDate)) {
+          const conflicts = await findPlanConflicts(tx, {
+            workCenter: String(targetWorkCenter),
+            plannedStartDate: targetPlannedStartDate as Date,
+            plannedEndDate: targetPlannedEndDate as Date,
+            excludeIds: [id],
+          });
+
+          if (conflicts.length) {
+            const err: any = new Error('PLAN_CONFLICT');
+            err.conflicts = conflicts;
+            throw err;
+          }
+        }
+
         const updated = await tx.serviceOrder.update({
           where: { id },
           data: {
@@ -453,6 +523,18 @@ export const ServiceOrderController = {
         return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
       }
 
+      if (error.message === 'INVALID_PLAN_WINDOW') {
+        return res.status(400).json({ status: 'error', message: 'Janela de planejamento inválida: início maior que fim.' });
+      }
+
+      if (error.message === 'PLAN_CONFLICT') {
+        return res.status(409).json({
+          status: 'error',
+          message: 'Conflito de agenda no centro de trabalho para o período informado.',
+          conflicts: error.conflicts || [],
+        });
+      }
+
       return res.status(400).json({ status: 'error', message: 'Erro ao atualizar planejamento da OS.', details: error.message });
     }
   },
@@ -492,7 +574,13 @@ export const ServiceOrderController = {
       const result = await prisma.$transaction(async (tx) => {
         const existing = await tx.serviceOrder.findMany({
           where: { id: { in: ids } },
-          select: { id: true, traceCode: true }
+          select: {
+            id: true,
+            traceCode: true,
+            workCenter: true,
+            plannedStartDate: true,
+            plannedEndDate: true,
+          }
         });
 
         const existingIds = existing.map((o) => o.id);
@@ -500,6 +588,77 @@ export const ServiceOrderController = {
 
         if (!existingIds.length) {
           throw new Error('NOT_FOUND');
+        }
+
+        const targetPlans = existing.map((order) => {
+          const targetWorkCenter = data.workCenter !== undefined ? (data.workCenter || null) : order.workCenter;
+          const targetPlannedStartDate = data.plannedStartDate !== undefined
+            ? (data.plannedStartDate ? new Date(data.plannedStartDate) : null)
+            : order.plannedStartDate;
+          const targetPlannedEndDate = data.plannedEndDate !== undefined
+            ? (data.plannedEndDate ? new Date(data.plannedEndDate) : null)
+            : order.plannedEndDate;
+
+          return {
+            id: order.id,
+            traceCode: order.traceCode,
+            workCenter: targetWorkCenter,
+            plannedStartDate: targetPlannedStartDate,
+            plannedEndDate: targetPlannedEndDate,
+          };
+        });
+
+        const invalidWindow = targetPlans.find((p) => p.plannedStartDate && p.plannedEndDate && p.plannedStartDate > p.plannedEndDate);
+        if (invalidWindow) {
+          throw new Error('INVALID_PLAN_WINDOW');
+        }
+
+        const completeTargetPlans = targetPlans.filter((p) =>
+          hasValidPlanWindow(p.workCenter || null, p.plannedStartDate || null, p.plannedEndDate || null)
+        );
+
+        const externalConflicts: Array<{ id: number; conflicts: any[] }> = [];
+
+        for (const targetPlan of completeTargetPlans) {
+          const conflicts = await findPlanConflicts(tx, {
+            workCenter: String(targetPlan.workCenter),
+            plannedStartDate: targetPlan.plannedStartDate as Date,
+            plannedEndDate: targetPlan.plannedEndDate as Date,
+            excludeIds: existingIds,
+          });
+
+          if (conflicts.length) {
+            externalConflicts.push({ id: targetPlan.id, conflicts });
+          }
+        }
+
+        const internalConflicts: Array<{ leftId: number; rightId: number; workCenter: string }> = [];
+        for (let i = 0; i < completeTargetPlans.length; i += 1) {
+          for (let j = i + 1; j < completeTargetPlans.length; j += 1) {
+            const left = completeTargetPlans[i];
+            const right = completeTargetPlans[j];
+            if (left.workCenter !== right.workCenter) continue;
+
+            if (overlaps(
+              left.plannedStartDate as Date,
+              left.plannedEndDate as Date,
+              right.plannedStartDate as Date,
+              right.plannedEndDate as Date,
+            )) {
+              internalConflicts.push({
+                leftId: left.id,
+                rightId: right.id,
+                workCenter: String(left.workCenter),
+              });
+            }
+          }
+        }
+
+        if (externalConflicts.length || internalConflicts.length) {
+          const err: any = new Error('PLAN_CONFLICT');
+          err.externalConflicts = externalConflicts;
+          err.internalConflicts = internalConflicts;
+          throw err;
         }
 
         await tx.serviceOrder.updateMany({
@@ -536,6 +695,19 @@ export const ServiceOrderController = {
     } catch (error: any) {
       if (error.message === 'NOT_FOUND') {
         return res.status(404).json({ status: 'error', message: 'Nenhuma OS encontrada para os IDs enviados.' });
+      }
+
+      if (error.message === 'INVALID_PLAN_WINDOW') {
+        return res.status(400).json({ status: 'error', message: 'Janela de planejamento inválida: início maior que fim.' });
+      }
+
+      if (error.message === 'PLAN_CONFLICT') {
+        return res.status(409).json({
+          status: 'error',
+          message: 'Conflito de agenda detectado para o replanejamento em lote.',
+          externalConflicts: error.externalConflicts || [],
+          internalConflicts: error.internalConflicts || [],
+        });
       }
 
       return res.status(400).json({ status: 'error', message: 'Erro ao atualizar planejamento em lote.', details: error.message });
