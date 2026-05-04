@@ -18,5 +18,7 @@ router.patch('/:id/plan', authenticateToken, requirePermission('os:gerenciar'), 
 router.put('/:id', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.update);
 router.delete('/:id', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.delete);
 router.post('/purchase-requests', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseRequest);
+router.get('/purchase-requests', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseRequests);
+router.post('/purchase-requests/:id/fulfill', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.fulfillPurchaseRequest);
 
 export default router;

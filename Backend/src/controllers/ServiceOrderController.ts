@@ -262,6 +262,216 @@ export const ServiceOrderController = {
     }
   },
 
+  async listPurchaseRequests(req: Request, res: Response) {
+    try {
+      const serviceOrderId = req.query.serviceOrderId ? Number(req.query.serviceOrderId) : null;
+      const status = req.query.status ? String(req.query.status) : null;
+
+      const where: any = {};
+      if (serviceOrderId && Number.isFinite(serviceOrderId) && serviceOrderId > 0) {
+        where.serviceOrderId = serviceOrderId;
+      }
+      if (status) {
+        where.status = status;
+      }
+
+      const requests = await (prisma as any).purchaseRequest.findMany({
+        where,
+        include: {
+          serviceOrder: { select: { id: true, traceCode: true, description: true } },
+          items: {
+            include: {
+              material: { select: { id: true, name: true, unit: true, price: true } }
+            },
+            orderBy: { id: 'asc' }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      return res.json(requests);
+    } catch (error) {
+      return res.status(500).json({ status: 'error', message: 'Erro ao listar solicitações de compra.' });
+    }
+  },
+
+  async fulfillPurchaseRequest(req: Request, res: Response) {
+    try {
+      const requestId = Number(req.params.id);
+      const data = req.body || {};
+      const actor = getActor(req);
+      const supplierPersonId = Number(data.supplierPersonId);
+      const description = data.description ? String(data.description) : null;
+
+      if (!Number.isFinite(requestId) || requestId <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Solicitação de compra inválida.' });
+      }
+      if (!Number.isFinite(supplierPersonId) || supplierPersonId <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Fornecedor é obrigatório para registrar a compra.' });
+      }
+
+      const inputItems = Array.isArray(data.items) ? data.items : [];
+      if (!inputItems.length) {
+        return res.status(400).json({ status: 'error', message: 'Informe ao menos um item para registrar compra.' });
+      }
+
+      const items = inputItems
+        .map((item: any) => ({
+          purchaseRequestItemId: Number(item.purchaseRequestItemId),
+          quantity: Number(item.quantity),
+          unitCost: item.unitCost !== undefined && item.unitCost !== null ? Number(item.unitCost) : null,
+          totalPaid: item.totalPaid !== undefined && item.totalPaid !== null ? Number(item.totalPaid) : null,
+          notes: item.notes ? String(item.notes) : null,
+        }))
+        .filter((item: any) => Number.isFinite(item.purchaseRequestItemId) && item.purchaseRequestItemId > 0 && Number.isFinite(item.quantity) && item.quantity > 0);
+
+      if (!items.length) {
+        return res.status(400).json({ status: 'error', message: 'Itens de compra inválidos.' });
+      }
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const txAny = tx as any;
+
+        const supplier = await tx.person.findUnique({
+          where: { id: supplierPersonId },
+          select: { id: true }
+        });
+        if (!supplier) throw new Error('SUPPLIER_NOT_FOUND');
+
+        const request = await txAny.purchaseRequest.findUnique({
+          where: { id: requestId },
+          include: {
+            serviceOrder: { select: { id: true, traceCode: true } },
+            items: { include: { material: { select: { id: true, unit: true, price: true } } } }
+          }
+        });
+
+        if (!request) throw new Error('REQUEST_NOT_FOUND');
+
+        const requestItemsMap = new Map<number, any>(request.items.map((ri: any) => [ri.id, ri]));
+
+        for (const item of items) {
+          const requestItem = requestItemsMap.get(item.purchaseRequestItemId);
+          if (!requestItem) throw new Error('REQUEST_ITEM_NOT_FOUND');
+          if (requestItem.status === 'PURCHASED') continue;
+
+          const availableShortage = Math.max(0, Number(requestItem.shortageQty || 0));
+          if (availableShortage <= 0) continue;
+          const qtyToBuy = Math.min(item.quantity, availableShortage);
+          if (qtyToBuy <= 0) continue;
+
+          const finalUnitCost = item.unitCost && item.unitCost > 0
+            ? item.unitCost
+            : (item.totalPaid && item.totalPaid > 0 ? item.totalPaid / qtyToBuy : null);
+
+          if (!finalUnitCost || finalUnitCost <= 0) {
+            throw new Error('ITEM_COST_REQUIRED');
+          }
+
+          const finalTotalPaid = item.totalPaid && item.totalPaid > 0 ? item.totalPaid : finalUnitCost * qtyToBuy;
+
+          await txAny.stockLog.create({
+            data: {
+              materialId: requestItem.materialId,
+              quantity: qtyToBuy,
+              type: 'IN',
+              description: item.notes || description || `Compra vinculada à solicitação ${request.code}`,
+              supplierPersonId,
+              unitCost: finalUnitCost,
+              totalPaid: finalTotalPaid,
+              remainingQty: qtyToBuy,
+            }
+          });
+
+          await tx.material.update({
+            where: { id: requestItem.materialId },
+            data: { price: finalUnitCost }
+          });
+
+          const newStockQty = Number(requestItem.stockQty || 0) + qtyToBuy;
+          const newShortageQty = Math.max(0, Number(requestItem.shortageQty || 0) - qtyToBuy);
+          const newStatus = newShortageQty <= 0 ? 'PURCHASED' : 'PARTIAL';
+
+          await txAny.purchaseRequestItem.update({
+            where: { id: requestItem.id },
+            data: {
+              stockQty: newStockQty,
+              shortageQty: newShortageQty,
+              status: newStatus,
+            }
+          });
+        }
+
+        const refreshedItems = await txAny.purchaseRequestItem.findMany({
+          where: { purchaseRequestId: requestId },
+          select: { id: true, status: true }
+        });
+
+        const allPurchased = refreshedItems.every((ri: any) => ri.status === 'PURCHASED');
+        const hasAnyPurchased = refreshedItems.some((ri: any) => ri.status === 'PURCHASED' || ri.status === 'PARTIAL');
+
+        await txAny.purchaseRequest.update({
+          where: { id: requestId },
+          data: {
+            status: allPurchased ? 'CLOSED' : (hasAnyPurchased ? 'PARTIAL' : 'OPEN')
+          }
+        });
+
+        if (request.serviceOrderId) {
+          await txAny.serviceOrderTrace.create({
+            data: {
+              serviceOrderId: request.serviceOrderId,
+              serviceOrderCode: request.serviceOrder?.traceCode || null,
+              action: 'PURCHASE_REQUEST_FULFILL',
+              changedByUserId: actor.id,
+              changedByEmail: actor.email,
+              payload: {
+                purchaseRequestId: request.id,
+                purchaseRequestCode: request.code,
+                supplierPersonId,
+                items: items.map((i: any) => ({
+                  purchaseRequestItemId: i.purchaseRequestItemId,
+                  quantity: i.quantity,
+                  unitCost: i.unitCost,
+                  totalPaid: i.totalPaid,
+                }))
+              }
+            }
+          });
+        }
+
+        return txAny.purchaseRequest.findUnique({
+          where: { id: requestId },
+          include: {
+            serviceOrder: { select: { id: true, traceCode: true, description: true } },
+            items: {
+              include: {
+                material: { select: { id: true, name: true, unit: true, price: true } }
+              },
+              orderBy: { id: 'asc' }
+            }
+          }
+        });
+      });
+
+      return res.json(updated);
+    } catch (error: any) {
+      if (error.message === 'REQUEST_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Solicitação de compra não encontrada.' });
+      }
+      if (error.message === 'REQUEST_ITEM_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Item da solicitação não encontrado.' });
+      }
+      if (error.message === 'SUPPLIER_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Fornecedor não encontrado.' });
+      }
+      if (error.message === 'ITEM_COST_REQUIRED') {
+        return res.status(400).json({ status: 'error', message: 'Informe custo unitário ou total pago para os itens da compra.' });
+      }
+      return res.status(400).json({ status: 'error', message: 'Erro ao registrar compra da solicitação.', details: error.message });
+    }
+  },
+
   async checkMaterialsCoverage(req: Request, res: Response) {
     try {
       const data = req.body || {};

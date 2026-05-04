@@ -55,6 +55,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
   const [materialsCoverage, setMaterialsCoverage] = useState<any | null>(null);
   const [checkingCoverage, setCheckingCoverage] = useState(false);
   const [creatingPurchaseRequest, setCreatingPurchaseRequest] = useState(false);
+  const [purchaseRequests, setPurchaseRequests] = useState<any[]>([]);
+  const [loadingPurchaseRequests, setLoadingPurchaseRequests] = useState(false);
+  const [fulfillingRequestId, setFulfillingRequestId] = useState<number | null>(null);
+  const [supplierByRequest, setSupplierByRequest] = useState<Record<number, string>>({});
+  const [itemInputs, setItemInputs] = useState<Record<number, { quantity: string; unitCost: string; totalPaid: string }>>({});
   const [operationLogs, setOperationLogs] = useState<any[]>([]);
   const [operationsEfficiency, setOperationsEfficiency] = useState<any | null>(null);
   const [operationForm, setOperationForm] = useState({
@@ -90,8 +95,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
         api.get(`/service-orders/${id}`),
         api.get(`/service-orders/${id}/operations`).catch(() => []),
         api.get('/service-orders/operations/efficiency').catch(() => null),
+        api.get(`/service-orders/purchase-requests?serviceOrderId=${id}`).catch(() => []),
       ])
-        .then(([data, operations, efficiency]: any[]) => {
+        .then(([data, operations, efficiency, requests]: any[]) => {
           setFormData({
             description: data.description || '',
             problemDescription: data.problemDescription || '',
@@ -125,12 +131,26 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
           setFinancials(data.financials || null);
           setOperationLogs(Array.isArray(operations) ? operations : []);
           setOperationsEfficiency(efficiency || null);
+          setPurchaseRequests(Array.isArray(requests) ? requests : []);
         })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, [id, isEdit, isView, showToast]);
+
+  const loadPurchaseRequests = async () => {
+    if (!id) return;
+    setLoadingPurchaseRequests(true);
+    try {
+      const requests = await api.get(`/service-orders/purchase-requests?serviceOrderId=${id}`);
+      setPurchaseRequests(Array.isArray(requests) ? requests : []);
+    } catch {
+      showToast('Erro ao carregar solicitações de compra da OS.', 'error');
+    } finally {
+      setLoadingPurchaseRequests(false);
+    }
+  };
 
   const formatDateTimeLabel = (dateValue: string | Date | null | undefined) => {
     if (!dateValue) return '-';
@@ -227,10 +247,74 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
       });
 
       showToast(`Solicitação ${created?.code || ''} gerada com ${shortageItems.length} item(ns).`, 'success');
+      await loadPurchaseRequests();
     } catch (err: any) {
       showToast(typeof err === 'string' ? err : 'Erro ao gerar solicitação de compra.', 'error');
     } finally {
       setCreatingPurchaseRequest(false);
+    }
+  };
+
+  const handleItemInputChange = (itemId: number, field: 'quantity' | 'unitCost' | 'totalPaid', value: string) => {
+    setItemInputs((prev) => ({
+      ...prev,
+      [itemId]: {
+        quantity: prev[itemId]?.quantity || '',
+        unitCost: prev[itemId]?.unitCost || '',
+        totalPaid: prev[itemId]?.totalPaid || '',
+        [field]: value,
+      }
+    }));
+  };
+
+  const handleFulfillPurchaseRequest = async (request: any) => {
+    const requestId = Number(request.id);
+    const supplierPersonId = Number(supplierByRequest[requestId] || 0);
+    if (!supplierPersonId || !Number.isFinite(supplierPersonId) || supplierPersonId <= 0) {
+      showToast('Selecione o fornecedor para registrar a compra.', 'warning');
+      return;
+    }
+
+    const pendingItems = (request.items || []).filter((item: any) => Number(item.shortageQty || 0) > 0 && item.status !== 'PURCHASED');
+    if (!pendingItems.length) {
+      showToast('Não há itens pendentes nesta solicitação.', 'warning');
+      return;
+    }
+
+    const payloadItems = pendingItems.map((item: any) => {
+      const input = itemInputs[item.id] || { quantity: '', unitCost: '', totalPaid: '' };
+      const quantity = input.quantity ? Number(input.quantity) : Number(item.shortageQty || 0);
+      const unitCost = input.unitCost ? Number(input.unitCost) : undefined;
+      const totalPaid = input.totalPaid ? Number(input.totalPaid) : undefined;
+      return {
+        purchaseRequestItemId: Number(item.id),
+        quantity,
+        unitCost,
+        totalPaid,
+      };
+    });
+
+    const invalid = payloadItems.some((item: any) => !Number.isFinite(item.quantity) || item.quantity <= 0 || ((!item.unitCost || item.unitCost <= 0) && (!item.totalPaid || item.totalPaid <= 0)));
+    if (invalid) {
+      showToast('Informe quantidade e custo (unitário ou total) para os itens pendentes.', 'warning');
+      return;
+    }
+
+    setFulfillingRequestId(requestId);
+    try {
+      await api.post(`/service-orders/purchase-requests/${requestId}/fulfill`, {
+        supplierPersonId,
+        items: payloadItems,
+        description: `Compra registrada pela OS #${id}`,
+      });
+
+      showToast(`Compra da solicitação ${request.code} registrada com sucesso.`, 'success');
+      await loadPurchaseRequests();
+      setMaterialsCoverage(null);
+    } catch (err: any) {
+      showToast(typeof err === 'string' ? err : 'Erro ao registrar compra da solicitação.', 'error');
+    } finally {
+      setFulfillingRequestId(null);
     }
   };
 
@@ -735,6 +819,141 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                     >
                       {creatingPurchaseRequest ? 'Gerando Solicitação...' : 'Gerar Solicitação de Compra'}
                     </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {id && (
+              <div style={{
+                background: 'rgba(15,23,42,0.45)',
+                border: '1px solid rgba(148,163,184,0.2)',
+                borderRadius: 12,
+                padding: 12,
+                marginBottom: 12,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <strong style={{ color: '#e2e8f0' }}>Solicitações de Compra da OS</strong>
+                  <button
+                    type="button"
+                    onClick={loadPurchaseRequests}
+                    disabled={loadingPurchaseRequests}
+                    style={{
+                      border: '1px solid rgba(148,163,184,0.3)',
+                      background: 'transparent',
+                      color: '#cbd5e1',
+                      borderRadius: 8,
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {loadingPurchaseRequests ? 'Atualizando...' : 'Atualizar'}
+                  </button>
+                </div>
+
+                {purchaseRequests.length === 0 ? (
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Nenhuma solicitação registrada para esta OS.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {purchaseRequests.map((request: any) => {
+                      const pendingItems = (request.items || []).filter((item: any) => Number(item.shortageQty || 0) > 0 && item.status !== 'PURCHASED');
+                      return (
+                        <div key={request.id} style={{ border: '1px solid rgba(148,163,184,0.18)', borderRadius: 10, padding: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                            <div style={{ color: '#e2e8f0', fontWeight: 800 }}>{request.code}</div>
+                            <div style={{ color: '#94a3b8', fontSize: 12 }}>Status: {request.status}</div>
+                          </div>
+
+                          {pendingItems.length === 0 ? (
+                            <div style={{ color: '#86efac', fontSize: 12 }}>Todos os itens desta solicitação já foram comprados.</div>
+                          ) : (
+                            <>
+                              <div style={{ marginBottom: 8 }}>
+                                <label className={styles.label}>Fornecedor</label>
+                                <select
+                                  className={styles.formSelect}
+                                  disabled={isView || fulfillingRequestId === request.id}
+                                  value={supplierByRequest[request.id] || ''}
+                                  onChange={(e) => setSupplierByRequest((prev) => ({ ...prev, [request.id]: e.target.value }))}
+                                >
+                                  <option value="">Selecione...</option>
+                                  {people.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                      {p.naturalPerson?.name || p.legalPerson?.corporateName}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+                                {pendingItems.map((item: any) => {
+                                  const input = itemInputs[item.id] || { quantity: '', unitCost: '', totalPaid: '' };
+                                  return (
+                                    <div key={item.id} style={{ background: 'rgba(2,6,23,0.4)', borderRadius: 8, padding: 8 }}>
+                                      <div style={{ color: '#e2e8f0', fontSize: 12, marginBottom: 6 }}>
+                                        {item.material?.name}: falta {Number(item.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} {item.unit || item.material?.unit || ''}
+                                      </div>
+                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          step="0.01"
+                                          className={styles.formInput}
+                                          placeholder={`Qtd (padrão ${Number(item.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })})`}
+                                          disabled={isView || fulfillingRequestId === request.id}
+                                          value={input.quantity}
+                                          onChange={(e) => handleItemInputChange(item.id, 'quantity', e.target.value)}
+                                        />
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          step="0.01"
+                                          className={styles.formInput}
+                                          placeholder="Custo unitário"
+                                          disabled={isView || fulfillingRequestId === request.id}
+                                          value={input.unitCost}
+                                          onChange={(e) => handleItemInputChange(item.id, 'unitCost', e.target.value)}
+                                        />
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          step="0.01"
+                                          className={styles.formInput}
+                                          placeholder="Total pago"
+                                          disabled={isView || fulfillingRequestId === request.id}
+                                          value={input.totalPaid}
+                                          onChange={(e) => handleItemInputChange(item.id, 'totalPaid', e.target.value)}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {!isView && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleFulfillPurchaseRequest(request)}
+                                  disabled={fulfillingRequestId === request.id}
+                                  style={{
+                                    background: 'rgba(16,185,129,0.15)',
+                                    color: '#86efac',
+                                    border: '1px solid rgba(16,185,129,0.4)',
+                                    borderRadius: 8,
+                                    padding: '8px 12px',
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  {fulfillingRequestId === request.id ? 'Registrando Compra...' : 'Registrar Compra e Dar Entrada no Estoque'}
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
