@@ -124,6 +124,7 @@ const ServiceOrdersList: React.FC = () => {
             <tr>
               <th style={{ paddingLeft: 20 }}>OS #</th>
               <th>Cliente</th>
+              <th>Custos / Total</th>
               <th>Data Abertura</th>
               <th>Status</th>
               <th style={{ textAlign: 'center' }}>Ações</th>
@@ -136,6 +137,16 @@ const ServiceOrdersList: React.FC = () => {
                 <td className={styles.tableCell}>
                   <div style={{ fontWeight: 600 }}>{order.person?.naturalPerson?.name || order.person?.legalPerson?.corporateName || 'N/A'}</div>
                   <div style={{ fontSize: 12, color: '#8a99a8' }}>{order.description.substring(0, 40)}...</div>
+                </td>
+                <td className={styles.tableCell}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ color: '#94a3b8', fontSize: 12 }}>
+                      Custo Direto: R$ {(order.financials?.directCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                    <span style={{ color: '#10b981', fontWeight: 700 }}>
+                      Total Previsto: R$ {(order.financials?.totalEstimated || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 </td>
                 <td className={styles.tableCell}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

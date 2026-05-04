@@ -47,6 +47,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [financials, setFinancials] = useState<any | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -92,6 +93,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
             unitPrice: s.unitPrice || 0,
             totalPrice: s.totalPrice || 0
           })));
+          setFinancials(data.financials || null);
         })
         .finally(() => setLoading(false));
     } else {
@@ -210,10 +212,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
       };
 
       if (isEdit) {
-        await api.put(`/service-orders/${id}`, payload);
+        const updated = await api.put(`/service-orders/${id}`, payload);
+        setFinancials(updated?.financials || null);
         showToast('Ordem de Serviço atualizada!');
       } else {
-        await api.post('/service-orders', payload);
+        const created = await api.post('/service-orders', payload);
+        setFinancials(created?.financials || null);
         showToast('OS/Orçamento criado com sucesso!');
       }
       navigate('/service-orders');
@@ -402,6 +406,45 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
               />
             </div>
           </div>
+
+          {(financials || itemsMaterials.length > 0 || itemsServices.length > 0) && (
+            <div className={styles.fullWidth} style={{ marginTop: 18 }}>
+              <div style={{
+                background: 'rgba(15, 23, 42, 0.55)',
+                border: '1px solid rgba(148, 163, 184, 0.2)',
+                borderRadius: 16,
+                padding: 16,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: 12,
+              }}>
+                <div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Custo de Materiais</div>
+                  <div style={{ color: '#fff', fontWeight: 700 }}>
+                    R$ {((financials?.materialCost) ?? itemsMaterials.reduce((acc, i) => acc + (i.totalPrice || 0), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Custo de Mão de Obra</div>
+                  <div style={{ color: '#fff', fontWeight: 700 }}>
+                    R$ {((financials?.laborCost) ?? itemsServices.reduce((acc, i) => acc + (i.totalPrice || 0), 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Custo Direto</div>
+                  <div style={{ color: '#f59e0b', fontWeight: 700 }}>
+                    R$ {((financials?.directCost) ?? (itemsMaterials.reduce((acc, i) => acc + (i.totalPrice || 0), 0) + itemsServices.reduce((acc, i) => acc + (i.totalPrice || 0), 0))).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Total Previsto</div>
+                  <div style={{ color: '#10b981', fontWeight: 800 }}>
+                    R$ {((financials?.totalEstimated) ?? calculateTotal()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* TABELA DE MATERIAIS */}
           <div className={styles.fullWidth} style={{ marginTop: 30 }}>

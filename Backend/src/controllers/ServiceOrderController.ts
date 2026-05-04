@@ -18,6 +18,53 @@ function getActor(req: Request) {
   return { id, email };
 }
 
+function toNumber(value: unknown) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function enrichFinancials(order: any) {
+  const materials = Array.isArray(order.materials) ? order.materials : [];
+  const services = Array.isArray(order.services) ? order.services : [];
+  const transactions = Array.isArray(order.transactions) ? order.transactions : [];
+
+  const materialCost = materials.reduce((acc: number, m: any) => acc + toNumber(m.totalPrice), 0);
+  const laborCost = services.reduce((acc: number, s: any) => acc + toNumber(s.totalPrice), 0);
+  const directCost = materialCost + laborCost;
+
+  const profitPercent = toNumber(order.profitPercent);
+  const taxPercent = toNumber(order.taxPercent);
+  const profitAmount = directCost * (profitPercent / 100);
+  const baseForTax = directCost + profitAmount;
+  const taxAmount = baseForTax * (taxPercent / 100);
+  const totalEstimated = baseForTax + taxAmount;
+
+  const receivables = transactions
+    .filter((t: any) => t.type === 'RECEIVABLE')
+    .reduce((acc: number, t: any) => acc + toNumber(t.amount), 0);
+  const payables = transactions
+    .filter((t: any) => t.type === 'PAYABLE')
+    .reduce((acc: number, t: any) => acc + toNumber(t.amount), 0);
+  const realizedMargin = receivables - payables - directCost;
+
+  return {
+    ...order,
+    financials: {
+      materialCost,
+      laborCost,
+      directCost,
+      profitPercent,
+      profitAmount,
+      taxPercent,
+      taxAmount,
+      totalEstimated,
+      receivables,
+      payables,
+      realizedMargin,
+    },
+  };
+}
+
 export const ServiceOrderController = {
   async list(req: Request, res: Response) {
     try {
@@ -27,6 +74,7 @@ export const ServiceOrderController = {
           services: { include: { service: true, employee: true } },
           materials: { include: { material: true } },
           qualityControls: true,
+          transactions: true,
           traces: {
             orderBy: { createdAt: 'desc' },
             take: 1,
@@ -40,7 +88,7 @@ export const ServiceOrderController = {
         },
         orderBy: { openingDate: 'desc' }
       });
-      res.json(orders);
+      res.json(orders.map(enrichFinancials));
     } catch (error) {
       res.status(500).json({ status: 'error', message: 'Erro ao listar ordens de serviço.' });
     }
@@ -56,13 +104,14 @@ export const ServiceOrderController = {
           services: { include: { service: true, employee: true } },
           materials: { include: { material: true } },
           qualityControls: true,
+          transactions: true,
           traces: {
             orderBy: { createdAt: 'desc' },
           }
         }
       });
       if (!order) return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada' });
-      res.json(order);
+      res.json(enrichFinancials(order));
     } catch (error) {
       res.status(500).json({ status: 'error', message: 'Erro ao buscar ordem de serviço.' });
     }
@@ -130,6 +179,7 @@ export const ServiceOrderController = {
             services: { include: { service: true, employee: true } },
             materials: { include: { material: true } },
             qualityControls: true,
+            transactions: true,
             traces: {
               orderBy: { createdAt: 'desc' },
               take: 10,
@@ -138,7 +188,7 @@ export const ServiceOrderController = {
         });
       });
 
-      res.status(201).json(order);
+      res.status(201).json(enrichFinancials(order));
     } catch (error: any) {
       console.error('Erro ao criar OS:', error);
       res.status(400).json({ status: 'error', message: 'Erro ao criar ordem de serviço.', details: error.message });
@@ -220,6 +270,7 @@ export const ServiceOrderController = {
             services: { include: { service: true, employee: true } },
             materials: { include: { material: true } },
             qualityControls: true,
+            transactions: true,
             traces: {
               orderBy: { createdAt: 'desc' },
               take: 20,
@@ -228,7 +279,7 @@ export const ServiceOrderController = {
         });
       });
 
-      res.json(order);
+      res.json(enrichFinancials(order));
     } catch (error: any) {
       console.error('Erro ao atualizar OS:', error);
       res.status(400).json({ status: 'error', message: 'Erro ao atualizar ordem de serviço.', details: error.message });
