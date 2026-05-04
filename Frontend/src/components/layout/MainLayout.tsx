@@ -49,6 +49,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         { label: 'Ordens de Serviço', to: '/service-orders', icon: Wrench, permission: 'os:visualizar' },
         { label: 'Qualidade', to: '/quality-controls', icon: ClipboardCheck, permission: 'qualidade:visualizar' },
         { label: 'Estoque', to: '/stock', icon: Package, permission: 'estoque:visualizar' },
+        { label: 'Compras', to: '/purchases', icon: Wallet, permission: 'estoque:visualizar' },
         { label: 'Materiais', to: '/materials', icon: Layers, permission: 'materiais:visualizar' },
       ]
     },

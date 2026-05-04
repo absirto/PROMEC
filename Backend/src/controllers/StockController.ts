@@ -25,9 +25,29 @@ export const StockController = {
   async purchaseHistory(req: Request, res: Response) {
     try {
       const materialId = req.query.materialId ? Number(req.query.materialId) : null;
+      const supplierPersonId = req.query.supplierPersonId ? Number(req.query.supplierPersonId) : null;
+      const startDate = typeof req.query.startDate === 'string' ? new Date(req.query.startDate) : null;
+      const endDate = typeof req.query.endDate === 'string' ? new Date(req.query.endDate) : null;
       const where: any = { type: 'IN', unitCost: { not: null } };
       if (materialId && Number.isFinite(materialId) && materialId > 0) {
         where.materialId = materialId;
+      }
+      if (supplierPersonId && Number.isFinite(supplierPersonId) && supplierPersonId > 0) {
+        where.supplierPersonId = supplierPersonId;
+      }
+      if (startDate && !Number.isNaN(startDate.getTime())) {
+        where.createdAt = {
+          ...(where.createdAt || {}),
+          gte: startDate,
+        };
+      }
+      if (endDate && !Number.isNaN(endDate.getTime())) {
+        const inclusiveEndDate = new Date(endDate);
+        inclusiveEndDate.setHours(23, 59, 59, 999);
+        where.createdAt = {
+          ...(where.createdAt || {}),
+          lte: inclusiveEndDate,
+        };
       }
 
       const logs = await (prisma as any).stockLog.findMany({

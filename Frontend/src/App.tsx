@@ -38,6 +38,7 @@ const UserForm = lazy(() => import('./pages/users/UserForm'));
 const GroupsList = lazy(() => import('./pages/groups/GroupsList'));
 const GroupForm = lazy(() => import('./pages/groups/GroupForm'));
 const StockList = lazy(() => import('./pages/materials/StockList'));
+const PurchasesList = lazy(() => import('./pages/materials/PurchasesList'));
 const FinanceList = lazy(() => import('./pages/finance/FinanceList'));
 const SettingsForm = lazy(() => import('./pages/settings/SettingsForm'));
 const AuxiliaryTables = lazy(() => import('./pages/settings/AuxiliaryTables'));
@@ -96,6 +97,7 @@ function App() {
                   <Route path="groups/:id" element={<ProtectedRoute permission="usuarios:gerenciar"><GroupForm isView={true} /></ProtectedRoute>} />
                   <Route path="groups/:id/edit" element={<ProtectedRoute permission="usuarios:gerenciar"><GroupForm isEdit={true} /></ProtectedRoute>} />
                   <Route path="stock" element={<ProtectedRoute permission="estoque:visualizar"><StockList /></ProtectedRoute>} />
+                  <Route path="purchases" element={<ProtectedRoute permission="estoque:visualizar"><PurchasesList /></ProtectedRoute>} />
                   <Route path="finance" element={<ProtectedRoute permission="financeiro:visualizar"><FinanceList /></ProtectedRoute>} />
                   <Route path="settings" element={<ProtectedRoute permission="configuracoes:gerenciar"><SettingsForm /></ProtectedRoute>} />
                   <Route path="auxiliary-tables" element={<ProtectedRoute permission="configuracoes:gerenciar"><AuxiliaryTables /></ProtectedRoute>} />
