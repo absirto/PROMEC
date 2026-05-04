@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../services/prisma';
 import { AuthRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 function generateTraceCode() {
   const d = new Date();
@@ -306,7 +307,8 @@ export const ServiceOrderController = {
       });
 
       return res.json(requests);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('ServiceOrderController.listPurchaseRequests falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       return res.status(500).json({ status: 'error', message: 'Erro ao listar solicitações de compra.' });
     }
   },

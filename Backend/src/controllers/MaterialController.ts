@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../services/prisma';
 import { cacheGet, cacheSet, cacheDel } from '../utils/cache';
+import { logger } from '../utils/logger';
 
 export const MaterialController = {
   async list(req: Request, res: Response) {
@@ -11,7 +12,8 @@ export const MaterialController = {
       const materials = await prisma.material.findMany();
       await cacheSet(cacheKey, materials, 120); // cache por 2 minutos
       res.json(materials);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('MaterialController.list falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       res.status(500).json({ status: 'error', message: 'Erro ao buscar materiais.' });
     }
   },
@@ -22,7 +24,8 @@ export const MaterialController = {
       const material = await prisma.material.findUnique({ where: { id } });
       if (!material) return res.status(404).json({ status: 'error', message: 'Material não encontrado.' });
       res.json(material);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('MaterialController.get falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       res.status(500).json({ status: 'error', message: 'Erro ao buscar material.' });
     }
   },
@@ -35,7 +38,8 @@ export const MaterialController = {
       });
       await cacheDel('materials:list');
       res.status(201).json(material);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('MaterialController.create falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       res.status(500).json({ status: 'error', message: 'Erro ao criar material.' });
     }
   },
@@ -56,7 +60,8 @@ export const MaterialController = {
       });
       await cacheDel('materials:list');
       res.json(material);
-    } catch (error) {
+    } catch (error: any) {
+      logger.error('MaterialController.update falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       res.status(500).json({ status: 'error', message: 'Erro ao atualizar material.' });
     }
   },
