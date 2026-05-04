@@ -30,8 +30,19 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    if (error.response && error.response.data && error.response.data.message) {
-      return Promise.reject(error.response.data.message);
+    if (error.response && error.response.data) {
+      const data = error.response.data;
+
+      // Preserva payload completo para telas que precisam renderizar detalhes de conflito.
+      if (data.conflicts || data.externalConflicts || data.internalConflicts) {
+        return Promise.reject(data);
+      }
+
+      if (data.message) {
+        return Promise.reject(data.message);
+      }
+
+      return Promise.reject(data);
     }
     return Promise.reject(error);
   }

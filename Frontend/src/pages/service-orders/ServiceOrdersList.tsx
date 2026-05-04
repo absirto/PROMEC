@@ -12,6 +12,13 @@ const formatDateInput = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+const formatDateLabel = (dateValue: string | Date | null | undefined) => {
+  if (!dateValue) return '-';
+  const d = new Date(dateValue);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleDateString('pt-BR');
+};
+
 const ServiceOrdersList: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -33,6 +40,9 @@ const ServiceOrdersList: React.FC = () => {
   const [planEditor, setPlanEditor] = useState<any | null>(null);
   const [batchEditorOpen, setBatchEditorOpen] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<number[]>([]);
+  const [quickPlanConflicts, setQuickPlanConflicts] = useState<any[]>([]);
+  const [batchExternalConflicts, setBatchExternalConflicts] = useState<any[]>([]);
+  const [batchInternalConflicts, setBatchInternalConflicts] = useState<any[]>([]);
   const [planForm, setPlanForm] = useState({
     workCenter: '',
     plannedStartDate: '',
@@ -80,6 +90,7 @@ const ServiceOrdersList: React.FC = () => {
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
 
   const openPlanEditor = (order: any) => {
+    setQuickPlanConflicts([]);
     setPlanEditor(order);
     setPlanForm({
       workCenter: order.workCenter || '',
@@ -91,6 +102,7 @@ const ServiceOrdersList: React.FC = () => {
 
   const closePlanEditor = () => {
     if (savingPlan) return;
+    setQuickPlanConflicts([]);
     setPlanEditor(null);
   };
 
@@ -118,11 +130,15 @@ const ServiceOrdersList: React.FC = () => {
       showToast('Selecione ao menos uma OS para replanejar em lote.', 'warning');
       return;
     }
+    setBatchExternalConflicts([]);
+    setBatchInternalConflicts([]);
     setBatchEditorOpen(true);
   };
 
   const closeBatchEditor = () => {
     if (savingPlan) return;
+    setBatchExternalConflicts([]);
+    setBatchInternalConflicts([]);
     setBatchEditorOpen(false);
   };
 
@@ -139,10 +155,16 @@ const ServiceOrdersList: React.FC = () => {
       });
 
       showToast(`Planejamento da OS #${planEditor.id} atualizado.`, 'success');
+      setQuickPlanConflicts([]);
       setPlanEditor(null);
       loadOrders();
       loadPcpOverview();
     } catch (error: any) {
+      if (error && typeof error === 'object' && Array.isArray(error.conflicts)) {
+        setQuickPlanConflicts(error.conflicts);
+        showToast(error.message || 'Conflito de agenda detectado.', 'error');
+        return;
+      }
       showToast(typeof error === 'string' ? error : 'Erro ao replanejar OS.', 'error');
     } finally {
       setSavingPlan(false);
@@ -176,10 +198,22 @@ const ServiceOrdersList: React.FC = () => {
       showToast(`Replanejamento em lote concluído: ${result?.updatedCount || selectedOrderIds.length} OS.`, 'success');
       setBatchEditorOpen(false);
       setSelectedOrderIds([]);
+      setBatchExternalConflicts([]);
+      setBatchInternalConflicts([]);
       setBatchPlanForm({ workCenter: '', plannedStartDate: '', plannedEndDate: '', plannedHours: '' });
       loadOrders();
       loadPcpOverview();
     } catch (error: any) {
+      if (error && typeof error === 'object') {
+        const externalConflicts = Array.isArray(error.externalConflicts) ? error.externalConflicts : [];
+        const internalConflicts = Array.isArray(error.internalConflicts) ? error.internalConflicts : [];
+        if (externalConflicts.length || internalConflicts.length) {
+          setBatchExternalConflicts(externalConflicts);
+          setBatchInternalConflicts(internalConflicts);
+          showToast(error.message || 'Conflito de agenda detectado no lote.', 'error');
+          return;
+        }
+      }
       showToast(typeof error === 'string' ? error : 'Erro ao replanejar lote de OS.', 'error');
     } finally {
       setSavingPlan(false);
@@ -507,6 +541,46 @@ const ServiceOrdersList: React.FC = () => {
               Preencha apenas os campos que deseja aplicar. Campos vazios serão ignorados.
             </div>
 
+            {(batchExternalConflicts.length > 0 || batchInternalConflicts.length > 0) && (
+              <div style={{
+                background: 'rgba(127, 29, 29, 0.28)',
+                border: '1px solid rgba(239, 68, 68, 0.45)',
+                borderRadius: 12,
+                padding: 12,
+                marginBottom: 12,
+                color: '#fecaca'
+              }}>
+                <div style={{ fontWeight: 800, marginBottom: 8 }}>Conflitos detectados no lote</div>
+
+                {batchExternalConflicts.length > 0 && (
+                  <div style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 12, color: '#fca5a5', marginBottom: 4 }}>Conflitos com OS já planejadas:</div>
+                    {batchExternalConflicts.map((group: any) => (
+                      <div key={`external-${group.id}`} style={{ fontSize: 12, marginBottom: 6 }}>
+                        <strong>OS #{group.id}</strong>
+                        {Array.isArray(group.conflicts) && group.conflicts.map((c: any) => (
+                          <div key={`conf-${group.id}-${c.id}`} style={{ marginLeft: 8, color: '#fee2e2' }}>
+                            • Conflita com OS #{c.id} ({c.traceCode || 'sem código'}) - {formatDateLabel(c.plannedStartDate)} até {formatDateLabel(c.plannedEndDate)}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {batchInternalConflicts.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, color: '#fca5a5', marginBottom: 4 }}>Conflitos internos no próprio lote:</div>
+                    {batchInternalConflicts.map((c: any, idx: number) => (
+                      <div key={`internal-${idx}`} style={{ fontSize: 12, marginLeft: 8, color: '#fee2e2' }}>
+                        • OS #{c.leftId} e OS #{c.rightId} sobrepõem no centro {c.workCenter}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Centro de Trabalho</label>
@@ -551,6 +625,24 @@ const ServiceOrdersList: React.FC = () => {
                 />
               </div>
             </div>
+
+            {quickPlanConflicts.length > 0 && (
+              <div style={{
+                background: 'rgba(127, 29, 29, 0.28)',
+                border: '1px solid rgba(239, 68, 68, 0.45)',
+                borderRadius: 12,
+                padding: 12,
+                marginTop: 12,
+                color: '#fecaca'
+              }}>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>Conflitos de agenda</div>
+                {quickPlanConflicts.map((c: any) => (
+                  <div key={`quick-conf-${c.id}`} style={{ fontSize: 12, marginBottom: 4, color: '#fee2e2' }}>
+                    • OS #{c.id} ({c.traceCode || 'sem código'}) no centro {c.workCenter || '-'} - {formatDateLabel(c.plannedStartDate)} até {formatDateLabel(c.plannedEndDate)}
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button
