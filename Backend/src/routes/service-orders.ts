@@ -5,6 +5,7 @@ import { authenticateToken, requirePermission } from '../middleware/auth';
 const router = Router();
 
 router.get('/', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.list);
+router.post('/materials/check', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.checkMaterialsCoverage);
 router.get('/pcp/overview', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpOverview);
 router.get('/pcp/calendar', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpCalendar);
 router.get('/operations/efficiency', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.operationsEfficiency);

@@ -142,6 +142,93 @@ function enrichFinancials(order: any) {
 }
 
 export const ServiceOrderController = {
+  async checkMaterialsCoverage(req: Request, res: Response) {
+    try {
+      const data = req.body || {};
+      const inputMaterials = Array.isArray(data.materials) ? data.materials : [];
+
+      const requestedMap: Record<number, number> = {};
+      inputMaterials.forEach((m: any) => {
+        const materialId = Number(m.materialId);
+        const quantity = Math.max(0, toNumber(m.quantity));
+        if (!Number.isFinite(materialId) || materialId <= 0 || quantity <= 0) return;
+        requestedMap[materialId] = (requestedMap[materialId] || 0) + quantity;
+      });
+
+      const materialIds = Object.keys(requestedMap).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0);
+      if (!materialIds.length) {
+        return res.json({
+          items: [],
+          totals: {
+            requestedQty: 0,
+            stockQty: 0,
+            shortageQty: 0,
+            coveragePercent: 100,
+          }
+        });
+      }
+
+      const [materials, stockLogs] = await Promise.all([
+        prisma.material.findMany({
+          where: { id: { in: materialIds } },
+          select: { id: true, name: true, unit: true }
+        }),
+        prisma.stockLog.findMany({
+          where: { materialId: { in: materialIds } },
+          select: { materialId: true, type: true, quantity: true }
+        })
+      ]);
+
+      const stockMap: Record<number, number> = {};
+      stockLogs.forEach((log) => {
+        const current = stockMap[log.materialId] || 0;
+        stockMap[log.materialId] = log.type === 'IN'
+          ? current + toNumber(log.quantity)
+          : current - toNumber(log.quantity);
+      });
+
+      const items = materialIds.map((materialId) => {
+        const requestedQty = requestedMap[materialId] || 0;
+        const stockQty = Math.max(0, stockMap[materialId] || 0);
+        const shortageQty = Math.max(0, requestedQty - stockQty);
+        const coveragePercent = requestedQty > 0 ? Math.min(100, (stockQty / requestedQty) * 100) : 100;
+        const material = materials.find((m) => m.id === materialId);
+
+        return {
+          materialId,
+          materialName: material?.name || `Material #${materialId}`,
+          unit: material?.unit || '',
+          requestedQty,
+          stockQty,
+          shortageQty,
+          coveragePercent,
+          status: shortageQty > 0 ? 'SHORTAGE' : 'OK',
+        };
+      });
+
+      const totals = items.reduce((acc, item) => {
+        acc.requestedQty += item.requestedQty;
+        acc.stockQty += item.stockQty;
+        acc.shortageQty += item.shortageQty;
+        return acc;
+      }, { requestedQty: 0, stockQty: 0, shortageQty: 0 });
+
+      const coveragePercent = totals.requestedQty > 0
+        ? Math.min(100, (totals.stockQty / totals.requestedQty) * 100)
+        : 100;
+
+      return res.json({
+        items,
+        totals: {
+          ...totals,
+          coveragePercent,
+        }
+      });
+    } catch (error) {
+      return res.status(500).json({ status: 'error', message: 'Erro ao verificar cobertura de materiais.' });
+    }
+  },
+
   async operationsEfficiency(req: Request, res: Response) {
     try {
       const startQuery = typeof req.query.startDate === 'string' ? req.query.startDate : '';

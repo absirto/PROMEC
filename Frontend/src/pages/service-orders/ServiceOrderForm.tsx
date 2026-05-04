@@ -52,6 +52,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [financials, setFinancials] = useState<any | null>(null);
+  const [materialsCoverage, setMaterialsCoverage] = useState<any | null>(null);
+  const [checkingCoverage, setCheckingCoverage] = useState(false);
   const [operationLogs, setOperationLogs] = useState<any[]>([]);
   const [operationsEfficiency, setOperationsEfficiency] = useState<any | null>(null);
   const [operationForm, setOperationForm] = useState({
@@ -138,10 +140,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
 
   const addMaterialItem = () => {
     setItemsMaterials([...itemsMaterials, { materialId: '', quantity: 1, unitPrice: 0, totalPrice: 0 }]);
+    setMaterialsCoverage(null);
   };
 
   const removeMaterialItem = (index: number) => {
     setItemsMaterials(itemsMaterials.filter((_, i) => i !== index));
+    setMaterialsCoverage(null);
   };
 
   const updateMaterialItem = (index: number, field: string, value: any) => {
@@ -157,6 +161,38 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
 
     newItems[index].totalPrice = (Number(newItems[index].quantity) || 0) * (Number(newItems[index].unitPrice) || 0);
     setItemsMaterials(newItems);
+    setMaterialsCoverage(null);
+  };
+
+  const checkMaterialsCoverage = async () => {
+    const payloadMaterials = itemsMaterials
+      .filter(m => m.materialId)
+      .map(m => ({
+        materialId: parseInt(m.materialId),
+        quantity: parseFloat(m.quantity) || 0,
+      }))
+      .filter(m => Number.isFinite(m.materialId) && m.materialId > 0 && m.quantity > 0);
+
+    if (!payloadMaterials.length) {
+      showToast('Adicione materiais para verificar cobertura.', 'warning');
+      return;
+    }
+
+    setCheckingCoverage(true);
+    try {
+      const coverage = await api.post('/service-orders/materials/check', { materials: payloadMaterials });
+      setMaterialsCoverage(coverage);
+      const shortage = Number(coverage?.totals?.shortageQty || 0);
+      if (shortage > 0) {
+        showToast('Atenção: há ruptura de materiais nesta OS.', 'warning');
+      } else {
+        showToast('Cobertura de materiais OK para a OS.', 'success');
+      }
+    } catch (err: any) {
+      showToast(typeof err === 'string' ? err : 'Erro ao verificar cobertura de materiais.', 'error');
+    } finally {
+      setCheckingCoverage(false);
+    }
   };
 
   const addServiceItem = () => {
@@ -594,11 +630,56 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                 <Package size={20} /> Peças e Materiais
               </h3>
               {!isView && (
-                <button type="button" onClick={addMaterialItem} style={{ background: 'rgba(0, 230, 176, 0.1)', color: '#00e6b0', border: 'none', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}>
-                  <Plus size={16} /> Adicionar Peça
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" onClick={checkMaterialsCoverage} style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 700 }}>
+                    {checkingCoverage ? 'Verificando...' : 'Cobertura'}
+                  </button>
+                  <button type="button" onClick={addMaterialItem} style={{ background: 'rgba(0, 230, 176, 0.1)', color: '#00e6b0', border: 'none', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 600 }}>
+                    <Plus size={16} /> Adicionar Peça
+                  </button>
+                </div>
               )}
             </div>
+
+            {materialsCoverage && (
+              <div style={{
+                background: 'rgba(15,23,42,0.5)',
+                border: '1px solid rgba(148,163,184,0.2)',
+                borderRadius: 12,
+                padding: 12,
+                marginBottom: 12,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <strong style={{ color: '#e2e8f0' }}>Cobertura de Materiais</strong>
+                  <span style={{
+                    color: Number(materialsCoverage?.totals?.shortageQty || 0) > 0 ? '#f87171' : '#10b981',
+                    fontWeight: 800,
+                    fontSize: 12,
+                  }}>
+                    {Number(materialsCoverage?.totals?.coveragePercent || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 8, marginBottom: 8 }}>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Solicitado: <span style={{ color: '#fff' }}>{Number(materialsCoverage?.totals?.requestedQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}</span></div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Estoque: <span style={{ color: '#fff' }}>{Number(materialsCoverage?.totals?.stockQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}</span></div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Falta: <span style={{ color: '#f87171' }}>{Number(materialsCoverage?.totals?.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}</span></div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {(materialsCoverage?.items || []).map((item: any) => (
+                    <div key={item.materialId} style={{
+                      fontSize: 12,
+                      color: item.status === 'SHORTAGE' ? '#fecaca' : '#bbf7d0',
+                      background: item.status === 'SHORTAGE' ? 'rgba(127,29,29,0.25)' : 'rgba(20,83,45,0.25)',
+                      borderRadius: 8,
+                      padding: '4px 8px'
+                    }}>
+                      {item.materialName}: solicitado {Number(item.requestedQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} {item.unit || ''}, estoque {Number(item.stockQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} {item.unit || ''}
+                      {item.status === 'SHORTAGE' ? `, falta ${Number(item.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} ${item.unit || ''}` : ''}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div style={{ background: 'rgba(0,0,0,0.1)', borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff', fontSize: 14 }}>
