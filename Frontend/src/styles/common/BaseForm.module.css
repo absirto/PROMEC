@@ -270,3 +270,88 @@
   transform: scale(1.05);
   box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
 }
+
+@media (max-width: 1024px) {
+  .formContainer {
+    min-height: auto;
+    padding: 28px 14px;
+  }
+
+  .glassCard {
+    max-width: 100%;
+    padding: 32px 20px;
+    border-radius: 20px;
+  }
+
+  .header {
+    margin-bottom: 28px;
+  }
+
+  .title {
+    font-size: 30px;
+  }
+
+  .formGrid {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .formContainer {
+    padding: 14px 10px;
+  }
+
+  .glassCard {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .backBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .formInput,
+  .formSelect,
+  .formTextarea {
+    font-size: 15px;
+    border-radius: 14px;
+    padding: 14px 14px 14px 46px;
+  }
+
+  .formTextarea {
+    padding-left: 14px;
+    min-height: 110px;
+  }
+
+  .lookupBtn {
+    position: static;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+    height: 42px;
+    border-radius: 10px;
+  }
+
+  .submitBtn {
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 16px;
+  }
+}

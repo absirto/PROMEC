@@ -20,6 +20,10 @@
   z-index: 1000;
 }
 
+.sidebarOpen {
+  transform: translateX(0);
+}
+
 .sidebarHeader {
   padding: 40px 24px;
   display: flex;
@@ -108,6 +112,41 @@
   z-index: 900;
 }
 
+.mobileMenuBtn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.5);
+  color: #e2e8f0;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mobileCloseBtn {
+  display: none;
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.6);
+  color: #e2e8f0;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mobileBackdrop {
+  display: none;
+}
+
+.mobileBackdropVisible {
+  display: none;
+}
+
 .userAvatar {
   width: 40px;
   height: 40px;
@@ -146,28 +185,73 @@
 }
 
 @media (max-width: 768px) {
-  .layoutContainer {
-    flex-direction: column;
-  }
   .sidebar {
-    width: 100%;
-    height: auto;
+    width: min(86vw, 320px);
+    height: 100dvh;
     position: fixed;
+    top: 0;
+    left: 0;
     bottom: 0;
-    top: auto;
-    border-right: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  .nav {
-    display: flex;
-    justify-content: space-around;
-    padding: 10px;
+    transform: translateX(-102%);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: none;
+    z-index: 1100;
   }
   .sidebarHeader, .sidebarFooter {
-    display: none;
+    display: flex;
+  }
+  .sidebarHeader {
+    padding: 22px 16px;
+  }
+  .mobileCloseBtn {
+    display: inline-flex;
+  }
+  .nav {
+    display: block;
+    padding: 0 12px 12px;
   }
   .navItem {
-    margin-bottom: 0;
+    margin-bottom: 6px;
+    justify-content: flex-start;
+    padding: 12px 14px;
+  }
+  .navItem span {
+    display: inline;
+    font-size: 13px;
+  }
+  .sectionLabel {
+    padding: 0 14px;
+    margin-bottom: 10px;
+  }
+  .topBar {
+    height: 64px;
+    padding: 0 12px;
+    gap: 10px;
+  }
+  .mobileMenuBtn {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+  .userInfo {
+    min-width: 0;
+  }
+  .userInfo > div:first-child {
+    display: none;
+  }
+  .userAvatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+  .mobileBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.58);
+    z-index: 1090;
+  }
+  .mobileBackdropVisible {
+    display: block;
   }
 }
 

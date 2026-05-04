@@ -187,3 +187,50 @@
     margin: 0 auto 40px auto;
   }
 }
+
+@media (max-width: 768px) {
+  .login-left {
+    padding: 28px 14px;
+  }
+
+  .login-right {
+    padding: 16px 12px 24px;
+  }
+
+  .login-title {
+    font-size: 32px;
+    letter-spacing: -1.2px;
+  }
+
+  .login-desc {
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+
+  .login-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    margin-bottom: 22px;
+  }
+
+  .login-form {
+    max-width: 100%;
+    border-radius: 22px;
+    padding: 22px 14px;
+  }
+
+  .input-field {
+    height: 52px;
+    border-radius: 14px;
+    font-size: 15px;
+    padding: 0 16px 0 48px;
+  }
+
+  .submit-btn {
+    height: 54px;
+    border-radius: 14px;
+    font-size: 16px;
+    margin-top: 24px;
+  }
+}

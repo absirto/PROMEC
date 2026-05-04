@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Users, Briefcase, Package, Wrench,
   ClipboardCheck, Tag, Settings, LogOut,
   Shield, Wallet, Database,
-  LayoutDashboard, Layers, FileText,
+  LayoutDashboard, Layers, FileText, Menu, X,
 } from 'lucide-react';
 import styles from './MainLayout.module.css';
 
@@ -15,8 +15,13 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -78,12 +83,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className={styles.layoutContainer}>
-      <aside className={styles.sidebar}>
+      <div
+        className={`${styles.mobileBackdrop} ${isMobileMenuOpen ? styles.mobileBackdropVisible : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.sidebarHeader}>
           <div className={styles.logoIcon}>
             <Wrench size={24} />
           </div>
           <span className={styles.logoText}>ProMEC</span>
+          <button
+            type="button"
+            className={styles.mobileCloseBtn}
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Fechar menu"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav className={styles.nav} style={{ overflowY: 'auto' }}>
@@ -130,6 +148,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       <main className={styles.content}>
         <header className={styles.topBar}>
+          <button
+            type="button"
+            className={styles.mobileMenuBtn}
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Abrir menu"
+          >
+            <Menu size={18} />
+          </button>
+
           <div style={{ color: '#8a99a8', fontSize: 14, fontWeight: 500 }}>
             {location.pathname === '/' ? 'Dashboard' : location.pathname.split('/')[1].replace('-', ' ').toUpperCase()}
           </div>
