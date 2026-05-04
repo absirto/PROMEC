@@ -383,6 +383,80 @@ export const ServiceOrderController = {
     }
   },
 
+  async updatePlan(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isFinite(id) || id <= 0) {
+        return res.status(400).json({ status: 'error', message: 'ID de OS inválido.' });
+      }
+
+      const data = req.body || {};
+      const actor = getActor(req);
+
+      const order = await prisma.$transaction(async (tx) => {
+        const existing = await tx.serviceOrder.findUnique({ where: { id } });
+        if (!existing) {
+          throw new Error('NOT_FOUND');
+        }
+
+        const updated = await tx.serviceOrder.update({
+          where: { id },
+          data: {
+            workCenter: data.workCenter !== undefined ? (data.workCenter || null) : undefined,
+            plannedStartDate: data.plannedStartDate !== undefined
+              ? (data.plannedStartDate ? new Date(data.plannedStartDate) : null)
+              : undefined,
+            plannedEndDate: data.plannedEndDate !== undefined
+              ? (data.plannedEndDate ? new Date(data.plannedEndDate) : null)
+              : undefined,
+            plannedHours: data.plannedHours !== undefined
+              ? (data.plannedHours !== null ? Number(data.plannedHours) : null)
+              : undefined,
+          }
+        });
+
+        await (tx.serviceOrderTrace as any).create({
+          data: {
+            serviceOrderId: id,
+            serviceOrderCode: updated.traceCode,
+            action: 'PLAN_UPDATE',
+            changedByUserId: actor.id,
+            changedByEmail: actor.email,
+            payload: {
+              workCenter: updated.workCenter,
+              plannedStartDate: updated.plannedStartDate,
+              plannedEndDate: updated.plannedEndDate,
+              plannedHours: updated.plannedHours,
+            }
+          }
+        });
+
+        return tx.serviceOrder.findUnique({
+          where: { id },
+          include: {
+            person: { include: { naturalPerson: true, legalPerson: true } },
+            services: { include: { service: true, employee: true } },
+            materials: { include: { material: true } },
+            qualityControls: true,
+            transactions: true,
+            traces: {
+              orderBy: { createdAt: 'desc' },
+              take: 10,
+            }
+          }
+        });
+      });
+
+      return res.json(enrichFinancials(order));
+    } catch (error: any) {
+      if (error.message === 'NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
+      }
+
+      return res.status(400).json({ status: 'error', message: 'Erro ao atualizar planejamento da OS.', details: error.message });
+    }
+  },
+
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);

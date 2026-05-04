@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, Eye, Edit2, Calendar, Filter, X } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
+import { useToast } from '../../components/ToastProvider';
 
 const formatDateInput = (date: Date) => {
   const year = date.getFullYear();
@@ -13,10 +14,12 @@ const formatDateInput = (date: Date) => {
 
 const ServiceOrdersList: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pcpOverview, setPcpOverview] = useState<any>({ centers: [], days: 0, dailyCapacityHours: 8 });
   const [pcpLoading, setPcpLoading] = useState(false);
+  const [savingPlan, setSavingPlan] = useState(false);
   
   // Filtros
   const [search, setSearch] = useState('');
@@ -27,16 +30,23 @@ const ServiceOrdersList: React.FC = () => {
   const [pcpStartDate, setPcpStartDate] = useState(formatDateInput(new Date()));
   const [pcpEndDate, setPcpEndDate] = useState(formatDateInput(new Date(Date.now() + (6 * 24 * 60 * 60 * 1000))));
   const [dailyCapacityHours, setDailyCapacityHours] = useState(8);
+  const [planEditor, setPlanEditor] = useState<any | null>(null);
+  const [planForm, setPlanForm] = useState({
+    workCenter: '',
+    plannedStartDate: '',
+    plannedEndDate: '',
+    plannedHours: 0,
+  });
 
-  useEffect(() => {
+  const loadOrders = useCallback(() => {
     setLoading(true);
     api.get('/service-orders')
       .then((data: any) => setOrders(data))
-      .catch(() => {})
+      .catch(() => showToast('Erro ao carregar ordens de serviço.', 'error'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [showToast]);
 
-  useEffect(() => {
+  const loadPcpOverview = useCallback(() => {
     setPcpLoading(true);
     api.get('/service-orders/pcp/overview', {
       params: {
@@ -50,8 +60,54 @@ const ServiceOrdersList: React.FC = () => {
       .finally(() => setPcpLoading(false));
   }, [pcpStartDate, pcpEndDate, dailyCapacityHours]);
 
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    loadPcpOverview();
+  }, [loadPcpOverview]);
+
   const handleView = (id: number) => navigate(`/service-orders/${id}`);
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
+
+  const openPlanEditor = (order: any) => {
+    setPlanEditor(order);
+    setPlanForm({
+      workCenter: order.workCenter || '',
+      plannedStartDate: order.plannedStartDate ? String(order.plannedStartDate).split('T')[0] : '',
+      plannedEndDate: order.plannedEndDate ? String(order.plannedEndDate).split('T')[0] : '',
+      plannedHours: Number(order.plannedHours) || 0,
+    });
+  };
+
+  const closePlanEditor = () => {
+    if (savingPlan) return;
+    setPlanEditor(null);
+  };
+
+  const saveQuickPlan = async () => {
+    if (!planEditor) return;
+
+    setSavingPlan(true);
+    try {
+      await api.patch(`/service-orders/${planEditor.id}/plan`, {
+        workCenter: planForm.workCenter?.trim() || null,
+        plannedStartDate: planForm.plannedStartDate ? new Date(planForm.plannedStartDate).toISOString() : null,
+        plannedEndDate: planForm.plannedEndDate ? new Date(planForm.plannedEndDate).toISOString() : null,
+        plannedHours: Number(planForm.plannedHours) || 0,
+      });
+
+      showToast(`Planejamento da OS #${planEditor.id} atualizado.`, 'success');
+      setPlanEditor(null);
+      loadOrders();
+      loadPcpOverview();
+    } catch (error: any) {
+      showToast(typeof error === 'string' ? error : 'Erro ao replanejar OS.', 'error');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
 
   const filtered = orders.filter(order => {
     const matchSearch = order.person?.naturalPerson?.name?.toLowerCase().includes(search.toLowerCase()) || 
@@ -294,12 +350,122 @@ const ServiceOrdersList: React.FC = () => {
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                     <button onClick={() => handleView(order.id)} className={`${styles.actionBtn} ${styles.viewBtn}`}><Eye size={16} /></button>
                     <button onClick={() => handleEdit(order.id)} className={`${styles.actionBtn} ${styles.editBtn}`}><Edit2 size={16} /></button>
+                    <button
+                      onClick={() => openPlanEditor(order)}
+                      className={`${styles.actionBtn} ${styles.editBtn}`}
+                      style={{ minWidth: 50, fontSize: 11, fontWeight: 800 }}
+                    >
+                      PCP
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+
+      {planEditor && (
+        <div
+          onClick={closePlanEditor}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(2, 6, 23, 0.72)',
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 560,
+              background: 'linear-gradient(180deg, rgba(15,23,42,0.96), rgba(2,6,23,0.96))',
+              border: '1px solid rgba(148,163,184,0.22)',
+              borderRadius: 18,
+              padding: 18,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, color: '#f8fafc' }}>Replanejar OS #{planEditor.id}</h3>
+              <button
+                onClick={closePlanEditor}
+                disabled={savingPlan}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 20 }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Centro de Trabalho</label>
+                <input
+                  className={styles.searchInput}
+                  value={planForm.workCenter}
+                  onChange={e => setPlanForm({ ...planForm, workCenter: e.target.value })}
+                  placeholder="Ex: Solda MIG"
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Horas Planejadas</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.5"
+                  className={styles.searchInput}
+                  value={planForm.plannedHours}
+                  onChange={e => setPlanForm({ ...planForm, plannedHours: parseFloat(e.target.value) || 0 })}
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Início Planejado</label>
+                <input
+                  type="date"
+                  className={styles.searchInput}
+                  value={planForm.plannedStartDate}
+                  onChange={e => setPlanForm({ ...planForm, plannedStartDate: e.target.value })}
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Fim Planejado</label>
+                <input
+                  type="date"
+                  className={styles.searchInput}
+                  value={planForm.plannedEndDate}
+                  onChange={e => setPlanForm({ ...planForm, plannedEndDate: e.target.value })}
+                  style={{ height: 38, width: '100%', padding: '0 10px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                onClick={closePlanEditor}
+                disabled={savingPlan}
+                style={{ background: 'rgba(148,163,184,0.15)', color: '#cbd5e1', border: 'none', padding: '10px 14px', borderRadius: 10, fontWeight: 700, cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={saveQuickPlan}
+                disabled={savingPlan}
+                style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981', border: '1px solid rgba(16,185,129,0.4)', padding: '10px 14px', borderRadius: 10, fontWeight: 800, cursor: 'pointer' }}
+              >
+                {savingPlan ? 'Salvando...' : 'Salvar Planejamento'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

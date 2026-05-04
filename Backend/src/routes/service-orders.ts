@@ -8,6 +8,7 @@ router.get('/', authenticateToken, requirePermission('os:visualizar'), ServiceOr
 router.get('/pcp/overview', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpOverview);
 router.get('/:id', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
 router.post('/', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.create);
+router.patch('/:id/plan', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.updatePlan);
 router.put('/:id', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.update);
 router.delete('/:id', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.delete);
 
