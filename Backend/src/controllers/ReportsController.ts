@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import prisma from '../services/prisma';
 import { generateAccountsPDF } from '../utils/pdfAccounts';
 import { getSettings } from '../utils/pdfSettings';
@@ -10,7 +11,90 @@ import { generateServiceOrdersPDF } from '../utils/pdfServiceOrders';
 import { generatePurchasesPDF } from '../utils/pdfPurchases';
 import { AuthRequest } from '../middleware/auth';
 
+function getReportActor(req: Request) {
+  const authReq = req as AuthRequest;
+  return {
+    id: authReq.user?.id ? Number(authReq.user.id) : null,
+    email: authReq.user?.email ? String(authReq.user.email) : null,
+    fullName: [authReq.user?.firstName, authReq.user?.lastName].filter(Boolean).join(' ').trim() || authReq.user?.email || 'Usuário autenticado',
+  };
+}
+
+async function registerReportEmission(params: {
+  reportKey: string;
+  exportFormat: string;
+  fileName?: string | null;
+  fileHash?: string | null;
+  filters?: any;
+  generatedByUserId?: number | null;
+  generatedByEmail?: string | null;
+}) {
+  await (prisma as any).reportEmission.create({
+    data: {
+      reportKey: params.reportKey,
+      exportFormat: params.exportFormat,
+      fileName: params.fileName || null,
+      fileHash: params.fileHash || null,
+      filters: params.filters || null,
+      generatedByUserId: params.generatedByUserId || null,
+      generatedByEmail: params.generatedByEmail || null,
+    }
+  });
+}
+
 export const ReportsController = {
+  async listEmissions(req: Request, res: Response) {
+    try {
+      const reportKey = typeof req.query.reportKey === 'string' ? req.query.reportKey : undefined;
+      const limit = req.query.limit ? Math.min(100, Math.max(1, Number(req.query.limit))) : 20;
+      const where: any = {};
+      if (reportKey) where.reportKey = reportKey;
+
+      const emissions = await (prisma as any).reportEmission.findMany({
+        where,
+        include: {
+          generatedBy: {
+            select: { id: true, firstName: true, lastName: true, email: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+
+      return res.json(emissions.map((emission: any) => ({
+        ...emission,
+        generatedByName: emission.generatedBy ? `${emission.generatedBy.firstName || ''} ${emission.generatedBy.lastName || ''}`.trim() || emission.generatedBy.email : emission.generatedByEmail,
+      })));
+    } catch {
+      return res.status(500).json({ error: 'Erro ao listar histórico de emissões.' });
+    }
+  },
+
+  async registerEmission(req: Request, res: Response) {
+    try {
+      const actor = getReportActor(req);
+      const reportKey = req.body?.reportKey ? String(req.body.reportKey) : '';
+      const exportFormat = req.body?.exportFormat ? String(req.body.exportFormat).toUpperCase() : '';
+      if (!reportKey || !exportFormat) {
+        return res.status(400).json({ error: 'reportKey e exportFormat são obrigatórios.' });
+      }
+
+      await registerReportEmission({
+        reportKey,
+        exportFormat,
+        fileName: req.body?.fileName ? String(req.body.fileName) : null,
+        fileHash: req.body?.fileHash ? String(req.body.fileHash) : null,
+        filters: req.body?.filters || null,
+        generatedByUserId: actor.id,
+        generatedByEmail: actor.email,
+      });
+
+      return res.status(201).json({ status: 'success' });
+    } catch {
+      return res.status(500).json({ error: 'Erro ao registrar emissão de relatório.' });
+    }
+  },
+
   async operationalPurchases(req: Request, res: Response) {
     try {
       const { start, end, status, supplierPersonId } = req.query;
@@ -86,8 +170,8 @@ export const ReportsController = {
 
   async operationalPurchasesPDF(req: Request, res: Response) {
     try {
-      const authReq = req as AuthRequest;
-      const emitterName = [authReq.user?.firstName, authReq.user?.lastName].filter(Boolean).join(' ').trim() || authReq.user?.email || 'Usuário autenticado';
+      const actor = getReportActor(req);
+      const emitterName = actor.fullName;
       const { start, end, status, supplierPersonId } = req.query;
       const requestWhere: any = {};
       const historyWhere: any = { type: 'IN', unitCost: { not: null } };
@@ -179,8 +263,20 @@ export const ReportsController = {
         }
       );
 
+      const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+      await registerReportEmission({
+        reportKey: 'purchases',
+        exportFormat: 'PDF',
+        fileName: 'relatorio_compras.pdf',
+        fileHash,
+        filters: { start, end, status, supplierPersonId },
+        generatedByUserId: actor.id,
+        generatedByEmail: actor.email,
+      });
+
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="relatorio_compras.pdf"');
+      res.setHeader('X-Report-Hash', fileHash);
       return res.send(pdfBuffer);
     } catch (error) {
       return res.status(500).json({ error: 'Erro ao gerar PDF do relatório de compras.' });

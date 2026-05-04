@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Sheet } from 'lucide-react';
+import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Sheet, FileSpreadsheet } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
@@ -19,7 +19,10 @@ const PurchasesList: React.FC = () => {
   const [purchaseRequests, setPurchaseRequests] = useState<any[]>([]);
   const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
   const [people, setPeople] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any | null>(null);
+  const [emissions, setEmissions] = useState<any[]>([]);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportingXlsx, setExportingXlsx] = useState(false);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -55,15 +58,19 @@ const PurchasesList: React.FC = () => {
         purchaseHistoryParams.set('supplierPersonId', filters.supplierPersonId);
       }
 
-      const [requestsData, historyData, peopleData] = await Promise.all([
+      const [requestsData, historyData, peopleData, settingsData, emissionsData] = await Promise.all([
         api.get(`/service-orders/purchase-requests${purchaseRequestParams.toString() ? `?${purchaseRequestParams.toString()}` : ''}`),
         api.get(`/stock/purchases${purchaseHistoryParams.toString() ? `?${purchaseHistoryParams.toString()}` : ''}`),
         api.get('/people'),
+        api.get('/settings').catch(() => null),
+        api.get('/reports/emissions?reportKey=purchases&limit=8').catch(() => []),
       ]);
 
       setPurchaseRequests(Array.isArray(requestsData) ? requestsData : []);
       setPurchaseHistory(Array.isArray(historyData) ? historyData : []);
       setPeople(Array.isArray(peopleData) ? peopleData : []);
+      setSettings(settingsData || null);
+      setEmissions(Array.isArray(emissionsData) ? emissionsData : []);
     } catch {
       showToast('Erro ao carregar central de compras.', 'error');
     } finally {
@@ -103,6 +110,7 @@ const PurchasesList: React.FC = () => {
       });
 
       downloadBlob(response.data, 'relatorio_compras.pdf');
+      void fetchData();
     } catch {
       showToast('Erro ao exportar PDF do relatório de compras.', 'error');
     } finally {
@@ -110,75 +118,114 @@ const PurchasesList: React.FC = () => {
     }
   };
 
-  const handleExportXlsx = () => {
-    const summaryRows = [
-      { Indicador: 'Solicitações totais', Valor: purchaseRequests.length },
-      { Indicador: 'Solicitações abertas/parciais', Valor: purchaseRequests.filter((request) => request.status !== 'CLOSED').length },
-      { Indicador: 'Compras registradas', Valor: purchaseHistory.length },
-      { Indicador: 'Valor total comprado', Valor: purchaseHistory.reduce((acc, log) => acc + Number(log.totalPaid || 0), 0) },
-      { Indicador: 'Período inicial', Valor: filters.startDate || '-' },
-      { Indicador: 'Período final', Valor: filters.endDate || '-' },
-      { Indicador: 'Status filtrado', Valor: filters.status || 'Todos' },
-      { Indicador: 'Fornecedor filtrado', Valor: people.find((person) => String(person.id) === filters.supplierPersonId)?.naturalPerson?.name || people.find((person) => String(person.id) === filters.supplierPersonId)?.legalPerson?.corporateName || 'Todos' },
-    ];
+  const toHex = (buffer: ArrayBuffer) => Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 
-    const requestRows = purchaseRequests.flatMap((request) =>
-      (request.items || []).map((item: any) => ({
-        Codigo: request.code,
-        Status: request.status,
-        OS: request.serviceOrder?.traceCode || '',
-        DescricaoOS: request.serviceOrder?.description || '',
-        Material: item.material?.name || '',
-        QuantidadeSolicitada: Number(item.requestedQty || 0),
-        QuantidadeEmFalta: Number(item.shortageQty || 0),
-        Unidade: item.unit || item.material?.unit || '',
-        StatusItem: item.status,
-        DataCriacao: new Date(request.createdAt).toLocaleString('pt-BR'),
-      }))
-    );
+  const handleExportXlsx = async () => {
+    setExportingXlsx(true);
+    try {
+      const summaryRows = [
+        { Indicador: 'Empresa', Valor: settings?.companyName || 'ProMEC' },
+        { Indicador: 'Logo', Valor: settings?.logoUrl || '-' },
+        { Indicador: 'CNPJ', Valor: settings?.cnpj || '-' },
+        { Indicador: 'Contato', Valor: settings?.contactEmail || settings?.phone || '-' },
+        { Indicador: 'Solicitações totais', Valor: purchaseRequests.length },
+        { Indicador: 'Solicitações abertas/parciais', Valor: purchaseRequests.filter((request) => request.status !== 'CLOSED').length },
+        { Indicador: 'Compras registradas', Valor: purchaseHistory.length },
+        { Indicador: 'Valor total comprado', Valor: purchaseHistory.reduce((acc, log) => acc + Number(log.totalPaid || 0), 0) },
+        { Indicador: 'Período inicial', Valor: filters.startDate || '-' },
+        { Indicador: 'Período final', Valor: filters.endDate || '-' },
+        { Indicador: 'Status filtrado', Valor: filters.status || 'Todos' },
+        { Indicador: 'Fornecedor filtrado', Valor: people.find((person) => String(person.id) === filters.supplierPersonId)?.naturalPerson?.name || people.find((person) => String(person.id) === filters.supplierPersonId)?.legalPerson?.corporateName || 'Todos' },
+      ];
 
-    const historyRows = purchaseHistory.map((log) => ({
-      Material: log.material?.name || '',
-      Fornecedor: log.supplierName || getPersonName(log.supplierPerson),
-      Quantidade: Number(log.quantity || 0),
-      Unidade: log.material?.unit || '',
-      CustoUnitario: Number(log.unitCost || 0),
-      TotalPago: Number(log.totalPaid || 0),
-      DataCompra: new Date(log.createdAt).toLocaleString('pt-BR'),
-      Observacao: log.description || '',
-    }));
+      const requestRows = purchaseRequests.flatMap((request) =>
+        (request.items || []).map((item: any) => ({
+          Codigo: request.code,
+          Status: request.status,
+          OS: request.serviceOrder?.traceCode || '',
+          DescricaoOS: request.serviceOrder?.description || '',
+          Material: item.material?.name || '',
+          QuantidadeSolicitada: Number(item.requestedQty || 0),
+          QuantidadeEmFalta: Number(item.shortageQty || 0),
+          Unidade: item.unit || item.material?.unit || '',
+          StatusItem: item.status,
+          DataCriacao: new Date(request.createdAt).toLocaleString('pt-BR'),
+        }))
+      );
 
-    const workbook = XLSX.utils.book_new();
-    const summarySheet = XLSX.utils.json_to_sheet(summaryRows);
-    const requestsSheet = XLSX.utils.json_to_sheet(requestRows);
-    const historySheet = XLSX.utils.json_to_sheet(historyRows);
-    summarySheet['!cols'] = [{ wch: 28 }, { wch: 24 }];
-    requestsSheet['!cols'] = [
-      { wch: 16 },
-      { wch: 12 },
-      { wch: 14 },
-      { wch: 36 },
-      { wch: 28 },
-      { wch: 18 },
-      { wch: 18 },
-      { wch: 10 },
-      { wch: 14 },
-      { wch: 22 },
-    ];
-    historySheet['!cols'] = [
-      { wch: 28 },
-      { wch: 30 },
-      { wch: 14 },
-      { wch: 10 },
-      { wch: 16 },
-      { wch: 16 },
-      { wch: 22 },
-      { wch: 36 },
-    ];
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
-    XLSX.utils.book_append_sheet(workbook, requestsSheet, 'Solicitacoes');
-    XLSX.utils.book_append_sheet(workbook, historySheet, 'Compras');
-    XLSX.writeFile(workbook, 'relatorio_compras.xlsx');
+      const historyRows = purchaseHistory.map((log) => ({
+        Material: log.material?.name || '',
+        Fornecedor: log.supplierName || getPersonName(log.supplierPerson),
+        Quantidade: Number(log.quantity || 0),
+        Unidade: log.material?.unit || '',
+        CustoUnitario: Number(log.unitCost || 0),
+        TotalPago: Number(log.totalPaid || 0),
+        DataCompra: new Date(log.createdAt).toLocaleString('pt-BR'),
+        Observacao: log.description || '',
+      }));
+
+      const workbook = XLSX.utils.book_new();
+      const summarySheet = XLSX.utils.aoa_to_sheet([
+        [settings?.companyName || 'ProMEC'],
+        ['Relatório de Compras'],
+        [`Emitido em ${new Date().toLocaleString('pt-BR')}`],
+      ]);
+      XLSX.utils.sheet_add_json(summarySheet, summaryRows, { origin: 'A4', skipHeader: false });
+      const requestsSheet = XLSX.utils.json_to_sheet(requestRows);
+      const historySheet = XLSX.utils.json_to_sheet(historyRows);
+      summarySheet['!cols'] = [{ wch: 28 }, { wch: 42 }];
+      requestsSheet['!cols'] = [
+        { wch: 16 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 36 },
+        { wch: 28 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 10 },
+        { wch: 14 },
+        { wch: 22 },
+      ];
+      historySheet['!cols'] = [
+        { wch: 28 },
+        { wch: 30 },
+        { wch: 14 },
+        { wch: 10 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 22 },
+        { wch: 36 },
+      ];
+      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
+      XLSX.utils.book_append_sheet(workbook, requestsSheet, 'Solicitacoes');
+      XLSX.utils.book_append_sheet(workbook, historySheet, 'Compras');
+      const arrayBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', arrayBuffer);
+      const fileHash = toHex(hashBuffer);
+      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      downloadBlob(blob, 'relatorio_compras.xlsx');
+
+      try {
+        await api.post('/reports/emissions', {
+          reportKey: 'purchases',
+          exportFormat: 'XLSX',
+          fileName: 'relatorio_compras.xlsx',
+          fileHash,
+          filters: {
+            start: filters.startDate || null,
+            end: filters.endDate || null,
+            status: filters.status || null,
+            supplierPersonId: filters.supplierPersonId || null,
+          }
+        });
+      } catch {
+        showToast('A planilha foi gerada, mas o log de emissão não pôde ser gravado.', 'warning');
+      }
+
+      void fetchData();
+    } finally {
+      setExportingXlsx(false);
+    }
   };
 
   useEffect(() => {
@@ -264,8 +311,8 @@ const PurchasesList: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginBottom: 16 }}>
-        <button className={styles.newBtn} type="button" onClick={handleExportXlsx} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
-          <Sheet size={18} /> Exportar XLSX
+        <button className={styles.newBtn} type="button" onClick={() => void handleExportXlsx()} disabled={exportingXlsx} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
+          <Sheet size={18} /> {exportingXlsx ? 'Gerando XLSX...' : 'Exportar XLSX'}
         </button>
         <button className={styles.newBtn} type="button" onClick={() => void handleExportPdf()} disabled={exportingPdf} style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)' }}>
           <FileDown size={18} /> {exportingPdf ? 'Gerando PDF...' : 'Exportar PDF'}
@@ -431,6 +478,33 @@ const PurchasesList: React.FC = () => {
                   <div style={{ color: '#94a3b8', fontSize: 12 }}>Quantidade: {Number(log.quantity || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} {log.material?.unit || ''}</div>
                   <div style={{ color: '#94a3b8', fontSize: 12 }}>Custo unitário: {Number(log.unitCost || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
                   <div style={{ color: '#64748b', fontSize: 12, marginTop: 6 }}>{new Date(log.createdAt).toLocaleString('pt-BR')}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{ background: 'rgba(2,6,23,0.35)', border: '1px solid rgba(148,163,184,0.16)', borderRadius: 18, padding: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <FileSpreadsheet size={18} color="#38bdf8" />
+            <strong style={{ color: '#e2e8f0' }}>Histórico de Emissões</strong>
+          </div>
+
+          {loading ? (
+            <div style={{ color: '#94a3b8' }}>Carregando emissões...</div>
+          ) : emissions.length === 0 ? (
+            <div style={{ color: '#94a3b8' }}>Nenhuma emissão registrada para este relatório.</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {emissions.map((emission) => (
+                <div key={emission.id} style={{ border: '1px solid rgba(148,163,184,0.15)', borderRadius: 14, padding: 12, background: 'rgba(15,23,42,0.45)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                    <div style={{ color: '#fff', fontWeight: 800 }}>{emission.fileName}</div>
+                    <div style={{ color: '#38bdf8', fontWeight: 800 }}>{emission.exportFormat}</div>
+                  </div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Emitido por: {emission.generatedByEmail || 'Usuário não identificado'}</div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Hash: {String(emission.fileHash || '').slice(0, 20)}...</div>
+                  <div style={{ color: '#64748b', fontSize: 12, marginTop: 6 }}>{new Date(emission.createdAt).toLocaleString('pt-BR')}</div>
                 </div>
               ))}
             </div>

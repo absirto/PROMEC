@@ -4,6 +4,9 @@ import { authenticateToken, requirePermission } from '../middleware/auth';
 
 const router = Router();
 
+router.get('/emissions', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.listEmissions);
+router.post('/emissions', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.registerEmission);
+
 // Relatórios Operacionais
 router.get('/operational/service-orders', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalServiceOrders);
 router.get('/operational/service-orders/pdf', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalServiceOrdersPDF);

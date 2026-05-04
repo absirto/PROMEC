@@ -20,6 +20,7 @@ model User {
   updatedAt          DateTime            @updatedAt
   employee           Employee?
   group              Group?              @relation(fields: [groupId], references: [id])
+  reportEmissions    ReportEmission[]
   serviceOrderTraces ServiceOrderTrace[]
 }
 
@@ -381,6 +382,23 @@ model StockLog {
 
   @@index([materialId, createdAt])
   @@index([supplierPersonId])
+}
+
+model ReportEmission {
+  id                Int      @id @default(autoincrement())
+  reportKey         String
+  exportFormat      String
+  fileName          String?
+  fileHash          String?
+  filters           Json?
+  generatedByUserId Int?
+  generatedByEmail  String?
+  createdAt         DateTime @default(now())
+  generatedBy       User?    @relation(fields: [generatedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([reportKey, createdAt])
+  @@index([exportFormat])
+  @@index([generatedByUserId])
 }
 
 model Transaction {
