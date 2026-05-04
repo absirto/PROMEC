@@ -4,10 +4,19 @@ import { Search, Plus, Eye, Edit2, Calendar, Filter, X } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 
+const formatDateInput = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const ServiceOrdersList: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pcpOverview, setPcpOverview] = useState<any>({ centers: [], days: 0, dailyCapacityHours: 8 });
+  const [pcpLoading, setPcpLoading] = useState(false);
   
   // Filtros
   const [search, setSearch] = useState('');
@@ -15,6 +24,9 @@ const ServiceOrdersList: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [pcpStartDate, setPcpStartDate] = useState(formatDateInput(new Date()));
+  const [pcpEndDate, setPcpEndDate] = useState(formatDateInput(new Date(Date.now() + (6 * 24 * 60 * 60 * 1000))));
+  const [dailyCapacityHours, setDailyCapacityHours] = useState(8);
 
   useEffect(() => {
     setLoading(true);
@@ -23,6 +35,20 @@ const ServiceOrdersList: React.FC = () => {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    setPcpLoading(true);
+    api.get('/service-orders/pcp/overview', {
+      params: {
+        startDate: pcpStartDate,
+        endDate: pcpEndDate,
+        dailyCapacityHours,
+      }
+    })
+      .then((data: any) => setPcpOverview(data || { centers: [] }))
+      .catch(() => setPcpOverview({ centers: [] }))
+      .finally(() => setPcpLoading(false));
+  }, [pcpStartDate, pcpEndDate, dailyCapacityHours]);
 
   const handleView = (id: number) => navigate(`/service-orders/${id}`);
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
@@ -48,6 +74,10 @@ const ServiceOrdersList: React.FC = () => {
     setEndDate('');
   };
 
+  const totalPlanned = (pcpOverview?.centers || []).reduce((acc: number, c: any) => acc + (c.plannedHours || 0), 0);
+  const totalCapacity = (pcpOverview?.centers || []).reduce((acc: number, c: any) => acc + (c.capacityHours || 0), 0);
+  const totalLoadPercent = totalCapacity > 0 ? (totalPlanned / totalCapacity) * 100 : 0;
+
   return (
     <div className={styles.listContainer}>
       <div className={styles.header}>
@@ -68,6 +98,97 @@ const ServiceOrdersList: React.FC = () => {
         <Link to="/service-orders/new" className={styles.newBtn}>
           <Plus size={20} /> Nova OS
         </Link>
+      </div>
+
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.82), rgba(30,41,59,0.78))',
+        border: '1px solid rgba(148, 163, 184, 0.2)',
+        borderRadius: 18,
+        padding: 18,
+        marginBottom: 22,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <h3 style={{ margin: 0, color: '#e2e8f0', fontSize: 18 }}>PCP: Capacidade x Carga</h3>
+            <div style={{ color: '#94a3b8', fontSize: 12, marginTop: 4 }}>
+              {pcpOverview?.days || 0} dias no período • {pcpOverview?.centers?.length || 0} centros ativos
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div>
+              <label style={{ fontSize: 11, color: '#94a3b8', display: 'block', marginBottom: 4 }}>Início</label>
+              <input type="date" value={pcpStartDate} onChange={e => setPcpStartDate(e.target.value)} className={styles.searchInput} style={{ height: 34, padding: '0 10px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: '#94a3b8', display: 'block', marginBottom: 4 }}>Fim</label>
+              <input type="date" value={pcpEndDate} onChange={e => setPcpEndDate(e.target.value)} className={styles.searchInput} style={{ height: 34, padding: '0 10px' }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: '#94a3b8', display: 'block', marginBottom: 4 }}>Capacidade/dia (h)</label>
+              <input
+                type="number"
+                min={1}
+                step="0.5"
+                value={dailyCapacityHours}
+                onChange={e => setDailyCapacityHours(Math.max(1, parseFloat(e.target.value) || 8))}
+                className={styles.searchInput}
+                style={{ height: 34, width: 130, padding: '0 10px' }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12 }}>
+            <div style={{ color: '#94a3b8', fontSize: 11 }}>Carga Planejada Total</div>
+            <div style={{ color: '#f8fafc', fontSize: 20, fontWeight: 800 }}>{totalPlanned.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h</div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12 }}>
+            <div style={{ color: '#94a3b8', fontSize: 11 }}>Capacidade Total</div>
+            <div style={{ color: '#f8fafc', fontSize: 20, fontWeight: 800 }}>{totalCapacity.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h</div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12 }}>
+            <div style={{ color: '#94a3b8', fontSize: 11 }}>Ocupação Global</div>
+            <div style={{ color: totalLoadPercent > 100 ? '#ef4444' : '#10b981', fontSize: 20, fontWeight: 900 }}>
+              {totalLoadPercent.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
+          {pcpLoading && <div style={{ color: '#94a3b8', fontSize: 13 }}>Atualizando visão PCP...</div>}
+          {!pcpLoading && (pcpOverview?.centers || []).length === 0 && (
+            <div style={{ color: '#94a3b8', fontSize: 13 }}>Nenhuma OS planejada para o período selecionado.</div>
+          )}
+          {!pcpLoading && (pcpOverview?.centers || []).map((center: any) => {
+            const load = Number(center.loadPercent || 0);
+            const cappedWidth = Math.min(load, 100);
+            const barColor = load > 100 ? '#ef4444' : load > 85 ? '#f59e0b' : '#10b981';
+
+            return (
+              <div key={center.workCenter} style={{ background: 'rgba(2,6,23,0.45)', border: '1px solid rgba(148,163,184,0.15)', borderRadius: 12, padding: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <strong style={{ color: '#e2e8f0', fontSize: 13 }}>{center.workCenter}</strong>
+                  <span style={{ color: barColor, fontWeight: 800, fontSize: 12 }}>
+                    {load.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}%
+                  </span>
+                </div>
+
+                <div style={{ marginTop: 8, height: 8, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.max(cappedWidth, 2)}%`, height: '100%', background: barColor }} />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: '#94a3b8' }}>
+                  <span>{(center.plannedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h planejadas</span>
+                  <span>{(center.capacityHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h capacidade</span>
+                </div>
+                <div style={{ marginTop: 4, fontSize: 11, color: '#64748b' }}>
+                  {center.ordersCount || 0} OS em carteira
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {showFilters && (
