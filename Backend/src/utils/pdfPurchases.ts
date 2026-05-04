@@ -11,11 +11,30 @@ function ensureSpace(doc: PDFKit.PDFDocument, neededHeight = 40) {
   }
 }
 
+function drawSummaryCard(doc: PDFKit.PDFDocument, x: number, y: number, width: number, label: string, value: string, color: string) {
+  doc.save();
+  doc.roundedRect(x, y, width, 52, 10).fillAndStroke('#f8fafc', '#cbd5e1');
+  doc.rect(x, y, 6, 52).fill(color);
+  doc.fillColor('#64748b').fontSize(9).text(label, x + 14, y + 10, { width: width - 24 });
+  doc.fillColor('#0f172a').fontSize(15).text(value, x + 14, y + 24, { width: width - 24 });
+  doc.restore();
+}
+
+function drawMiniBar(doc: PDFKit.PDFDocument, x: number, y: number, width: number, label: string, value: number, maxValue: number, color: string) {
+  const safeMax = maxValue > 0 ? maxValue : 1;
+  const fillWidth = Math.max(8, (value / safeMax) * width);
+  doc.fillColor('#475569').fontSize(9).text(label, x, y - 12);
+  doc.roundedRect(x, y, width, 10, 5).fill('#e2e8f0');
+  doc.roundedRect(x, y, Math.min(width, fillWidth), 10, 5).fill(color);
+  doc.fillColor('#0f172a').fontSize(9).text(String(value), x + width + 8, y - 2);
+}
+
 export function generatePurchasesPDF(
   purchaseRequests: any[],
   purchaseHistory: any[],
   filters: { start?: string; end?: string; status?: string; supplierName?: string },
-  companyLogo?: string
+  companyLogo?: string,
+  companyInfo?: { companyName?: string; cnpj?: string; phone?: string; contactEmail?: string; address?: string }
 ): Buffer {
   const doc = new PDFDocument({ margin: 40, size: 'A4' });
   if (companyLogo) (doc as any).companyLogo = companyLogo;
@@ -28,13 +47,32 @@ export function generatePurchasesPDF(
 
   const totalRequests = purchaseRequests.length;
   const openRequests = purchaseRequests.filter((request) => request.status !== 'CLOSED').length;
+  const closedRequests = purchaseRequests.filter((request) => request.status === 'CLOSED').length;
   const totalPurchases = purchaseHistory.length;
   const totalPaid = purchaseHistory.reduce((acc, log) => acc + Number(log.totalPaid || 0), 0);
+  const chartMax = Math.max(totalRequests, openRequests, closedRequests, totalPurchases, 1);
 
   doc.fontSize(11).fillColor('#455a64');
   doc.text(`Período: ${filters.start || '-'} a ${filters.end || '-'}`);
   doc.text(`Status solicitado: ${filters.status || 'Todos'}`);
   doc.text(`Fornecedor: ${filters.supplierName || 'Todos'}`);
+  doc.moveDown();
+
+  const cardsY = doc.y;
+  drawSummaryCard(doc, 40, cardsY, 120, 'Solicitações', String(totalRequests), '#2563eb');
+  drawSummaryCard(doc, 172, cardsY, 120, 'Em aberto/parcial', String(openRequests), '#f59e0b');
+  drawSummaryCard(doc, 304, cardsY, 120, 'Compras', String(totalPurchases), '#10b981');
+  drawSummaryCard(doc, 436, cardsY, 120, 'Valor comprado', formatCurrency(totalPaid), '#7c3aed');
+  doc.y = cardsY + 68;
+
+  doc.fontSize(13).fillColor('#1a237e').text('Resumo Visual', { underline: true });
+  doc.moveDown(0.5);
+  const chartY = doc.y + 4;
+  drawMiniBar(doc, 40, chartY, 180, 'Solicitações totais', totalRequests, chartMax, '#2563eb');
+  drawMiniBar(doc, 40, chartY + 22, 180, 'Solicitações fechadas', closedRequests, chartMax, '#10b981');
+  drawMiniBar(doc, 300, chartY, 180, 'Solicitações em aberto/parcial', openRequests, chartMax, '#f59e0b');
+  drawMiniBar(doc, 300, chartY + 22, 180, 'Compras registradas', totalPurchases, chartMax, '#7c3aed');
+  doc.y = chartY + 44;
   doc.moveDown();
 
   doc.fontSize(13).fillColor('#1a237e').text('Resumo Executivo', { underline: true });
@@ -95,6 +133,22 @@ export function generatePurchasesPDF(
       doc.moveDown(0.7);
     });
   }
+
+  ensureSpace(doc, 90);
+  doc.moveDown();
+  doc.fontSize(13).fillColor('#1a237e').text('Emissão Institucional', { underline: true });
+  doc.moveDown(0.5);
+  doc.fontSize(10).fillColor('#334155');
+  doc.text(`Empresa: ${companyInfo?.companyName || 'ProMEC'}`);
+  if (companyInfo?.cnpj) doc.text(`CNPJ: ${companyInfo.cnpj}`);
+  if (companyInfo?.address) doc.text(`Endereço: ${companyInfo.address}`);
+  if (companyInfo?.phone || companyInfo?.contactEmail) {
+    doc.text(`Contato: ${companyInfo?.phone || '-'} ${companyInfo?.contactEmail ? `| ${companyInfo.contactEmail}` : ''}`);
+  }
+  doc.moveDown(1.2);
+  doc.moveTo(40, doc.y).lineTo(250, doc.y).stroke('#94a3b8');
+  doc.moveDown(0.3);
+  doc.fontSize(10).fillColor('#475569').text('Assinatura / Responsável pela emissão do relatório', 40);
 
   doc.end();
   return Buffer.concat(buffers);

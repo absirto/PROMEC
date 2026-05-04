@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Sheet } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
@@ -109,46 +110,39 @@ const PurchasesList: React.FC = () => {
     }
   };
 
-  const handleExportCsv = () => {
-    const lines = [
-      ['Tipo', 'Codigo', 'Status', 'OS', 'Material', 'Fornecedor', 'Quantidade', 'CustoUnitario', 'TotalPago', 'Data'].join(';')
-    ];
+  const handleExportXlsx = () => {
+    const requestRows = purchaseRequests.flatMap((request) =>
+      (request.items || []).map((item: any) => ({
+        Codigo: request.code,
+        Status: request.status,
+        OS: request.serviceOrder?.traceCode || '',
+        DescricaoOS: request.serviceOrder?.description || '',
+        Material: item.material?.name || '',
+        QuantidadeSolicitada: Number(item.requestedQty || 0),
+        QuantidadeEmFalta: Number(item.shortageQty || 0),
+        Unidade: item.unit || item.material?.unit || '',
+        StatusItem: item.status,
+        DataCriacao: new Date(request.createdAt).toLocaleString('pt-BR'),
+      }))
+    );
 
-    purchaseRequests.forEach((request) => {
-      (request.items || []).forEach((item: any) => {
-        lines.push([
-          'SOLICITACAO',
-          request.code,
-          request.status,
-          request.serviceOrder?.traceCode || '',
-          item.material?.name || '',
-          '',
-          Number(item.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 }),
-          '',
-          '',
-          new Date(request.createdAt).toLocaleString('pt-BR')
-        ].join(';'));
-      });
-    });
+    const historyRows = purchaseHistory.map((log) => ({
+      Material: log.material?.name || '',
+      Fornecedor: log.supplierName || getPersonName(log.supplierPerson),
+      Quantidade: Number(log.quantity || 0),
+      Unidade: log.material?.unit || '',
+      CustoUnitario: Number(log.unitCost || 0),
+      TotalPago: Number(log.totalPaid || 0),
+      DataCompra: new Date(log.createdAt).toLocaleString('pt-BR'),
+      Observacao: log.description || '',
+    }));
 
-    purchaseHistory.forEach((log) => {
-      lines.push([
-        'COMPRA',
-        '',
-        '',
-        '',
-        log.material?.name || '',
-        log.supplierName || getPersonName(log.supplierPerson),
-        Number(log.quantity || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 }),
-        Number(log.unitCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-        Number(log.totalPaid || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-        new Date(log.createdAt).toLocaleString('pt-BR')
-      ].join(';'));
-    });
-
-    const csv = '\uFEFF' + lines.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    downloadBlob(blob, 'relatorio_compras.csv');
+    const workbook = XLSX.utils.book_new();
+    const requestsSheet = XLSX.utils.json_to_sheet(requestRows);
+    const historySheet = XLSX.utils.json_to_sheet(historyRows);
+    XLSX.utils.book_append_sheet(workbook, requestsSheet, 'Solicitacoes');
+    XLSX.utils.book_append_sheet(workbook, historySheet, 'Compras');
+    XLSX.writeFile(workbook, 'relatorio_compras.xlsx');
   };
 
   useEffect(() => {
@@ -234,8 +228,8 @@ const PurchasesList: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginBottom: 16 }}>
-        <button className={styles.newBtn} type="button" onClick={handleExportCsv} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
-          <Sheet size={18} /> Exportar CSV
+        <button className={styles.newBtn} type="button" onClick={handleExportXlsx} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
+          <Sheet size={18} /> Exportar XLSX
         </button>
         <button className={styles.newBtn} type="button" onClick={() => void handleExportPdf()} disabled={exportingPdf} style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)' }}>
           <FileDown size={18} /> {exportingPdf ? 'Gerando PDF...' : 'Exportar PDF'}

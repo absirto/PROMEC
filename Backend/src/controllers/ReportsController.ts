@@ -165,7 +165,14 @@ export const ReportsController = {
           status: status as string,
           supplierName,
         },
-        settings?.logoUrl ?? undefined
+        settings?.logoUrl ?? undefined,
+        {
+          companyName: settings?.companyName ?? undefined,
+          cnpj: settings?.cnpj ?? undefined,
+          phone: settings?.phone ?? undefined,
+          contactEmail: settings?.contactEmail ?? undefined,
+          address: settings?.address ?? undefined,
+        }
       );
 
       res.setHeader('Content-Type', 'application/pdf');
