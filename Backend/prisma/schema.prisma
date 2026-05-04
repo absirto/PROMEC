@@ -59,6 +59,7 @@ model Person {
   legalPerson   LegalPerson?
   naturalPerson NaturalPerson?
   serviceOrders ServiceOrder[]
+  stockPurchases StockLog[]     @relation("StockPurchaseSupplier")
 }
 
 model NaturalPerson {
@@ -365,13 +366,21 @@ model Settings {
 }
 
 model StockLog {
-  id          Int      @id @default(autoincrement())
-  materialId  Int
-  quantity    Float
-  type        String
-  description String?
-  createdAt   DateTime @default(now())
-  material    Material @relation(fields: [materialId], references: [id])
+  id               Int      @id @default(autoincrement())
+  materialId       Int
+  quantity         Float
+  type             String
+  description      String?
+  supplierPersonId Int?
+  unitCost         Float?
+  totalPaid        Float?
+  remainingQty     Float?
+  createdAt        DateTime @default(now())
+  material         Material @relation(fields: [materialId], references: [id])
+  supplierPerson   Person?  @relation("StockPurchaseSupplier", fields: [supplierPersonId], references: [id], onDelete: SetNull)
+
+  @@index([materialId, createdAt])
+  @@index([supplierPersonId])
 }
 
 model Transaction {

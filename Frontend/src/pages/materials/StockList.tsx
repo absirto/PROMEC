@@ -7,7 +7,9 @@ import { useToast } from '../../components/ToastProvider';
 const StockList: React.FC = () => {
   const { showToast } = useToast();
   const [logs, setLogs] = useState<any[]>([]);
+  const [purchaseLogs, setPurchaseLogs] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
+  const [people, setPeople] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   
@@ -15,18 +17,30 @@ const StockList: React.FC = () => {
     materialId: '',
     quantity: '',
     type: 'IN',
-    description: ''
+    description: '',
+    supplierPersonId: '',
+    unitCost: '',
+    totalPaid: ''
   });
+
+  const getPersonName = (person: any) => {
+    if (!person) return '-';
+    return person.naturalPerson?.name || person.legalPerson?.corporateName || '-';
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [logsData, materialsData] = await Promise.all([
+      const [logsData, purchasesData, materialsData, peopleData] = await Promise.all([
         api.get('/stock'),
-        api.get('/materials')
+        api.get('/stock/purchases'),
+        api.get('/materials'),
+        api.get('/people')
       ]);
       setLogs(logsData);
-      setMaterials(materialsData);
+      setPurchaseLogs(Array.isArray(purchasesData) ? purchasesData : []);
+      setMaterials(Array.isArray(materialsData) ? materialsData : []);
+      setPeople(Array.isArray(peopleData) ? peopleData : []);
     } catch (err) {
       showToast('Erro ao carregar dados de estoque.', 'error');
     } finally {
@@ -40,12 +54,29 @@ const StockList: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.type === 'IN') {
+      if (!formData.supplierPersonId) {
+        showToast('Selecione o fornecedor da compra.', 'warning');
+        return;
+      }
+      if (!formData.unitCost && !formData.totalPaid) {
+        showToast('Informe custo unitário ou valor total pago.', 'warning');
+        return;
+      }
+    }
+
     try {
-      await api.post('/stock', formData);
+      await api.post('/stock', {
+        ...formData,
+        supplierPersonId: formData.type === 'IN' ? Number(formData.supplierPersonId) : undefined,
+        unitCost: formData.unitCost ? Number(formData.unitCost) : undefined,
+        totalPaid: formData.totalPaid ? Number(formData.totalPaid) : undefined,
+      });
       showToast('Movimentação registrada com sucesso!');
       setShowModal(false);
-      setFormData({ materialId: '', quantity: '', type: 'IN', description: '' });
-      fetchData();
+      setFormData({ materialId: '', quantity: '', type: 'IN', description: '', supplierPersonId: '', unitCost: '', totalPaid: '' });
+      void fetchData();
     } catch (err) {
       showToast('Erro ao registrar movimentação.', 'error');
     }
@@ -73,14 +104,16 @@ const StockList: React.FC = () => {
               <th style={{ padding: '16px 20px', textAlign: 'left' }}>Material</th>
               <th style={{ padding: '16px 20px', textAlign: 'left' }}>Tipo</th>
               <th style={{ padding: '16px 20px', textAlign: 'left' }}>Qtd</th>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Fornecedor</th>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Valor Pago</th>
               <th style={{ padding: '16px 20px', textAlign: 'left' }}>Observação</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Carregando histórico...</td></tr>
+              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Carregando histórico...</td></tr>
             ) : logs.length === 0 ? (
-              <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Nenhuma movimentação encontrada.</td></tr>
+              <tr><td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Nenhuma movimentação encontrada.</td></tr>
             ) : logs.map(log => (
               <tr key={log.id} className={styles.tableRow}>
                 <td style={{ padding: '16px 20px' }}>{new Date(log.createdAt).toLocaleString('pt-BR')}</td>
@@ -96,7 +129,47 @@ const StockList: React.FC = () => {
                   </span>
                 </td>
                 <td style={{ padding: '16px 20px', fontWeight: 700 }}>{log.quantity} {log.material?.unit}</td>
+                <td style={{ padding: '16px 20px' }}>{getPersonName(log.supplierPerson)}</td>
+                <td style={{ padding: '16px 20px', fontWeight: 700 }}>
+                  {log.totalPaid ? Number(log.totalPaid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                </td>
                 <td style={{ padding: '16px 20px', color: '#8a99a8', fontSize: 13 }}>{log.description || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className={styles.tableContainer} style={{ marginTop: 20 }}>
+        <h3 style={{ margin: '0 0 14px 0', color: '#e2e8f0' }}>Histórico de Compras de Peças</h3>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr className={styles.tableHeader}>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Data</th>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Material</th>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Fornecedor</th>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Qtd Comprada</th>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Custo Unitário</th>
+              <th style={{ padding: '16px 20px', textAlign: 'left' }}>Total Pago</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Carregando compras...</td></tr>
+            ) : purchaseLogs.length === 0 ? (
+              <tr><td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Nenhuma compra registrada.</td></tr>
+            ) : purchaseLogs.map(log => (
+              <tr key={`purchase-${log.id}`} className={styles.tableRow}>
+                <td style={{ padding: '16px 20px' }}>{new Date(log.createdAt).toLocaleString('pt-BR')}</td>
+                <td style={{ padding: '16px 20px', fontWeight: 600 }}>{log.material?.name}</td>
+                <td style={{ padding: '16px 20px' }}>{log.supplierName || getPersonName(log.supplierPerson)}</td>
+                <td style={{ padding: '16px 20px', fontWeight: 700 }}>{log.quantity} {log.material?.unit}</td>
+                <td style={{ padding: '16px 20px' }}>
+                  {log.unitCost ? Number(log.unitCost).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                </td>
+                <td style={{ padding: '16px 20px', fontWeight: 700 }}>
+                  {log.totalPaid ? Number(log.totalPaid).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -147,6 +220,51 @@ const StockList: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {formData.type === 'IN' && (
+                <>
+                  <div>
+                    <label style={{ display: 'block', color: '#8a99a8', marginBottom: 8, fontSize: 13 }}>Fornecedor</label>
+                    <select
+                      style={{ width: '100%', padding: 12, borderRadius: 12, background: '#23283a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                      value={formData.supplierPersonId}
+                      onChange={e => setFormData({ ...formData, supplierPersonId: e.target.value })}
+                      required
+                    >
+                      <option value="">Selecione...</option>
+                      {people.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.naturalPerson?.name || p.legalPerson?.corporateName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', color: '#8a99a8', marginBottom: 8, fontSize: 13 }}>Custo Unitário (R$)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        style={{ width: '100%', padding: 12, borderRadius: 12, background: '#23283a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                        value={formData.unitCost}
+                        onChange={e => setFormData({ ...formData, unitCost: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', color: '#8a99a8', marginBottom: 8, fontSize: 13 }}>Valor Total Pago (R$)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        style={{ width: '100%', padding: 12, borderRadius: 12, background: '#23283a', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                        value={formData.totalPaid}
+                        onChange={e => setFormData({ ...formData, totalPaid: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div>
                 <label style={{ display: 'block', color: '#8a99a8', marginBottom: 8, fontSize: 13 }}>Observação</label>
                 <textarea 
