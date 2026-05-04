@@ -7,6 +7,8 @@ const router = Router();
 // Relatórios Operacionais
 router.get('/operational/service-orders', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalServiceOrders);
 router.get('/operational/service-orders/pdf', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalServiceOrdersPDF);
+router.get('/operational/purchases', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalPurchases);
+router.get('/operational/purchases/pdf', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalPurchasesPDF);
 router.get('/operational/stock-movements', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalStockMovements);
 router.get('/operational/stock-movements/pdf', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalStockMovementsPDF);
 router.get('/operational/production', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalProduction);

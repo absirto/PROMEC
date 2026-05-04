@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3 } from 'lucide-react';
+import axios from 'axios';
+import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Sheet } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
@@ -17,6 +18,7 @@ const PurchasesList: React.FC = () => {
   const [purchaseRequests, setPurchaseRequests] = useState<any[]>([]);
   const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
   const [people, setPeople] = useState<any[]>([]);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -67,6 +69,87 @@ const PurchasesList: React.FC = () => {
       setLoading(false);
     }
   }, [filters, showToast]);
+
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.set('start', filters.startDate);
+    if (filters.endDate) params.set('end', filters.endDate);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.supplierPersonId) params.set('supplierPersonId', filters.supplierPersonId);
+    return params.toString();
+  };
+
+  const downloadBlob = (blob: Blob, fileName: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const query = buildQueryString();
+      const token = localStorage.getItem('token');
+      const baseURL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3001/v1' : '/v1');
+      const response = await axios.get(`${baseURL}/reports/operational/purchases/pdf${query ? `?${query}` : ''}`, {
+        responseType: 'blob',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      downloadBlob(response.data, 'relatorio_compras.pdf');
+    } catch {
+      showToast('Erro ao exportar PDF do relatório de compras.', 'error');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
+  const handleExportCsv = () => {
+    const lines = [
+      ['Tipo', 'Codigo', 'Status', 'OS', 'Material', 'Fornecedor', 'Quantidade', 'CustoUnitario', 'TotalPago', 'Data'].join(';')
+    ];
+
+    purchaseRequests.forEach((request) => {
+      (request.items || []).forEach((item: any) => {
+        lines.push([
+          'SOLICITACAO',
+          request.code,
+          request.status,
+          request.serviceOrder?.traceCode || '',
+          item.material?.name || '',
+          '',
+          Number(item.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 }),
+          '',
+          '',
+          new Date(request.createdAt).toLocaleString('pt-BR')
+        ].join(';'));
+      });
+    });
+
+    purchaseHistory.forEach((log) => {
+      lines.push([
+        'COMPRA',
+        '',
+        '',
+        '',
+        log.material?.name || '',
+        log.supplierName || getPersonName(log.supplierPerson),
+        Number(log.quantity || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 }),
+        Number(log.unitCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+        Number(log.totalPaid || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+        new Date(log.createdAt).toLocaleString('pt-BR')
+      ].join(';'));
+    });
+
+    const csv = '\uFEFF' + lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    downloadBlob(blob, 'relatorio_compras.csv');
+  };
 
   useEffect(() => {
     void fetchData();
@@ -147,6 +230,15 @@ const PurchasesList: React.FC = () => {
         </div>
         <button className={styles.newBtn} onClick={() => void fetchData()}>
           <RefreshCw size={18} /> Atualizar
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginBottom: 16 }}>
+        <button className={styles.newBtn} type="button" onClick={handleExportCsv} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
+          <Sheet size={18} /> Exportar CSV
+        </button>
+        <button className={styles.newBtn} type="button" onClick={() => void handleExportPdf()} disabled={exportingPdf} style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)' }}>
+          <FileDown size={18} /> {exportingPdf ? 'Gerando PDF...' : 'Exportar PDF'}
         </button>
       </div>
 

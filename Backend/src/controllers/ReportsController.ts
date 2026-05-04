@@ -7,8 +7,175 @@ import { generateTeamPerformancePDF } from '../utils/pdfTeamPerformance';
 import { generateFinancialFlowPDF } from '../utils/pdfFinancialFlow';
 import { generateStockMovementsPDF } from '../utils/pdfStockMovements';
 import { generateServiceOrdersPDF } from '../utils/pdfServiceOrders';
+import { generatePurchasesPDF } from '../utils/pdfPurchases';
 
 export const ReportsController = {
+  async operationalPurchases(req: Request, res: Response) {
+    try {
+      const { start, end, status, supplierPersonId } = req.query;
+      const requestWhere: any = {};
+      const historyWhere: any = { type: 'IN', unitCost: { not: null } };
+
+      if (status) {
+        requestWhere.status = status;
+      }
+
+      if (start) {
+        const startDate = new Date(start as string);
+        if (!Number.isNaN(startDate.getTime())) {
+          requestWhere.createdAt = { ...(requestWhere.createdAt || {}), gte: startDate };
+          historyWhere.createdAt = { ...(historyWhere.createdAt || {}), gte: startDate };
+        }
+      }
+
+      if (end) {
+        const endDate = new Date(end as string);
+        if (!Number.isNaN(endDate.getTime())) {
+          endDate.setHours(23, 59, 59, 999);
+          requestWhere.createdAt = { ...(requestWhere.createdAt || {}), lte: endDate };
+          historyWhere.createdAt = { ...(historyWhere.createdAt || {}), lte: endDate };
+        }
+      }
+
+      if (supplierPersonId) {
+        const parsedSupplierId = Number(supplierPersonId);
+        if (Number.isFinite(parsedSupplierId) && parsedSupplierId > 0) {
+          historyWhere.supplierPersonId = parsedSupplierId;
+        }
+      }
+
+      const [purchaseRequests, purchaseHistory] = await Promise.all([
+        (prisma as any).purchaseRequest.findMany({
+          where: requestWhere,
+          include: {
+            serviceOrder: { select: { id: true, traceCode: true, description: true } },
+            items: {
+              include: { material: { select: { id: true, name: true, unit: true, price: true } } },
+              orderBy: { id: 'asc' }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        (prisma as any).stockLog.findMany({
+          where: historyWhere,
+          include: {
+            material: true,
+            supplierPerson: {
+              include: {
+                naturalPerson: { select: { name: true } },
+                legalPerson: { select: { corporateName: true } },
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        })
+      ]);
+
+      return res.json({
+        purchaseRequests,
+        purchaseHistory: purchaseHistory.map((log: any) => ({
+          ...log,
+          supplierName: log.supplierPerson?.naturalPerson?.name || log.supplierPerson?.legalPerson?.corporateName || null,
+        }))
+      });
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao gerar relatório operacional de compras.' });
+    }
+  },
+
+  async operationalPurchasesPDF(req: Request, res: Response) {
+    try {
+      const { start, end, status, supplierPersonId } = req.query;
+      const requestWhere: any = {};
+      const historyWhere: any = { type: 'IN', unitCost: { not: null } };
+      let supplierName = 'Todos';
+
+      if (status) {
+        requestWhere.status = status;
+      }
+
+      if (start) {
+        const startDate = new Date(start as string);
+        if (!Number.isNaN(startDate.getTime())) {
+          requestWhere.createdAt = { ...(requestWhere.createdAt || {}), gte: startDate };
+          historyWhere.createdAt = { ...(historyWhere.createdAt || {}), gte: startDate };
+        }
+      }
+
+      if (end) {
+        const endDate = new Date(end as string);
+        if (!Number.isNaN(endDate.getTime())) {
+          endDate.setHours(23, 59, 59, 999);
+          requestWhere.createdAt = { ...(requestWhere.createdAt || {}), lte: endDate };
+          historyWhere.createdAt = { ...(historyWhere.createdAt || {}), lte: endDate };
+        }
+      }
+
+      if (supplierPersonId) {
+        const parsedSupplierId = Number(supplierPersonId);
+        if (Number.isFinite(parsedSupplierId) && parsedSupplierId > 0) {
+          historyWhere.supplierPersonId = parsedSupplierId;
+          const supplier = await prisma.person.findUnique({
+            where: { id: parsedSupplierId },
+            include: { naturalPerson: true, legalPerson: true }
+          });
+          supplierName = supplier?.naturalPerson?.name || supplier?.legalPerson?.corporateName || 'Todos';
+        }
+      }
+
+      const [purchaseRequests, purchaseHistory, settings] = await Promise.all([
+        (prisma as any).purchaseRequest.findMany({
+          where: requestWhere,
+          include: {
+            serviceOrder: { select: { id: true, traceCode: true, description: true } },
+            items: {
+              include: { material: { select: { id: true, name: true, unit: true, price: true } } },
+              orderBy: { id: 'asc' }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        (prisma as any).stockLog.findMany({
+          where: historyWhere,
+          include: {
+            material: true,
+            supplierPerson: {
+              include: {
+                naturalPerson: { select: { name: true } },
+                legalPerson: { select: { corporateName: true } },
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        getSettings(),
+      ]);
+
+      const normalizedHistory = purchaseHistory.map((log: any) => ({
+        ...log,
+        supplierName: log.supplierPerson?.naturalPerson?.name || log.supplierPerson?.legalPerson?.corporateName || null,
+      }));
+
+      const pdfBuffer = generatePurchasesPDF(
+        purchaseRequests,
+        normalizedHistory,
+        {
+          start: start as string,
+          end: end as string,
+          status: status as string,
+          supplierName,
+        },
+        settings?.logoUrl ?? undefined
+      );
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'attachment; filename="relatorio_compras.pdf"');
+      return res.send(pdfBuffer);
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao gerar PDF do relatório de compras.' });
+    }
+  },
+
   // Relatório: Contas a receber/pagar (PDF)
   async adminAccountsPDF(req: Request, res: Response) {
     try {
