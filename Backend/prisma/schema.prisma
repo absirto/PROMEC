@@ -163,7 +163,7 @@ model Material {
   unit                  String
   active                Boolean                @default(true)
   createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  updatedAt             DateTime               @default(now()) @updatedAt
   serviceOrderMaterials ServiceOrderMaterial[]
   purchaseRequestItems  PurchaseRequestItem[]
   stockLogs             StockLog[]
@@ -274,6 +274,9 @@ model ServiceOrderTrace {
   changedByEmail String?
   payload        Json?
   createdAt      DateTime      @default(now())
+
+  @@index([serviceOrderId])
+  @@index([createdAt])
 }
 
 model ServiceOrderService {
@@ -353,7 +356,7 @@ model QualityPhoto {
 }
 
 model Settings {
-  id                 Int      @id @default(1)
+  id                 Int      @id @default(autoincrement())
   backgroundImageUrl String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -377,9 +380,11 @@ model StockLog {
   totalPaid        Float?
   remainingQty     Float?
   createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   material         Material @relation(fields: [materialId], references: [id])
   supplierPerson   Person?  @relation("StockPurchaseSupplier", fields: [supplierPersonId], references: [id], onDelete: SetNull)
 
+  @@index([materialId])
   @@index([materialId, createdAt])
   @@index([supplierPersonId])
 }
