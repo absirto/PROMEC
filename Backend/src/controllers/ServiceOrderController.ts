@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../services/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { generateQuotationPDF } from '../utils/pdfQuotation';
 
 function generateTraceCode() {
   const d = new Date();
@@ -178,6 +179,17 @@ export const ServiceOrderController = {
       const purchaseRequestId = Number(data.purchaseRequestId);
       const supplierPersonId = Number(data.supplierPersonId);
       const validUntil = data.validUntil ? new Date(data.validUntil) : null;
+      const paymentTerms = data.paymentTerms ? String(data.paymentTerms).trim() : null;
+      const freightMode = data.freightMode ? String(data.freightMode).trim().toUpperCase() : null;
+      const freightCost = data.freightCost !== undefined && data.freightCost !== null && data.freightCost !== ''
+        ? Math.max(0, Number(data.freightCost))
+        : null;
+      const deliveryLeadTimeDays = data.deliveryLeadTimeDays !== undefined && data.deliveryLeadTimeDays !== null && data.deliveryLeadTimeDays !== ''
+        ? Math.max(0, Math.round(Number(data.deliveryLeadTimeDays)))
+        : null;
+      const warrantyDays = data.warrantyDays !== undefined && data.warrantyDays !== null && data.warrantyDays !== ''
+        ? Math.max(0, Math.round(Number(data.warrantyDays)))
+        : null;
 
       if (!Number.isFinite(purchaseRequestId) || purchaseRequestId <= 0) {
         return res.status(400).json({ status: 'error', message: 'Solicitação de compra inválida.' });
@@ -192,6 +204,9 @@ export const ServiceOrderController = {
           purchaseRequestItemId: Number(item.purchaseRequestItemId),
           quantity: Number(item.quantity),
           unitCost: Number(item.unitCost),
+          ipiValue: item.ipiValue !== undefined && item.ipiValue !== null ? Math.max(0, Number(item.ipiValue)) : 0,
+          icmsValue: item.icmsValue !== undefined && item.icmsValue !== null ? Math.max(0, Number(item.icmsValue)) : 0,
+          stValue: item.stValue !== undefined && item.stValue !== null ? Math.max(0, Number(item.stValue)) : 0,
           totalPaid: item.totalPaid !== undefined && item.totalPaid !== null ? Number(item.totalPaid) : null,
           notes: item.notes ? String(item.notes) : null,
         }))
@@ -228,6 +243,11 @@ export const ServiceOrderController = {
             status: 'OPEN',
             notes: data.notes ? String(data.notes) : null,
             validUntil,
+            paymentTerms,
+            freightMode,
+            freightCost,
+            deliveryLeadTimeDays,
+            warrantyDays,
             createdByEmail: actor.email,
             items: {
               create: items.map((item: any) => {
@@ -236,13 +256,19 @@ export const ServiceOrderController = {
                 const maxQty = Math.max(0, Number(requestItem.shortageQty || 0));
                 if (maxQty <= 0) throw new Error('REQUEST_ITEM_ALREADY_COVERED');
                 const qty = Math.min(item.quantity, maxQty);
-                const totalPaid = item.totalPaid && item.totalPaid > 0 ? item.totalPaid : qty * item.unitCost;
+                const ipiValue = Math.max(0, Number(item.ipiValue || 0));
+                const icmsValue = Math.max(0, Number(item.icmsValue || 0));
+                const stValue = Math.max(0, Number(item.stValue || 0));
+                const totalPaid = item.totalPaid && item.totalPaid > 0 ? item.totalPaid : (qty * item.unitCost) + ipiValue + icmsValue + stValue;
 
                 return {
                   purchaseRequestItemId: item.purchaseRequestItemId,
                   materialId: requestItem.materialId,
                   quantity: qty,
                   unitCost: item.unitCost,
+                  ipiValue,
+                  icmsValue,
+                  stValue,
                   totalPaid,
                   notes: item.notes,
                 };
@@ -278,6 +304,9 @@ export const ServiceOrderController = {
                 purchaseRequestId,
                 quotationCode,
                 supplierPersonId,
+                paymentTerms,
+                freightMode,
+                freightCost,
               }
             }
           });
@@ -486,6 +515,58 @@ export const ServiceOrderController = {
         return res.status(400).json({ status: 'error', message: 'Somente cotações abertas podem ser aprovadas.' });
       }
       return res.status(400).json({ status: 'error', message: 'Erro ao aprovar cotação de compra.', details: error.message });
+    }
+  },
+
+  async getPurchaseQuotationPDF(req: Request, res: Response) {
+    try {
+      const quotationId = Number(req.params.id);
+      if (!Number.isFinite(quotationId) || quotationId <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Cotação inválida.' });
+      }
+
+      const prismaAny = prisma as any;
+
+      const quotation = await prismaAny.purchaseQuotation.findUnique({
+        where: { id: quotationId },
+        include: {
+          supplierPerson: { include: { naturalPerson: true, legalPerson: true } },
+          purchaseRequest: {
+            include: {
+              serviceOrder: { select: { id: true, traceCode: true, description: true } },
+              items: { include: { material: true } }
+            }
+          },
+          items: { include: { material: true, purchaseRequestItem: { include: { material: true } } } }
+        }
+      });
+
+      if (!quotation) {
+        return res.status(404).json({ status: 'error', message: 'Cotação não encontrada.' });
+      }
+
+      const settings = await (prisma as any).settings.findFirst();
+      const companyInfo = settings
+        ? {
+            companyName: settings.companyName,
+            cnpj: settings.cnpj,
+            phone: settings.phone,
+            address: settings.address,
+            companyLogo: settings.logoUrl,
+          }
+        : undefined;
+
+      const pdfBuffer = await generateQuotationPDF(quotation, companyInfo);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="cotacao-${quotation.code || quotationId}.pdf"`
+      );
+      return res.end(pdfBuffer);
+    } catch (error: any) {
+      logger.error('getPurchaseQuotationPDF falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
+      return res.status(500).json({ status: 'error', message: 'Erro ao gerar PDF da cotação.' });
     }
   },
 

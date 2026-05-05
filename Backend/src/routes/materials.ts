@@ -9,7 +9,7 @@ const router = Router();
 router.get('/', authenticateToken, requirePermission('materiais:visualizar'), MaterialController.list);
 router.get('/:id', authenticateToken, requirePermission('materiais:visualizar'), MaterialController.get);
 router.post('/', authenticateToken, requirePermission('materiais:gerenciar'), validateBody(materialSchema), MaterialController.create);
-router.put('/:id', authenticateToken, requirePermission('materiais:gerenciar'), MaterialController.update);
+router.put('/:id', authenticateToken, requirePermission('materiais:gerenciar'), validateBody(materialSchema), MaterialController.update);
 router.delete('/:id', authenticateToken, requirePermission('materiais:gerenciar'), MaterialController.delete);
 
 export default router;

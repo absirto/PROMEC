@@ -21,6 +21,9 @@ export const MaterialController = {
   async get(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ status: 'error', message: 'ID de material inválido.' });
+      }
       const material = await prisma.material.findUnique({ where: { id } });
       if (!material) return res.status(404).json({ status: 'error', message: 'Material não encontrado.' });
       res.json(material);
@@ -33,8 +36,12 @@ export const MaterialController = {
   async create(req: Request, res: Response) {
     try {
       const { name, description, price, unit, active } = req.body;
+      const numericPrice = Number(price);
+      if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Preço do material inválido.' });
+      }
       const material = await prisma.material.create({
-        data: { name, description, price: Number(price), unit, active }
+        data: { name, description, price: numericPrice, unit, active }
       });
       await cacheDel('materials:list');
       res.status(201).json(material);
@@ -47,11 +54,20 @@ export const MaterialController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ status: 'error', message: 'ID de material inválido.' });
+      }
       const { name, description, price, unit, active } = req.body;
       const data: Record<string, unknown> = {};
       if (name !== undefined) data.name = name;
       if (description !== undefined) data.description = description;
-      if (price !== undefined) data.price = Number(price);
+      if (price !== undefined) {
+        const numericPrice = Number(price);
+        if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+          return res.status(400).json({ status: 'error', message: 'Preço do material inválido.' });
+        }
+        data.price = numericPrice;
+      }
       if (unit !== undefined) data.unit = unit;
       if (active !== undefined) data.active = active;
       const material = await prisma.material.update({
@@ -61,6 +77,9 @@ export const MaterialController = {
       await cacheDel('materials:list');
       res.json(material);
     } catch (error: any) {
+      if (error?.code === 'P2025') {
+        return res.status(404).json({ status: 'error', message: 'Material não encontrado.' });
+      }
       logger.error('MaterialController.update falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       res.status(500).json({ status: 'error', message: 'Erro ao atualizar material.' });
     }

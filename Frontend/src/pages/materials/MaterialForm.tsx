@@ -38,7 +38,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
   const validate = () => {
     const newErrors: any = {};
     if (!formData.name.trim()) newErrors.name = 'O nome do material é obrigatório.';
-    if (formData.price <= 0) newErrors.price = 'O preço deve ser maior que zero.';
+    if (!Number.isFinite(formData.price) || formData.price <= 0) newErrors.price = 'O preço deve ser maior que zero.';
     if (!formData.unit.trim()) newErrors.unit = 'A unidade de medida é obrigatória.';
     
     setErrors(newErrors);
@@ -121,7 +121,10 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
                 step="0.01"
                 disabled={isView}
                 value={formData.price}
-                onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                onChange={e => setFormData({
+                  ...formData,
+                  price: e.target.value === '' ? Number.NaN : parseFloat(e.target.value)
+                })}
               />
             </div>
             {errors.price && <span className={styles.errorMessage}>{errors.price}</span>}

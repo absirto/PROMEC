@@ -1,5 +1,15 @@
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
+function redirectToLogin() {
+  if (typeof window === 'undefined') return;
+
+  localStorage.removeItem('token');
+
+  if (window.location.pathname !== '/login') {
+    window.location.replace('/login');
+  }
+}
+
 const defaultApiUrl = process.env.NODE_ENV === 'development'
   ? 'http://localhost:3001/v1'
   : '/v1';
@@ -32,19 +42,33 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.data) {
       const data = error.response.data;
+      const message = typeof data === 'string'
+        ? data
+        : typeof data?.message === 'string'
+          ? data.message
+          : undefined;
+
+      if (error.response.status === 401 || message === 'Token inválido' || message === 'Não autenticado') {
+        redirectToLogin();
+      }
 
       // Preserva payload completo para telas que precisam renderizar detalhes de conflito.
       if (data.conflicts || data.externalConflicts || data.internalConflicts) {
         return Promise.reject(data);
       }
 
-      if (data.message) {
-        return Promise.reject(data.message);
+      if (message) {
+        return Promise.reject(message);
       }
 
-      return Promise.reject(data);
+      return Promise.reject('Erro inesperado ao comunicar com o servidor.');
     }
-    return Promise.reject(error);
+
+    if (error?.message) {
+      return Promise.reject(error.message);
+    }
+
+    return Promise.reject('Erro inesperado ao comunicar com o servidor.');
   }
 );
 

@@ -11,6 +11,7 @@ const AdministrativeReports = lazy(() => import('./pages/reports/AdministrativeR
 const ServiceOrdersReport = lazy(() => import('./pages/reports/ServiceOrdersReport'));
 const StockMovementsReport = lazy(() => import('./pages/reports/StockMovementsReport'));
 const ProductionReport = lazy(() => import('./pages/reports/ProductionReport'));
+const QualityReport = lazy(() => import('./pages/reports/QualityReport'));
 const FinancialFlowReport = lazy(() => import('./pages/reports/FinancialFlowReport'));
 const AccountsReport = lazy(() => import('./pages/reports/AccountsReport'));
 const TeamPerformanceReport = lazy(() => import('./pages/reports/TeamPerformanceReport'));
@@ -109,6 +110,7 @@ function App() {
                       <Route path="service-orders" element={<ServiceOrdersReport />} />
                       <Route path="stock-movements" element={<StockMovementsReport />} />
                       <Route path="production" element={<ProductionReport />} />
+                      <Route path="quality" element={<QualityReport />} />
                     </Route>
                     <Route path="administrative" element={<AdministrativeReports />}>
                       <Route path="financial-flow" element={<FinancialFlowReport />} />

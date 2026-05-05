@@ -252,6 +252,11 @@ model PurchaseQuotation {
   status            String                  @default("OPEN")
   notes             String?
   validUntil        DateTime?
+  paymentTerms      String?
+  freightMode       String?
+  freightCost       Float?
+  deliveryLeadTimeDays Int?
+  warrantyDays      Int?
   createdByEmail    String?
   approvedByEmail   String?
   approvedAt        DateTime?
@@ -273,6 +278,9 @@ model PurchaseQuotationItem {
   materialId            Int
   quantity              Float
   unitCost              Float
+  ipiValue              Float?
+  icmsValue             Float?
+  stValue               Float?
   totalPaid             Float
   notes                 String?
   createdAt             DateTime          @default(now())

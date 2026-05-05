@@ -294,7 +294,7 @@ export const ReportsController = {
         orderBy: { date: 'asc' }
       });
       const settings = await getSettings();
-      const pdfBuffer = generateAccountsPDF(accounts, status as string, (settings?.logoUrl ?? undefined));
+      const pdfBuffer = await generateAccountsPDF(accounts, status as string, (settings?.logoUrl ?? undefined));
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="relatorio_contas.pdf"');
       res.send(pdfBuffer);
@@ -327,7 +327,7 @@ export const ReportsController = {
         _count: { _all: true }
       });
       const settings = await getSettings();
-      const pdfBuffer = generateTeamPerformancePDF(performance, (settings?.logoUrl ?? undefined));
+      const pdfBuffer = await generateTeamPerformancePDF(performance, (settings?.logoUrl ?? undefined));
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="relatorio_desempenho_equipes.pdf"');
       res.send(pdfBuffer);
@@ -355,7 +355,7 @@ export const ReportsController = {
       }, { totalIncome: 0, totalExpense: 0 });
       summary.balance = summary.totalIncome - summary.totalExpense;
       const settings = await getSettings();
-      const pdfBuffer = generateFinancialFlowPDF(summary, start as string, end as string, (settings?.logoUrl ?? undefined));
+      const pdfBuffer = await generateFinancialFlowPDF(summary, start as string, end as string, (settings?.logoUrl ?? undefined));
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="relatorio_fluxo_financeiro.pdf"');
       res.send(pdfBuffer);
@@ -381,7 +381,7 @@ export const ReportsController = {
         orderBy: { createdAt: 'desc' }
       });
       const settings = await getSettings();
-      const pdfBuffer = generateStockMovementsPDF(logs, start as string, end as string, (settings?.logoUrl ?? undefined));
+      const pdfBuffer = await generateStockMovementsPDF(logs, start as string, end as string, (settings?.logoUrl ?? undefined));
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="relatorio_movimentacao_estoque.pdf"');
       res.send(pdfBuffer);
@@ -407,7 +407,7 @@ export const ReportsController = {
         where
       });
       const settings = await getSettings();
-      const pdfBuffer = generateServiceOrdersPDF(byStatus, start as string, end as string, (settings?.logoUrl ?? undefined));
+      const pdfBuffer = await generateServiceOrdersPDF(byStatus, start as string, end as string, (settings?.logoUrl ?? undefined));
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="relatorio_ordens_servico.pdf"');
       res.send(pdfBuffer);
@@ -463,24 +463,163 @@ export const ReportsController = {
   // Relatório: Produção por funcionário/área
   async operationalProduction(req: Request, res: Response) {
     try {
-      const { start, end } = req.query;
+      const { start, end, employeeId, workAreaId } = req.query;
       const where: any = {};
-      if (start && end) {
-        where.openingDate = {
-          gte: new Date(start as string),
-          lte: new Date(end as string)
-        };
+
+      if (employeeId) {
+        const parsedEmployeeId = Number(employeeId);
+        if (Number.isFinite(parsedEmployeeId) && parsedEmployeeId > 0) {
+          where.employeeId = parsedEmployeeId;
+        }
       }
+
+      if (workAreaId) {
+        const parsedWorkAreaId = Number(workAreaId);
+        if (Number.isFinite(parsedWorkAreaId) && parsedWorkAreaId > 0) {
+          where.employee = { ...(where.employee || {}), workAreaId: parsedWorkAreaId };
+        }
+      }
+
+      if (start || end) {
+        const openingDate: Record<string, Date> = {};
+        if (start) {
+          const startDate = new Date(start as string);
+          if (!Number.isNaN(startDate.getTime())) openingDate.gte = startDate;
+        }
+        if (end) {
+          const endDate = new Date(end as string);
+          if (!Number.isNaN(endDate.getTime())) {
+            endDate.setHours(23, 59, 59, 999);
+            openingDate.lte = endDate;
+          }
+        }
+        if (Object.keys(openingDate).length) {
+          where.serviceOrder = { ...(where.serviceOrder || {}), openingDate };
+        }
+      }
+
       const production = await (prisma as any).serviceOrderService.findMany({
         where,
         include: {
-          employee: { include: { workArea: true, person: true } },
-          serviceOrder: true
-        }
+          employee: {
+            include: {
+              workArea: true,
+              jobRole: true,
+              person: { include: { naturalPerson: true, legalPerson: true } }
+            }
+          },
+          serviceOrder: {
+            select: {
+              id: true,
+              traceCode: true,
+              description: true,
+              openingDate: true,
+              status: true,
+            }
+          },
+          service: { select: { id: true, name: true, description: true } }
+        },
+        orderBy: [
+          { serviceOrder: { openingDate: 'desc' } },
+          { id: 'desc' }
+        ]
       });
-      res.json(production);
+
+      res.json(production.map((entry: any) => ({
+        id: entry.id,
+        employeeId: entry.employeeId,
+        employeeName: entry.employee?.person?.naturalPerson?.name || entry.employee?.person?.legalPerson?.corporateName || 'Sem técnico',
+        workAreaName: entry.employee?.workArea?.name || 'Sem área',
+        jobRoleName: entry.employee?.jobRole?.name || 'Sem função',
+        serviceName: entry.service?.name || entry.description || 'Serviço',
+        serviceDescription: entry.service?.description || entry.description || null,
+        serviceOrderId: entry.serviceOrder?.id || null,
+        serviceOrderCode: entry.serviceOrder?.traceCode || null,
+        serviceOrderDescription: entry.serviceOrder?.description || null,
+        serviceOrderStatus: entry.serviceOrder?.status || null,
+        openingDate: entry.serviceOrder?.openingDate || null,
+        hoursWorked: Number(entry.hoursWorked || 0),
+        unitPrice: Number(entry.unitPrice || 0),
+        totalPrice: Number(entry.totalPrice || 0),
+      })));
     } catch (error) {
       res.status(500).json({ error: 'Erro ao gerar relatório de produção.' });
+    }
+  },
+
+  async operationalQuality(req: Request, res: Response) {
+    try {
+      const { start, end, status, inspectorId } = req.query;
+      const where: any = {};
+
+      if (status) {
+        where.status = status;
+      }
+
+      if (inspectorId) {
+        const parsedInspectorId = Number(inspectorId);
+        if (Number.isFinite(parsedInspectorId) && parsedInspectorId > 0) {
+          where.inspectorId = parsedInspectorId;
+        }
+      }
+
+      if (start || end) {
+        const inspectionDate: Record<string, Date> = {};
+        if (start) {
+          const startDate = new Date(start as string);
+          if (!Number.isNaN(startDate.getTime())) inspectionDate.gte = startDate;
+        }
+        if (end) {
+          const endDate = new Date(end as string);
+          if (!Number.isNaN(endDate.getTime())) {
+            endDate.setHours(23, 59, 59, 999);
+            inspectionDate.lte = endDate;
+          }
+        }
+        if (Object.keys(inspectionDate).length) {
+          where.inspectionDate = inspectionDate;
+        }
+      }
+
+      const controls = await prisma.qualityControl.findMany({
+        where,
+        include: {
+          serviceOrder: {
+            select: { id: true, traceCode: true, description: true, status: true }
+          },
+          inspector: {
+            include: {
+              workArea: true,
+              person: { include: { naturalPerson: true, legalPerson: true } }
+            }
+          },
+          measurements: true,
+          nonConformities: true,
+          photos: true,
+        },
+        orderBy: { inspectionDate: 'desc' }
+      });
+
+      return res.json(controls.map((control) => ({
+        id: control.id,
+        inspectionDate: control.inspectionDate,
+        status: control.status,
+        finalVerdict: control.finalVerdict,
+        serviceOrderId: control.serviceOrderId,
+        serviceOrderCode: control.serviceOrder?.traceCode || null,
+        serviceOrderDescription: control.serviceOrder?.description || null,
+        serviceOrderStatus: control.serviceOrder?.status || null,
+        inspectorId: control.inspectorId,
+        inspectorName: control.inspector?.person?.naturalPerson?.name || control.inspector?.person?.legalPerson?.corporateName || 'Sem inspetor',
+        inspectorArea: control.inspector?.workArea?.name || 'Sem área',
+        measurementsCount: control.measurements.length,
+        approvedMeasurements: control.measurements.filter((measurement) => measurement.result === 'Aprovado').length,
+        nonConformitiesCount: control.nonConformities.length,
+        openNonConformities: control.nonConformities.filter((item) => item.status !== 'Resolvido').length,
+        photosCount: control.photos.length,
+      })));
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao gerar relatório de qualidade.' });
     }
   },
 
@@ -528,9 +667,40 @@ export const ReportsController = {
     try {
       const performance = await (prisma as any).serviceOrderService.groupBy({
         by: ['employeeId'],
-        _count: { _all: true }
+        where: { employeeId: { not: null } },
+        _count: { _all: true },
+        _sum: { hoursWorked: true, totalPrice: true }
       });
-      res.json(performance);
+
+      const employeeIds = performance
+        .map((item: any) => Number(item.employeeId))
+        .filter((value: number) => Number.isFinite(value) && value > 0);
+
+      const employees = employeeIds.length
+        ? await prisma.employee.findMany({
+            where: { id: { in: employeeIds } },
+            include: {
+              workArea: true,
+              jobRole: true,
+              person: { include: { naturalPerson: true, legalPerson: true } }
+            }
+          })
+        : [];
+
+      const employeeMap = new Map(employees.map((employee) => [employee.id, employee]));
+
+      res.json(performance.map((item: any) => {
+        const employee = employeeMap.get(Number(item.employeeId));
+        return {
+          employeeId: item.employeeId,
+          employeeName: employee?.person?.naturalPerson?.name || employee?.person?.legalPerson?.corporateName || `Funcionário #${item.employeeId}`,
+          workAreaName: employee?.workArea?.name || 'Sem área',
+          jobRoleName: employee?.jobRole?.name || 'Sem função',
+          servicesCount: item._count?._all || 0,
+          totalHours: Number(item._sum?.hoursWorked || 0),
+          totalRevenue: Number(item._sum?.totalPrice || 0),
+        };
+      }));
     } catch (error) {
       res.status(500).json({ error: 'Erro ao gerar relatório de desempenho.' });
     }
@@ -540,7 +710,7 @@ export const ReportsController = {
   async adminProfitability(req: Request, res: Response) {
     try {
       const { start, end } = req.query;
-      const where: any = { status: 'CONCLUIDA' };
+      const where: any = { status: 'Concluída' };
       if (start && end) {
         where.openingDate = {
           gte: new Date(start as string),

@@ -15,6 +15,7 @@ router.get('/operational/purchases/pdf', authenticateToken, requirePermission('r
 router.get('/operational/stock-movements', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalStockMovements);
 router.get('/operational/stock-movements/pdf', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalStockMovementsPDF);
 router.get('/operational/production', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalProduction);
+router.get('/operational/quality', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.operationalQuality);
 
 // Relatórios Administrativos
 router.get('/admin/financial-flow', authenticateToken, requirePermission('relatorios:visualizar'), ReportsController.adminFinancialFlow);

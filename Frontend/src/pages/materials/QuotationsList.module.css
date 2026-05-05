@@ -13,6 +13,98 @@
   min-width: 0;
 }
 
+.overviewGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.overviewCard {
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.14), transparent 45%),
+    rgba(2, 6, 23, 0.42);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.overviewLabel,
+.metricLabel,
+.requestMetaLabel {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.overviewValue,
+.metricValue {
+  color: #f8fafc;
+  font-size: 24px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+.overviewHint,
+.metricHint {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.requestContextCard {
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.78) 0%, rgba(12, 18, 33, 0.9) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.16);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.requestContextHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.requestCode {
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.requestSubtext {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.requestMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.requestMetaGrid strong,
+.quoteMetaGrid strong {
+  color: #e2e8f0;
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.requestDescription {
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .twoColumnForm {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -23,6 +115,13 @@
 .metaGrid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.commercialGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -70,6 +169,13 @@
   margin-bottom: 10px;
 }
 
+.metricCard {
+  background: rgba(15, 23, 42, 0.48);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  padding: 10px;
+}
+
 .tableShell {
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 12px;
@@ -82,12 +188,206 @@
   overflow: auto;
 }
 
+.tableScrollWide {
+  max-height: 44vh;
+  overflow: auto;
+}
+
 .historyScroll {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 72vh;
+  max-height: 38vh;
   overflow-y: auto;
+}
+
+.comparisonHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.comparisonActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 420px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.comparisonActions > select {
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+
+.comparisonOverview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.quoteCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.quoteCard {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(8, 15, 28, 0.88) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.quoteCardBest {
+  border-color: rgba(16, 185, 129, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.12);
+}
+
+.quoteCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.quoteCode {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.quoteSupplier {
+  color: #cbd5e1;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.quoteCardTotal {
+  color: #86efac;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.quoteMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quoteDeltaRow {
+  margin-top: 12px;
+}
+
+.bestBadge,
+.deltaBadge,
+.variationBadge,
+.emptyQuote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bestBadge {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.34);
+  color: #86efac;
+}
+
+.deltaBadge {
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(59, 130, 246, 0.34);
+  color: #bfdbfe;
+}
+
+.quoteNotes {
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.comparisonTable {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+}
+
+.comparisonTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.comparisonTable th {
+  text-align: left;
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.comparisonTable td {
+  vertical-align: top;
+  padding: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.comparisonItemName,
+.comparisonQty,
+.comparisonPrice,
+.quoteCellValue {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.comparisonItemSub,
+.quoteCellSub {
+  color: #64748b;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.variationBadge {
+  margin-top: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.quoteCellNote {
+  color: #cbd5e1;
+  font-size: 11px;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.emptyQuote {
+  background: rgba(100, 116, 139, 0.12);
+  border: 1px solid rgba(100, 116, 139, 0.18);
+  color: #94a3b8;
+}
+
+.historySectionHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0 12px;
+  flex-wrap: wrap;
 }
 
 .tableInputSm,
@@ -95,6 +395,10 @@
 .tableInputLg {
   min-width: 0 !important;
   width: 100% !important;
+}
+
+.tableInputXs {
+  min-width: 72px !important;
 }
 
 .tableInputSm {
@@ -107,6 +411,12 @@
 
 .tableInputLg {
   min-width: 170px !important;
+}
+
+.taxInputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  gap: 6px;
 }
 
 .paginationRow {
@@ -122,6 +432,10 @@
   .contentGrid {
     grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
     gap: 14px;
+  }
+
+  .overviewGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .panelCard {
@@ -164,18 +478,29 @@
 }
 
 @media (max-width: 1220px) {
+  .overviewGrid,
   .contentGrid {
     grid-template-columns: 1fr;
+  }
+
+  .overviewGrid,
+  .comparisonOverview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .summaryGrid {
     grid-template-columns: repeat(2, minmax(120px, 1fr));
   }
+
+  .commercialGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 820px) {
   .twoColumnForm,
-  .metaGrid {
+  .metaGrid,
+  .commercialGrid {
     grid-template-columns: 1fr;
   }
 
@@ -189,8 +514,28 @@
     grid-template-columns: 1fr;
   }
 
+  .requestMetaGrid,
+  .quoteMetaGrid,
+  .comparisonOverview,
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .comparisonActions {
+    justify-content: stretch;
+  }
+
+  .comparisonActions > select,
+  .comparisonActions > button {
+    flex: 1 1 100%;
+  }
+
   .tableInputLg {
     min-width: 140px !important;
+  }
+
+  .taxInputs {
+    grid-template-columns: 1fr;
   }
 
   .tableScroll {
@@ -210,5 +555,9 @@
 
   .historyScroll {
     max-height: 58vh;
+  }
+
+  .comparisonTable {
+    min-width: 760px;
   }
 }

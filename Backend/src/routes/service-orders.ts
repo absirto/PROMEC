@@ -3,6 +3,7 @@ import { ServiceOrderController } from '../controllers/ServiceOrderController';
 import { authenticateToken, requirePermission } from '../middleware/auth';
 
 const router = Router();
+const ensureNumericId = (req: any, _res: any, next: any) => (/^\d+$/.test(String(req.params.id)) ? next() : next('route'));
 
 router.get('/', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.list);
 router.post('/materials/check', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.checkMaterialsCoverage);
@@ -15,8 +16,9 @@ router.post('/purchase-requests/:id/fulfill', authenticateToken, requirePermissi
 router.post('/purchase-quotations', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseQuotation);
 router.get('/purchase-quotations', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseQuotations);
 router.post('/purchase-quotations/:id/approve', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.approvePurchaseQuotation);
-router.get('/:id/operations', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listOperations);
-router.get('/:id', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
+router.get('/purchase-quotations/:id/pdf', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.getPurchaseQuotationPDF);
+router.get('/:id/operations', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listOperations);
+router.get('/:id', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
 router.post('/', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.create);
 router.post('/:id/operations', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.addOperation);
 router.patch('/plan/batch', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.updatePlanBatch);
