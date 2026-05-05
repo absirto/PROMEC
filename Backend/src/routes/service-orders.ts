@@ -9,6 +9,9 @@ router.post('/materials/check', authenticateToken, requirePermission('os:visuali
 router.get('/pcp/overview', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpOverview);
 router.get('/pcp/calendar', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpCalendar);
 router.get('/operations/efficiency', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.operationsEfficiency);
+router.post('/purchase-requests', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseRequest);
+router.get('/purchase-requests', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseRequests);
+router.post('/purchase-requests/:id/fulfill', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.fulfillPurchaseRequest);
 router.get('/:id/operations', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listOperations);
 router.get('/:id', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
 router.post('/', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.create);
@@ -17,8 +20,5 @@ router.patch('/plan/batch', authenticateToken, requirePermission('os:gerenciar')
 router.patch('/:id/plan', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.updatePlan);
 router.put('/:id', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.update);
 router.delete('/:id', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.delete);
-router.post('/purchase-requests', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseRequest);
-router.get('/purchase-requests', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseRequests);
-router.post('/purchase-requests/:id/fulfill', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.fulfillPurchaseRequest);
 
 export default router;
