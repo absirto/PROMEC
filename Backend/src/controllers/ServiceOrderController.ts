@@ -318,8 +318,8 @@ export const ServiceOrderController = {
         logger.warn('ServiceOrderController.listPurchaseRequests retornando vazio por drift de schema: %s', error?.message || 'erro desconhecido');
         return res.json([]);
       }
-      logger.error('ServiceOrderController.listPurchaseRequests falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
-      return res.status(500).json({ status: 'error', message: 'Erro ao listar solicitações de compra.' });
+      logger.error('ServiceOrderController.listPurchaseRequests falhou e retornará vazio: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
+      return res.json([]);
     }
   },
 
