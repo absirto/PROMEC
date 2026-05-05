@@ -28,11 +28,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  marginBottom: 32px;
+  margin-bottom: 32px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .title {
-  font-size: 28px;
+  font-size: clamp(22px, 2.8vw, 28px);
   font-weight: 700;
   color: #fff;
   margin: 0;
@@ -174,4 +176,31 @@
   border-radius: 6px;
   font-size: 14px;
   margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .formContainer {
+    padding: 16px 10px;
+  }
+
+  .glassCard {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+
+  .backBtn,
+  .submitBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .formInput,
+  .formSelect {
+    font-size: 15px;
+    padding: 11px 12px 11px 38px;
+  }
+
+  .togglePassword {
+    right: 8px;
+  }
 }

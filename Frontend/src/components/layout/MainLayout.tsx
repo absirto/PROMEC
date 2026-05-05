@@ -161,7 +161,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   >
                     <item.icon size={18} />
                     <span style={{ fontSize: 14 }}>{item.label}</span>
-                    {location.pathname === item.to && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#00e6b0', marginLeft: 'auto' }} />}
+                    {location.pathname === item.to && <div className={styles.activeDot} />}
                   </NavLink>
                 ))}
               </div>
@@ -188,7 +188,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Menu size={18} />
           </button>
 
-          <div style={{ color: '#94a3b8', fontSize: 14, fontWeight: 600, letterSpacing: 0.2 }}>
+          <div className={styles.pageLabel}>
             {currentPageLabel}
           </div>
           

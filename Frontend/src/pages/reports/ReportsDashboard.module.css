@@ -1,6 +1,8 @@
 
 .container {
-  padding: 20px;
+  padding: clamp(12px, 2.6vw, 24px);
+  width: min(100%, 1880px);
+  margin: 0 auto;
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -10,11 +12,11 @@
 }
 
 .header {
-  margin-bottom: 40px;
+  margin-bottom: clamp(18px, 3vw, 40px);
 }
 
 .title {
-  font-size: 32px;
+  font-size: clamp(24px, 3.2vw, 32px);
   font-weight: 800;
   color: #fff;
   letter-spacing: -1px;
@@ -28,7 +30,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 32px;
 }
 
@@ -41,8 +43,8 @@
 .section {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  padding: 30px;
+  border-radius: clamp(14px, 2vw, 24px);
+  padding: clamp(14px, 2.4vw, 30px);
 }
 
 .sectionHeader {
@@ -71,6 +73,17 @@
   .reportList {
     grid-template-columns: 1fr;
   }
+
+  .reportCard {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .iconBox {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
 }
 
 .reportCard {
@@ -85,6 +98,7 @@
   transition: all 0.2s;
   text-align: left;
   width: 100%;
+  min-width: 0;
 }
 
 .reportCard:hover {
@@ -120,4 +134,30 @@
   text-transform: uppercase;
   font-weight: 800;
   margin-top: 2px;
+}
+
+@media (min-width: 1200px) and (max-width: 1460px) {
+  .grid {
+    gap: 22px;
+  }
+
+  .section {
+    padding: 18px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .grid {
+    gap: 36px;
+  }
+
+  .reportList {
+    gap: 20px;
+  }
+}
+
+@media (min-width: 2300px) {
+  .container {
+    width: min(100%, 2100px);
+  }
 }

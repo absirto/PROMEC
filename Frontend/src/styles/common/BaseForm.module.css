@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: flex-start;
   min-height: 85vh;
-  padding: 80px 24px;
+  padding: clamp(16px, 4vw, 80px) clamp(10px, 2.5vw, 24px);
   animation: slideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -17,13 +17,41 @@
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 32px;
-  padding: 64px;
+  border-radius: clamp(16px, 2.2vw, 32px);
+  padding: clamp(18px, 4vw, 64px);
   width: 100%;
   max-width: 900px;
   box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.6);
   position: relative;
   overflow: hidden;
+}
+
+@media (min-width: 1200px) and (max-width: 1460px) {
+  .glassCard {
+    max-width: 860px;
+  }
+
+  .formGrid {
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .glassCard {
+    max-width: 1020px;
+  }
+
+  .formInput,
+  .formSelect,
+  .formTextarea {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 2300px) {
+  .glassCard {
+    max-width: 1120px;
+  }
 }
 
 /* Subtle inner glow for the card */
@@ -41,11 +69,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 48px;
 }
 
 .title {
-  font-size: 38px;
+  font-size: clamp(24px, 3vw, 38px);
   font-weight: 900;
   color: #fff;
   margin: 0;
@@ -81,7 +111,7 @@
 .formGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
+  gap: clamp(14px, 2.3vw, 32px);
 }
 
 .fullWidth {
@@ -195,6 +225,7 @@
   align-items: center;
   justify-content: center;
   gap: 14px;
+  white-space: nowrap;
 }
 
 .submitBtn:hover:not(:disabled) {
@@ -264,6 +295,18 @@
   gap: 10px;
   z-index: 2;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+@media (max-width: 1280px) {
+  .formContainer {
+    min-height: auto;
+  }
+
+  .formInput,
+  .formSelect,
+  .formTextarea {
+    font-size: 15px;
+  }
 }
 
 .lookupBtn:hover:not(:disabled) {

@@ -59,6 +59,20 @@
   overflow-y: auto;
 }
 
+.navSection {
+  margin-bottom: 24px;
+}
+
+.sectionLabel {
+  padding: 0 24px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
 .navItem {
   display: flex;
   align-items: center;
@@ -85,9 +99,41 @@
   border-left: 3px solid #10b981;
 }
 
+.activeDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #00e6b0;
+  margin-left: auto;
+}
+
 .sidebarFooter {
   padding: 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logoutBtn {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  transition: all 0.3s;
+  font-family: 'Inter', sans-serif;
+}
+
+.logoutBtn:hover {
+  background: #ef4444;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
 }
 
 .content {
@@ -96,11 +142,12 @@
   flex-direction: column;
   overflow-x: hidden;
   position: relative;
+  min-width: 0;
 }
 
 .topBar {
   height: 80px;
-  padding: 0 40px;
+  padding: 0 clamp(14px, 2.5vw, 40px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -110,6 +157,17 @@
   position: sticky;
   top: 0;
   z-index: 900;
+  gap: 12px;
+}
+
+.pageLabel {
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mobileMenuBtn {
@@ -147,6 +205,13 @@
   display: none;
 }
 
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
 .userAvatar {
   width: 40px;
   height: 40px;
@@ -161,30 +226,98 @@
 }
 
 .mainOutlet {
-  padding: 0; /* Let pages handle padding */
+  padding: 0;
   flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 1200px) and (max-width: 1460px) {
+  .sidebar {
+    width: 252px;
+  }
+
+  .sidebarHeader {
+    padding: 30px 18px;
+  }
+
+  .navItem {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .topBar {
+    height: 72px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .sidebar {
+    width: 300px;
+  }
+
+  .topBar {
+    height: 84px;
+    padding: 0 clamp(24px, 2vw, 48px);
+  }
+}
+
+@media (min-width: 2300px) {
+  .sidebar {
+    width: 320px;
+  }
+
+  .nav {
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 1199px) {
+  .sidebar {
+    width: 248px;
+  }
+
+  .sidebarHeader {
+    padding: 30px 18px;
+  }
+
+  .navItem {
+    padding: 12px 14px;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .topBar {
+    height: 72px;
+  }
 }
 
 @media (max-width: 1024px) {
   .sidebar {
     width: 72px;
   }
-  .logoText, .navItem span, .sectionLabel {
+
+  .logoText,
+  .navItem span,
+  .sectionLabel {
     display: none;
   }
+
   .sidebarHeader {
     padding: 24px 14px;
     justify-content: center;
   }
+
   .nav {
     padding: 0 8px;
   }
+
   .navItem {
     justify-content: center;
     padding: 13px;
     gap: 0;
     margin-bottom: 4px;
   }
+
   .navSection {
     margin-bottom: 12px;
   }
@@ -203,116 +336,78 @@
     border-top: none;
     z-index: 1100;
   }
-  .sidebarHeader, .sidebarFooter {
+
+  .sidebarHeader,
+  .sidebarFooter {
     display: flex;
   }
+
   .sidebarHeader {
     padding: 22px 16px;
   }
+
   .mobileCloseBtn {
     display: inline-flex;
   }
+
   .nav {
     display: block;
     padding: 0 12px 12px;
   }
+
   .navItem {
     margin-bottom: 6px;
     justify-content: flex-start;
     padding: 12px 14px;
   }
+
   .navItem span {
     display: inline;
     font-size: 13px;
   }
+
   .sectionLabel {
     padding: 0 14px;
     margin-bottom: 10px;
   }
+
   .topBar {
     height: 64px;
     padding: 0 12px;
     gap: 10px;
   }
+
+  .pageLabel {
+    font-size: 12px;
+    max-width: 45vw;
+  }
+
   .mobileMenuBtn {
     display: inline-flex;
     flex-shrink: 0;
   }
-  .userInfo {
-    min-width: 0;
-  }
+
   .userInfo > div:first-child {
     display: none;
   }
+
   .userAvatar {
     width: 34px;
     height: 34px;
     border-radius: 10px;
     font-size: 12px;
   }
+
   .mobileBackdrop {
     position: fixed;
     inset: 0;
     background: rgba(2, 6, 23, 0.58);
     z-index: 1090;
   }
+
   .mobileBackdropVisible {
     display: block;
   }
-}
-
-.navSection {
-  margin-bottom: 24px;
-}
-
-.sectionLabel {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: #475569;
-  padding: 0 18px;
-  margin-bottom: 6px;
-}
-
-.userInfo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.sectionLabel {
-  padding: 0 24px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 12px;
-}
-
-.logoutBtn {
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  transition: all 0.3s;
-  font-family: 'Inter', sans-serif;
-}
-
-.logoutBtn:hover {
-  background: #ef4444;
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
 }
 
 /* Fix for Select Options in Dark Mode */

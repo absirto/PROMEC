@@ -17,3 +17,14 @@
 .reports-dashboard nav a {
   text-decoration: none;
 }
+
+@media (max-width: 768px) {
+  .reports-dashboard {
+    padding: 0.75rem;
+  }
+
+  .reports-dashboard nav ul {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

@@ -1,5 +1,5 @@
 .listContainer {
-  padding: 48px 32px;
+  padding: clamp(16px, 3.5vw, 48px) clamp(12px, 2.6vw, 32px);
   max-width: 1400px;
   margin: 0 auto;
   animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1);
@@ -14,13 +14,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
   margin-bottom: 40px;
 }
 
 .title {
   color: #fff;
   margin: 0;
-  font-size: 38px;
+  font-size: clamp(28px, 2.2vw, 38px);
   font-weight: 900;
   font-family: 'Outfit', sans-serif;
   letter-spacing: -1.5px;
@@ -33,6 +35,7 @@
   display: flex;
   gap: 16px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .searchInput {
@@ -43,7 +46,8 @@
   padding: 14px 20px;
   font-size: 16px;
   outline: none;
-  min-width: 350px;
+  min-width: 0;
+  width: min(100%, 360px);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(12px);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -53,7 +57,6 @@
   border-color: #10b981;
   background: rgba(16, 185, 129, 0.05);
   box-shadow: 0 0 25px rgba(16, 185, 129, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 400px;
 }
 
 .newBtn {
@@ -73,6 +76,7 @@
   box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
 }
 
 .newBtn::after {
@@ -130,7 +134,7 @@
 
 .tableRow:hover {
   background: rgba(30, 41, 59, 0.6);
-  transform: scale(1.015) translateY(-2px);
+  transform: translateY(-2px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   z-index: 10;
 }
@@ -248,6 +252,46 @@
   letter-spacing: 0.5px;
 }
 
+@media (min-width: 1200px) and (max-width: 1460px) {
+  .listContainer {
+    max-width: 1280px;
+  }
+
+  .header {
+    margin-bottom: 28px;
+  }
+
+  .tableCell {
+    padding: 18px 20px;
+    font-size: 15px;
+  }
+
+  .newBtn {
+    padding: 12px 22px;
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .listContainer {
+    max-width: 1620px;
+  }
+
+  .tableCell {
+    padding: 24px 30px;
+  }
+
+  .searchInput {
+    width: min(100%, 420px);
+  }
+}
+
+@media (min-width: 2300px) {
+  .listContainer {
+    max-width: 1840px;
+  }
+}
+
 @media (max-width: 1024px) {
   .listContainer {
     padding: 28px 18px;
@@ -258,12 +302,7 @@
   }
 
   .searchInput {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .searchInput:focus {
-    width: 100%;
+    width: min(100%, 420px);
   }
 }
 
@@ -288,6 +327,10 @@
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+  }
+
+  .searchInput {
+    width: 100%;
   }
 
   .newBtn {

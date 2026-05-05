@@ -3,7 +3,8 @@
   display: flex;
   background: #020617;
   font-family: 'Inter', sans-serif;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
   box-sizing: border-box;
 }
@@ -18,7 +19,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 80px;
+  padding: clamp(22px, 5vw, 80px);
   position: relative;
   z-index: 1;
   background: rgba(15, 23, 42, 0.2);
@@ -81,7 +82,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  padding: clamp(14px, 3vw, 40px);
   position: relative;
   z-index: 1;
 }
@@ -90,8 +91,8 @@
   background: rgba(30, 41, 59, 0.3);
   backdrop-filter: blur(32px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 40px;
-  padding: 64px;
+  border-radius: clamp(20px, 2.5vw, 40px);
+  padding: clamp(20px, 4vw, 64px);
   box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.7);
   width: 100%;
   max-width: 480px;
@@ -185,6 +186,24 @@
   }
   .login-logo {
     margin: 0 auto 40px auto;
+  }
+}
+
+@media (max-height: 760px) {
+  .login-logo {
+    margin-bottom: 26px;
+  }
+
+  .login-desc {
+    margin-bottom: 24px;
+  }
+
+  .login-form {
+    max-width: 520px;
+  }
+
+  .submit-btn {
+    margin-top: 22px;
   }
 }
 

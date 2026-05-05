@@ -22,6 +22,12 @@ body {
   overflow-x: hidden;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+}
+
 /* Animated Glowing Orbs in Background */
 body::before, body::after {
   content: '';
@@ -91,4 +97,23 @@ body::after {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 900px) {
+  body::before,
+  body::after {
+    width: 75vw;
+    height: 75vw;
+    filter: blur(90px);
+    opacity: 0.12;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

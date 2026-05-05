@@ -5,6 +5,7 @@
   align-items: flex-start;
   margin-top: 24px;
   margin-bottom: 24px;
+  min-width: 0;
 }
 
 .user-menu-trigger {
@@ -17,6 +18,9 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s;
+  width: 100%;
+  max-width: 280px;
+  text-align: left;
 }
 
 .user-menu-trigger:hover {
@@ -33,6 +37,19 @@
   display: flex;
   flex-direction: column;
   min-width: 160px;
+}
+
+@media (max-width: 768px) {
+  .user-menu-root {
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+
+  .user-menu-trigger,
+  .user-menu-dropdown {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 .user-menu-dropdown button {

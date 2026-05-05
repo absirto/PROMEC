@@ -1,5 +1,7 @@
 .dashboardContainer {
-  padding: 40px;
+  padding: clamp(16px, 3vw, 40px);
+  width: min(100%, 1880px);
+  margin: 0 auto;
   animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -12,12 +14,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
   margin-bottom: 40px;
 }
 
 .welcomeTitle {
   margin: 0;
-  font-size: 36px;
+  font-size: clamp(24px, 3.4vw, 36px);
   font-weight: 800;
   font-family: 'Outfit', sans-serif;
   letter-spacing: -1px;
@@ -44,7 +48,7 @@
 
 .statsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 24px;
   margin-bottom: 48px;
 }
@@ -107,7 +111,7 @@
 
 .chartsGrid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 24px;
   margin-bottom: 48px;
 }
@@ -117,7 +121,7 @@
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
-  padding: 32px;
+  padding: clamp(16px, 2.8vw, 32px);
 }
 
 .chartTitle {
@@ -132,7 +136,7 @@
 
 .bottomGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
 }
 
@@ -198,6 +202,34 @@
   transition: width 1s ease-out;
 }
 
+@media (min-width: 1200px) and (max-width: 1460px) {
+  .statCard,
+  .chartCard,
+  .kpiCard {
+    border-radius: 20px;
+  }
+
+  .statCard {
+    padding: 22px;
+  }
+}
+
+@media (min-width: 1800px) {
+  .statsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .bottomGrid {
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  }
+}
+
+@media (min-width: 2300px) {
+  .dashboardContainer {
+    width: min(100%, 2120px);
+  }
+}
+
 @media (max-width: 1200px) {
   .chartsGrid {
     grid-template-columns: 1fr;
@@ -206,11 +238,36 @@
 
 @media (max-width: 768px) {
   .dashboardContainer {
-    padding: 24px;
+    padding: 16px 12px;
   }
+
+  .welcomeHeader {
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+
   .welcomeTitle {
     font-size: 28px;
   }
+
+  .dateBadge {
+    width: 100%;
+    text-align: center;
+    padding: 10px 12px;
+  }
+
+  .statsGrid,
+  .chartsGrid,
+  .bottomGrid {
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .kpiCard {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
   .bottomGrid {
     grid-template-columns: 1fr;
   }

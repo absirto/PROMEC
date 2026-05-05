@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Clock3, FileText, RefreshCw, Search, WandSparkles } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
+import pageStyles from './QuotationsList.module.css';
 import { useToast } from '../../components/ToastProvider';
 
 const quotationStatusColor: Record<string, string> = {
@@ -296,11 +297,11 @@ const QuotationsList: React.FC = () => {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.35fr 1fr', gap: 16 }}>
-        <div style={{ background: 'rgba(2,6,23,0.35)', border: '1px solid rgba(148,163,184,0.16)', borderRadius: 18, padding: 16 }}>
+      <div className={pageStyles.contentGrid}>
+        <div className={pageStyles.panelCard}>
           <div style={{ color: '#e2e8f0', fontWeight: 800, marginBottom: 12 }}>Nova Cotação</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+          <div className={pageStyles.twoColumnForm}>
             <select className={styles.searchInput} value={form.purchaseRequestId} onChange={(e) => setForm((prev) => ({ ...prev, purchaseRequestId: e.target.value }))}>
               <option value="">Selecione a solicitação</option>
               {openRequests.map((request: any) => (
@@ -316,7 +317,7 @@ const QuotationsList: React.FC = () => {
             </select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10, marginBottom: 12 }}>
+          <div className={pageStyles.metaGrid}>
             <input className={styles.searchInput} type="date" value={form.validUntil} onChange={(e) => setForm((prev) => ({ ...prev, validUntil: e.target.value }))} />
             <input className={styles.searchInput} placeholder="Observações gerais da cotação" value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} />
           </div>
@@ -327,8 +328,8 @@ const QuotationsList: React.FC = () => {
             <div style={{ color: '#94a3b8', fontSize: 13 }}>Esta solicitação não possui itens pendentes.</div>
           ) : (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto auto', gap: 8, marginBottom: 10 }}>
-                <div style={{ position: 'relative' }}>
+              <div className={pageStyles.actionsToolbar}>
+                <div className={pageStyles.searchFieldWrap}>
                   <Search size={14} style={{ position: 'absolute', left: 10, top: 11, color: '#64748b' }} />
                   <input
                     className={styles.searchInput}
@@ -341,28 +342,31 @@ const QuotationsList: React.FC = () => {
                     }}
                   />
                 </div>
-                <input
-                  className={styles.searchInput}
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  placeholder="Custo em massa"
-                  value={bulkUnitCost}
-                  onChange={(e) => setBulkUnitCost(e.target.value)}
-                />
-                <button className={styles.newBtn} type="button" onClick={applyBulkUnitCost} style={{ background: 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' }}>
-                  Aplicar
-                </button>
-                <button className={styles.newBtn} type="button" onClick={autoFillFromCurrentPrice} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
-                  <WandSparkles size={16} /> Preço atual
-                </button>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#cbd5e1', fontSize: 12 }}>
-                  <input type="checkbox" checked={onlyFilled} onChange={(e) => setOnlyFilled(e.target.checked)} />
-                  Somente preenchidos
-                </label>
+
+                <div className={pageStyles.bulkControlsWrap}>
+                  <input
+                    className={styles.searchInput}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="Custo em massa"
+                    value={bulkUnitCost}
+                    onChange={(e) => setBulkUnitCost(e.target.value)}
+                  />
+                  <button className={styles.newBtn} type="button" onClick={applyBulkUnitCost} style={{ background: 'linear-gradient(135deg, #334155 0%, #1e293b 100%)' }}>
+                    Aplicar
+                  </button>
+                  <button className={styles.newBtn} type="button" onClick={autoFillFromCurrentPrice} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
+                    <WandSparkles size={16} /> Preço atual
+                  </button>
+                  <label className={pageStyles.onlyFilledToggle}>
+                    <input type="checkbox" checked={onlyFilled} onChange={(e) => setOnlyFilled(e.target.checked)} />
+                    Somente preenchidos
+                  </label>
+                </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(110px, 1fr))', gap: 8, marginBottom: 10 }}>
+              <div className={pageStyles.summaryGrid}>
                 <div style={{ background: 'rgba(15,23,42,0.45)', border: '1px solid rgba(148,163,184,0.16)', borderRadius: 10, padding: 8 }}>
                   <div style={{ color: '#64748b', fontSize: 11 }}>Itens pendentes</div>
                   <div style={{ color: '#e2e8f0', fontWeight: 800 }}>{summary.itemsCount}</div>
@@ -381,8 +385,8 @@ const QuotationsList: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ border: '1px solid rgba(148,163,184,0.16)', borderRadius: 12, overflow: 'hidden', marginBottom: 10 }}>
-                <div style={{ maxHeight: '46vh', overflow: 'auto' }}>
+              <div className={pageStyles.tableShell}>
+                <div className={pageStyles.tableScroll}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                     <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
                       <tr>
@@ -407,16 +411,16 @@ const QuotationsList: React.FC = () => {
                               {Number(item.shortageQty || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
-                              <input className={styles.searchInput} type="number" min={0} step="0.01" value={input.quantity} onChange={(e) => handleItemInput(item.id, 'quantity', e.target.value)} style={{ minWidth: 'unset', width: 92 }} />
+                              <input className={`${styles.searchInput} ${pageStyles.tableInputSm}`} type="number" min={0} step="0.01" value={input.quantity} onChange={(e) => handleItemInput(item.id, 'quantity', e.target.value)} />
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
-                              <input className={styles.searchInput} type="number" min={0} step="0.01" value={input.unitCost} onChange={(e) => handleItemInput(item.id, 'unitCost', e.target.value)} style={{ minWidth: 'unset', width: 100 }} />
+                              <input className={`${styles.searchInput} ${pageStyles.tableInputMd}`} type="number" min={0} step="0.01" value={input.unitCost} onChange={(e) => handleItemInput(item.id, 'unitCost', e.target.value)} />
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
-                              <input className={styles.searchInput} type="number" min={0} step="0.01" value={input.totalPaid} onChange={(e) => handleItemInput(item.id, 'totalPaid', e.target.value)} style={{ minWidth: 'unset', width: 110 }} />
+                              <input className={`${styles.searchInput} ${pageStyles.tableInputMd}`} type="number" min={0} step="0.01" value={input.totalPaid} onChange={(e) => handleItemInput(item.id, 'totalPaid', e.target.value)} />
                             </td>
                             <td style={{ padding: 8, borderBottom: '1px solid rgba(148,163,184,0.10)' }}>
-                              <input className={styles.searchInput} value={input.notes} onChange={(e) => handleItemInput(item.id, 'notes', e.target.value)} style={{ minWidth: 'unset', width: 180 }} />
+                              <input className={`${styles.searchInput} ${pageStyles.tableInputLg}`} value={input.notes} onChange={(e) => handleItemInput(item.id, 'notes', e.target.value)} />
                             </td>
                           </tr>
                         );
@@ -426,7 +430,7 @@ const QuotationsList: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div className={pageStyles.paginationRow}>
                 <div style={{ color: '#64748b', fontSize: 12 }}>
                   Exibindo {pagedItems.length} de {filteredItems.length} item(ns) filtrado(s) - pagina {page}/{totalPages}
                 </div>
@@ -449,7 +453,7 @@ const QuotationsList: React.FC = () => {
           </button>
         </div>
 
-        <div style={{ background: 'rgba(2,6,23,0.35)', border: '1px solid rgba(148,163,184,0.16)', borderRadius: 18, padding: 16 }}>
+        <div className={pageStyles.panelCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <Clock3 size={18} color="#f59e0b" />
             <strong style={{ color: '#e2e8f0' }}>Cotações Registradas</strong>
@@ -460,7 +464,7 @@ const QuotationsList: React.FC = () => {
           ) : quotations.length === 0 ? (
             <div style={{ color: '#94a3b8' }}>Nenhuma cotação registrada.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '72vh', overflowY: 'auto' }}>
+            <div className={pageStyles.historyScroll}>
               {quotations.map((quotation: any) => {
                 const total = (quotation.items || []).reduce((acc: number, item: any) => acc + Number(item.totalPaid || 0), 0);
                 const requestStatus = quotation.purchaseRequest?.status || 'OPEN';

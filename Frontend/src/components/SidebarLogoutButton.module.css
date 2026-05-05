@@ -10,8 +10,16 @@
   justify-content: center;
   transition: background 0.2s, color 0.2s;
   font-size: 1.1rem;
+  width: 100%;
 }
 .sidebar-logout:hover {
   background: #00e6b0;
   color: #181c24;
+}
+
+@media (max-width: 768px) {
+  .sidebar-logout {
+    min-height: 42px;
+    border-radius: 10px;
+  }
 }

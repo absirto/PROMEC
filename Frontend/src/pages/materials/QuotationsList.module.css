@@ -1,0 +1,214 @@
+.contentGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.panelCard {
+  background: rgba(2, 6, 23, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.twoColumnForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.actionsToolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.searchFieldWrap {
+  position: relative;
+  flex: 1 1 320px;
+  min-width: 220px;
+}
+
+.bulkControlsWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 380px;
+  flex-wrap: wrap;
+}
+
+.bulkControlsWrap > input {
+  flex: 1 1 180px;
+  min-width: 150px;
+}
+
+.onlyFilledToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.tableShell {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.tableScroll {
+  max-height: 46vh;
+  overflow: auto;
+}
+
+.historyScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+.tableInputSm,
+.tableInputMd,
+.tableInputLg {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.tableInputSm {
+  min-width: 86px !important;
+}
+
+.tableInputMd {
+  min-width: 98px !important;
+}
+
+.tableInputLg {
+  min-width: 170px !important;
+}
+
+.paginationRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 1200px) and (max-width: 1460px) {
+  .contentGrid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 1fr);
+    gap: 14px;
+  }
+
+  .panelCard {
+    padding: 14px;
+  }
+
+  .tableScroll {
+    max-height: 40vh;
+  }
+
+  .historyScroll {
+    max-height: 64vh;
+  }
+}
+
+@media (min-width: 1800px) {
+  .contentGrid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(420px, 1fr);
+    gap: 20px;
+  }
+
+  .panelCard {
+    padding: 20px;
+  }
+
+  .tableScroll {
+    max-height: 52vh;
+  }
+
+  .historyScroll {
+    max-height: 76vh;
+  }
+}
+
+@media (min-width: 2300px) {
+  .contentGrid {
+    grid-template-columns: minmax(0, 1.65fr) minmax(460px, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (max-width: 1220px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .twoColumnForm,
+  .metaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .searchFieldWrap,
+  .bulkControlsWrap {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tableInputLg {
+    min-width: 140px !important;
+  }
+
+  .tableScroll {
+    max-height: 44vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .bulkControlsWrap > button {
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+  }
+
+  .onlyFilledToggle {
+    width: 100%;
+  }
+
+  .historyScroll {
+    max-height: 58vh;
+  }
+}
