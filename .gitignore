@@ -7,9 +7,11 @@ Backend/dist/
 Frontend/build/
 
 # Ambientes
-Backend/.env
-Backend/.env.production
-Frontend/.env
+Backend/.env*
+!Backend/.env.example
+!Backend/.env.production.example
+Frontend/.env*
+!Frontend/.env.example
 
 # Logs e caches
 **/*.log
