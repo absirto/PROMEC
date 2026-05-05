@@ -12,6 +12,9 @@ router.get('/operations/efficiency', authenticateToken, requirePermission('os:vi
 router.post('/purchase-requests', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseRequest);
 router.get('/purchase-requests', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseRequests);
 router.post('/purchase-requests/:id/fulfill', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.fulfillPurchaseRequest);
+router.post('/purchase-quotations', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseQuotation);
+router.get('/purchase-quotations', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseQuotations);
+router.post('/purchase-quotations/:id/approve', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.approvePurchaseQuotation);
 router.get('/:id/operations', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listOperations);
 router.get('/:id', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
 router.post('/', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.create);

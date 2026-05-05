@@ -37,6 +37,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     '/quality-controls': 'Controle de Qualidade',
     '/stock': 'Estoque',
     '/purchases': 'Central de Compras',
+    '/quotations': 'Central de Cotações',
     '/materials': 'Materiais',
     '/finance': 'Fluxo de Caixa',
     '/services-catalog': 'Catálogo de Preços',
@@ -72,6 +73,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         { label: 'Qualidade', to: '/quality-controls', icon: ClipboardCheck, permission: 'qualidade:visualizar' },
         { label: 'Estoque', to: '/stock', icon: Package, permission: 'estoque:visualizar' },
         { label: 'Compras', to: '/purchases', icon: ShoppingCart, permission: 'estoque:visualizar' },
+        { label: 'Cotações', to: '/quotations', icon: FileText, permission: 'estoque:visualizar' },
         { label: 'Materiais', to: '/materials', icon: Layers, permission: 'materiais:visualizar' },
       ]
     },

@@ -64,6 +64,17 @@ function generatePurchaseRequestCode() {
   return `SC-${y}${m}${d}-${h}${min}-${rand}`;
 }
 
+function generatePurchaseQuotationCode() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const h = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `COT-${y}${m}${d}-${h}${min}-${rand}`;
+}
+
 const OPERATION_TYPES = ['USINAGEM', 'CALDEIRARIA', 'MONTAGEM'];
 const SHIFTS = ['MORNING', 'AFTERNOON', 'NIGHT'];
 const DOWNTIME_CATEGORIES = ['MACHINE', 'MATERIAL', 'SETUP', 'RETRABALHO', 'QUALIDADE', 'OUTROS'];
@@ -160,6 +171,324 @@ function enrichFinancials(order: any) {
 }
 
 export const ServiceOrderController = {
+  async createPurchaseQuotation(req: Request, res: Response) {
+    try {
+      const actor = getActor(req);
+      const data = req.body || {};
+      const purchaseRequestId = Number(data.purchaseRequestId);
+      const supplierPersonId = Number(data.supplierPersonId);
+      const validUntil = data.validUntil ? new Date(data.validUntil) : null;
+
+      if (!Number.isFinite(purchaseRequestId) || purchaseRequestId <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Solicitação de compra inválida.' });
+      }
+      if (!Number.isFinite(supplierPersonId) || supplierPersonId <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Fornecedor inválido.' });
+      }
+
+      const inputItems = Array.isArray(data.items) ? data.items : [];
+      const items = inputItems
+        .map((item: any) => ({
+          purchaseRequestItemId: Number(item.purchaseRequestItemId),
+          quantity: Number(item.quantity),
+          unitCost: Number(item.unitCost),
+          totalPaid: item.totalPaid !== undefined && item.totalPaid !== null ? Number(item.totalPaid) : null,
+          notes: item.notes ? String(item.notes) : null,
+        }))
+        .filter((item: any) => Number.isFinite(item.purchaseRequestItemId) && item.purchaseRequestItemId > 0 && Number.isFinite(item.quantity) && item.quantity > 0 && Number.isFinite(item.unitCost) && item.unitCost > 0);
+
+      if (!items.length) {
+        return res.status(400).json({ status: 'error', message: 'Informe itens válidos para a cotação.' });
+      }
+
+      const created = await prisma.$transaction(async (tx) => {
+        const txAny = tx as any;
+
+        const supplier = await tx.person.findUnique({ where: { id: supplierPersonId }, select: { id: true } });
+        if (!supplier) throw new Error('SUPPLIER_NOT_FOUND');
+
+        const request = await txAny.purchaseRequest.findUnique({
+          where: { id: purchaseRequestId },
+          include: {
+            serviceOrder: { select: { id: true, traceCode: true } },
+            items: { include: { material: { select: { id: true, unit: true, price: true } } } }
+          }
+        });
+
+        if (!request) throw new Error('REQUEST_NOT_FOUND');
+
+        const requestItemsMap = new Map<number, any>(request.items.map((ri: any) => [ri.id, ri]));
+        const quotationCode = generatePurchaseQuotationCode();
+
+        const quotation = await txAny.purchaseQuotation.create({
+          data: {
+            code: quotationCode,
+            purchaseRequestId,
+            supplierPersonId,
+            status: 'OPEN',
+            notes: data.notes ? String(data.notes) : null,
+            validUntil,
+            createdByEmail: actor.email,
+            items: {
+              create: items.map((item: any) => {
+                const requestItem = requestItemsMap.get(item.purchaseRequestItemId);
+                if (!requestItem) throw new Error('REQUEST_ITEM_NOT_FOUND');
+                const maxQty = Math.max(0, Number(requestItem.shortageQty || 0));
+                if (maxQty <= 0) throw new Error('REQUEST_ITEM_ALREADY_COVERED');
+                const qty = Math.min(item.quantity, maxQty);
+                const totalPaid = item.totalPaid && item.totalPaid > 0 ? item.totalPaid : qty * item.unitCost;
+
+                return {
+                  purchaseRequestItemId: item.purchaseRequestItemId,
+                  materialId: requestItem.materialId,
+                  quantity: qty,
+                  unitCost: item.unitCost,
+                  totalPaid,
+                  notes: item.notes,
+                };
+              })
+            }
+          },
+          include: {
+            supplierPerson: { include: { naturalPerson: true, legalPerson: true } },
+            purchaseRequest: {
+              include: {
+                serviceOrder: { select: { id: true, traceCode: true, description: true } },
+                items: { include: { material: true } }
+              }
+            },
+            items: {
+              include: {
+                material: true,
+                purchaseRequestItem: true,
+              }
+            }
+          }
+        });
+
+        if (request.serviceOrderId) {
+          await txAny.serviceOrderTrace.create({
+            data: {
+              serviceOrderId: request.serviceOrderId,
+              serviceOrderCode: request.serviceOrder?.traceCode || null,
+              action: 'PURCHASE_QUOTATION_CREATE',
+              changedByUserId: actor.id,
+              changedByEmail: actor.email,
+              payload: {
+                purchaseRequestId,
+                quotationCode,
+                supplierPersonId,
+              }
+            }
+          });
+        }
+
+        return quotation;
+      });
+
+      return res.status(201).json(created);
+    } catch (error: any) {
+      if (error.message === 'REQUEST_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Solicitação de compra não encontrada.' });
+      }
+      if (error.message === 'SUPPLIER_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Fornecedor não encontrado.' });
+      }
+      if (error.message === 'REQUEST_ITEM_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Item da solicitação não encontrado.' });
+      }
+      if (error.message === 'REQUEST_ITEM_ALREADY_COVERED') {
+        return res.status(400).json({ status: 'error', message: 'Não é possível cotar item já totalmente coberto.' });
+      }
+      return res.status(400).json({ status: 'error', message: 'Erro ao criar cotação de compra.', details: error.message });
+    }
+  },
+
+  async listPurchaseQuotations(req: Request, res: Response) {
+    try {
+      const purchaseRequestId = req.query.purchaseRequestId ? Number(req.query.purchaseRequestId) : null;
+      const status = req.query.status ? String(req.query.status) : null;
+
+      const where: any = {};
+      if (purchaseRequestId && Number.isFinite(purchaseRequestId) && purchaseRequestId > 0) {
+        where.purchaseRequestId = purchaseRequestId;
+      }
+      if (status) where.status = status;
+
+      const quotations = await (prisma as any).purchaseQuotation.findMany({
+        where,
+        include: {
+          supplierPerson: { include: { naturalPerson: true, legalPerson: true } },
+          purchaseRequest: {
+            include: {
+              serviceOrder: { select: { id: true, traceCode: true, description: true } },
+              items: { include: { material: true } },
+            }
+          },
+          items: {
+            include: {
+              material: true,
+              purchaseRequestItem: true,
+            },
+            orderBy: { id: 'asc' },
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return res.json(quotations);
+    } catch (error: any) {
+      logger.error('ServiceOrderController.listPurchaseQuotations falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
+      return res.json([]);
+    }
+  },
+
+  async approvePurchaseQuotation(req: Request, res: Response) {
+    try {
+      const quotationId = Number(req.params.id);
+      const actor = getActor(req);
+
+      if (!Number.isFinite(quotationId) || quotationId <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Cotação inválida.' });
+      }
+
+      const result = await prisma.$transaction(async (tx) => {
+        const txAny = tx as any;
+        const quotation = await txAny.purchaseQuotation.findUnique({
+          where: { id: quotationId },
+          include: {
+            purchaseRequest: {
+              include: {
+                serviceOrder: { select: { id: true, traceCode: true } },
+                items: { include: { material: true } }
+              }
+            },
+            items: true,
+          }
+        });
+
+        if (!quotation) throw new Error('QUOTATION_NOT_FOUND');
+        if (quotation.status !== 'OPEN') throw new Error('QUOTATION_NOT_OPEN');
+
+        const requestItemsMap = new Map<number, any>(quotation.purchaseRequest.items.map((ri: any) => [ri.id, ri]));
+
+        for (const qItem of quotation.items) {
+          const requestItem = requestItemsMap.get(qItem.purchaseRequestItemId);
+          if (!requestItem) continue;
+
+          const availableShortage = Math.max(0, Number(requestItem.shortageQty || 0));
+          if (availableShortage <= 0) continue;
+
+          const qtyToBuy = Math.min(Number(qItem.quantity || 0), availableShortage);
+          if (qtyToBuy <= 0) continue;
+
+          const unitCost = Number(qItem.unitCost || 0);
+          const totalPaid = Number(qItem.totalPaid || 0) > 0 ? Number(qItem.totalPaid) : unitCost * qtyToBuy;
+
+          await txAny.stockLog.create({
+            data: {
+              materialId: requestItem.materialId,
+              quantity: qtyToBuy,
+              type: 'IN',
+              description: `Compra por cotação ${quotation.code}`,
+              supplierPersonId: quotation.supplierPersonId,
+              unitCost,
+              totalPaid,
+              remainingQty: qtyToBuy,
+            }
+          });
+
+          await tx.material.update({
+            where: { id: requestItem.materialId },
+            data: { price: unitCost }
+          });
+
+          const newStockQty = Number(requestItem.stockQty || 0) + qtyToBuy;
+          const newShortageQty = Math.max(0, Number(requestItem.shortageQty || 0) - qtyToBuy);
+          const newStatus = newShortageQty <= 0 ? 'PURCHASED' : 'PARTIAL';
+
+          await txAny.purchaseRequestItem.update({
+            where: { id: requestItem.id },
+            data: {
+              stockQty: newStockQty,
+              shortageQty: newShortageQty,
+              status: newStatus,
+            }
+          });
+        }
+
+        const refreshedItems = await txAny.purchaseRequestItem.findMany({
+          where: { purchaseRequestId: quotation.purchaseRequestId },
+          select: { id: true, status: true }
+        });
+        const allPurchased = refreshedItems.every((ri: any) => ri.status === 'PURCHASED');
+        const hasAnyPurchased = refreshedItems.some((ri: any) => ri.status === 'PURCHASED' || ri.status === 'PARTIAL');
+
+        await txAny.purchaseRequest.update({
+          where: { id: quotation.purchaseRequestId },
+          data: {
+            status: allPurchased ? 'CLOSED' : (hasAnyPurchased ? 'PARTIAL' : 'OPEN')
+          }
+        });
+
+        await txAny.purchaseQuotation.updateMany({
+          where: { purchaseRequestId: quotation.purchaseRequestId, id: { not: quotationId }, status: 'OPEN' },
+          data: { status: 'REJECTED' }
+        });
+
+        await txAny.purchaseQuotation.update({
+          where: { id: quotationId },
+          data: {
+            status: 'APPROVED',
+            approvedAt: new Date(),
+            approvedByEmail: actor.email,
+          }
+        });
+
+        if (quotation.purchaseRequest.serviceOrderId) {
+          await txAny.serviceOrderTrace.create({
+            data: {
+              serviceOrderId: quotation.purchaseRequest.serviceOrderId,
+              serviceOrderCode: quotation.purchaseRequest.serviceOrder?.traceCode || null,
+              action: 'PURCHASE_QUOTATION_APPROVE',
+              changedByUserId: actor.id,
+              changedByEmail: actor.email,
+              payload: {
+                quotationId: quotation.id,
+                quotationCode: quotation.code,
+                purchaseRequestId: quotation.purchaseRequestId,
+              }
+            }
+          });
+        }
+
+        return txAny.purchaseQuotation.findUnique({
+          where: { id: quotationId },
+          include: {
+            supplierPerson: { include: { naturalPerson: true, legalPerson: true } },
+            purchaseRequest: {
+              include: {
+                serviceOrder: { select: { id: true, traceCode: true, description: true } },
+                items: { include: { material: true } }
+              }
+            },
+            items: { include: { material: true, purchaseRequestItem: true } }
+          }
+        });
+      });
+
+      return res.json(result);
+    } catch (error: any) {
+      if (error.message === 'QUOTATION_NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Cotação não encontrada.' });
+      }
+      if (error.message === 'QUOTATION_NOT_OPEN') {
+        return res.status(400).json({ status: 'error', message: 'Somente cotações abertas podem ser aprovadas.' });
+      }
+      return res.status(400).json({ status: 'error', message: 'Erro ao aprovar cotação de compra.', details: error.message });
+    }
+  },
+
   async createPurchaseRequest(req: Request, res: Response) {
     try {
       type PurchaseRequestInputItem = {
