@@ -1,9 +1,10 @@
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { clearStoredSession, getValidStoredToken } from '../utils/authSession';
 
 function redirectToLogin() {
   if (typeof window === 'undefined') return;
 
-  localStorage.removeItem('token');
+  clearStoredSession();
 
   if (window.location.pathname !== '/login') {
     window.location.replace('/login');
@@ -23,9 +24,11 @@ const api = axios.create({
 
 // Interceptor para adicionar token JWT automaticamente
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = localStorage.getItem('token');
+  const token = getValidStoredToken();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else if (config.headers?.Authorization) {
+    delete config.headers.Authorization;
   }
   return config;
 });

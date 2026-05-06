@@ -5,6 +5,12 @@ import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
 
+interface ServiceOrdersListProps {
+  showFinancialData?: boolean;
+  title?: string;
+  viewPathBase?: string;
+}
+
 const formatDateInput = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -19,7 +25,11 @@ const formatDateLabel = (dateValue: string | Date | null | undefined) => {
   return d.toLocaleDateString('pt-BR');
 };
 
-const ServiceOrdersList: React.FC = () => {
+const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
+  showFinancialData = false,
+  title = 'Ordens de Serviço',
+  viewPathBase = '/service-orders',
+}) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [orders, setOrders] = useState<any[]>([]);
@@ -67,6 +77,20 @@ const ServiceOrdersList: React.FC = () => {
       .finally(() => setLoading(false));
   }, [showToast]);
 
+  const displayedOrders = useMemo(() => {
+    if (!showFinancialData) return orders;
+    return orders.map((order: any) => ({
+      ...order,
+      financials: {
+        directCost: (order.materials || []).reduce((acc: number, m: any) => acc + Number(m.totalPrice || 0), 0)
+          + (order.services || []).reduce((acc: number, s: any) => acc + Number(s.totalPrice || 0), 0),
+        totalEstimated: Number(order.financials?.totalEstimated || 0)
+          || ((order.materials || []).reduce((acc: number, m: any) => acc + Number(m.totalPrice || 0), 0)
+          + (order.services || []).reduce((acc: number, s: any) => acc + Number(s.totalPrice || 0), 0)),
+      },
+    }));
+  }, [orders, showFinancialData]);
+
   const loadPcpOverview = useCallback(() => {
     setPcpLoading(true);
     api.get('/service-orders/pcp/overview', {
@@ -109,7 +133,7 @@ const ServiceOrdersList: React.FC = () => {
     loadPcpCalendar();
   }, [loadPcpCalendar]);
 
-  const handleView = (id: number) => navigate(`/service-orders/${id}`);
+  const handleView = (id: number) => navigate(`${viewPathBase}/${id}`);
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
 
   const openPlanEditor = (order: any) => {
@@ -281,7 +305,7 @@ const ServiceOrdersList: React.FC = () => {
     return conflictIds;
   }, [pcpOverview]);
 
-  const filtered = orders.filter(order => {
+  const filtered = displayedOrders.filter(order => {
     const matchSearch = order.person?.naturalPerson?.name?.toLowerCase().includes(search.toLowerCase()) || 
                       order.person?.legalPerson?.corporateName?.toLowerCase().includes(search.toLowerCase()) ||
                       order.description?.toLowerCase().includes(search.toLowerCase());
@@ -312,7 +336,7 @@ const ServiceOrdersList: React.FC = () => {
     <div className={styles.listContainer}>
       <div className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <h2 className={styles.title}>Ordens de Serviço</h2>
+          <h2 className={styles.title}>{title}</h2>
           <button 
             onClick={() => setShowFilters(!showFilters)}
             style={{ 
@@ -564,7 +588,7 @@ const ServiceOrdersList: React.FC = () => {
               </th>
               <th style={{ paddingLeft: 20 }}>OS #</th>
               <th>Cliente</th>
-              <th>Custos / Total</th>
+              <th>{showFinancialData ? 'Custos / Total' : 'Quantidades / PCP'}</th>
               <th>Data Abertura</th>
               <th>Status</th>
               <th style={{ textAlign: 'center' }}>Ações</th>
@@ -591,12 +615,25 @@ const ServiceOrdersList: React.FC = () => {
                 </td>
                 <td className={styles.tableCell}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ color: '#94a3b8', fontSize: 12 }}>
-                      Custo Direto: R$ {(order.financials?.directCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                    <span style={{ color: '#10b981', fontWeight: 700 }}>
-                      Total Previsto: R$ {(order.financials?.totalEstimated || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
+                    {showFinancialData ? (
+                      <>
+                        <span style={{ color: '#94a3b8', fontSize: 12 }}>
+                          Custo Direto: R$ {(order.financials?.directCost || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                        <span style={{ color: '#10b981', fontWeight: 700 }}>
+                          Total Previsto: R$ {(order.financials?.totalEstimated || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ color: '#94a3b8', fontSize: 12 }}>
+                          Materiais: {(order.materials || []).reduce((acc: number, item: any) => acc + Number(item.quantity || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}
+                        </span>
+                        <span style={{ color: '#10b981', fontWeight: 700 }}>
+                          Mão de obra: {(order.services || []).reduce((acc: number, item: any) => acc + Number(item.hoursWorked || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h
+                        </span>
+                      </>
+                    )}
                     <span style={{ color: '#60a5fa', fontSize: 12 }}>
                       PCP: {(order.workCenter || 'Sem centro')} • {(order.plannedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h
                     </span>

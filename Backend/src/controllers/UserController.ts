@@ -4,10 +4,26 @@ import bcrypt from 'bcryptjs';
 import prisma from '../services/prisma';
 import { addToQueue } from '../utils/queueHelper';
 
+const userSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  email: true,
+  role: true,
+  groupId: true,
+  group: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+    },
+  },
+} satisfies Prisma.UserSelect;
+
 export const UserController = {
   async list(req: Request, res: Response) {
     const users = await prisma.user.findMany({
-      select: { id: true, firstName: true, lastName: true, email: true, role: true, groupId: true },
+      select: userSelect,
     });
     res.json(users);
   },
@@ -16,7 +32,7 @@ export const UserController = {
     const id = Number(req.params.id);
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, firstName: true, lastName: true, email: true, role: true, groupId: true },
+      select: userSelect,
     });
     if (!user) return res.status(404).json({ message: 'Usuário não encontrado' });
     res.json(user);
@@ -36,9 +52,10 @@ export const UserController = {
         role: role || 'user',
         groupId: Number(groupId),
       },
+      select: userSelect,
     });
     await addToQueue('user_created', { userId: user.id, email: user.email });
-    res.status(201).json({ id: user.id, email: user.email });
+    res.status(201).json(user);
   },
 
   async update(req: Request, res: Response) {
@@ -53,8 +70,8 @@ export const UserController = {
     if (password && String(password).length > 0) {
       data.password = await bcrypt.hash(String(password), 10);
     }
-    const user = await prisma.user.update({ where: { id }, data });
-    res.json({ id: user.id, email: user.email, firstName: user.firstName, groupId: user.groupId });
+    const user = await prisma.user.update({ where: { id }, data, select: userSelect });
+    res.json(user);
   },
 
   async delete(req: Request, res: Response) {

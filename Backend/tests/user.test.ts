@@ -39,7 +39,13 @@ describe('User API', () => {
       .set(adminAuthHeader())
       .send(buildUserPayload());
     expect(res.status).toBe(201);
-    expect(res.body.data).toHaveProperty('id');
+    expect(res.body.data).toMatchObject({
+      firstName: 'Test',
+      lastName: 'User',
+      role: 'user',
+      groupId,
+      group: { id: groupId, name: 'TestUsersGroup' },
+    });
     userId = res.body.data.id;
   });
 
@@ -47,12 +53,13 @@ describe('User API', () => {
     const res = await request(app).get(`${API_ROOT}/users`).set(adminAuthHeader());
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.some((user: any) => user.id === userId && user.group?.id === groupId && user.group?.name === 'TestUsersGroup')).toBe(true);
   });
 
   it('should get user by id', async () => {
     const res = await request(app).get(`${API_ROOT}/users/${userId}`).set(adminAuthHeader());
     expect(res.status).toBe(200);
-    expect(res.body.data).toMatchObject({ id: userId });
+    expect(res.body.data).toMatchObject({ id: userId, groupId, group: { id: groupId, name: 'TestUsersGroup' } });
   });
 
   it('should update user', async () => {
@@ -61,7 +68,12 @@ describe('User API', () => {
       .set(adminAuthHeader())
       .send({ firstName: 'Updated', groupId });
     expect(res.status).toBe(200);
-    expect(res.body.data.firstName).toBe('Updated');
+    expect(res.body.data).toMatchObject({
+      id: userId,
+      firstName: 'Updated',
+      groupId,
+      group: { id: groupId, name: 'TestUsersGroup' },
+    });
   });
 
   it('should delete user', async () => {

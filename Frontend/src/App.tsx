@@ -81,10 +81,12 @@ function App() {
                   <Route path="quality-controls/new" element={<ProtectedRoute permission="qualidade:gerenciar"><QualityControlForm /></ProtectedRoute>} />
                   <Route path="quality-controls/:id" element={<ProtectedRoute permission="qualidade:visualizar"><QualityControlForm isView={true} /></ProtectedRoute>} />
                   <Route path="quality-controls/:id/edit" element={<ProtectedRoute permission="qualidade:gerenciar"><QualityControlForm isEdit={true} /></ProtectedRoute>} />
-                  <Route path="service-orders" element={<ProtectedRoute permission="os:visualizar"><ServiceOrdersList /></ProtectedRoute>} />
+                  <Route path="service-orders" element={<ProtectedRoute permission="os:visualizar"><ServiceOrdersList showFinancialData={false} viewPathBase="/service-orders" /></ProtectedRoute>} />
                   <Route path="service-orders/new" element={<ProtectedRoute permission="os:gerenciar"><ServiceOrderForm /></ProtectedRoute>} />
-                  <Route path="service-orders/:id" element={<ProtectedRoute permission="os:visualizar"><ServiceOrderForm isView={true} /></ProtectedRoute>} />
+                  <Route path="service-orders/:id" element={<ProtectedRoute permission="os:visualizar"><ServiceOrderForm isView={true} showFinancialData={false} listPath="/service-orders" /></ProtectedRoute>} />
                   <Route path="service-orders/:id/edit" element={<ProtectedRoute permission="os:gerenciar"><ServiceOrderForm isEdit={true} /></ProtectedRoute>} />
+                  <Route path="finance/service-orders" element={<ProtectedRoute permission="financeiro:visualizar"><ServiceOrdersList showFinancialData={true} title="Ordens de Serviço Financeiras" viewPathBase="/finance/service-orders" /></ProtectedRoute>} />
+                  <Route path="finance/service-orders/:id" element={<ProtectedRoute permission="financeiro:visualizar"><ServiceOrderForm isView={true} showFinancialData={true} listPath="/finance/service-orders" /></ProtectedRoute>} />
                   <Route path="budgets" element={<ProtectedRoute permission="orcamentos:visualizar"><BudgetsList /></ProtectedRoute>} />
                   <Route path="services-catalog" element={<ProtectedRoute permission="materiais:visualizar"><ServicesCatalogList /></ProtectedRoute>} />
                   <Route path="services-catalog/new" element={<ProtectedRoute permission="materiais:gerenciar"><ServiceCatalogForm /></ProtectedRoute>} />

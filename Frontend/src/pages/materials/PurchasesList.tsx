@@ -5,6 +5,7 @@ import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Sheet,
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
+import { getValidStoredToken } from '../../utils/authSession';
 
 const requestStatusColor: Record<string, string> = {
   OPEN: '#f59e0b',
@@ -102,7 +103,7 @@ const PurchasesList: React.FC = () => {
     setExportingPdf(true);
     try {
       const query = buildQueryString();
-      const token = localStorage.getItem('token');
+      const token = getValidStoredToken();
       const baseURL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3001/v1' : '/v1');
       const response = await axios.get(`${baseURL}/reports/operational/purchases/pdf${query ? `?${query}` : ''}`, {
         responseType: 'blob',

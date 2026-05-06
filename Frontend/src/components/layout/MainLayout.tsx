@@ -8,6 +8,7 @@ import {
   ClipboardList, BarChart3,
 } from 'lucide-react';
 import styles from './MainLayout.module.css';
+import { clearStoredSession } from '../../utils/authSession';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -25,8 +26,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearStoredSession();
     navigate('/login');
   };
 
@@ -34,6 +34,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     '/': 'Dashboard',
     '/budgets': 'Orçamentos',
     '/service-orders': 'Ordens de Serviço',
+    '/finance/service-orders': 'Ordens de Serviço Financeiras',
     '/quality-controls': 'Controle de Qualidade',
     '/stock': 'Estoque',
     '/purchases': 'Central de Compras',
@@ -81,6 +82,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       title: 'Financeiro',
       items: [
         { label: 'Fluxo de Caixa', to: '/finance', icon: Wallet, permission: 'financeiro:visualizar' },
+        { label: 'OS Financeiras', to: '/finance/service-orders', icon: Wrench, permission: 'financeiro:visualizar' },
         { label: 'Catálogo de Preços', to: '/services-catalog', icon: Tag, permission: 'materiais:visualizar' },
       ]
     },

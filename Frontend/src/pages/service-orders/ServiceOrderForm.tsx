@@ -18,12 +18,15 @@ declare global {
 interface ServiceOrderFormProps {
   isEdit?: boolean;
   isView?: boolean;
+  showFinancialData?: boolean;
+  listPath?: string;
 }
 
-const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) => {
+const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, showFinancialData = true, listPath = '/service-orders' }) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { showToast } = useToast();
+  const isOperationalView = Boolean(isView && !showFinancialData);
   
   const [formData, setFormData] = useState({
     description: '',
@@ -464,7 +467,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
     doc.setFontSize(9);
     itemsMaterials.forEach((m, i) => {
       const matName = availableMaterials.find(am => am.id.toString() === m.materialId.toString())?.name || 'Item';
-      doc.text(`${matName} (${m.quantity}x) - R$ ${m.totalPrice.toFixed(2)}`, 25, currentY);
+      const materialLine = showFinancialData
+        ? `${matName} (${m.quantity}x) - R$ ${m.totalPrice.toFixed(2)}`
+        : `${matName} (${m.quantity}x)`;
+      doc.text(materialLine, 25, currentY);
       currentY += 5;
     });
 
@@ -475,30 +481,35 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
     doc.setFontSize(9);
     itemsServices.forEach((s, i) => {
       const svcName = availableServices.find(as => as.id.toString() === s.serviceId.toString())?.name || 'Serviço';
-      doc.text(`${svcName} (${s.hoursWorked}h) - R$ ${s.totalPrice.toFixed(2)}`, 25, currentY);
+      const serviceLine = showFinancialData
+        ? `${svcName} (${s.hoursWorked}h) - R$ ${s.totalPrice.toFixed(2)}`
+        : `${svcName} (${s.hoursWorked}h)`;
+      doc.text(serviceLine, 25, currentY);
       currentY += 5;
     });
 
-    currentY += 10;
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    const matTotal = itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0);
-    const svcTotal = itemsServices.reduce((acc, i) => acc + i.totalPrice, 0);
-    const subtotal = matTotal + svcTotal;
-    const profitAmt = subtotal * (formData.profitPercent / 100);
-    const baseForTax = subtotal + profitAmt;
-    const taxAmt = baseForTax * (formData.taxPercent / 100);
+    if (showFinancialData) {
+      currentY += 10;
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const matTotal = itemsMaterials.reduce((acc, i) => acc + i.totalPrice, 0);
+      const svcTotal = itemsServices.reduce((acc, i) => acc + i.totalPrice, 0);
+      const subtotal = matTotal + svcTotal;
+      const profitAmt = subtotal * (formData.profitPercent / 100);
+      const baseForTax = subtotal + profitAmt;
+      const taxAmt = baseForTax * (formData.taxPercent / 100);
 
-    doc.text(`Subtotal: R$ ${subtotal.toFixed(2)}`, 20, currentY);
-    currentY += 5;
-    doc.text(`Lucro (${formData.profitPercent}%): R$ ${profitAmt.toFixed(2)}`, 20, currentY);
-    currentY += 5;
-    doc.text(`Impostos (${formData.taxPercent}% sobre Subtotal + Lucro): R$ ${taxAmt.toFixed(2)}`, 20, currentY);
+      doc.text(`Subtotal: R$ ${subtotal.toFixed(2)}`, 20, currentY);
+      currentY += 5;
+      doc.text(`Lucro (${formData.profitPercent}%): R$ ${profitAmt.toFixed(2)}`, 20, currentY);
+      currentY += 5;
+      doc.text(`Impostos (${formData.taxPercent}% sobre Subtotal + Lucro): R$ ${taxAmt.toFixed(2)}`, 20, currentY);
 
-    currentY += 10;
-    doc.setFontSize(14);
-    doc.setTextColor(0, 230, 176);
-    doc.text(`VALOR TOTAL: R$ ${(baseForTax + taxAmt).toFixed(2)}`, 20, currentY);
+      currentY += 10;
+      doc.setFontSize(14);
+      doc.setTextColor(0, 230, 176);
+      doc.text(`VALOR TOTAL: R$ ${(baseForTax + taxAmt).toFixed(2)}`, 20, currentY);
+    }
     
     doc.save(`OS_ProMEC_${id || 'Nova'}.pdf`);
   };
@@ -561,7 +572,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                 <FileDown size={18} /> Exportar
               </button>
             )}
-            <button className={styles.backBtn} onClick={() => navigate('/service-orders')}>
+            <button className={styles.backBtn} onClick={() => navigate(listPath)}>
               <ArrowLeft size={18} /> Voltar
             </button>
           </div>
@@ -707,7 +718,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
             </div>
           </div>
 
-          {(financials || itemsMaterials.length > 0 || itemsServices.length > 0) && (
+          {showFinancialData && (financials || itemsMaterials.length > 0 || itemsServices.length > 0) && (
             <div className={styles.fullWidth} style={{ marginTop: 18 }}>
               <div style={{
                 background: 'rgba(15, 23, 42, 0.55)',
@@ -824,7 +835,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
               </div>
             )}
 
-            {id && (
+            {id && showFinancialData && (
               <div style={{
                 background: 'rgba(15,23,42,0.45)',
                 border: '1px solid rgba(148,163,184,0.2)',
@@ -965,8 +976,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                   <tr>
                     <th style={{ padding: 12, textAlign: 'left' }}>Item</th>
                     <th style={{ padding: 12, textAlign: 'center', width: 100 }}>Qtd</th>
-                    <th style={{ padding: 12, textAlign: 'right', width: 150 }}>Unitário (R$)</th>
-                    <th style={{ padding: 12, textAlign: 'right', width: 150 }}>Total (R$)</th>
+                    {!isOperationalView && <th style={{ padding: 12, textAlign: 'right', width: 150 }}>Unitário (R$)</th>}
+                    {!isOperationalView && <th style={{ padding: 12, textAlign: 'right', width: 150 }}>Total (R$)</th>}
                     {!isView && <th style={{ padding: 12, width: 50 }}></th>}
                   </tr>
                 </thead>
@@ -990,15 +1001,19 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                           value={item.quantity} onChange={e => updateMaterialItem(idx, 'quantity', e.target.value)}
                         />
                       </td>
-                      <td style={{ padding: 8 }}>
-                        <input 
-                          type="number" className={`${styles.formInput} ${styles.tableInput}`} style={{ textAlign: 'right' }} disabled={isView}
-                          value={item.unitPrice} onChange={e => updateMaterialItem(idx, 'unitPrice', e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: 8, textAlign: 'right', fontWeight: 700 }}>
-                        {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </td>
+                      {!isOperationalView && (
+                        <td style={{ padding: 8 }}>
+                          <input 
+                            type="number" className={`${styles.formInput} ${styles.tableInput}`} style={{ textAlign: 'right' }} disabled={isView}
+                            value={item.unitPrice} onChange={e => updateMaterialItem(idx, 'unitPrice', e.target.value)}
+                          />
+                        </td>
+                      )}
+                      {!isOperationalView && (
+                        <td style={{ padding: 8, textAlign: 'right', fontWeight: 700 }}>
+                          {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                      )}
                       {!isView && (
                         <td style={{ padding: 8, textAlign: 'center' }}>
                           <button type="button" onClick={() => removeMaterialItem(idx)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer' }}>
@@ -1009,7 +1024,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                     </tr>
                   ))}
                   {itemsMaterials.length === 0 && (
-                    <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#8a99a8' }}>Nenhuma peça adicionada.</td></tr>
+                    <tr><td colSpan={isOperationalView ? 2 : 5} style={{ padding: 20, textAlign: 'center', color: '#8a99a8' }}>Nenhuma peça adicionada.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1036,8 +1051,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                     <th style={{ padding: 12, textAlign: 'left' }}>Serviço</th>
                     <th style={{ padding: 12, textAlign: 'left' }}>Responsável</th>
                     <th style={{ padding: 12, textAlign: 'center', width: 80 }}>Horas</th>
-                    <th style={{ padding: 12, textAlign: 'right', width: 120 }}>Vl. Hora (R$)</th>
-                    <th style={{ padding: 12, textAlign: 'right', width: 120 }}>Total (R$)</th>
+                    {!isOperationalView && <th style={{ padding: 12, textAlign: 'right', width: 120 }}>Vl. Hora (R$)</th>}
+                    {!isOperationalView && <th style={{ padding: 12, textAlign: 'right', width: 120 }}>Total (R$)</th>}
                     {!isView && <th style={{ padding: 12, width: 50 }}></th>}
                   </tr>
                 </thead>
@@ -1072,15 +1087,19 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                           value={item.hoursWorked} onChange={e => updateServiceItem(idx, 'hoursWorked', e.target.value)}
                         />
                       </td>
-                      <td style={{ padding: 8 }}>
-                        <input 
-                          type="number" className={`${styles.formInput} ${styles.tableInput}`} style={{ textAlign: 'right' }} disabled={isView}
-                          value={item.unitPrice} onChange={e => updateServiceItem(idx, 'unitPrice', e.target.value)}
-                        />
-                      </td>
-                      <td style={{ padding: 8, textAlign: 'right', fontWeight: 700 }}>
-                        {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </td>
+                      {!isOperationalView && (
+                        <td style={{ padding: 8 }}>
+                          <input 
+                            type="number" className={`${styles.formInput} ${styles.tableInput}`} style={{ textAlign: 'right' }} disabled={isView}
+                            value={item.unitPrice} onChange={e => updateServiceItem(idx, 'unitPrice', e.target.value)}
+                          />
+                        </td>
+                      )}
+                      {!isOperationalView && (
+                        <td style={{ padding: 8, textAlign: 'right', fontWeight: 700 }}>
+                          {item.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </td>
+                      )}
                       {!isView && (
                         <td style={{ padding: 8, textAlign: 'center' }}>
                           <button type="button" onClick={() => removeServiceItem(idx)} style={{ background: 'transparent', border: 'none', color: '#ff4d4f', cursor: 'pointer' }}>
@@ -1091,7 +1110,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
                     </tr>
                   ))}
                   {itemsServices.length === 0 && (
-                    <tr><td colSpan={6} style={{ padding: 20, textAlign: 'center', color: '#8a99a8' }}>Nenhum serviço adicionado.</td></tr>
+                    <tr><td colSpan={isOperationalView ? 3 : 6} style={{ padding: 20, textAlign: 'center', color: '#8a99a8' }}>Nenhum serviço adicionado.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1321,6 +1340,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
           )}
 
           {/* TOTALIZADOR PREMIUM */}
+          {showFinancialData && (
           <div className={styles.fullWidth} style={{ 
             marginTop: 50, 
             padding: 40, 
@@ -1407,6 +1427,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView }) =
               </div>
             </div>
           </div>
+          )}
 
           {!isView && (
             <div className={styles.fullWidth} style={{ marginTop: 32 }}>
