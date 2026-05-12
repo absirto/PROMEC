@@ -16,7 +16,8 @@ const ServiceCatalogForm: React.FC<ServiceCatalogFormProps> = ({ isEdit, isView 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: 0
+    price: 0,
+    active: true,
   });
   
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,8 @@ const ServiceCatalogForm: React.FC<ServiceCatalogFormProps> = ({ isEdit, isView 
         .then((data: any) => setFormData({
           name: data.name || '',
           description: data.description || '',
-          price: data.price || 0
+          price: data.price || 0,
+          active: data.active !== undefined ? data.active : true,
         }))
         .catch(() => setError('Erro ao carregar serviço.'))
         .finally(() => setLoading(false));

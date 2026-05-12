@@ -26,7 +26,7 @@ export const ServiceController = {
     try {
       const { name, description, price, active } = req.body;
       const service = await prisma.service.create({
-        data: { name, description, price: Number(price), active }
+        data: { name, description, price: Number(price), active: active !== undefined ? active : true }
       });
       res.status(201).json(service);
     } catch (error) {
@@ -38,9 +38,17 @@ export const ServiceController = {
     try {
       const id = Number(req.params.id);
       const { name, description, price, active } = req.body;
+      const data: any = {
+        name,
+        description,
+        price: Number(price),
+      };
+      if (active !== undefined) {
+        data.active = active;
+      }
       const service = await prisma.service.update({
         where: { id },
-        data: { name, description, price: Number(price), active }
+        data,
       });
       res.json(service);
     } catch (error) {
