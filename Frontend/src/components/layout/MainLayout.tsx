@@ -41,7 +41,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     '/quotations': 'Central de Cotações',
     '/materials': 'Materiais',
     '/finance': 'Fluxo de Caixa',
-    '/services-catalog': 'Catálogo de Preços',
+    '/services-catalog': 'Catálogo de Serviços',
     '/people': 'Pessoas',
     '/employees': 'Funcionários',
     '/reports': 'Relatórios',
@@ -83,7 +83,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       items: [
         { label: 'Fluxo de Caixa', to: '/finance', icon: Wallet, permission: 'financeiro:visualizar' },
         { label: 'OS Financeiras', to: '/finance/service-orders', icon: Wrench, permission: 'financeiro:visualizar' },
-        { label: 'Catálogo de Preços', to: '/services-catalog', icon: Tag, permission: 'materiais:visualizar' },
+        { label: 'Catálogo de Serviços', to: '/services-catalog', icon: Tag, permission: 'materiais:visualizar' },
       ]
     },
     {
