@@ -37,7 +37,12 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     // Carregar lista de clientes para o filtro
-    api.get('/people').then(setPeople).catch(console.error);
+    api.get('/people')
+      .then((res: any) => {
+        // Trata resposta paginada ou array direto
+        setPeople(res.data || res);
+      })
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
