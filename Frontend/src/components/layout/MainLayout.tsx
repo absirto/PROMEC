@@ -5,10 +5,12 @@ import {
   ClipboardCheck, Tag, Settings, LogOut,
   Shield, Wallet, Database, ShoppingCart,
   LayoutDashboard, Layers, FileText, Menu, X,
-  ClipboardList, BarChart3,
+  ClipboardList, BarChart3, Search, ChevronRight
 } from 'lucide-react';
 import styles from './MainLayout.module.css';
 import { clearStoredSession } from '../../utils/authSession';
+import Breadcrumbs from '../Breadcrumbs';
+import CommandPalette from '../CommandPalette';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -58,6 +60,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const base = '/' + location.pathname.split('/')[1];
     return routeLabels[base] || location.pathname.split('/')[1].replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   })();
+
+  const [expandedSections, setExpandedSections] = useState<string[]>(['Principal', 'Operacional', 'Financeiro', 'Cadastros', 'Relatórios', 'Configurações']);
+
+  const toggleSection = (title: string) => {
+    setExpandedSections(prev => 
+      prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
+    );
+  };
 
   const menuSections = [
     {
@@ -136,7 +146,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </button>
         </div>
 
-        <nav className={styles.nav} style={{ overflowY: 'auto' }}>
+        <nav className={styles.nav}>
           {menuSections.map((section, idx) => {
             const visibleItems = section.items.filter(item => 
               item.permission === 'any' || 
@@ -146,25 +156,35 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             );
 
             if (visibleItems.length === 0) return null;
+            const isExpanded = expandedSections.includes(section.title);
 
             return (
-              <div key={idx} className={styles.navSection}>
-                <div className={styles.sectionLabel}>
-                  {section.title}
+              <div key={idx} className={`${styles.navSection} ${isExpanded ? styles.sectionExpanded : ''}`}>
+                <div 
+                  className={styles.sectionHeader}
+                  onClick={() => toggleSection(section.title)}
+                >
+                  <span className={styles.sectionLabel}>{section.title}</span>
+                  <div className={styles.sectionToggle}>
+                    <ChevronRight size={12} className={isExpanded ? styles.rotate90 : ''} />
+                  </div>
                 </div>
-                {visibleItems.map(item => (
-                  <NavLink 
-                    key={item.to}
-                    to={item.to}
-                    className={({ isActive }) => 
-                      `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
-                    }
-                  >
-                    <item.icon size={18} />
-                    <span style={{ fontSize: 14 }}>{item.label}</span>
-                    {location.pathname === item.to && <div className={styles.activeDot} />}
-                  </NavLink>
-                ))}
+                
+                <div className={styles.sectionItems}>
+                  {visibleItems.map(item => (
+                    <NavLink 
+                      key={item.to}
+                      to={item.to}
+                      className={({ isActive }) => 
+                        `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+                      }
+                    >
+                      <item.icon size={18} />
+                      <span>{item.label}</span>
+                      {location.pathname === item.to && <div className={styles.activeDot} />}
+                    </NavLink>
+                  ))}
+                </div>
               </div>
             );
           })}
@@ -189,8 +209,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Menu size={18} />
           </button>
 
-          <div className={styles.pageLabel}>
-            {currentPageLabel}
+          <div className={styles.topBarActions}>
+            <button 
+              className={styles.globalSearchBtn} 
+              onClick={() => (window as any).dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+              title="Busca Global (Ctrl + K)"
+            >
+              <Search size={18} />
+              <span>Buscar...</span>
+              <kbd>⌘K</kbd>
+            </button>
+
+            <div className={styles.pageLabel}>
+              {currentPageLabel}
+            </div>
           </div>
           
           <div className={styles.userInfo} onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
@@ -205,9 +237,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </header>
 
         <div className={styles.mainOutlet}>
+          <Breadcrumbs />
           {children}
         </div>
       </main>
+
+      <CommandPalette />
     </div>
   );
 };

@@ -61,14 +61,51 @@
   margin-bottom: 32px;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.3s;
+  margin-bottom: 4px;
+}
+
+.sectionHeader:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .sectionLabel {
-  padding: 0 20px;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 950;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.2em;
-  margin-bottom: 16px;
+  letter-spacing: 0.25em;
+  font-family: 'Outfit', sans-serif;
+}
+
+.sectionToggle {
+  color: var(--text-muted);
+  transition: all 0.4s var(--spring);
+  opacity: 0.5;
+}
+
+.rotate90 {
+  transform: rotate(90deg);
+  color: var(--primary);
+  opacity: 1;
+}
+
+.sectionItems {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.6s var(--spring);
+  padding-left: 8px;
+}
+
+.sectionExpanded .sectionItems {
+  max-height: 800px;
 }
 
 .navItem {
@@ -168,6 +205,52 @@
   position: sticky;
   top: 0;
   z-index: 900;
+}
+
+.topBarActions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.globalSearchBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  padding: 8px 16px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s var(--spring);
+}
+
+.globalSearchBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--primary-bright);
+  color: #fff;
+}
+
+.globalSearchBtn kbd {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--glass-border);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: inherit;
+  color: var(--primary-bright);
+}
+
+.activeDot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--primary-glow);
+  position: absolute;
+  right: 12px;
 }
 
 .pageLabel {
