@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, Eye, Edit2, Trash2, UserCheck } from 'lucide-react';
+import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 
@@ -15,7 +16,7 @@ const EmployeesList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/employees')
-      .then((data: any) => setEmployees(Array.isArray(data) ? data : (data?.data || [])))
+      .then((data: any) => setEmployees(data))
       .catch(() => setError('Erro ao carregar funcionários.'))
       .finally(() => setLoading(false));
   }, []);
@@ -59,7 +60,7 @@ const EmployeesList: React.FC = () => {
         </div>
       </div>
 
-      {loading && <div className={styles.stats}>Carregando funcionários...</div>}
+      {loading && <SkeletonTable columns={6} rows={6} />}
       {error && <div className={styles.badge + ' ' + styles.badgeInactive}>{error}</div>}
 
       {!loading && !error && (

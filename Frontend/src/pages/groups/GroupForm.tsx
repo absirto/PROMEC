@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { Shield, Key, ArrowLeft, Save } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
+import { useToast } from '../../components/ToastProvider';
 
-
+interface GroupFormData {
+  name: string;
+  permissions: string[];
+}
 
 interface GroupFormProps {
   isEdit?: boolean;
@@ -14,57 +19,69 @@ interface GroupFormProps {
 const GroupForm: React.FC<GroupFormProps> = ({ isEdit, isView }) => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { showToast } = useToast();
   
-  const [name, setName] = useState('');
-  const [permissions, setPermissions] = useState<string[]>([]);
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<GroupFormData>({
+    defaultValues: {
+      name: '',
+      permissions: []
+    }
+  });
+
+  const selectedPermissions = watch('permissions') || [];
   const [availablePermissions, setAvailablePermissions] = useState<any[]>([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Carregar todas as permissões disponíveis
+    setLoading(true);
     api.get('/groups/permissions')
-      .then((data: any) => setAvailablePermissions(data?.data || data || []))
-      .catch(console.error);
+      .then((data: any) => setAvailablePermissions(data || []))
+      .catch(() => showToast('Erro ao carregar permissões.', 'error'))
+      .finally(() => {
+        if (!id) setLoading(false);
+      });
 
     if (id && (isEdit || isView)) {
-      setLoading(true);
       api.get(`/groups/${id}`)
         .then((data: any) => {
-          setName(data.name || '');
-          if (data.permissions) {
-             setPermissions(data.permissions.map((p: any) => p.permission?.name || p.name));
-          }
+          reset({
+            name: data.name || '',
+            permissions: data.permissions ? data.permissions.map((p: any) => p.permission?.name || p.name) : []
+          });
         })
+        .catch(() => showToast('Erro ao carregar grupo.', 'error'))
         .finally(() => setLoading(false));
     }
-  }, [id, isEdit, isView]);
+  }, [id, isEdit, isView, reset, showToast]);
 
   const handleTogglePermission = (perm: string) => {
     if (isView) return;
-    setPermissions(perms => perms.includes(perm) ? perms.filter(p => p !== perm) : [...perms, perm]);
+    const current = selectedPermissions;
+    const next = current.includes(perm) ? current.filter(p => p !== perm) : [...current, perm];
+    setValue('permissions', next, { shouldDirty: true });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: GroupFormData) => {
     if (isView) return;
     
-    if (!name || permissions.length === 0) {
-      setError('Preencha o nome e selecione ao menos um módulo.');
+    if (data.permissions.length === 0) {
+      showToast('Selecione ao menos um módulo de acesso.', 'warning');
       return;
     }
     
     setLoading(true);
     try {
-      const payload = { name, permissionKeys: permissions };
+      const payload = { name: data.name, permissionKeys: data.permissions };
       if (isEdit) {
         await api.put(`/groups/${id}`, payload);
+        showToast('Grupo atualizado com sucesso!');
       } else {
         await api.post('/groups', payload);
+        showToast('Grupo criado com sucesso!');
       }
       navigate('/groups');
     } catch (err: any) {
-      setError(typeof err === 'string' ? err : 'Erro ao salvar grupo.');
+      showToast('Erro ao salvar grupo.', 'error');
     } finally {
       setLoading(false);
     }
@@ -82,21 +99,19 @@ const GroupForm: React.FC<GroupFormProps> = ({ isEdit, isView }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           <div className={styles.fullWidth + ' ' + styles.fieldGroup}>
             <label className={styles.label}>
               <Shield size={16} /> Nome Identificador do Grupo
             </label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${errors.name ? styles.inputError : ''}`}>
               <Shield className={styles.inputIcon} size={18} />
               <input
                 className={styles.formInput}
                 type="text"
                 disabled={isView}
-                value={name}
-                onChange={e => setName(e.target.value)}
+                {...register('name', { required: 'Obrigatório' })}
                 placeholder="Ex: Equipe de Vendas, Operadores de Pista..."
-                required
               />
             </div>
           </div>
@@ -110,37 +125,36 @@ const GroupForm: React.FC<GroupFormProps> = ({ isEdit, isView }) => {
               <label 
                 key={perm.id} 
                 style={{ 
-                   background: permissions.includes(perm.name) ? 'rgba(0, 230, 176, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-                   border: `1px solid ${permissions.includes(perm.name) ? '#00e6b0' : 'rgba(255, 255, 255, 0.05)'}`,
-                   padding: '12px 16px',
-                   borderRadius: 12,
+                   background: selectedPermissions.includes(perm.name) ? 'rgba(0, 230, 176, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                   border: `1px solid ${selectedPermissions.includes(perm.name) ? '#00e6b0' : 'rgba(255, 255, 255, 0.05)'}`,
+                   padding: '16px',
+                   borderRadius: 14,
                    display: 'flex',
                    alignItems: 'center',
                    gap: 12,
                    cursor: isView ? 'default' : 'pointer',
-                   transition: 'all 0.2s'
+                   transition: 'all 0.2s',
+                   boxShadow: selectedPermissions.includes(perm.name) ? '0 4px 12px rgba(0, 230, 176, 0.1)' : 'none'
                 }}
               >
                 <input
                   type="checkbox"
                   disabled={isView}
-                  checked={permissions.includes(perm.name)}
+                  checked={selectedPermissions.includes(perm.name)}
                   onChange={() => handleTogglePermission(perm.name)}
-                  style={{ width: 18, height: 18 }}
+                  style={{ width: 18, height: 18, accentColor: '#00e6b0' }}
                 />
                 <div>
-                  <div style={{ color: permissions.includes(perm.name) ? '#00e6b0' : '#fff', fontWeight: 600, fontSize: 14 }}>
+                  <div style={{ color: selectedPermissions.includes(perm.name) ? '#00e6b0' : '#fff', fontWeight: 700, fontSize: 14 }}>
                     {perm.name}
                   </div>
-                  <div style={{ fontSize: 11, color: '#8a99a8', marginTop: 2 }}>
+                  <div style={{ fontSize: 11, color: '#8a99a8', marginTop: 2, lineHeight: 1.4 }}>
                     {perm.description}
                   </div>
                 </div>
               </label>
             ))}
           </div>
-
-          {error && <div className={styles.fullWidth + ' ' + styles.errorMsg}>{error}</div>}
 
           {!isView && (
             <button className={styles.fullWidth + ' ' + styles.submitBtn} type="submit" disabled={loading}>

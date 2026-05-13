@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Users, Search, Eye, Edit2, Trash2, UserPlus } from 'lucide-react';
+import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import Pagination from '../../components/Pagination';
@@ -29,7 +30,7 @@ const PeopleList: React.FC = () => {
       }
     })
       .then((res: any) => {
-        setPeople((Array.isArray(res) ? res : res?.data) || []);
+        setPeople(res);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
       })
@@ -81,7 +82,7 @@ const PeopleList: React.FC = () => {
         </div>
       </div>
 
-      {loading && <div className={styles.stats}>Buscando registros...</div>}
+      {loading && <SkeletonTable columns={6} rows={10} />}
       {error && <div className={styles.badge + ' ' + styles.badgeInactive}>{error}</div>}
 
       {!loading && !error && (

@@ -19,7 +19,51 @@ function getActor(req: Request) {
   const authReq = req as AuthRequest;
   const id = authReq.user?.id ? Number(authReq.user.id) : undefined;
   const email = authReq.user?.email ? String(authReq.user.email) : undefined;
-  return { id, email };
+  const permissions = authReq.user?.permissions || [];
+  const isAdmin = authReq.user?.role === 'ADMIN';
+  return { id, email, permissions, isAdmin };
+}
+
+function canSeeFinance(req: Request) {
+  const { permissions, isAdmin } = getActor(req);
+  if (isAdmin) return true;
+  return permissions.some(p => p === 'financeiro:visualizar' || p === 'financeiro:gerenciar' || p === 'financeiro:*');
+}
+
+function sanitizeOrder(order: any, req: Request) {
+  if (!order) return order;
+  if (canSeeFinance(req)) return order;
+
+  // Se não pode ver financeiro, remove campos sensíveis
+  const sanitized = { ...order };
+  
+  // Remove do objeto principal
+  delete sanitized.profitPercent;
+  delete sanitized.taxPercent;
+  delete sanitized.financials; // Enrich financials object
+
+  // Remove de transações
+  if (Array.isArray(sanitized.transactions)) {
+    delete sanitized.transactions; // Ou filtrar para remover valores
+  }
+
+  // Remove de materiais (custo unitário e total)
+  if (Array.isArray(sanitized.materials)) {
+    sanitized.materials = sanitized.materials.map((m: any) => {
+      const { unitCost, totalPrice, ...rest } = m;
+      return rest;
+    });
+  }
+
+  // Remove de serviços (valor unitário e total)
+  if (Array.isArray(sanitized.services)) {
+    sanitized.services = sanitized.services.map((s: any) => {
+      const { unitPrice, totalPrice, ...rest } = s;
+      return rest;
+    });
+  }
+
+  return sanitized;
 }
 
 function toNumber(value: unknown) {
@@ -1500,7 +1544,8 @@ export const ServiceOrderController = {
       ]);
 
       const enriched = orders.map(enrichFinancials);
-      res.json(formatPaginatedResponse(enriched, total, pagination));
+      const sanitized = enriched.map(o => sanitizeOrder(o, req));
+      res.json(formatPaginatedResponse(sanitized, total, pagination));
     } catch (error) {
       res.status(500).json({ status: 'error', message: 'Erro ao listar ordens de serviço.' });
     }
@@ -1523,7 +1568,9 @@ export const ServiceOrderController = {
         }
       });
       if (!order) return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada' });
-      res.json(enrichFinancials(order));
+      const enriched = enrichFinancials(order);
+      const sanitized = sanitizeOrder(enriched, req);
+      res.json(sanitized);
     } catch (error) {
       res.status(500).json({ status: 'error', message: 'Erro ao buscar ordem de serviço.' });
     }
@@ -1820,7 +1867,9 @@ export const ServiceOrderController = {
         });
       });
 
-      return res.json(enrichFinancials(order));
+      const enriched = enrichFinancials(order);
+      const sanitized = sanitizeOrder(enriched, req);
+      return res.json(sanitized);
     } catch (error: any) {
       if (error.message === 'NOT_FOUND') {
         return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });

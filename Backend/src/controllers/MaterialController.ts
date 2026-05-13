@@ -8,10 +8,25 @@ import { AuthRequest } from '../middleware/auth';
 
 function getActor(req: Request) {
   const authReq = req as AuthRequest;
-  return {
-    id: authReq.user?.id ? Number(authReq.user.id) : undefined,
-    email: authReq.user?.email ? String(authReq.user.email) : undefined,
-  };
+  const id = authReq.user?.id ? Number(authReq.user.id) : undefined;
+  const email = authReq.user?.email ? String(authReq.user.email) : undefined;
+  const permissions = authReq.user?.permissions || [];
+  const isAdmin = authReq.user?.role === 'ADMIN';
+  return { id, email, permissions, isAdmin };
+}
+
+function canSeeFinance(req: Request) {
+  const { permissions, isAdmin } = getActor(req);
+  if (isAdmin) return true;
+  return permissions.some(p => p === 'financeiro:visualizar' || p === 'financeiro:gerenciar' || p === 'financeiro:*');
+}
+
+function sanitizeMaterial(material: any, req: Request) {
+  if (!material) return material;
+  if (canSeeFinance(req)) return material;
+
+  const { price, ...rest } = material;
+  return rest;
 }
 
 export const MaterialController = {
@@ -40,7 +55,13 @@ export const MaterialController = {
       ]);
 
       const response = formatPaginatedResponse(materials, total, pagination);
-      await cacheSet(cacheKey, response, 120); // cache por 2 minutos
+      
+      // Sanitização pós-formatação
+      if (Array.isArray(response.data)) {
+        response.data = response.data.map((m: any) => sanitizeMaterial(m, req));
+      }
+
+      await cacheSet(cacheKey, response, 120);
       res.json(response);
     } catch (error: any) {
       logger.error('MaterialController.list falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
@@ -56,7 +77,7 @@ export const MaterialController = {
       }
       const material = await prisma.material.findUnique({ where: { id } });
       if (!material) return res.status(404).json({ status: 'error', message: 'Material não encontrado.' });
-      res.json(material);
+      res.json(sanitizeMaterial(material, req));
     } catch (error: any) {
       logger.error('MaterialController.get falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       res.status(500).json({ status: 'error', message: 'Erro ao buscar material.' });

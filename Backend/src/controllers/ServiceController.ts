@@ -8,10 +8,25 @@ import { AuthRequest } from '../middleware/auth';
 
 function getActor(req: Request) {
   const authReq = req as AuthRequest;
-  return {
-    id: authReq.user?.id ? Number(authReq.user.id) : undefined,
-    email: authReq.user?.email ? String(authReq.user.email) : undefined,
-  };
+  const id = authReq.user?.id ? Number(authReq.user.id) : undefined;
+  const email = authReq.user?.email ? String(authReq.user.email) : undefined;
+  const permissions = authReq.user?.permissions || [];
+  const isAdmin = authReq.user?.role === 'ADMIN';
+  return { id, email, permissions, isAdmin };
+}
+
+function canSeeFinance(req: Request) {
+  const { permissions, isAdmin } = getActor(req);
+  if (isAdmin) return true;
+  return permissions.some(p => p === 'financeiro:visualizar' || p === 'financeiro:gerenciar' || p === 'financeiro:*');
+}
+
+function sanitizeService(service: any, req: Request) {
+  if (!service) return service;
+  if (canSeeFinance(req)) return service;
+
+  const { price, ...rest } = service;
+  return rest;
 }
 
 export const ServiceController = {
@@ -40,7 +55,12 @@ export const ServiceController = {
       ]);
 
       const response = formatPaginatedResponse(services, total, pagination);
-      await cacheSet(cacheKey, response, 300); // cache por 5 minutos (serviços mudam pouco)
+      
+      if (Array.isArray(response.data)) {
+        response.data = response.data.map((s: any) => sanitizeService(s, req));
+      }
+
+      await cacheSet(cacheKey, response, 300);
       res.json(response);
     } catch (error: any) {
       logger.error('ServiceController.list falhou: %s', error?.message);
@@ -53,7 +73,7 @@ export const ServiceController = {
       const id = Number(req.params.id);
       const service = await prisma.service.findUnique({ where: { id } });
       if (!service) return res.status(404).json({ status: 'error', message: 'Serviço não encontrado.' });
-      res.json(service);
+      res.json(sanitizeService(service, req));
     } catch (error) {
       res.status(500).json({ status: 'error', message: 'Erro ao buscar serviço.' });
     }

@@ -1,30 +1,41 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { Mail, Lock, LogIn, Wrench } from 'lucide-react';
 import api from '../../services/api';
 import styles from './Login.module.css';
+import { useToast } from '../../components/ToastProvider';
+
+interface LoginFormData {
+  email: string;
+  password: string;
+}
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', data);
       const { token, user } = response.data || response;
       localStorage.setItem('token', token);
       if (user) {
         localStorage.setItem('user', JSON.stringify(user));
       }
+      showToast('Login realizado com sucesso!');
       navigate('/');
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Credenciais inválidas.');
+      showToast(err?.response?.data?.message || err.message || 'Credenciais inválidas.', 'error');
     } finally {
       setLoading(false);
     }
@@ -72,45 +83,35 @@ const Login: React.FC = () => {
       
       <div className={styles['login-right']}>
         <div className={styles['form-wrapper']}>
-          <form className={styles['login-form']} onSubmit={handleSubmit}>
+          <form className={styles['login-form']} onSubmit={handleSubmit(onSubmit)}>
             <h2 style={{ fontSize: 32, fontWeight: 800, color: '#fff', margin: '0 0 8px 0', letterSpacing: -1 }}>Acesso</h2>
             <p style={{ color: '#8a99a8', marginBottom: 40, fontSize: 14 }}>Insira suas credenciais para entrar</p>
             
             <div className={styles['input-container']}>
               <label className={styles['input-label']}>E-mail</label>
-              <div className={styles['input-field-wrapper']}>
+              <div className={`${styles['input-field-wrapper']} ${errors.email ? styles['input-error'] : ''}`}>
                 <Mail className={styles['input-icon']} size={20} />
                 <input
                   type="email"
                   className={styles['input-field']}
                   placeholder="admin@promec.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
+                  {...register('email', { required: 'E-mail é obrigatório' })}
                 />
               </div>
             </div>
 
             <div className={styles['input-container']}>
               <label className={styles['input-label']}>Senha</label>
-              <div className={styles['input-field-wrapper']}>
+              <div className={`${styles['input-field-wrapper']} ${errors.password ? styles['input-error'] : ''}`}>
                 <Lock className={styles['input-icon']} size={20} />
                 <input
                   type="password"
                   className={styles['input-field']}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
+                  {...register('password', { required: 'Senha é obrigatória' })}
                 />
               </div>
             </div>
-
-            {error && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '14px', borderRadius: '12px', fontSize: 13, fontWeight: 600, marginBottom: 24, textAlign: 'center', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                {error}
-              </div>
-            )}
 
             <button 
               type="submit" 

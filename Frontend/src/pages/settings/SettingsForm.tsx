@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import {
   Building2, Mail, Phone, Globe,
   Palette, Save, ArrowLeft, Camera, MapPin, Search
@@ -7,32 +8,47 @@ import {
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { maskCNPJ, maskPhone, maskCEP } from '../../utils/masks';
+import { useToast } from '../../components/ToastProvider';
+import Skeleton from '../../components/Skeleton';
+
+interface SettingsFormData {
+  companyName: string;
+  cnpj: string;
+  contactEmail: string;
+  phone: string;
+  address: string;
+  systemTheme: string;
+  logoUrl: string;
+}
 
 const SettingsForm: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [error, setError] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   
-  const [formData, setFormData] = useState({
-    companyName: '',
-    cnpj: '',
-    contactEmail: '',
-    phone: '',
-    address: '',
-    systemTheme: 'dark',
-    logoUrl: ''
+  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<SettingsFormData>({
+    defaultValues: {
+      companyName: '',
+      cnpj: '',
+      contactEmail: '',
+      phone: '',
+      address: '',
+      systemTheme: 'dark',
+      logoUrl: ''
+    }
   });
+
+  const cnpjValue = watch('cnpj');
 
   useEffect(() => {
     setFetching(true);
     api.get('/settings')
       .then((data: any) => {
         if (data) {
-          setFormData({
+          const formatted = {
             companyName: data.companyName || '',
             cnpj: maskCNPJ(data.cnpj || ''),
             contactEmail: data.contactEmail || '',
@@ -40,72 +56,78 @@ const SettingsForm: React.FC = () => {
             address: data.address || '',
             systemTheme: data.systemTheme || 'dark',
             logoUrl: data.logoUrl || ''
-          });
+          };
+          reset(formatted);
           if (data.logoUrl) setLogoPreview(data.logoUrl);
         }
       })
-      .catch(() => setError('Erro ao carregar configurações.'))
+      .catch(() => showToast('Erro ao carregar configurações.', 'error'))
       .finally(() => setFetching(false));
-  }, []);
+  }, [reset, showToast]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Simulação de upload transformando em Base64
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
         setLogoPreview(base64);
-        setFormData({ ...formData, logoUrl: base64 });
+        setValue('logoUrl', base64, { shouldDirty: true });
       };
       reader.readAsDataURL(file);
     }
   };
   
   const handleCNPJLookup = async () => {
-    const cleanCnpj = formData.cnpj.replace(/\D/g, '');
-    if (cleanCnpj.length !== 14) {
-      setError('Digite um CNPJ completo para realizar a busca.');
+    const cleanCnpj = cnpjValue?.replace(/\D/g, '');
+    if (!cleanCnpj || cleanCnpj.length !== 14) {
+      showToast('Digite um CNPJ completo para realizar a busca.', 'warning');
       return;
     }
 
     setLookupLoading(true);
-    setError('');
     try {
       const data = await api.get(`/external/cnpj/${cleanCnpj}`);
-      setFormData(prev => ({
-        ...prev,
-        companyName: data.corporateName || prev.companyName,
-        contactEmail: data.contact?.email || prev.contactEmail,
-        phone: maskPhone(data.contact?.phone || prev.phone),
-        address: data.address ? 
-          `${data.address.street}, ${data.address.number}${data.address.complement ? ` - ${data.address.complement}` : ''}, ${data.address.neighborhood}, ${data.address.city} - ${data.address.state}, CEP: ${maskCEP(data.address.zipCode)}` 
-          : prev.address
-      }));
+      if (data.corporateName) setValue('companyName', data.corporateName, { shouldDirty: true });
+      if (data.contact?.email) setValue('contactEmail', data.contact.email, { shouldDirty: true });
+      if (data.contact?.phone) setValue('phone', maskPhone(data.contact.phone), { shouldDirty: true });
+      if (data.address) {
+        const addr = `${data.address.street}, ${data.address.number}${data.address.complement ? ` - ${data.address.complement}` : ''}, ${data.address.neighborhood}, ${data.address.city} - ${data.address.state}, CEP: ${maskCEP(data.address.zipCode)}`;
+        setValue('address', addr, { shouldDirty: true });
+      }
+      showToast('Dados do CNPJ importados com sucesso!');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Não foi possível localizar os dados deste CNPJ.');
+      showToast('Não foi possível localizar os dados deste CNPJ.', 'error');
     } finally {
       setLookupLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: SettingsFormData) => {
     setLoading(true);
-    setError('');
-    
     try {
-      await api.put('/settings', formData);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      await api.put('/settings', data);
+      showToast('Configurações salvas com sucesso!');
     } catch (err) {
-      setError('Erro ao salvar as configurações.');
+      showToast('Erro ao salvar as configurações.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetching) return <div style={{ color: '#fff', padding: 40 }}>Carregando configurações...</div>;
+  if (fetching) {
+    return (
+      <div className={styles.formContainer}>
+        <div className={styles.glassCard} style={{ maxWidth: 900 }}>
+          <div className={styles.header}><Skeleton width="300px" height="35px" /></div>
+          <div style={{ marginTop: 30 }}><Skeleton height="160px" borderRadius="24px" /></div>
+          <div style={{ marginTop: 30, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} height="50px" borderRadius="10px" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.formContainer}>
@@ -117,8 +139,7 @@ const SettingsForm: React.FC = () => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
-          {/* Perfil da Empresa */}
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           <div className={styles.fullWidth + ' ' + styles.sectionTitle}>
             <Building2 size={18} /> Perfil da Empresa / Organização
           </div>
@@ -149,13 +170,11 @@ const SettingsForm: React.FC = () => {
 
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Nome da Empresa</label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${errors.companyName ? styles.inputError : ''}`}>
               <Building2 className={styles.inputIcon} size={18} />
               <input 
                 className={styles.formInput} 
-                value={formData.companyName}
-                onChange={e => setFormData({...formData, companyName: e.target.value})}
-                required
+                {...register('companyName', { required: 'Obrigatório' })}
               />
             </div>
           </div>
@@ -166,8 +185,9 @@ const SettingsForm: React.FC = () => {
               <Globe className={styles.inputIcon} size={18} />
               <input 
                 className={styles.formInput} 
-                value={formData.cnpj}
-                onChange={e => setFormData({...formData, cnpj: maskCNPJ(e.target.value)})}
+                {...register('cnpj', { 
+                  onChange: (e) => setValue('cnpj', maskCNPJ(e.target.value))
+                })}
                 placeholder="00.000.000/0000-00"
               />
               <button 
@@ -190,13 +210,12 @@ const SettingsForm: React.FC = () => {
 
           <div className={styles.fieldGroup}>
             <label className={styles.label}>E-mail de Contato</label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${errors.contactEmail ? styles.inputError : ''}`}>
               <Mail className={styles.inputIcon} size={18} />
               <input 
                 className={styles.formInput} 
                 type="email"
-                value={formData.contactEmail}
-                onChange={e => setFormData({...formData, contactEmail: e.target.value})}
+                {...register('contactEmail')}
               />
             </div>
           </div>
@@ -207,8 +226,9 @@ const SettingsForm: React.FC = () => {
               <Phone className={styles.inputIcon} size={18} />
               <input 
                 className={styles.formInput} 
-                value={formData.phone}
-                onChange={e => setFormData({...formData, phone: maskPhone(e.target.value)})}
+                {...register('phone', {
+                  onChange: (e) => setValue('phone', maskPhone(e.target.value))
+                })}
               />
             </div>
           </div>
@@ -219,13 +239,11 @@ const SettingsForm: React.FC = () => {
               <MapPin className={styles.inputIcon} size={18} />
               <input 
                 className={styles.formInput} 
-                value={formData.address}
-                onChange={e => setFormData({...formData, address: e.target.value})}
+                {...register('address')}
               />
             </div>
           </div>
 
-          {/* Preferências do Sistema */}
           <div className={styles.fullWidth + ' ' + styles.sectionTitle}>
             <Palette size={18} /> Preferências e Aparência
           </div>
@@ -236,24 +254,13 @@ const SettingsForm: React.FC = () => {
               <Palette className={styles.inputIcon} size={18} />
               <select 
                 className={styles.formSelect}
-                value={formData.systemTheme}
-                onChange={e => setFormData({...formData, systemTheme: e.target.value})}
+                {...register('systemTheme')}
               >
                 <option value="dark">Dark Mode (Padrão)</option>
                 <option value="light">Light Mode</option>
               </select>
             </div>
           </div>
-
-          {error && <div className={styles.fullWidth + ' ' + styles.errorMsg}>{error}</div>}
-          {saveSuccess && (
-            <div className={styles.fullWidth} style={{ 
-              background: 'rgba(0, 230, 176, 0.1)', color: '#00e6b0', 
-              padding: 16, borderRadius: 12, textAlign: 'center', fontWeight: 600
-            }}>
-              Configurações salvas com sucesso!
-            </div>
-          )}
 
           <div className={styles.fullWidth} style={{ marginTop: 20 }}>
             <button className={styles.submitBtn} type="submit" disabled={loading}>

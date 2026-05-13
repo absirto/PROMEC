@@ -1,11 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { User, Briefcase, Map, Shield, ArrowLeft, Save, Hash, Check } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
 import { maskCNPJ, maskCPF } from '../../utils/masks';
 import Skeleton from '../../components/Skeleton';
+
+interface EmployeeFormData {
+  personId: string;
+  jobRoleId: string;
+  workAreaId: string;
+  matricula: string;
+  status: string;
+  userId: string;
+}
 
 interface EmployeeFormProps {
   isEdit?: boolean;
@@ -17,13 +27,15 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
   const { id } = useParams();
   const { showToast } = useToast();
   
-  const [formData, setFormData] = useState({
-    personId: '',
-    jobRoleId: '',
-    workAreaId: '',
-    matricula: '',
-    status: 'Ativo',
-    userId: ''
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<EmployeeFormData>({
+    defaultValues: {
+      personId: '',
+      jobRoleId: '',
+      workAreaId: '',
+      matricula: '',
+      status: 'Ativo',
+      userId: ''
+    }
   });
   
   const [people, setPeople] = useState<any[]>([]);
@@ -31,7 +43,6 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
   const [areas, setAreas] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     setLoading(true);
@@ -44,58 +55,43 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
 
     Promise.all(dataPromises)
       .then(([peopleData, rolesData, areasData, usersData]: any[]) => {
-        setPeople((Array.isArray(peopleData) ? peopleData : peopleData?.data) || []);
-        setRoles((Array.isArray(rolesData) ? rolesData : rolesData?.data) || []);
-        setAreas((Array.isArray(areasData) ? areasData : areasData?.data) || []);
-        setUsers((Array.isArray(usersData) ? usersData : usersData?.data) || []);
+        setPeople(peopleData);
+        setRoles(rolesData);
+        setAreas(areasData);
+        setUsers(usersData);
       })
       .catch(() => showToast('Erro ao carregar dados de suporte.', 'error'));
 
     if (id && (isEdit || isView)) {
       api.get(`/employees/${id}`)
-        .then((data: any) => setFormData({
-          personId: data.personId?.toString() || '',
-          jobRoleId: data.jobRoleId?.toString() || '',
-          workAreaId: data.workAreaId?.toString() || '',
-          matricula: data.matricula || '',
-          status: data.status || 'Ativo',
-          userId: data.userId?.toString() || ''
-        }))
+        .then((data: any) => {
+          reset({
+            personId: data.personId?.toString() || '',
+            jobRoleId: data.jobRoleId?.toString() || '',
+            workAreaId: data.workAreaId?.toString() || '',
+            matricula: data.matricula || '',
+            status: data.status || 'Ativo',
+            userId: data.userId?.toString() || ''
+          });
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [id, isEdit, isView, showToast]);
+  }, [id, isEdit, isView, showToast, reset]);
 
-  const validate = () => {
-    const newErrors: any = {};
-    if (!formData.personId) newErrors.personId = 'Vínculo pessoal é obrigatório.';
-    if (!formData.matricula) newErrors.matricula = 'Matrícula é obrigatória.';
-    if (!formData.jobRoleId) newErrors.jobRoleId = 'Cargo é obrigatório.';
-    if (!formData.workAreaId) newErrors.workAreaId = 'Área de trabalho é obrigatória.';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: EmployeeFormData) => {
     if (isView) return;
     
-    if (!validate()) {
-      showToast('Por favor, preencha todos os campos obrigatórios.', 'error');
-      return;
-    }
-
     setLoading(true);
     try {
       const payload = {
-        personId: parseInt(formData.personId),
-        jobRoleId: parseInt(formData.jobRoleId),
-        workAreaId: parseInt(formData.workAreaId),
-        matricula: formData.matricula,
-        status: formData.status,
-        userId: formData.userId ? parseInt(formData.userId) : null
+        personId: parseInt(data.personId),
+        jobRoleId: parseInt(data.jobRoleId),
+        workAreaId: parseInt(data.workAreaId),
+        matricula: data.matricula,
+        status: data.status,
+        userId: data.userId ? parseInt(data.userId) : null
       };
 
       if (isEdit) {
@@ -143,7 +139,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           <div className={styles.fullWidth + ' ' + styles.sectionTitle}>
             <User size={18} /> Vínculo Pessoal
           </div>
@@ -154,8 +150,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
               <User className={styles.inputIcon} size={18} />
               <select 
                 className={styles.formSelect} 
-                value={formData.personId} 
-                onChange={e => setFormData({...formData, personId: e.target.value})}
+                {...register('personId', { required: 'Vínculo pessoal é obrigatório' })}
                 disabled={isView || isEdit}
               >
                 <option value="">Selecione uma pessoa...</option>
@@ -166,7 +161,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
                 ))}
               </select>
             </div>
-            {errors.personId && <span className={styles.errorMessage}>{errors.personId}</span>}
+            {errors.personId && <span className={styles.errorMessage}>{errors.personId.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -175,13 +170,12 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
               <Hash className={styles.inputIcon} size={18} />
               <input 
                 className={styles.formInput} 
-                value={formData.matricula} 
-                onChange={e => setFormData({...formData, matricula: e.target.value})} 
+                {...register('matricula', { required: 'Matrícula é obrigatória' })}
                 disabled={isView} 
                 placeholder="Ex: PROMEC-001" 
               />
             </div>
-            {errors.matricula && <span className={styles.errorMessage}>{errors.matricula}</span>}
+            {errors.matricula && <span className={styles.errorMessage}>{errors.matricula.message}</span>}
           </div>
 
           <div className={styles.fullWidth + ' ' + styles.sectionTitle}>
@@ -192,31 +186,39 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
             <label className={styles.label}>Cargo</label>
             <div className={`${styles.inputWrapper} ${errors.jobRoleId ? styles.inputError : ''}`}>
               <Briefcase className={styles.inputIcon} size={18} />
-              <select className={styles.formSelect} value={formData.jobRoleId} onChange={e => setFormData({...formData, jobRoleId: e.target.value})} disabled={isView}>
+              <select 
+                className={styles.formSelect} 
+                {...register('jobRoleId', { required: 'Cargo é obrigatório' })}
+                disabled={isView}
+              >
                 <option value="">Selecione...</option>
                 {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
             </div>
-            {errors.jobRoleId && <span className={styles.errorMessage}>{errors.jobRoleId}</span>}
+            {errors.jobRoleId && <span className={styles.errorMessage}>{errors.jobRoleId.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Área de Trabalho</label>
             <div className={`${styles.inputWrapper} ${errors.workAreaId ? styles.inputError : ''}`}>
               <Map className={styles.inputIcon} size={18} />
-              <select className={styles.formSelect} value={formData.workAreaId} onChange={e => setFormData({...formData, workAreaId: e.target.value})} disabled={isView}>
+              <select 
+                className={styles.formSelect} 
+                {...register('workAreaId', { required: 'Área de trabalho é obrigatória' })}
+                disabled={isView}
+              >
                 <option value="">Selecione...</option>
                 {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
-            {errors.workAreaId && <span className={styles.errorMessage}>{errors.workAreaId}</span>}
+            {errors.workAreaId && <span className={styles.errorMessage}>{errors.workAreaId.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Vincular Usuário (Acesso ao Sistema)</label>
             <div className={styles.inputWrapper}>
               <Shield className={styles.inputIcon} size={18} />
-              <select className={styles.formSelect} value={formData.userId} onChange={e => setFormData({...formData, userId: e.target.value})} disabled={isView}>
+              <select className={styles.formSelect} {...register('userId')} disabled={isView}>
                 <option value="">Nenhum acesso</option>
                 {users.map(u => <option key={u.id} value={u.id}>{u.firstName} {u.lastName} ({u.email})</option>)}
               </select>
@@ -227,7 +229,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
             <label className={styles.label}>Status do Funcionário</label>
             <div className={styles.inputWrapper}>
               <Check className={styles.inputIcon} size={18} />
-              <select className={styles.formSelect} value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} disabled={isView}>
+              <select className={styles.formSelect} {...register('status')} disabled={isView}>
                 <option value="Ativo">Ativo</option>
                 <option value="Inativo">Inativo</option>
                 <option value="Afastado">Afastado</option>
@@ -238,9 +240,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
 
           {!isView && (
             <div className={styles.fullWidth} style={{ marginTop: 32 }}>
-              <button className={styles.submitBtn} type="submit" disabled={loading}>
+              <button className={styles.submitBtn} type="submit" disabled={loading || isSubmitting}>
                 <Save size={18} style={{ marginRight: 8 }} />
-                {loading ? 'Salvando...' : 'Salvar Registro Oficial'}
+                {loading || isSubmitting ? 'Salvando...' : 'Salvar Registro Oficial'}
               </button>
             </div>
           )}

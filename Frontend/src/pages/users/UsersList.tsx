@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Search, Plus, Eye, Edit2, Trash2, ShieldCheck, Mail } from 'lucide-react';
+import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 
@@ -15,7 +16,7 @@ const UsersList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/users')
-      .then((data: any) => setUsers(Array.isArray(data) ? data : (data?.data || [])))
+      .then((data: any) => setUsers(data))
       .catch(() => setError('Erro ao carregar usuários.'))
       .finally(() => setLoading(false));
   }, []);
@@ -57,7 +58,7 @@ const UsersList: React.FC = () => {
         </div>
       </div>
 
-      {loading && <div className={styles.stats}>Buscando usuários...</div>}
+      {loading && <SkeletonTable columns={6} rows={5} />}
       {error && <div className={styles.badge + ' ' + styles.badgeInactive}>{error}</div>}
 
       {!loading && !error && (

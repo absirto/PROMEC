@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ClipboardCheck, Search, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
+import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 
@@ -14,7 +15,7 @@ const QualityControlsList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/quality-controls')
-      .then((data: any) => setControls(Array.isArray(data) ? data : (data?.data || [])))
+      .then((data: any) => setControls(data))
       .catch(() => setError('Erro ao carregar controles.'))
       .finally(() => setLoading(false));
   }, []);
@@ -61,7 +62,7 @@ const QualityControlsList: React.FC = () => {
         </div>
       </div>
 
-      {loading && <div className={styles.stats}>Buscando registros...</div>}
+      {loading && <SkeletonTable columns={5} rows={10} />}
       {error && <div className={styles.badge + ' ' + styles.badgeInactive}>{error}</div>}
 
       {!loading && !error && (

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, Eye, Edit2, Calendar, Filter, X } from 'lucide-react';
+import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
@@ -588,7 +589,7 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
         </div>
       )}
 
-      {loading && <div className={styles.stats}>Sincronizando Ordens de Serviço...</div>}
+      {loading && <SkeletonTable columns={7} rows={8} />}
       
       {!loading && (
         <table className={styles.tableContainer}>

@@ -1,22 +1,18 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Users, Package, Wrench,
   ArrowUpRight, ArrowDownRight, Clock, CheckCircle2,
-  TrendingUp, Wallet, Activity, Percent
+  TrendingUp, Wallet, Activity, Percent, Filter, RefreshCw
 } from 'lucide-react';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend, BarChart, Bar
+} from 'recharts';
 import Skeleton from '../../components/Skeleton';
 import api from '../../services/api';
 import styles from './Home.module.css';
 
-declare global {
-  interface Window {
-    ApexCharts: any;
-  }
-}
-
 const Home: React.FC = () => {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const pieRef = useRef<HTMLDivElement>(null);
   const [dashboardData, setDashboardData] = useState<any>({
     stats: { totalRevenue: 0, people: 0, activeOrders: 0, lowStock: 0, totalOrders: 0 },
     activities: [],
@@ -24,11 +20,10 @@ const Home: React.FC = () => {
     distribution: [],
     operationsKpi: { workedHours: 0, downtimeMinutes: 0, efficiencyPercent: 0, logsCount: 0 },
     efficiencyByCenter: [],
-    efficiencyTrendByCenter: [],
-    downtimeByCategory: {}
   });
 
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState({
     personId: '',
     startDate: '',
@@ -36,208 +31,83 @@ const Home: React.FC = () => {
   });
   const [people, setPeople] = useState<any[]>([]);
 
+  const fetchData = async () => {
+    setRefreshing(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.personId) params.append('personId', filters.personId);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+
+      const data = await api.get(`/dashboard/stats?${params.toString()}`);
+      setDashboardData(data);
+    } catch (err) {
+      console.error('Error loading dashboard stats', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    // Carregar lista de clientes para o filtro
     api.get('/people')
-      .then((res: any) => {
-        setPeople((Array.isArray(res) ? res : res?.data) || []);
-      })
+      .then((res: any) => setPeople((Array.isArray(res) ? res : res?.data) || []))
       .catch(console.error);
   }, []);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, [filters]);
 
-  const fetchData = () => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (filters.personId) params.append('personId', filters.personId);
-    if (filters.startDate) params.append('startDate', filters.startDate);
-    if (filters.endDate) params.append('endDate', filters.endDate);
+  const cards = useMemo(() => [
+    { title: 'Faturamento Total', value: dashboardData.stats.totalRevenue || 0, icon: Wallet, color: '#10b981', trend: '+12.5%' },
+    { title: 'Peças e Materiais', value: dashboardData.stats.totalMaterials || 0, icon: Package, color: '#3b82f6', trend: 'Insumos' },
+    { title: 'Mão de Obra', value: dashboardData.stats.totalServices || 0, icon: Wrench, color: '#8b5cf6', trend: 'Mão de Obra' },
+    { title: 'Lucro Estimado', value: dashboardData.stats.totalProfit || 0, icon: TrendingUp, color: '#f59e0b', trend: 'Margem Bruta' },
+  ], [dashboardData]);
 
-    api.get(`/dashboard/stats?${params.toString()}`)
-      .then((data: any) => {
-        setDashboardData(data);
-        if (window.ApexCharts) {
-          initCharts(data.financialPerformance, data.distribution);
-        }
-      })
-      .catch((err: any) => console.error('Error loading dashboard stats', err))
-      .finally(() => setLoading(false));
-  };
-
-  const initCharts = (financialPerformance: any[], distribution: any[]) => {
-    const options = {
-      series: [{
-        name: 'Recebimentos',
-        data: financialPerformance.map(d => d.revenue)
-      }, {
-        name: 'Custos Estimados',
-        data: financialPerformance.map(d => d.costs)
-      }],
-      chart: {
-        height: 350,
-        type: 'area',
-        toolbar: { show: false },
-        background: 'transparent',
-        fontFamily: 'Inter, sans-serif',
-        locales: [{
-          "name": "pt-br",
-          "options": {
-            "months": ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
-            "shortMonths": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-            "days": ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"],
-            "shortDays": ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
-            "toolbar": {
-              "exportToSVG": "Baixar SVG",
-              "exportToPNG": "Baixar PNG",
-              "menu": "Menu",
-              "selection": "Seleção",
-              "selectionZoom": "Zoom de Seleção",
-              "zoomIn": "Aumentar Zoom",
-              "zoomOut": "Diminuir Zoom",
-              "pan": "Pan",
-              "reset": "Resetar Zoom"
-            }
-          }
-        }],
-        defaultLocale: "pt-br"
-      },
-      theme: { mode: 'dark' },
-      dataLabels: { enabled: false },
-      stroke: { curve: 'smooth', width: 3 },
-      fill: {
-        type: 'gradient',
-        gradient: {
-          shadeIntensity: 1,
-          opacityFrom: 0.45,
-          opacityTo: 0.05,
-          stops: [20, 100]
-        }
-      },
-      colors: ['#10b981', '#ef4444'],
-      xaxis: {
-        categories: financialPerformance.map(d => d.name),
-        axisBorder: { show: false },
-        axisTicks: { show: false }
-      },
-      grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
-      tooltip: {
-        y: {
-          formatter: (val: number) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-        }
-      }
-    };
-
-    if (chartRef.current) {
-      new window.ApexCharts(chartRef.current, options).render();
-    }
-
-    const pieOptions = {
-      series: distribution.map(d => d.value),
-      chart: {
-        width: '100%',
-        type: 'donut',
-      },
-      labels: distribution.map(d => d.label),
-      colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
-      legend: { position: 'bottom', fontSize: '14px' },
-      theme: { mode: 'dark' },
-      stroke: { show: false },
-      plotOptions: {
-        pie: {
-          donut: { size: '75%', background: 'transparent' }
-        }
-      }
-    };
-
-    if (pieRef.current) {
-      new window.ApexCharts(pieRef.current, pieOptions).render();
-    }
-  };
-
-  const cards = [
-    { title: 'Faturamento Total', value: `R$ ${(dashboardData.stats.totalRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Wallet, color: '#10b981', trend: '+12.5%' },
-    { title: 'Peças e Materiais', value: `R$ ${(dashboardData.stats.totalMaterials || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Package, color: '#3b82f6', trend: 'Receita' },
-    { title: 'Mão de Obra', value: `R$ ${(dashboardData.stats.totalServices || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Wrench, color: '#8b5cf6', trend: 'Receita' },
-    { title: 'Lucro Líquido Est.', value: `R$ ${(dashboardData.stats.totalProfit || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: '#f59e0b', trend: 'Margem' },
-    { title: 'Impostos Totais', value: `R$ ${(dashboardData.stats.totalTaxes || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Percent, color: '#ef4444', trend: 'Encargos' },
-  ];
+  const formatCurrency = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   if (loading) {
     return (
       <div className={styles.dashboardContainer}>
-        <header className={styles.welcomeHeader} style={{ marginBottom: 20 }}>
-          <div>
-            <Skeleton width="250px" height="32px" style={{ marginBottom: 8 }} />
-            <Skeleton width="400px" height="18px" />
-          </div>
-          <Skeleton width="150px" height="36px" borderRadius="12px" />
-        </header>
-
-        <section style={{ 
-          background: 'rgba(255,255,255,0.02)', 
-          padding: '20px 30px', 
-          borderRadius: 24, 
-          marginBottom: 40,
-          display: 'flex',
-          gap: 24,
-          border: '1px solid rgba(255,255,255,0.05)'
-        }}>
-          <div style={{ flex: 1 }}><Skeleton height="40px" borderRadius="12px" /></div>
-          <div style={{ width: 180 }}><Skeleton height="40px" borderRadius="12px" /></div>
-          <div style={{ width: 180 }}><Skeleton height="40px" borderRadius="12px" /></div>
-          <div style={{ width: 100 }}><Skeleton height="40px" borderRadius="12px" /></div>
-        </section>
-
-        <section className={styles.statsGrid}>
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className={styles.statCard}>
-              <Skeleton variant="circle" width="48px" height="48px" style={{ marginBottom: 16 }} />
-              <Skeleton width="100%" height="28px" style={{ marginBottom: 8 }} />
-              <Skeleton width="60%" height="16px" />
-            </div>
-          ))}
-        </section>
-
-        <section className={styles.chartsGrid} style={{ marginTop: 40 }}>
-          <div className={styles.chartCard}><Skeleton height="350px" borderRadius="20px" /></div>
-          <div className={styles.chartCard}><Skeleton height="350px" borderRadius="20px" /></div>
-        </section>
+        <div className={styles.welcomeHeader}>
+          <Skeleton width="400px" height="60px" />
+          <Skeleton width="180px" height="40px" borderRadius="16px" />
+        </div>
+        <div className={styles.statsGrid}>
+          {[1,2,3,4].map(i => <Skeleton key={i} height="180px" borderRadius="32px" />)}
+        </div>
+        <div className={styles.chartsGrid}>
+           <Skeleton height="400px" borderRadius="32px" />
+           <Skeleton height="400px" borderRadius="32px" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className={styles.dashboardContainer}>
-      <header className={styles.welcomeHeader} style={{ marginBottom: 20 }}>
+      <header className={styles.welcomeHeader}>
         <div>
-          <h1 className={styles.welcomeTitle}>Inteligência Operacional</h1>
-          <p className={styles.welcomeSubtitle}>Visão em tempo real da performance de sua oficina.</p>
+          <h1 className={styles.welcomeTitle}>Comando Operacional</h1>
+          <p className={styles.welcomeSubtitle}>
+            Visão estratégica e monitoramento de eficiência da ProMEC em tempo real.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-           <div className={styles.dateBadge}>
-            {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
-          </div>
-        </div>
+        <button onClick={() => void fetchData()} className={styles.refreshBtn} disabled={refreshing}>
+          <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+          {refreshing ? 'Atualizando...' : 'Sincronizar Dados'}
+        </button>
       </header>
 
-      {/* BARRA DE FILTROS */}
-      <section style={{ 
-        background: 'rgba(255,255,255,0.03)', 
-        padding: '20px 30px', 
-        borderRadius: 24, 
-        marginBottom: 40,
-        display: 'flex',
-        gap: 24,
-        alignItems: 'flex-end',
-        border: '1px solid rgba(255,255,255,0.05)'
-      }}>
-        <div style={{ flex: 1 }}>
-          <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, letterSpacing: 1, marginBottom: 8, display: 'block' }}>Filtrar por Cliente</label>
+      {/* Barra de Filtros Inteligente */}
+      <section className={styles.filterSection}>
+        <div className={styles.filterGroup}>
+          <label className={styles.filterLabel}><Filter size={12} /> Cliente</label>
           <select 
-            style={{ width: '100%', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '10px 15px', color: '#fff', outline: 'none' }}
+            className="formSelect"
+            style={{ width: '100%', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: '12px 16px', color: '#fff', outline: 'none' }}
             value={filters.personId}
             onChange={e => setFilters({...filters, personId: e.target.value})}
           >
@@ -249,217 +119,180 @@ const Home: React.FC = () => {
             ))}
           </select>
         </div>
-        <div style={{ width: 180 }}>
-          <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, letterSpacing: 1, marginBottom: 8, display: 'block' }}>Data Inicial</label>
+        <div className={styles.filterGroup} style={{ width: 180 }}>
+          <label className={styles.filterLabel}>Início</label>
           <input 
             type="date" 
-            style={{ width: '100%', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '10px 15px', color: '#fff', outline: 'none' }}
+            style={{ width: '100%', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: '12px 16px', color: '#fff', outline: 'none' }}
             value={filters.startDate}
             onChange={e => setFilters({...filters, startDate: e.target.value})}
           />
         </div>
-        <div style={{ width: 180 }}>
-          <label style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 800, letterSpacing: 1, marginBottom: 8, display: 'block' }}>Data Final</label>
+        <div className={styles.filterGroup} style={{ width: 180 }}>
+          <label className={styles.filterLabel}>Término</label>
           <input 
             type="date" 
-            style={{ width: '100%', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '10px 15px', color: '#fff', outline: 'none' }}
+            style={{ width: '100%', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid var(--glass-border)', borderRadius: 16, padding: '12px 16px', color: '#fff', outline: 'none' }}
             value={filters.endDate}
             onChange={e => setFilters({...filters, endDate: e.target.value})}
           />
         </div>
         <button 
           onClick={() => setFilters({ personId: '', startDate: '', endDate: '' })}
-          style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', padding: '11px 20px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}
+          style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', border: 'none', padding: '14px 24px', borderRadius: 16, fontWeight: 800, cursor: 'pointer' }}
         >
           Limpar
         </button>
       </section>
 
-      <section className={styles.statsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+      {/* Cards de Métricas */}
+      <section className={styles.statsGrid}>
         {cards.map((card, i) => (
           <div key={i} className={styles.statCard}>
-            <div className={styles.cardTrend} style={{ color: card.trend.includes('+') ? '#10b981' : card.trend.includes('-') ? '#ef4444' : '#94a3b8' }}>
-              {card.trend.includes('+') ? <ArrowUpRight size={14} /> : card.trend.includes('-') ? <ArrowDownRight size={14} /> : null}
+            <div className={styles.cardTrend} style={{ color: card.trend.includes('+') ? 'var(--success)' : 'var(--text-muted)' }}>
+              {card.trend.includes('+') ? <ArrowUpRight size={14} /> : null}
               {card.trend}
             </div>
             <div className={styles.cardIconBox} style={{ background: `${card.color}15`, color: card.color }}>
-              <card.icon size={28} />
+              <card.icon size={32} />
             </div>
-            <div style={{ marginTop: 12 }}>
-              <div className={styles.cardValue} style={{ fontSize: card.value.length > 15 ? '1.2rem' : '1.5rem' }}>{card.value}</div>
-              <div className={styles.cardLabel}>{card.title}</div>
-            </div>
+            <div className={styles.cardValue}>{formatCurrency(card.value)}</div>
+            <div className={styles.cardLabel}>{card.title}</div>
           </div>
         ))}
       </section>
 
-      {/* KPIs Secundários */}
-      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 40 }}>
-         <div style={{ background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#fff' }}>{dashboardData.stats.people}</div>
-            <div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', marginTop: 4 }}>Clientes Ativos</div>
+      {/* KPIs Rápidos */}
+      <section className={styles.kpiGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 56 }}>
+         <div className={styles.kpiCard}>
+            <div className={styles.kpiValue} style={{ color: 'var(--primary)' }}>{dashboardData.stats.people}</div>
+            <div className={styles.kpiLabel}>Base de Clientes</div>
          </div>
-         <div style={{ background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#f59e0b' }}>{dashboardData.stats.activeOrders}</div>
-            <div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', marginTop: 4 }}>OS em Aberto</div>
+         <div className={styles.kpiCard}>
+            <div className={styles.kpiValue} style={{ color: 'var(--warning)' }}>{dashboardData.stats.activeOrders}</div>
+            <div className={styles.kpiLabel}>OS em Produção</div>
          </div>
-         <div style={{ background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#ef4444' }}>{dashboardData.stats.lowStock}</div>
-            <div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', marginTop: 4 }}>Itens em Baixa</div>
+         <div className={styles.kpiCard}>
+            <div className={styles.kpiValue} style={{ color: 'var(--danger)' }}>{dashboardData.stats.lowStock}</div>
+            <div className={styles.kpiLabel}>Alertas de Estoque</div>
          </div>
-         <div style={{ background: 'rgba(255,255,255,0.02)', padding: 20, borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#3b82f6' }}>{dashboardData.stats.totalOrders}</div>
-            <div style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', marginTop: 4 }}>Total de OS</div>
+         <div className={styles.kpiCard}>
+            <div className={styles.kpiValue} style={{ color: '#fff' }}>{dashboardData.stats.totalOrders}</div>
+            <div className={styles.kpiLabel}>Histórico Total</div>
          </div>
       </section>
 
+      {/* Visualização de Dados Principal */}
       <section className={styles.chartsGrid}>
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>
-            <TrendingUp size={22} color="#10b981" /> Performance Financeira (Últimos 7 Dias)
-          </h3>
-          <div ref={chartRef}></div>
+          <div className={styles.chartHeader}>
+            <h3 className={styles.chartTitle}><TrendingUp size={24} color="var(--success)" /> Performance Financeira</h3>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Últimos 7 dias de operação</div>
+          </div>
+          <div style={{ width: '100%', height: 350 }}>
+            <ResponsiveContainer>
+              <AreaChart data={dashboardData.financialPerformance}>
+                <defs>
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--success)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="var(--success)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="costs" stroke="var(--danger)" strokeWidth={2} fillOpacity={0} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>
-            <Activity size={22} color="#3b82f6" /> Distribuição Operacional
-          </h3>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div ref={pieRef}></div>
+          <div className={styles.chartHeader}>
+            <h3 className={styles.chartTitle}><Activity size={24} color="var(--primary)" /> Mix de Receita</h3>
+          </div>
+          <div style={{ width: '100%', height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={dashboardData.distribution}
+                  innerRadius={80}
+                  outerRadius={110}
+                  paddingAngle={8}
+                  dataKey="value"
+                >
+                  {(dashboardData.distribution || []).map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={['#10b981', '#3b82f6', '#f59e0b', '#ef4444'][index % 4]} stroke="none" />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}
+                />
+                <Legend iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </section>
 
-      <section className={styles.bottomGrid}>
+      {/* Monitoramento de Atividades e Eficiência */}
+      <section className={styles.activitySection}>
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>
-            <Clock size={22} color="#10b981" /> Atividades Recentes
-          </h3>
-          <div className={styles.activityList}>
-            {(dashboardData.activities || []).length > 0 ? (
-              dashboardData.activities.map((act: any, i: number) => (
+           <h3 className={styles.chartTitle} style={{ marginBottom: 32 }}><Clock size={24} color="var(--info)" /> Log de Atividades</h3>
+           <div className={styles.activityList}>
+              {(dashboardData.activities || []).map((act: any, i: number) => (
                 <div key={i} className={styles.activityItem}>
                   <div className={styles.activityIcon} style={{ 
-                    background: act.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)', 
-                    color: act.type === 'success' ? '#10b981' : '#3b82f6' 
+                    background: act.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(56, 189, 248, 0.1)', 
+                    color: act.type === 'success' ? 'var(--success)' : 'var(--primary)' 
                   }}>
                     {act.type === 'success' ? <CheckCircle2 size={20} /> : <Wrench size={20} />}
                   </div>
-                  <div>
+                  <div className={styles.activityContent}>
                     <div className={styles.activityTitle}>{act.title}</div>
-                    <div className={styles.activityMeta}>
-                      {act.description} • {new Date(act.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
+                    <div className={styles.activityMeta}>{act.description} • {new Date(act.time).toLocaleTimeString('pt-BR')}</div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p style={{ color: '#94a3b8' }}>Nenhuma atividade detectada nas últimas 24 horas.</p>
-            )}
-          </div>
+              ))}
+              {dashboardData.activities.length === 0 && <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Aguardando novas atividades...</p>}
+           </div>
         </div>
 
         <div className={styles.chartCard}>
-          <h3 className={styles.chartTitle}>
-            <CheckCircle2 size={22} color="#10b981" /> Eficiência Operacional
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-            <div className={styles.kpiCard}>
-              <div className={styles.kpiHeader}>
-                <span style={{ color: '#94a3b8' }}>Eficiência Global do Chão de Fábrica</span>
-                <span style={{ color: '#10b981', fontWeight: 800 }}>
-                  {Number(dashboardData.operationsKpi?.efficiencyPercent || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
-                </span>
+           <h3 className={styles.chartTitle} style={{ marginBottom: 32 }}><Percent size={24} color="var(--accent)" /> Eficiência Global</h3>
+           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 40 }}>
+              <div style={{ textAlign: 'center' }}>
+                 <div style={{ fontSize: 64, fontWeight: 900, color: 'var(--accent)', fontFamily: 'Outfit' }}>
+                   {Number(dashboardData.operationsKpi?.efficiencyPercent || 0).toFixed(1)}%
+                 </div>
+                 <div style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 600 }}>Índice de Produtividade Global</div>
               </div>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ 
-                  width: `${Math.min(100, Number(dashboardData.operationsKpi?.efficiencyPercent || 0))}%`, 
-                  background: 'linear-gradient(to right, #10b981, #34d399)',
-                  boxShadow: '0 0 15px rgba(16, 185, 129, 0.4)'
-                }} />
+              
+              <div style={{ height: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 10, overflow: 'hidden' }}>
+                 <div style={{ 
+                   height: '100%', 
+                   width: `${dashboardData.operationsKpi?.efficiencyPercent || 0}%`, 
+                   background: 'linear-gradient(to right, var(--accent), var(--primary))',
+                   boxShadow: '0 0 20px var(--accent-glow)'
+                 }} />
               </div>
-              <div style={{ marginTop: 8, color: '#94a3b8', fontSize: 12 }}>
-                Horas Apontadas: {Number(dashboardData.operationsKpi?.workedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h •
-                Paradas: {Number(dashboardData.operationsKpi?.downtimeMinutes || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} min
-              </div>
-            </div>
 
-            <div className={styles.kpiCard}>
-              <div className={styles.kpiHeader}>
-                <span style={{ color: '#94a3b8' }}>Paradas por Categoria</span>
-                <span style={{ color: '#ef4444', fontWeight: 800 }}>
-                  {Object.keys(dashboardData.downtimeByCategory || {}).length}
-                </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: 16, borderRadius: 16, border: '1px solid var(--glass-border)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Horas Produzidas</div>
+                    <div style={{ fontSize: 18, fontWeight: 800 }}>{dashboardData.operationsKpi?.workedHours || 0}h</div>
+                 </div>
+                 <div style={{ background: 'rgba(255,255,255,0.02)', padding: 16, borderRadius: 16, border: '1px solid var(--glass-border)' }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Minutos de Parada</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--danger)' }}>{dashboardData.operationsKpi?.downtimeMinutes || 0}m</div>
+                 </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {Object.entries(dashboardData.downtimeByCategory || {}).map(([category, minutes]: any) => (
-                  <span key={String(category)} style={{
-                    fontSize: 11,
-                    color: '#e2e8f0',
-                    background: 'rgba(239,68,68,0.15)',
-                    borderRadius: 999,
-                    padding: '4px 8px'
-                  }}>
-                    {String(category)}: {Number(minutes || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} min
-                  </span>
-                ))}
-                {Object.keys(dashboardData.downtimeByCategory || {}).length === 0 && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>Sem apontamentos de parada no período.</span>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.kpiCard}>
-              <div className={styles.kpiHeader}>
-                <span style={{ color: '#94a3b8' }}>Eficiência por Centro</span>
-                <span style={{ color: '#3b82f6', fontWeight: 800 }}>{(dashboardData.efficiencyByCenter || []).length}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 220, overflow: 'auto' }}>
-                {(dashboardData.efficiencyByCenter || []).map((row: any) => (
-                  <div key={row.workCenter} style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                    borderRadius: 10,
-                    padding: 10,
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 700 }}>{row.workCenter}</span>
-                      <span style={{ color: '#10b981', fontWeight: 800, fontSize: 12 }}>
-                        {Number(row.efficiencyPercent || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
-                      </span>
-                    </div>
-                    <div style={{ color: '#94a3b8', fontSize: 11 }}>
-                      {Number(row.workedHours || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h • {Number(row.downtimeMinutes || 0).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} min parada
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 30, marginTop: 8 }}>
-                      {((dashboardData.efficiencyTrendByCenter || []).find((t: any) => t.workCenter === row.workCenter)?.trend || []).map((point: any) => {
-                        const value = Number(point.efficiencyPercent || 0);
-                        const height = Math.max(3, Math.min(28, (value / 100) * 28));
-                        const barColor = value >= 85 ? '#10b981' : value >= 70 ? '#f59e0b' : '#ef4444';
-                        return (
-                          <div
-                            key={`${row.workCenter}-${point.date}`}
-                            title={`${point.day}: ${value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`}
-                            style={{
-                              width: 10,
-                              height,
-                              borderRadius: 2,
-                              background: barColor,
-                              opacity: 0.95,
-                            }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-                {(dashboardData.efficiencyByCenter || []).length === 0 && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>Sem dados de eficiência no período selecionado.</span>
-                )}
-              </div>
-            </div>
-          </div>
+           </div>
         </div>
       </section>
     </div>

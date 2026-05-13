@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { Package, Banknote, Tag, ArrowLeft, Save } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
+
+interface MaterialFormData {
+  name: string;
+  description: string;
+  price: number;
+  unit: string;
+  active: boolean;
+}
 
 interface MaterialFormProps {
   isEdit?: boolean;
@@ -15,52 +24,38 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
   const { id } = useParams();
   const { showToast } = useToast();
   
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: 0,
-    unit: '',
-    active: true
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<MaterialFormData>({
+    defaultValues: {
+      name: '',
+      description: '',
+      price: 0,
+      unit: '',
+      active: true
+    }
   });
+
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (id && (isEdit || isView)) {
       setLoading(true);
       api.get(`/materials/${id}`)
-        .then((data: any) => setFormData(data))
+        .then((data: any) => reset(data))
         .catch(() => showToast('Erro ao carregar material.', 'error'))
         .finally(() => setLoading(false));
     }
-  }, [id, isEdit, isView, showToast]);
+  }, [id, isEdit, isView, showToast, reset]);
 
-  const validate = () => {
-    const newErrors: any = {};
-    if (!formData.name.trim()) newErrors.name = 'O nome do material é obrigatório.';
-    if (!Number.isFinite(formData.price) || formData.price <= 0) newErrors.price = 'O preço deve ser maior que zero.';
-    if (!formData.unit.trim()) newErrors.unit = 'A unidade de medida é obrigatória.';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: MaterialFormData) => {
     if (isView) return;
     
-    if (!validate()) {
-      showToast('Por favor, verifique os campos destacados.', 'error');
-      return;
-    }
-
     setLoading(true);
     try {
       if (isEdit) {
-        await api.put(`/materials/${id}`, formData);
+        await api.put(`/materials/${id}`, data);
         showToast('Material atualizado com sucesso!');
       } else {
-        await api.post('/materials', formData);
+        await api.post('/materials', data);
         showToast('Novo material cadastrado!');
       }
       navigate('/materials');
@@ -83,7 +78,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           <div className={styles.fullWidth + ' ' + styles.fieldGroup}>
             <label className={styles.label}>Nome do Material / Item de Estoque</label>
             <div className={`${styles.inputWrapper} ${errors.name ? styles.inputError : ''}`}>
@@ -92,12 +87,11 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
                 className={styles.formInput}
                 type="text"
                 disabled={isView}
-                value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                {...register('name', { required: 'O nome do material é obrigatório' })}
                 placeholder="Ex: Óleo 5W30, Pastilha de Freio..."
               />
             </div>
-            {errors.name && <span className={styles.errorMessage}>{errors.name}</span>}
+            {errors.name && <span className={styles.errorMessage}>{errors.name.message}</span>}
           </div>
 
           <div className={styles.fullWidth + ' ' + styles.fieldGroup}>
@@ -105,8 +99,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
             <textarea
               className={styles.formTextarea}
               disabled={isView}
-              value={formData.description || ''}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              {...register('description')}
               placeholder="Especificações técnicas, marca, shelf-life..."
             />
           </div>
@@ -120,14 +113,14 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
                 type="number"
                 step="0.01"
                 disabled={isView}
-                value={formData.price}
-                onChange={e => setFormData({
-                  ...formData,
-                  price: e.target.value === '' ? Number.NaN : parseFloat(e.target.value)
+                {...register('price', { 
+                  required: 'O preço é obrigatório',
+                  min: { value: 0.01, message: 'O preço deve ser maior que zero' },
+                  valueAsNumber: true
                 })}
               />
             </div>
-            {errors.price && <span className={styles.errorMessage}>{errors.price}</span>}
+            {errors.price && <span className={styles.errorMessage}>{errors.price.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -138,12 +131,11 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
                 className={styles.formInput}
                 type="text"
                 disabled={isView}
-                value={formData.unit}
-                onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                {...register('unit', { required: 'A unidade é obrigatória' })}
                 placeholder="un"
               />
             </div>
-            {errors.unit && <span className={styles.errorMessage}>{errors.unit}</span>}
+            {errors.unit && <span className={styles.errorMessage}>{errors.unit.message}</span>}
           </div>
 
           <div className={styles.fullWidth}>
@@ -152,8 +144,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
                 <input
                   type="checkbox"
                   disabled={isView}
-                  checked={formData.active}
-                  onChange={e => setFormData({ ...formData, active: e.target.checked })}
+                  {...register('active')}
                   style={{ width: 22, height: 22, cursor: 'pointer' }}
                 />
                 Material Ativo e Disponível para Ordens de Serviço
@@ -163,9 +154,9 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
 
           {!isView && (
             <div className={styles.fullWidth} style={{ marginTop: 24 }}>
-              <button className={styles.submitBtn} type="submit" disabled={loading}>
+              <button className={styles.submitBtn} type="submit" disabled={loading || isSubmitting}>
                 <Save size={18} style={{ marginRight: 8 }} />
-                {loading ? 'Salvando...' : 'Atualizar Catálogo'}
+                {loading || isSubmitting ? 'Salvando...' : 'Atualizar Catálogo'}
               </button>
             </div>
           )}

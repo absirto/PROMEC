@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { ClipboardCheck, Package, Wrench, ShieldAlert, ArrowLeft, Save } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
+
+interface QualityControlFormData {
+  description: string;
+  status: string;
+  serviceOrderId: string;
+  materialId: string;
+}
 
 interface QualityControlFormProps {
   isEdit?: boolean;
@@ -13,11 +21,13 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
   const navigate = useNavigate();
   const { id } = useParams();
   
-  const [formData, setFormData] = useState({
-    description: '',
-    status: 'Pendente',
-    serviceOrderId: '',
-    materialId: ''
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<QualityControlFormData>({
+    defaultValues: {
+      description: '',
+      status: 'Pendente',
+      serviceOrderId: '',
+      materialId: ''
+    }
   });
   
   const [orders, setOrders] = useState<any[]>([]);
@@ -37,7 +47,7 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
 
     if (id && (isEdit || isView)) {
       api.get(`/quality-controls/${id}`)
-        .then((data: any) => setFormData({
+        .then((data: any) => reset({
           description: data.description || '',
           status: data.status || 'Pendente',
           serviceOrderId: data.serviceOrderId?.toString() || '',
@@ -47,18 +57,17 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
     } else {
       setLoading(false);
     }
-  }, [id, isEdit, isView]);
+  }, [id, isEdit, isView, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: QualityControlFormData) => {
     if (isView) return;
     
     setLoading(true);
     try {
       const payload = {
-        ...formData,
-        serviceOrderId: formData.serviceOrderId ? parseInt(formData.serviceOrderId) : null,
-        materialId: formData.materialId ? parseInt(formData.materialId) : null,
+        ...data,
+        serviceOrderId: data.serviceOrderId ? parseInt(data.serviceOrderId) : null,
+        materialId: data.materialId ? parseInt(data.materialId) : null,
       };
 
       if (isEdit) {
@@ -86,7 +95,7 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           <div className={styles.fullWidth + ' ' + styles.fieldGroup}>
             <label className={styles.label}>
               <ClipboardCheck size={16} /> Relatório de Inspeção / Observações
@@ -94,11 +103,10 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
             <textarea
               className={styles.formTextarea}
               disabled={isView}
-              value={formData.description}
-              onChange={e => setFormData({ ...formData, description: e.target.value })}
+              {...register('description', { required: 'A descrição é obrigatória' })}
               placeholder="Descreva aqui o resultado da inspeção ou controle realizado..."
-              required
             />
+            {errors.description && <span className={styles.errorMsg}>{errors.description.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -110,8 +118,7 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
               <select
                 className={styles.formSelect}
                 disabled={isView}
-                value={formData.serviceOrderId}
-                onChange={e => setFormData({ ...formData, serviceOrderId: e.target.value })}
+                {...register('serviceOrderId')}
               >
                 <option value="">Nenhuma (Inspeção Geral)</option>
                 {orders.map(o => <option key={o.id} value={o.id}>OS #{o.id} - {o.description}</option>)}
@@ -128,8 +135,7 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
               <select
                 className={styles.formSelect}
                 disabled={isView}
-                value={formData.materialId}
-                onChange={e => setFormData({ ...formData, materialId: e.target.value })}
+                {...register('materialId')}
               >
                 <option value="">Nenhum</option>
                 {materials.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -146,8 +152,7 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
               <select
                 className={styles.formSelect}
                 disabled={isView}
-                value={formData.status}
-                onChange={e => setFormData({ ...formData, status: e.target.value })}
+                {...register('status')}
               >
                 <option value="Pendente">🟡 Pendente / Aguardando</option>
                 <option value="Aprovado">🟢 Aprovado / Conforme</option>
@@ -160,9 +165,9 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
           {error && <div className={styles.fullWidth + ' ' + styles.errorMsg}>{error}</div>}
 
           {!isView && (
-            <button className={styles.fullWidth + ' ' + styles.submitBtn} type="submit" disabled={loading}>
+            <button className={styles.fullWidth + ' ' + styles.submitBtn} type="submit" disabled={loading || isSubmitting}>
               <Save size={18} style={{ marginRight: 8 }} />
-              {loading ? 'Registrando...' : 'Salvar Controle de Qualidade'}
+              {loading || isSubmitting ? 'Registrando...' : 'Salvar Controle de Qualidade'}
             </button>
           )}
         </form>

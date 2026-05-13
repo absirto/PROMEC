@@ -36,11 +36,33 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // Interceptor para tratar respostas padronizadas do backend
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Se o backend retorna { status: 'success', data: ... }, entregamos apenas o data
-    if (response.data && response.data.status === 'success') {
-      return response.data.data;
+    let result = response.data;
+    
+    // Unwraps { status: 'success', data: ... }
+    if (result && result.status === 'success') {
+      result = result.data;
     }
-    return response.data;
+
+    // Se for um objeto paginado { data: [], meta: {} }
+    // Retornamos a array de dados, mas anexamos o 'meta' como uma propriedade oculta.
+    // Isso evita quebrar o .map() e permite acessar .meta se necessário.
+    if (result && !Array.isArray(result) && Array.isArray(result.data)) {
+      const dataArray = result.data;
+      // Anexa os metadados diretamente na array
+      Object.defineProperty(dataArray, 'meta', {
+        value: result.meta,
+        enumerable: false, // não aparece em loops normais
+        configurable: true
+      });
+      Object.defineProperty(dataArray, 'isPaginated', {
+        value: true,
+        enumerable: false,
+        configurable: true
+      });
+      return dataArray;
+    }
+
+    return result;
   },
   (error) => {
     if (error.response && error.response.data) {

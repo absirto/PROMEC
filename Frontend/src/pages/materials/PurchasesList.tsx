@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import axios from 'axios';
+import { useForm } from 'react-hook-form';
 import * as XLSX from 'xlsx';
-import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Sheet, FileSpreadsheet } from 'lucide-react';
+import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Search, FileSpreadsheet } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
-import { getValidStoredToken } from '../../utils/authSession';
+import Skeleton from '../../components/Skeleton';
 
 const requestStatusColor: Record<string, string> = {
   OPEN: '#f59e0b',
@@ -13,25 +13,179 @@ const requestStatusColor: Record<string, string> = {
   CLOSED: '#10b981',
 };
 
+interface NewPurchaseFormData {
+  supplierPersonId: string;
+  items: {
+    id: number;
+    materialName: string;
+    shortageQty: number;
+    unit: string;
+    quantity: number;
+    unitCost: string;
+    totalPaid: string;
+  }[];
+}
+
+// Componente para gerenciar a baixa de uma solicitação específica
+const PurchaseFulfillmentForm: React.FC<{ 
+  request: any, 
+  people: any[], 
+  onSuccess: () => void,
+  getPersonName: (p: any) => string 
+}> = ({ request, people, onSuccess, getPersonName }) => {
+  const { showToast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
+
+  const pendingItems = (request.items || []).filter((i: any) => Number(i.shortageQty || 0) > 0 && i.status !== 'PURCHASED');
+
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<NewPurchaseFormData>({
+    defaultValues: {
+      supplierPersonId: '',
+      items: pendingItems.map((item: any) => ({
+        id: item.id,
+        materialName: item.material?.name,
+        shortageQty: item.shortageQty,
+        unit: item.unit || item.material?.unit,
+        quantity: item.shortageQty,
+        unitCost: '',
+        totalPaid: ''
+      }))
+    }
+  });
+
+  const watchedItems = watch('items');
+
+  const handleCalcTotal = (index: number) => {
+    const qty = Number(watchedItems[index].quantity) || 0;
+    const cost = Number(watchedItems[index].unitCost) || 0;
+    setValue(`items.${index}.totalPaid` as any, (qty * cost).toFixed(2));
+  };
+
+  const onSubmit = async (data: NewPurchaseFormData) => {
+    if (!data.supplierPersonId) {
+      showToast('Selecione um fornecedor.', 'warning');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        supplierPersonId: data.supplierPersonId,
+        items: data.items.map((item: any) => ({
+          purchaseRequestItemId: item.id,
+          quantity: Number(item.quantity),
+          unitCost: Number(item.unitCost),
+          totalPaid: Number(item.totalPaid)
+        }))
+      };
+
+      await api.post(`/service-orders/purchase-requests/${request.id}/fulfill`, payload);
+      showToast('Compra e entrada em estoque registradas!');
+      onSuccess();
+    } catch (err: any) {
+      showToast(err?.response?.data?.message || 'Erro ao registrar compra.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} style={{ border: '1px solid rgba(148,163,184,0.15)', borderRadius: 14, padding: 12, background: 'rgba(15,23,42,0.45)', marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+        <div>
+          <div style={{ color: '#fff', fontWeight: 800 }}>{request.code}</div>
+          <div style={{ color: '#94a3b8', fontSize: 12 }}>
+            {request.serviceOrder?.traceCode || 'Sem OS'} · {request.serviceOrder?.description || 'Solicitação geral'}
+          </div>
+        </div>
+        <span style={{
+          color: requestStatusColor[request.status] || '#cbd5e1',
+          border: `1px solid ${requestStatusColor[request.status] || '#475569'}`,
+          borderRadius: 999,
+          padding: '4px 10px',
+          fontSize: 11,
+          fontWeight: 800,
+          height: 'fit-content'
+        }}>
+          {request.status}
+        </span>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <select
+          className={`${styles.searchInput} ${errors.supplierPersonId ? styles.inputError : ''}`}
+          style={{ width: '100%', minWidth: 'unset' }}
+          {...register('supplierPersonId', { required: true })}
+        >
+          <option value="">Selecione o fornecedor</option>
+          {people.map((person) => (
+            <option key={person.id} value={person.id}>{getPersonName(person)}</option>
+          ))}
+        </select>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+        {watchedItems.map((item, index) => (
+          <div key={item.id} style={{ background: 'rgba(2,6,23,0.45)', borderRadius: 10, padding: 10 }}>
+            <div style={{ color: '#e2e8f0', fontWeight: 700, marginBottom: 4 }}>
+              {item.materialName}
+            </div>
+            <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8 }}>
+              Pendente: {Number(item.shortageQty).toLocaleString('pt-BR')} {item.unit}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+              <input 
+                type="number" step="0.01" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%', fontSize: 12 }} 
+                placeholder="Qtd" {...register(`items.${index}.quantity` as any, { required: true, onChange: () => handleCalcTotal(index) })} 
+              />
+              <input 
+                type="number" step="0.01" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%', fontSize: 12 }} 
+                placeholder="Custo" {...register(`items.${index}.unitCost` as any, { required: true, onChange: () => handleCalcTotal(index) })} 
+              />
+              <input 
+                type="number" step="0.01" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%', fontSize: 12 }} 
+                placeholder="Total" {...register(`items.${index}.totalPaid` as any, { required: true })} 
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        style={{
+          width: '100%',
+          border: '1px solid rgba(16,185,129,0.35)',
+          background: 'rgba(16,185,129,0.14)',
+          color: '#86efac',
+          borderRadius: 12,
+          padding: '10px',
+          cursor: 'pointer',
+          fontWeight: 800,
+          fontSize: 13
+        }}
+      >
+        {submitting ? 'Gravando...' : 'Registrar Compra e Entrada'}
+      </button>
+    </form>
+  );
+};
+
 const PurchasesList: React.FC = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [savingRequestId, setSavingRequestId] = useState<number | null>(null);
   const [purchaseRequests, setPurchaseRequests] = useState<any[]>([]);
   const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
-  const [people, setPeople] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any | null>(null);
   const [emissions, setEmissions] = useState<any[]>([]);
-  const [exportingPdf, setExportingPdf] = useState(false);
-  const [exportingXlsx, setExportingXlsx] = useState(false);
+  const [people, setPeople] = useState<any[]>([]);
+  
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
     supplierPersonId: '',
     status: '',
   });
-  const [supplierByRequest, setSupplierByRequest] = useState<Record<number, string>>({});
-  const [itemInputs, setItemInputs] = useState<Record<number, { quantity: string; unitCost: string; totalPaid: string }>>({});
 
   const getPersonName = (person: any) => {
     if (!person) return '-';
@@ -41,269 +195,60 @@ const PurchasesList: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const purchaseRequestParams = new URLSearchParams();
-      const purchaseHistoryParams = new URLSearchParams();
+      const historyParams = new URLSearchParams();
+      if (filters.startDate) historyParams.set('startDate', filters.startDate);
+      if (filters.endDate) historyParams.set('endDate', filters.endDate);
+      if (filters.supplierPersonId) historyParams.set('supplierPersonId', filters.supplierPersonId);
 
-      if (filters.startDate) {
-        purchaseRequestParams.set('startDate', filters.startDate);
-        purchaseHistoryParams.set('startDate', filters.startDate);
-      }
-      if (filters.endDate) {
-        purchaseRequestParams.set('endDate', filters.endDate);
-        purchaseHistoryParams.set('endDate', filters.endDate);
-      }
-      if (filters.status) {
-        purchaseRequestParams.set('status', filters.status);
-      }
-      if (filters.supplierPersonId) {
-        purchaseHistoryParams.set('supplierPersonId', filters.supplierPersonId);
-      }
-
-      const [requestsData, historyData, peopleData, settingsData, emissionsData] = await Promise.all([
-        api.get(`/service-orders/purchase-requests${purchaseRequestParams.toString() ? `?${purchaseRequestParams.toString()}` : ''}`),
-        api.get(`/stock/purchases${purchaseHistoryParams.toString() ? `?${purchaseHistoryParams.toString()}` : ''}`),
+      const [requests, history, allPeople, logs] = await Promise.all([
+        api.get('/service-orders/purchase-requests'),
+        api.get(`/service-orders/purchase-history?${historyParams.toString()}`),
         api.get('/people'),
-        api.get('/settings').catch(() => null),
-        api.get('/reports/emissions?reportKey=purchases&limit=8').catch(() => []),
+        api.get('/dashboard/audit-logs?module=Suprimentos').catch(() => [])
       ]);
 
-      setPurchaseRequests((Array.isArray(requestsData) ? requestsData : requestsData?.data) || []);
-      setPurchaseHistory((Array.isArray(historyData) ? historyData : historyData?.data) || []);
-      setPeople((Array.isArray(peopleData) ? peopleData : peopleData?.data) || []);
-      setSettings(settingsData || null);
-      setEmissions((Array.isArray(emissionsData) ? emissionsData : emissionsData?.data) || []);
-    } catch {
-      showToast('Erro ao carregar central de compras.', 'error');
+      setPurchaseRequests(requests || []);
+      setPurchaseHistory(history || []);
+      setPeople(allPeople || []);
+      setEmissions(logs || []);
+    } catch (err) {
+      showToast('Erro ao carregar dados de suprimentos.', 'error');
     } finally {
       setLoading(false);
     }
   }, [filters, showToast]);
 
-  const buildQueryString = () => {
-    const params = new URLSearchParams();
-    if (filters.startDate) params.set('start', filters.startDate);
-    if (filters.endDate) params.set('end', filters.endDate);
-    if (filters.status) params.set('status', filters.status);
-    if (filters.supplierPersonId) params.set('supplierPersonId', filters.supplierPersonId);
-    return params.toString();
-  };
-
-  const downloadBlob = (blob: Blob, fileName: string) => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  };
-
-  const handleExportPdf = async () => {
-    setExportingPdf(true);
-    try {
-      const query = buildQueryString();
-      const token = getValidStoredToken();
-      const baseURL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3001/v1' : '/v1');
-      const response = await axios.get(`${baseURL}/reports/operational/purchases/pdf${query ? `?${query}` : ''}`, {
-        responseType: 'blob',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-
-      downloadBlob(response.data, 'relatorio_compras.pdf');
-      void fetchData();
-    } catch {
-      showToast('Erro ao exportar PDF do relatório de compras.', 'error');
-    } finally {
-      setExportingPdf(false);
-    }
-  };
-
-  const toHex = (buffer: ArrayBuffer) => Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, '0')).join('');
-
-  const handleExportXlsx = async () => {
-    setExportingXlsx(true);
-    try {
-      const summaryRows = [
-        { Indicador: 'Empresa', Valor: settings?.companyName || 'ProMEC' },
-        { Indicador: 'Logo', Valor: settings?.logoUrl || '-' },
-        { Indicador: 'CNPJ', Valor: settings?.cnpj || '-' },
-        { Indicador: 'Contato', Valor: settings?.contactEmail || settings?.phone || '-' },
-        { Indicador: 'Solicitações totais', Valor: purchaseRequests.length },
-        { Indicador: 'Solicitações abertas/parciais', Valor: purchaseRequests.filter((request) => request.status !== 'CLOSED').length },
-        { Indicador: 'Compras registradas', Valor: purchaseHistory.length },
-        { Indicador: 'Valor total comprado', Valor: purchaseHistory.reduce((acc, log) => acc + Number(log.totalPaid || 0), 0) },
-        { Indicador: 'Período inicial', Valor: filters.startDate || '-' },
-        { Indicador: 'Período final', Valor: filters.endDate || '-' },
-        { Indicador: 'Status filtrado', Valor: filters.status || 'Todos' },
-        { Indicador: 'Fornecedor filtrado', Valor: people.find((person) => String(person.id) === filters.supplierPersonId)?.naturalPerson?.name || people.find((person) => String(person.id) === filters.supplierPersonId)?.legalPerson?.corporateName || 'Todos' },
-      ];
-
-      const requestRows = purchaseRequests.flatMap((request) =>
-        (request.items || []).map((item: any) => ({
-          Codigo: request.code,
-          Status: request.status,
-          OS: request.serviceOrder?.traceCode || '',
-          DescricaoOS: request.serviceOrder?.description || '',
-          Material: item.material?.name || '',
-          QuantidadeSolicitada: Number(item.requestedQty || 0),
-          QuantidadeEmFalta: Number(item.shortageQty || 0),
-          Unidade: item.unit || item.material?.unit || '',
-          StatusItem: item.status,
-          DataCriacao: new Date(request.createdAt).toLocaleString('pt-BR'),
-        }))
-      );
-
-      const historyRows = purchaseHistory.map((log) => ({
-        Material: log.material?.name || '',
-        Fornecedor: log.supplierName || getPersonName(log.supplierPerson),
-        Quantidade: Number(log.quantity || 0),
-        Unidade: log.material?.unit || '',
-        CustoUnitario: Number(log.unitCost || 0),
-        TotalPago: Number(log.totalPaid || 0),
-        DataCompra: new Date(log.createdAt).toLocaleString('pt-BR'),
-        Observacao: log.description || '',
-      }));
-
-      const workbook = XLSX.utils.book_new();
-      const summarySheet = XLSX.utils.aoa_to_sheet([
-        [settings?.companyName || 'ProMEC'],
-        ['Relatório de Compras'],
-        [`Emitido em ${new Date().toLocaleString('pt-BR')}`],
-      ]);
-      XLSX.utils.sheet_add_json(summarySheet, summaryRows, { origin: 'A4', skipHeader: false });
-      const requestsSheet = XLSX.utils.json_to_sheet(requestRows);
-      const historySheet = XLSX.utils.json_to_sheet(historyRows);
-      summarySheet['!cols'] = [{ wch: 28 }, { wch: 42 }];
-      requestsSheet['!cols'] = [
-        { wch: 16 },
-        { wch: 12 },
-        { wch: 14 },
-        { wch: 36 },
-        { wch: 28 },
-        { wch: 18 },
-        { wch: 18 },
-        { wch: 10 },
-        { wch: 14 },
-        { wch: 22 },
-      ];
-      historySheet['!cols'] = [
-        { wch: 28 },
-        { wch: 30 },
-        { wch: 14 },
-        { wch: 10 },
-        { wch: 16 },
-        { wch: 16 },
-        { wch: 22 },
-        { wch: 36 },
-      ];
-      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Resumo');
-      XLSX.utils.book_append_sheet(workbook, requestsSheet, 'Solicitacoes');
-      XLSX.utils.book_append_sheet(workbook, historySheet, 'Compras');
-      const arrayBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const hashBuffer = await window.crypto.subtle.digest('SHA-256', arrayBuffer);
-      const fileHash = toHex(hashBuffer);
-      const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      downloadBlob(blob, 'relatorio_compras.xlsx');
-
-      try {
-        await api.post('/reports/emissions', {
-          reportKey: 'purchases',
-          exportFormat: 'XLSX',
-          fileName: 'relatorio_compras.xlsx',
-          fileHash,
-          filters: {
-            start: filters.startDate || null,
-            end: filters.endDate || null,
-            status: filters.status || null,
-            supplierPersonId: filters.supplierPersonId || null,
-          }
-        });
-      } catch {
-        showToast('A planilha foi gerada, mas o log de emissão não pôde ser gravado.', 'warning');
-      }
-
-      void fetchData();
-    } finally {
-      setExportingXlsx(false);
-    }
-  };
-
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
 
-  const handleItemInputChange = (itemId: number, field: 'quantity' | 'unitCost' | 'totalPaid', value: string) => {
-    setItemInputs((prev) => ({
-      ...prev,
-      [itemId]: {
-        quantity: prev[itemId]?.quantity || '',
-        unitCost: prev[itemId]?.unitCost || '',
-        totalPaid: prev[itemId]?.totalPaid || '',
-        [field]: value,
-      }
+  const exportToExcel = () => {
+    const exportData = purchaseHistory.map(item => ({
+      Data: new Date(item.purchaseDate).toLocaleDateString('pt-BR'),
+      Fornecedor: getPersonName(item.supplier),
+      Material: item.material?.name,
+      Quantidade: item.quantity,
+      'Custo Unitário': item.unitCost,
+      'Total Pago': item.totalPaid,
+      'OS Ref.': item.serviceOrder?.traceCode || 'Geral'
     }));
-  };
 
-  const handleFulfillRequest = async (request: any) => {
-    const requestId = Number(request.id);
-    const supplierPersonId = Number(supplierByRequest[requestId] || 0);
-    if (!supplierPersonId || !Number.isFinite(supplierPersonId) || supplierPersonId <= 0) {
-      showToast('Selecione o fornecedor para registrar a compra.', 'warning');
-      return;
-    }
-
-    const pendingItems = (request.items || []).filter((item: any) => Number(item.shortageQty || 0) > 0 && item.status !== 'PURCHASED');
-    if (!pendingItems.length) {
-      showToast('Não há itens pendentes nesta solicitação.', 'warning');
-      return;
-    }
-
-    const payloadItems = pendingItems.map((item: any) => {
-      const input = itemInputs[item.id] || { quantity: '', unitCost: '', totalPaid: '' };
-      const quantity = input.quantity ? Number(input.quantity) : Number(item.shortageQty || 0);
-      const unitCost = input.unitCost ? Number(input.unitCost) : undefined;
-      const totalPaid = input.totalPaid ? Number(input.totalPaid) : undefined;
-      return {
-        purchaseRequestItemId: Number(item.id),
-        quantity,
-        unitCost,
-        totalPaid,
-      };
-    });
-
-    const invalid = payloadItems.some((item: any) => !Number.isFinite(item.quantity) || item.quantity <= 0 || ((!item.unitCost || item.unitCost <= 0) && (!item.totalPaid || item.totalPaid <= 0)));
-    if (invalid) {
-      showToast('Informe quantidade e custo unitário ou total pago para os itens pendentes.', 'warning');
-      return;
-    }
-
-    setSavingRequestId(requestId);
-    try {
-      await api.post(`/service-orders/purchase-requests/${requestId}/fulfill`, {
-        supplierPersonId,
-        description: `Compra registrada na Central de Compras para ${request.code}`,
-        items: payloadItems,
-      });
-      showToast(`Compra da solicitação ${request.code} registrada.`, 'success');
-      void fetchData();
-    } catch {
-      showToast('Erro ao registrar compra da solicitação.', 'error');
-    } finally {
-      setSavingRequestId(null);
-    }
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Histórico de Compras");
+    XLSX.writeFile(wb, "historico_compras_promec.xlsx");
   };
 
   return (
     <div className={styles.listContainer} style={{ animation: 'fadeIn 0.5s ease-out' }}>
       <div className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: 'rgba(56, 189, 248, 0.12)', color: '#38bdf8', padding: 10, borderRadius: 12 }}>
+          <div style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', padding: 10, borderRadius: 12 }}>
             <ShoppingCart size={24} />
           </div>
           <div>
-            <h2 className={styles.title} style={{ margin: 0 }}>Central de Compras</h2>
-            <div style={{ color: '#94a3b8', marginTop: 6 }}>Solicitações pendentes e histórico de compras em uma única operação.</div>
+            <h2 className={styles.title} style={{ margin: 0 }}>Gestão de Suprimentos</h2>
+            <p style={{ color: '#8a99a8', fontSize: 13, margin: 0 }}>Fulfillment de solicitações e rastreabilidade de entradas</p>
           </div>
         </div>
         <button className={styles.newBtn} onClick={() => void fetchData()}>
@@ -311,205 +256,116 @@ const PurchasesList: React.FC = () => {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginBottom: 16 }}>
-        <button className={styles.newBtn} type="button" onClick={() => void handleExportXlsx()} disabled={exportingXlsx} style={{ background: 'linear-gradient(135deg, #0f766e 0%, #115e59 100%)' }}>
-          <Sheet size={18} /> {exportingXlsx ? 'Gerando XLSX...' : 'Exportar XLSX'}
-        </button>
-        <button className={styles.newBtn} type="button" onClick={() => void handleExportPdf()} disabled={exportingPdf} style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)' }}>
-          <FileDown size={18} /> {exportingPdf ? 'Gerando PDF...' : 'Exportar PDF'}
-        </button>
-      </div>
-
       <div style={{
-        background: 'rgba(15, 23, 42, 0.55)',
-        border: '1px solid rgba(148, 163, 184, 0.18)',
-        borderRadius: 18,
-        padding: 18,
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        background: 'rgba(15, 23, 42, 0.4)',
+        border: '1px solid rgba(255,255,255,0.05)',
+        borderRadius: 20,
+        padding: 20,
+        display: 'flex',
         gap: 12,
-        marginBottom: 22,
+        flexWrap: 'wrap',
+        marginBottom: 24,
+        marginTop: 24
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#e2e8f0', fontWeight: 800 }}>
-          <Filter size={16} /> Filtros da Central
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f1f5f9', fontWeight: 800, marginRight: 8 }}>
+          <Filter size={16} /> Filtros
         </div>
-        <input type="date" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%' }} value={filters.startDate} onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))} />
-        <input type="date" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%' }} value={filters.endDate} onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))} />
-        <select className={styles.searchInput} style={{ minWidth: 'unset', width: '100%' }} value={filters.supplierPersonId} onChange={(e) => setFilters((prev) => ({ ...prev, supplierPersonId: e.target.value }))}>
-          <option value="">Todos os fornecedores</option>
-          {people.map((person) => (
-            <option key={person.id} value={person.id}>{getPersonName(person)}</option>
-          ))}
+        <input type="date" className={styles.searchInput} value={filters.startDate} onChange={e => setFilters({...filters, startDate: e.target.value})} />
+        <input type="date" className={styles.searchInput} value={filters.endDate} onChange={e => setFilters({...filters, endDate: e.target.value})} />
+        <select className={styles.searchInput} value={filters.supplierPersonId} onChange={e => setFilters({...filters, supplierPersonId: e.target.value})}>
+          <option value="">Todos os Fornecedores</option>
+          {people.map(p => <option key={p.id} value={p.id}>{getPersonName(p)}</option>)}
         </select>
-        <select className={styles.searchInput} style={{ minWidth: 'unset', width: '100%' }} value={filters.status} onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}>
-          <option value="">Todos os status</option>
-          <option value="OPEN">Abertas</option>
-          <option value="PARTIAL">Parciais</option>
-          <option value="CLOSED">Fechadas</option>
-        </select>
+        <button className={styles.newBtn} onClick={() => void fetchData()}><Search size={18} /> Filtrar</button>
+        <button className={styles.actionBtn} onClick={exportToExcel} disabled={purchaseHistory.length === 0}><FileDown size={18} /> Exportar Excel</button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 18, alignItems: 'start' }}>
-        <div style={{ background: 'rgba(2,6,23,0.35)', border: '1px solid rgba(148,163,184,0.16)', borderRadius: 18, padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24, alignItems: 'start' }}>
+        {/* Solicitações Pendentes */}
+        <div>
+           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <Clock3 size={18} color="#f59e0b" />
-            <strong style={{ color: '#e2e8f0' }}>Solicitações de Compra</strong>
+            <strong style={{ color: '#f1f5f9', fontSize: 16 }}>Solicitações Pendentes</strong>
           </div>
 
           {loading ? (
-            <div style={{ color: '#94a3b8' }}>Carregando solicitações...</div>
-          ) : purchaseRequests.length === 0 ? (
-            <div style={{ color: '#94a3b8' }}>Nenhuma solicitação encontrada para os filtros atuais.</div>
-          ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {purchaseRequests.map((request) => {
-                const pendingItems = (request.items || []).filter((item: any) => Number(item.shortageQty || 0) > 0 && item.status !== 'PURCHASED');
-                return (
-                  <div key={request.id} style={{ border: '1px solid rgba(148,163,184,0.15)', borderRadius: 14, padding: 12, background: 'rgba(15,23,42,0.45)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
-                      <div>
-                        <div style={{ color: '#fff', fontWeight: 800 }}>{request.code}</div>
-                        <div style={{ color: '#94a3b8', fontSize: 12 }}>
-                          {request.serviceOrder?.traceCode || 'Sem OS'} · {request.serviceOrder?.description || 'Solicitação geral'}
-                        </div>
-                      </div>
-                      <span style={{
-                        color: requestStatusColor[request.status] || '#cbd5e1',
-                        border: `1px solid ${requestStatusColor[request.status] || '#475569'}`,
-                        borderRadius: 999,
-                        padding: '4px 10px',
-                        fontSize: 11,
-                        fontWeight: 800,
-                        height: 'fit-content'
-                      }}>
-                        {request.status}
-                      </span>
-                    </div>
-
-                    <div style={{ color: '#64748b', fontSize: 12, marginBottom: 8 }}>
-                      Criada em {new Date(request.createdAt).toLocaleString('pt-BR')}
-                    </div>
-
-                    {pendingItems.length === 0 ? (
-                      <div style={{ color: '#86efac', fontSize: 12 }}>Todos os itens desta solicitação já foram comprados.</div>
-                    ) : (
-                      <>
-                        <div style={{ marginBottom: 10 }}>
-                          <select
-                            className={styles.searchInput}
-                            style={{ minWidth: 'unset', width: '100%' }}
-                            value={supplierByRequest[request.id] || ''}
-                            onChange={(e) => setSupplierByRequest((prev) => ({ ...prev, [request.id]: e.target.value }))}
-                          >
-                            <option value="">Selecione o fornecedor</option>
-                            {people.map((person) => (
-                              <option key={person.id} value={person.id}>{getPersonName(person)}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
-                          {pendingItems.map((item: any) => {
-                            const input = itemInputs[item.id] || { quantity: '', unitCost: '', totalPaid: '' };
-                            return (
-                              <div key={item.id} style={{ background: 'rgba(2,6,23,0.45)', borderRadius: 10, padding: 10 }}>
-                                <div style={{ color: '#e2e8f0', fontWeight: 700, marginBottom: 6 }}>
-                                  {item.material?.name}
-                                </div>
-                                <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 8 }}>
-                                  Falta {Number(item.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} {item.unit || item.material?.unit || ''}
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                                  <input type="number" min={0} step="0.01" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%' }} placeholder="Quantidade" value={input.quantity} onChange={(e) => handleItemInputChange(item.id, 'quantity', e.target.value)} />
-                                  <input type="number" min={0} step="0.01" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%' }} placeholder="Custo unitário" value={input.unitCost} onChange={(e) => handleItemInputChange(item.id, 'unitCost', e.target.value)} />
-                                  <input type="number" min={0} step="0.01" className={styles.searchInput} style={{ minWidth: 'unset', width: '100%' }} placeholder="Total pago" value={input.totalPaid} onChange={(e) => handleItemInputChange(item.id, 'totalPaid', e.target.value)} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => void handleFulfillRequest(request)}
-                          disabled={savingRequestId === request.id}
-                          style={{
-                            width: '100%',
-                            border: '1px solid rgba(16,185,129,0.35)',
-                            background: 'rgba(16,185,129,0.14)',
-                            color: '#86efac',
-                            borderRadius: 12,
-                            padding: '12px 14px',
-                            cursor: 'pointer',
-                            fontWeight: 800,
-                          }}
-                        >
-                          {savingRequestId === request.id ? 'Registrando compra...' : 'Registrar compra e dar entrada no estoque'}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+              <Skeleton height="160px" borderRadius="14px" />
+              <Skeleton height="160px" borderRadius="14px" />
             </div>
-          )}
-        </div>
-
-        <div style={{ background: 'rgba(2,6,23,0.35)', border: '1px solid rgba(148,163,184,0.16)', borderRadius: 18, padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <CheckCircle2 size={18} color="#10b981" />
-            <strong style={{ color: '#e2e8f0' }}>Histórico de Compras</strong>
-          </div>
-
-          {loading ? (
-            <div style={{ color: '#94a3b8' }}>Carregando histórico...</div>
-          ) : purchaseHistory.length === 0 ? (
-            <div style={{ color: '#94a3b8' }}>Nenhuma compra encontrada para os filtros atuais.</div>
+          ) : purchaseRequests.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: 20, color: '#8a99a8' }}>Nenhuma solicitação pendente.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {purchaseHistory.map((log) => (
-                <div key={log.id} style={{ border: '1px solid rgba(148,163,184,0.15)', borderRadius: 14, padding: 12, background: 'rgba(15,23,42,0.45)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                    <div style={{ color: '#fff', fontWeight: 800 }}>{log.material?.name}</div>
-                    <div style={{ color: '#86efac', fontWeight: 800 }}>
-                      {Number(log.totalPaid || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </div>
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Fornecedor: {log.supplierName || getPersonName(log.supplierPerson)}</div>
-                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Quantidade: {Number(log.quantity || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} {log.material?.unit || ''}</div>
-                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Custo unitário: {Number(log.unitCost || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
-                  <div style={{ color: '#64748b', fontSize: 12, marginTop: 6 }}>{new Date(log.createdAt).toLocaleString('pt-BR')}</div>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {purchaseRequests.map(request => (
+                <PurchaseFulfillmentForm 
+                  key={request.id} 
+                  request={request} 
+                  people={people} 
+                  onSuccess={fetchData} 
+                  getPersonName={getPersonName} 
+                />
               ))}
             </div>
           )}
         </div>
 
-        <div style={{ background: 'rgba(2,6,23,0.35)', border: '1px solid rgba(148,163,184,0.16)', borderRadius: 18, padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-            <FileSpreadsheet size={18} color="#38bdf8" />
-            <strong style={{ color: '#e2e8f0' }}>Histórico de Emissões</strong>
+        {/* Histórico e Auditoria */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Histórico de Entradas */}
+          <div style={{ background: 'rgba(15, 23, 42, 0.25)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 24, padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <CheckCircle2 size={18} color="#10b981" />
+              <strong style={{ color: '#f1f5f9', fontSize: 16 }}>Últimas Entradas</strong>
+            </div>
+
+            {loading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[1,2,3].map(i => <Skeleton key={i} height="80px" borderRadius="12px" />)}
+              </div>
+            ) : purchaseHistory.length === 0 ? (
+              <div style={{ padding: 30, textAlign: 'center', color: '#8a99a8' }}>Sem entradas no período.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {purchaseHistory.map(item => (
+                  <div key={item.id} style={{ background: 'rgba(255,255,255,0.02)', padding: 14, borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontWeight: 700, color: '#f1f5f9' }}>{item.material?.name}</span>
+                      <span style={{ color: '#10b981', fontWeight: 800 }}>R$ {Number(item.totalPaid).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#8a99a8', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{getPersonName(item.supplier)}</span>
+                      <span>{item.quantity} {item.material?.unit}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {loading ? (
-            <div style={{ color: '#94a3b8' }}>Carregando emissões...</div>
-          ) : emissions.length === 0 ? (
-            <div style={{ color: '#94a3b8' }}>Nenhuma emissão registrada para este relatório.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {emissions.map((emission) => (
-                <div key={emission.id} style={{ border: '1px solid rgba(148,163,184,0.15)', borderRadius: 14, padding: 12, background: 'rgba(15,23,42,0.45)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                    <div style={{ color: '#fff', fontWeight: 800 }}>{emission.fileName}</div>
-                    <div style={{ color: '#38bdf8', fontWeight: 800 }}>{emission.exportFormat}</div>
-                  </div>
-                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Emitido por: {emission.generatedByEmail || 'Usuário não identificado'}</div>
-                  <div style={{ color: '#94a3b8', fontSize: 12 }}>Hash: {String(emission.fileHash || '').slice(0, 20)}...</div>
-                  <div style={{ color: '#64748b', fontSize: 12, marginTop: 6 }}>{new Date(emission.createdAt).toLocaleString('pt-BR')}</div>
-                </div>
-              ))}
+          {/* Histórico de Emissões */}
+          <div style={{ background: 'rgba(15, 23, 42, 0.25)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 24, padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <FileSpreadsheet size={18} color="#38bdf8" />
+              <strong style={{ color: '#f1f5f9', fontSize: 16 }}>Log de Atividades</strong>
             </div>
-          )}
+
+            {loading ? (
+               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                 <Skeleton height="60px" borderRadius="12px" />
+               </div>
+            ) : emissions.length === 0 ? (
+              <div style={{ padding: 20, textAlign: 'center', color: '#5c6b7a', fontSize: 12 }}>Nenhum log recente.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {emissions.map(log => (
+                  <div key={log.id} style={{ fontSize: 11, color: '#8a99a8', padding: '8px 12px', background: 'rgba(255,255,255,0.01)', borderRadius: 8 }}>
+                    <strong>{log.action}</strong> por {log.user?.firstName || 'Sistema'} em {new Date(log.createdAt).toLocaleDateString('pt-BR')}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

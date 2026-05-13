@@ -1,9 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { User, Mail, Lock, Shield, Eye, EyeOff, ArrowLeft, Save, UserPlus } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
+
+interface UserFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password?: string;
+  groupId: string;
+}
 
 interface UserFormProps {
   isEdit?: boolean;
@@ -15,29 +24,30 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    groupId: ''
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<UserFormData>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      groupId: ''
+    }
   });
   
   const [groups, setGroups] = useState<any[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     api.get('/groups')
-      .then((res: any) => setGroups(res?.data || res || []))
+      .then((res: any) => setGroups(res))
       .catch(() => showToast('Erro ao carregar grupos.', 'error'));
 
     if (id && (isEdit || isView)) {
       setLoading(true);
       api.get(`/users/${id}`)
         .then((user: any) => {
-          setFormData({
+          reset({
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             email: user.email || '',
@@ -47,33 +57,14 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
         })
         .finally(() => setLoading(false));
     }
-  }, [id, isEdit, isView, showToast]);
+  }, [id, isEdit, isView, showToast, reset]);
 
-  const validate = () => {
-    const newErrors: any = {};
-    if (!formData.firstName.trim()) newErrors.firstName = 'O primeiro nome é obrigatório.';
-    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'E-mail válido obrigatório.';
-    }
-    if (!isEdit && !formData.password) newErrors.password = 'A senha é obrigatória.';
-    if (!formData.groupId) newErrors.groupId = 'Selecione um grupo de acesso.';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: UserFormData) => {
     if (isView) return;
-
-    if (!validate()) {
-      showToast('Verifique os campos obrigatórios.', 'error');
-      return;
-    }
 
     setLoading(true);
     try {
-      const payload: any = { ...formData, groupId: parseInt(formData.groupId) };
+      const payload: any = { ...data, groupId: parseInt(data.groupId) };
       if (!payload.password) delete payload.password;
 
       if (id && isEdit) {
@@ -104,7 +95,7 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           <div className={styles.fullWidth + ' ' + styles.sectionTitle}>
              <UserPlus size={18} /> Dados da Conta
           </div>
@@ -115,12 +106,11 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
               <User className={styles.inputIcon} size={18} />
               <input
                 className={styles.formInput}
-                value={formData.firstName}
-                onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                {...register('firstName', { required: 'O primeiro nome é obrigatório' })}
                 disabled={isView}
               />
             </div>
-            {errors.firstName && <span className={styles.errorMessage}>{errors.firstName}</span>}
+            {errors.firstName && <span className={styles.errorMessage}>{errors.firstName.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -129,8 +119,7 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
               <User className={styles.inputIcon} size={18} />
               <input
                 className={styles.formInput}
-                value={formData.lastName}
-                onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                {...register('lastName')}
                 disabled={isView}
               />
             </div>
@@ -143,13 +132,18 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
               <input
                 className={styles.formInput}
                 type="email"
-                value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                {...register('email', { 
+                  required: 'O e-mail é obrigatório',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: 'E-mail inválido'
+                  }
+                })}
                 disabled={isView}
                 placeholder="email@empresa.com"
               />
             </div>
-            {errors.email && <span className={styles.errorMessage}>{errors.email}</span>}
+            {errors.email && <span className={styles.errorMessage}>{errors.email.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -158,15 +152,14 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
               <Shield className={styles.inputIcon} size={18} />
               <select
                 className={styles.formSelect}
-                value={formData.groupId}
-                onChange={e => setFormData({ ...formData, groupId: e.target.value })}
+                {...register('groupId', { required: 'O grupo é obrigatório' })}
                 disabled={isView}
               >
                 <option value="">Selecione...</option>
                 {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
             </div>
-            {errors.groupId && <span className={styles.errorMessage}>{errors.groupId}</span>}
+            {errors.groupId && <span className={styles.errorMessage}>{errors.groupId.message}</span>}
           </div>
 
           {!isView && (
@@ -179,8 +172,10 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
                 <input
                   className={styles.formInput}
                   type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={e => setFormData({ ...formData, password: e.target.value })}
+                  {...register('password', { 
+                    required: !isEdit ? 'A senha é obrigatória' : false,
+                    minLength: { value: 6, message: 'A senha deve ter pelo menos 6 caracteres' }
+                  })}
                   placeholder="••••••••"
                 />
                 <button
@@ -191,15 +186,15 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              {errors.password && <span className={styles.errorMessage}>{errors.password}</span>}
+              {errors.password && <span className={styles.errorMessage}>{errors.password.message}</span>}
             </div>
           )}
 
           {!isView && (
             <div className={styles.fullWidth} style={{ marginTop: 24 }}>
-              <button className={styles.submitBtn} type="submit" disabled={loading}>
+              <button className={styles.submitBtn} type="submit" disabled={loading || isSubmitting}>
                 <Save size={18} style={{ marginRight: 8 }} />
-                {loading ? 'Salvando...' : 'Confirmar Cadastro'}
+                {loading || isSubmitting ? 'Salvando...' : 'Confirmar Cadastro'}
               </button>
             </div>
           )}

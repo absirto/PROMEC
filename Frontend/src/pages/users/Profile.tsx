@@ -1,63 +1,96 @@
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { User, Mail, Shield, Lock, Save, Camera } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
+import Skeleton from '../../components/Skeleton';
+
+interface ProfileFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
 
 const Profile: React.FC = () => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [userData, setUserData] = useState<any>(null);
   
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<ProfileFormData>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
   });
+
+  const newPassword = watch('newPassword');
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       const u = JSON.parse(userStr);
       setUserData(u);
-      setFormData(prev => ({
-        ...prev,
+      reset({
         firstName: u.firstName || '',
         lastName: u.lastName || '',
         email: u.email || ''
-      }));
+      });
     }
-  }, []);
+    setFetching(false);
+  }, [reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+  const onSubmit = async (data: ProfileFormData) => {
+    if (data.newPassword && data.newPassword !== data.confirmPassword) {
       showToast('As novas senhas não coincidem.', 'error');
       return;
     }
     
     setLoading(true);
     try {
-      // Simulação de atualização de perfil
-      // No backend precisaria de uma rota /users/profile e validação de senha atual
       await api.put(`/users/${userData.id}`, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.newPassword || undefined
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.newPassword || undefined
       });
       
       showToast('Perfil atualizado com sucesso!');
-      setFormData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+      
+      // Atualizar dados no localStorage
+      const updatedUser = { ...userData, firstName: data.firstName, lastName: data.lastName, email: data.email };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUserData(updatedUser);
+      
+      reset({ ...data, newPassword: '', confirmPassword: '' });
     } catch (err) {
       showToast('Erro ao atualizar perfil.', 'error');
     } finally {
       setLoading(false);
     }
   };
+
+  if (fetching) {
+    return (
+      <div className={styles.formContainer}>
+        <div className={styles.glassCard} style={{ maxWidth: 800 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
+            <Skeleton width="120px" height="120px" borderRadius="50%" />
+            <div style={{ marginTop: 20 }}><Skeleton width="200px" height="25px" /></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+             {[1, 2, 3, 4].map(i => <Skeleton key={i} height="50px" borderRadius="10px" />)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.formContainer} style={{ animation: 'fadeIn 0.5s ease-out' }}>
@@ -69,53 +102,54 @@ const Profile: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40 }}>
           <div style={{ position: 'relative' }}>
             <div style={{ 
-              width: 120, height: 120, borderRadius: '50%', background: '#23283a', border: '3px solid #00e6b0',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, fontWeight: 800, color: '#00e6b0'
+              width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.02)', border: '3px solid #38bdf8',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, fontWeight: 800, color: '#38bdf8',
+              boxShadow: '0 0 20px rgba(56, 189, 248, 0.15)'
             }}>
-              {formData.firstName?.charAt(0)}
+              {userData?.firstName?.charAt(0)}
             </div>
             <button style={{ 
               position: 'absolute', bottom: 0, right: 0, 
-              width: 36, height: 36, borderRadius: '50%', background: '#00e6b0', color: '#181c24',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', border: '4px solid #1c222d', cursor: 'pointer'
+              width: 36, height: 36, borderRadius: '50%', background: '#38bdf8', color: '#1e293b',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', border: '4px solid #0f172a', cursor: 'pointer'
             }}>
               <Camera size={18} />
             </button>
           </div>
           <div style={{ marginTop: 16, textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{formData.firstName} {formData.lastName}</div>
-            <div style={{ color: '#00e6b0', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginTop: 4 }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9' }}>{userData?.firstName} {userData?.lastName}</div>
+            <div style={{ color: '#38bdf8', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginTop: 4 }}>
               <Shield size={14} /> {userData?.group?.name || 'Acesso Padrão'}
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.formGrid}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           <div className={styles.fullWidth + ' ' + styles.sectionTitle}>
              <User size={18} /> Informações Pessoais
           </div>
           
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Nome</label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${errors.firstName ? styles.inputError : ''}`}>
               <User className={styles.inputIcon} size={18} />
-              <input className={styles.formInput} value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} required />
+              <input className={styles.formInput} {...register('firstName', { required: 'Obrigatório' })} />
             </div>
           </div>
 
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Sobrenome</label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${errors.lastName ? styles.inputError : ''}`}>
               <User className={styles.inputIcon} size={18} />
-              <input className={styles.formInput} value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} required />
+              <input className={styles.formInput} {...register('lastName', { required: 'Obrigatório' })} />
             </div>
           </div>
 
           <div className={styles.fullWidth + ' ' + styles.fieldGroup}>
             <label className={styles.label}>E-mail de Acesso</label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${errors.email ? styles.inputError : ''}`}>
               <Mail className={styles.inputIcon} size={18} />
-              <input className={styles.formInput} type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+              <input className={styles.formInput} type="email" {...register('email', { required: 'Obrigatório' })} />
             </div>
           </div>
 
@@ -127,7 +161,12 @@ const Profile: React.FC = () => {
             <label className={styles.label}>Nova Senha</label>
             <div className={styles.inputWrapper}>
               <Lock className={styles.inputIcon} size={18} />
-              <input className={styles.formInput} type="password" placeholder="Preencha apenas para alterar" value={formData.newPassword} onChange={e => setFormData({...formData, newPassword: e.target.value})} />
+              <input 
+                className={styles.formInput} 
+                type="password" 
+                placeholder="Preencha apenas para alterar" 
+                {...register('newPassword')} 
+              />
             </div>
           </div>
 
@@ -135,7 +174,11 @@ const Profile: React.FC = () => {
             <label className={styles.label}>Confirmar Nova Senha</label>
             <div className={styles.inputWrapper}>
               <Lock className={styles.inputIcon} size={18} />
-              <input className={styles.formInput} type="password" value={formData.confirmPassword} onChange={e => setFormData({...formData, confirmPassword: e.target.value})} />
+              <input 
+                className={styles.formInput} 
+                type="password" 
+                {...register('confirmPassword')} 
+              />
             </div>
           </div>
 

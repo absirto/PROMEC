@@ -1,8 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Briefcase, Map, Plus, Edit2, Trash2, Save, X, Settings2 } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
+import Skeleton from '../../components/Skeleton';
+
+interface NewItemFormData {
+  name: string;
+}
 
 const AuxiliaryTables: React.FC = () => {
   const { showToast } = useToast();
@@ -11,14 +17,17 @@ const AuxiliaryTables: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
-  const [newName, setNewName] = useState('');
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<NewItemFormData>({
+    defaultValues: { name: '' }
+  });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const endpoint = activeTab === 'roles' ? '/job-roles' : '/work-areas';
       const result = await api.get(endpoint);
-      setData(result);
+      setData(result || []);
     } catch (err) {
       showToast('Erro ao carregar dados.', 'error');
     } finally {
@@ -28,16 +37,15 @@ const AuxiliaryTables: React.FC = () => {
 
   useEffect(() => {
     void fetchData();
+    setEditingId(null);
   }, [fetchData]);
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName) return;
+  const onAddItem = async (formData: NewItemFormData) => {
     try {
       const endpoint = activeTab === 'roles' ? '/job-roles' : '/work-areas';
-      await api.post(endpoint, { name: newName });
+      await api.post(endpoint, formData);
       showToast('Cadastrado com sucesso!');
-      setNewName('');
+      reset();
       fetchData();
     } catch (err) {
       showToast('Erro ao cadastrar.', 'error');
@@ -45,6 +53,7 @@ const AuxiliaryTables: React.FC = () => {
   };
 
   const handleUpdate = async (id: number) => {
+    if (!editName) return;
     try {
       const endpoint = activeTab === 'roles' ? '/job-roles' : '/work-areas';
       await api.put(`${endpoint}/${id}`, { name: editName });
@@ -72,7 +81,7 @@ const AuxiliaryTables: React.FC = () => {
     <div className={styles.listContainer} style={{ animation: 'fadeIn 0.5s ease-out' }}>
       <div className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: 10, borderRadius: 12 }}>
+          <div style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: 10, borderRadius: 12 }}>
             <Settings2 size={24} />
           </div>
           <div>
@@ -87,8 +96,8 @@ const AuxiliaryTables: React.FC = () => {
           onClick={() => setActiveTab('roles')}
           style={{ 
             padding: '12px 24px', borderRadius: 12, border: 'none', cursor: 'pointer',
-            background: activeTab === 'roles' ? 'rgba(0, 230, 176, 0.1)' : 'transparent',
-            color: activeTab === 'roles' ? '#00e6b0' : '#8a99a8',
+            background: activeTab === 'roles' ? 'rgba(56, 189, 248, 0.1)' : 'transparent',
+            color: activeTab === 'roles' ? '#38bdf8' : '#8a99a8',
             fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.2s'
           }}
         >
@@ -98,8 +107,8 @@ const AuxiliaryTables: React.FC = () => {
           onClick={() => setActiveTab('areas')}
           style={{ 
             padding: '12px 24px', borderRadius: 12, border: 'none', cursor: 'pointer',
-            background: activeTab === 'areas' ? 'rgba(0, 230, 176, 0.1)' : 'transparent',
-            color: activeTab === 'areas' ? '#00e6b0' : '#8a99a8',
+            background: activeTab === 'areas' ? 'rgba(56, 189, 248, 0.1)' : 'transparent',
+            color: activeTab === 'areas' ? '#38bdf8' : '#8a99a8',
             fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10, transition: 'all 0.2s'
           }}
         >
@@ -108,20 +117,17 @@ const AuxiliaryTables: React.FC = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 400px) 1fr', gap: 40 }}>
-        {/* Formulário de Adição */}
-        <div style={{ background: '#23283a', padding: 32, borderRadius: 24, border: '1px solid rgba(255,255,255,0.03)', height: 'fit-content' }}>
-          <h3 style={{ margin: '0 0 20px 0', fontSize: 18 }}>Novo {activeTab === 'roles' ? 'Cargo' : 'Área'}</h3>
-          <form onSubmit={handleAdd}>
+        <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: 32, borderRadius: 24, border: '1px solid rgba(255,255,255,0.05)', height: 'fit-content' }}>
+          <h3 style={{ margin: '0 0 20px 0', fontSize: 18, color: '#e2e8f0' }}>Novo {activeTab === 'roles' ? 'Cargo' : 'Área'}</h3>
+          <form onSubmit={handleSubmit(onAddItem)}>
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: 'block', color: '#8a99a8', marginBottom: 8, fontSize: 13 }}>Nome Identificador</label>
               <input 
                 type="text" 
-                className={styles.searchInput} 
+                className={`${styles.searchInput} ${errors.name ? styles.inputError : ''}`}
                 style={{ width: '100%', paddingLeft: 16 }}
                 placeholder="Ex: Supervisor, Oficina Sul..."
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-                required
+                {...register('name', { required: true })}
               />
             </div>
             <button type="submit" className={styles.newBtn} style={{ width: '100%', justifyContent: 'center' }}>
@@ -130,7 +136,6 @@ const AuxiliaryTables: React.FC = () => {
           </form>
         </div>
 
-        {/* Listagem Estilizada */}
         <div className={styles.tableContainer}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -141,7 +146,12 @@ const AuxiliaryTables: React.FC = () => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={2} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Carregando...</td></tr>
+                <tr>
+                  <td colSpan={2} style={{ padding: 20 }}>
+                    <Skeleton height="40px" borderRadius="8px" />
+                    <div style={{ marginTop: 10 }}><Skeleton height="40px" borderRadius="8px" /></div>
+                  </td>
+                </tr>
               ) : data.length === 0 ? (
                 <tr><td colSpan={2} style={{ padding: 40, textAlign: 'center', color: '#8a99a8' }}>Nenhum item encontrado.</td></tr>
               ) : data.map(item => (
@@ -150,21 +160,21 @@ const AuxiliaryTables: React.FC = () => {
                     {editingId === item.id ? (
                       <input 
                         className={styles.searchInput} 
-                        style={{ padding: '8px 12px', fontSize: 14 }}
+                        style={{ padding: '8px 12px', fontSize: 14, width: '100%' }}
                         value={editName}
                         onChange={e => setEditName(e.target.value)}
                         autoFocus
                       />
                     ) : (
-                      <span style={{ fontWeight: 600 }}>{item.name}</span>
+                      <span style={{ fontWeight: 600, color: '#f1f5f9' }}>{item.name}</span>
                     )}
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                       {editingId === item.id ? (
                         <>
-                          <button onClick={() => handleUpdate(item.id)} style={{ background: '#00e6b0', color: '#181c24', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer' }}><Save size={16} /></button>
-                          <button onClick={() => setEditingId(null)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: 'none', borderRadius: 8, padding: 8, cursor: 'pointer' }}><X size={16} /></button>
+                          <button onClick={() => handleUpdate(item.id)} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: 8, padding: 8, cursor: 'pointer' }}><Save size={16} /></button>
+                          <button onClick={() => setEditingId(null)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 8, cursor: 'pointer' }}><X size={16} /></button>
                         </>
                       ) : (
                         <>

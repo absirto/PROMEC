@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Plus, Eye, Edit2, Calendar, Filter, X } from 'lucide-react';
+import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 
@@ -27,8 +28,7 @@ const BudgetsList: React.FC = () => {
       .then((data: any) => {
         // Filter specifically for "Orçamento" status initially or just show all but label it Budget
         // The user wants a specialized Budget module, so let's show items with 'Orçamento' status.
-        const ordersArray = Array.isArray(data) ? data : (data?.data || []);
-        setOrders(ordersArray.filter((o: any) => o.status === 'Orçamento'));
+        setOrders(data.filter((o: any) => o.status === 'Orçamento'));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -125,7 +125,7 @@ const BudgetsList: React.FC = () => {
         </div>
       )}
 
-      {loading && <div className={styles.stats}>Buscando Orçamentos...</div>}
+      {loading && <SkeletonTable columns={7} rows={6} />}
       
       {!loading && (
         <table className={styles.tableContainer}>
