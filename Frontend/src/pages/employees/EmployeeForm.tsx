@@ -4,6 +4,7 @@ import { User, Briefcase, Map, Shield, ArrowLeft, Save, Hash, Check } from 'luci
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
+import { maskCNPJ, maskCPF } from '../../utils/masks';
 
 interface EmployeeFormProps {
   isEdit?: boolean;
@@ -140,9 +141,9 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
               >
                 <option value="">Selecione uma pessoa...</option>
                 {people.map(p => (
-                   <option key={p.id} value={p.id}>
-                     {p.naturalPerson?.name || p.legalPerson?.corporateName} (Doc: {p.type === 'F' ? p.naturalPerson?.cpf : p.legalPerson?.cnpj})
-                   </option>
+                    <option key={p.id} value={p.id}>
+                      {p.naturalPerson?.name || p.legalPerson?.corporateName} (Doc: {p.type === 'F' ? maskCPF(p.naturalPerson?.cpf || '') : maskCNPJ(p.legalPerson?.cnpj || '')})
+                    </option>
                 ))}
               </select>
             </div>

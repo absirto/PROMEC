@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2, Mail, Phone, Globe,
-  Palette, Save, ArrowLeft, Camera, MapPin,
+  Palette, Save, ArrowLeft, Camera, MapPin, Search
 } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
+import { maskCNPJ, maskPhone, maskCEP } from '../../utils/masks';
 
 const SettingsForm: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
   const [error, setError] = useState('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   
@@ -32,9 +34,9 @@ const SettingsForm: React.FC = () => {
         if (data) {
           setFormData({
             companyName: data.companyName || '',
-            cnpj: data.cnpj || '',
+            cnpj: maskCNPJ(data.cnpj || ''),
             contactEmail: data.contactEmail || '',
-            phone: data.phone || '',
+            phone: maskPhone(data.phone || ''),
             address: data.address || '',
             systemTheme: data.systemTheme || 'dark',
             logoUrl: data.logoUrl || ''
@@ -57,6 +59,33 @@ const SettingsForm: React.FC = () => {
         setFormData({ ...formData, logoUrl: base64 });
       };
       reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleCNPJLookup = async () => {
+    const cleanCnpj = formData.cnpj.replace(/\D/g, '');
+    if (cleanCnpj.length !== 14) {
+      setError('Digite um CNPJ completo para realizar a busca.');
+      return;
+    }
+
+    setLookupLoading(true);
+    setError('');
+    try {
+      const data = await api.get(`/external/cnpj/${cleanCnpj}`);
+      setFormData(prev => ({
+        ...prev,
+        companyName: data.corporateName || prev.companyName,
+        contactEmail: data.contact?.email || prev.contactEmail,
+        phone: maskPhone(data.contact?.phone || prev.phone),
+        address: data.address ? 
+          `${data.address.street}, ${data.address.number}${data.address.complement ? ` - ${data.address.complement}` : ''}, ${data.address.neighborhood}, ${data.address.city} - ${data.address.state}, CEP: ${maskCEP(data.address.zipCode)}` 
+          : prev.address
+      }));
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Não foi possível localizar os dados deste CNPJ.');
+    } finally {
+      setLookupLoading(false);
     }
   };
 
@@ -138,8 +167,24 @@ const SettingsForm: React.FC = () => {
               <input 
                 className={styles.formInput} 
                 value={formData.cnpj}
-                onChange={e => setFormData({...formData, cnpj: e.target.value})}
+                onChange={e => setFormData({...formData, cnpj: maskCNPJ(e.target.value)})}
+                placeholder="00.000.000/0000-00"
               />
+              <button 
+                type="button" 
+                className={styles.lookupBtn}
+                style={{ 
+                  position: 'absolute', right: 8, top: 8, bottom: 8,
+                  padding: '0 12px', background: 'rgba(0, 230, 176, 0.1)', color: '#00e6b0',
+                  border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 12,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                  transition: 'all 0.2s'
+                }}
+                onClick={handleCNPJLookup}
+                disabled={lookupLoading}
+              >
+                {lookupLoading ? '...' : <><Search size={14} /> Buscar</>}
+              </button>
             </div>
           </div>
 
@@ -163,7 +208,7 @@ const SettingsForm: React.FC = () => {
               <input 
                 className={styles.formInput} 
                 value={formData.phone}
-                onChange={e => setFormData({...formData, phone: e.target.value})}
+                onChange={e => setFormData({...formData, phone: maskPhone(e.target.value)})}
               />
             </div>
           </div>

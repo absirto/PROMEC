@@ -4,6 +4,7 @@ import { User, Mail, Phone, MapPin, CreditCard, ArrowLeft, Save, Globe, Search, 
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
+import { maskCNPJ, maskCPF, maskPhone, maskCEP } from '../../utils/masks';
 
 const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, isView }) => {
   const { id } = useParams();
@@ -44,15 +45,15 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
           name: person.type === 'F' ? (mainData?.name || '') : (mainData?.corporateName || ''),
           tradeName: person.type === 'J' ? (mainData?.tradeName || '') : '',
           email: person.contacts?.find((c: any) => c.type === 'EMAIL')?.value || '',
-          phone: person.contacts?.find((c: any) => c.type === 'PHONE')?.value || '',
-          document: person.type === 'F' ? (mainData?.cpf || '') : (mainData?.cnpj || ''),
+          phone: maskPhone(person.contacts?.find((c: any) => c.type === 'PHONE')?.value || ''),
+          document: person.type === 'F' ? maskCPF(mainData?.cpf || '') : maskCNPJ(mainData?.cnpj || ''),
           address: {
             street: mainAddress.logradouro || '',
             number: mainAddress.numero || '',
             neighborhood: mainAddress.bairro || '',
             city: mainAddress.cidade || '',
             state: mainAddress.uf || '',
-            zipCode: mainAddress.cep || '',
+            zipCode: maskCEP(mainAddress.cep || ''),
             complement: mainAddress.complemento || ''
           }
         });
@@ -91,10 +92,11 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
         name: data.corporateName,
         tradeName: data.tradeName,
         email: data.contact.email || prev.email,
-        phone: data.contact.phone || prev.phone,
+        phone: maskPhone(data.contact.phone || prev.phone),
         address: {
           ...prev.address,
-          ...data.address
+          ...data.address,
+          zipCode: maskCEP(data.address.zipCode || prev.address.zipCode)
         }
       }));
       showToast('Dados da empresa carregados com sucesso!');
@@ -225,7 +227,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 placeholder={personType === 'F' ? '000.000.000-00' : '00.000.000/0000-00'}
                 disabled={isView || isEdit}
                 value={formData.document}
-                onChange={e => setFormData({...formData, document: e.target.value})}
+                onChange={e => {
+                  const val = e.target.value;
+                  setFormData({...formData, document: personType === 'F' ? maskCPF(val) : maskCNPJ(val)});
+                }}
               />
               {personType === 'J' && !isView && !isEdit && (
                 <button 
@@ -292,7 +297,7 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
               <input 
                 className={styles.formInput} disabled={isView}
                 value={formData.phone}
-                onChange={e => setFormData({...formData, phone: e.target.value})}
+                onChange={e => setFormData({...formData, phone: maskPhone(e.target.value)})}
               />
             </div>
           </div>
@@ -309,8 +314,9 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} disabled={isView}
                 value={formData.address.zipCode}
                 onChange={e => {
-                  setFormData({...formData, address: {...formData.address, zipCode: e.target.value}});
-                  handleCEP(e.target.value);
+                  const val = maskCEP(e.target.value);
+                  setFormData({...formData, address: {...formData.address, zipCode: val}});
+                  handleCEP(val);
                 }}
               />
             </div>
