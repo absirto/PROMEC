@@ -82,7 +82,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       title: 'Financeiro',
       items: [
         { label: 'Fluxo de Caixa', to: '/finance', icon: Wallet, permission: 'financeiro:visualizar' },
-        { label: 'OS Financeiras', to: '/finance/service-orders', icon: Wrench, permission: 'financeiro:visualizar' },
         { label: 'Catálogo de Serviços', to: '/services-catalog', icon: Tag, permission: 'materiais:visualizar' },
       ]
     },

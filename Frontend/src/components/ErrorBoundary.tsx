@@ -16,7 +16,17 @@ export class ErrorBoundary extends React.Component<{ children?: React.ReactNode 
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    // Aqui você pode logar o erro em um serviço externo
+    // Tratamento automático para ChunkLoadError (novo deploy detectado)
+    if (error?.name === 'ChunkLoadError' || String(error?.message).includes('Loading chunk')) {
+      const isReloaded = sessionStorage.getItem('chunk_error_reloaded');
+      if (!isReloaded) {
+        sessionStorage.setItem('chunk_error_reloaded', 'true');
+        window.location.reload();
+        return;
+      }
+    }
+    
+    // Log para outros erros
     console.error('Erro capturado pelo ErrorBoundary:', error, errorInfo);
   }
 

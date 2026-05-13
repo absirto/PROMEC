@@ -40,8 +40,7 @@ const Home: React.FC = () => {
     // Carregar lista de clientes para o filtro
     api.get('/people')
       .then((res: any) => {
-        // Trata resposta paginada ou array direto
-        setPeople(res.data || res);
+        setPeople((Array.isArray(res) ? res : res?.data) || []);
       })
       .catch(console.error);
   }, []);

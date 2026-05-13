@@ -36,18 +36,18 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
   useEffect(() => {
     setLoading(true);
     const dataPromises = [
-      api.get('/people'),
-      api.get('/job-roles'),
-      api.get('/work-areas'),
-      api.get('/users')
+      api.get('/people').catch(() => []),
+      api.get('/job-roles').catch(() => []),
+      api.get('/work-areas').catch(() => []),
+      api.get('/users').catch(() => [])
     ];
 
     Promise.all(dataPromises)
       .then(([peopleData, rolesData, areasData, usersData]: any[]) => {
-        setPeople(peopleData.data || peopleData);
-        setRoles(rolesData);
-        setAreas(areasData);
-        setUsers(usersData);
+        setPeople((Array.isArray(peopleData) ? peopleData : peopleData?.data) || []);
+        setRoles((Array.isArray(rolesData) ? rolesData : rolesData?.data) || []);
+        setAreas((Array.isArray(areasData) ? areasData : areasData?.data) || []);
+        setUsers((Array.isArray(usersData) ? usersData : usersData?.data) || []);
       })
       .catch(() => showToast('Erro ao carregar dados de suporte.', 'error'));
 

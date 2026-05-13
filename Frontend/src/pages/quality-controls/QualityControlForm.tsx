@@ -28,11 +28,11 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      api.get('/service-orders'),
-      api.get('/materials')
+      api.get('/service-orders').catch(() => []),
+      api.get('/materials').catch(() => [])
     ]).then(([ordersData, materialsData]: any[]) => {
-      setOrders(ordersData);
-      setMaterials(materialsData);
+      setOrders((Array.isArray(ordersData) ? ordersData : ordersData?.data) || []);
+      setMaterials((Array.isArray(materialsData) ? materialsData : materialsData?.data) || []);
     }).catch(() => setError('Erro ao carregar dados de referência.'));
 
     if (id && (isEdit || isView)) {

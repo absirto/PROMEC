@@ -90,15 +90,15 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, sho
     setLoading(true);
     // Load lists for selection
     Promise.all([
-      api.get('/people'),
-      api.get('/materials'),
-      api.get('/services'),
-      api.get('/employees')
+      api.get('/people').catch(() => []),
+      api.get('/materials').catch(() => []),
+      api.get('/services').catch(() => []),
+      api.get('/employees').catch(() => [])
     ]).then(([p, m, s, e]: any[]) => {
-      setPeople(p.data || p);
-      setAvailableMaterials(m.data || m);
-      setAvailableServices(s.data || s);
-      setEmployees(e.data || e);
+      setPeople((Array.isArray(p) ? p : p?.data) || []);
+      setAvailableMaterials((Array.isArray(m) ? m : m?.data) || []);
+      setAvailableServices((Array.isArray(s) ? s : s?.data) || []);
+      setEmployees((Array.isArray(e) ? e : e?.data) || []);
     }).catch((err: any) => showToast('Erro ao carregar dados auxiliares.', 'error'));
 
     if (id && (isEdit || isView)) {
