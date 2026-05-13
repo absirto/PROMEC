@@ -1,22 +1,29 @@
 import { Request, Response } from 'express';
 import prisma from '../services/prisma';
+import { getPaginationParams, formatPaginatedResponse } from '../utils/pagination';
 
 export const StockController = {
   async list(req: Request, res: Response) {
     try {
-      const logs = await (prisma as any).stockLog.findMany({
-        include: {
-          material: true,
-          supplierPerson: {
-            include: {
-              naturalPerson: { select: { name: true } },
-              legalPerson: { select: { corporateName: true } },
+      const pagination = getPaginationParams(req);
+      const [logs, total] = await Promise.all([
+        (prisma as any).stockLog.findMany({
+          include: {
+            material: true,
+            supplierPerson: {
+              include: {
+                naturalPerson: { select: { name: true } },
+                legalPerson: { select: { corporateName: true } },
+              }
             }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-      res.json(logs);
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: pagination.skip,
+          take: pagination.limit,
+        }),
+        (prisma as any).stockLog.count(),
+      ]);
+      res.json(formatPaginatedResponse(logs, total, pagination));
     } catch (error) {
       res.status(500).json({ error: 'Erro ao buscar histórico de estoque.' });
     }
@@ -24,50 +31,49 @@ export const StockController = {
 
   async purchaseHistory(req: Request, res: Response) {
     try {
+      const pagination = getPaginationParams(req);
       const materialId = req.query.materialId ? Number(req.query.materialId) : null;
       const supplierPersonId = req.query.supplierPersonId ? Number(req.query.supplierPersonId) : null;
       const startDate = typeof req.query.startDate === 'string' ? new Date(req.query.startDate) : null;
       const endDate = typeof req.query.endDate === 'string' ? new Date(req.query.endDate) : null;
+      
       const where: any = { type: 'IN', unitCost: { not: null } };
-      if (materialId && Number.isFinite(materialId) && materialId > 0) {
-        where.materialId = materialId;
+      if (materialId && materialId > 0) where.materialId = materialId;
+      if (supplierPersonId && supplierPersonId > 0) where.supplierPersonId = supplierPersonId;
+      if (startDate && !isNaN(startDate.getTime())) {
+        where.createdAt = { ...(where.createdAt || {}), gte: startDate };
       }
-      if (supplierPersonId && Number.isFinite(supplierPersonId) && supplierPersonId > 0) {
-        where.supplierPersonId = supplierPersonId;
-      }
-      if (startDate && !Number.isNaN(startDate.getTime())) {
-        where.createdAt = {
-          ...(where.createdAt || {}),
-          gte: startDate,
-        };
-      }
-      if (endDate && !Number.isNaN(endDate.getTime())) {
+      if (endDate && !isNaN(endDate.getTime())) {
         const inclusiveEndDate = new Date(endDate);
         inclusiveEndDate.setHours(23, 59, 59, 999);
-        where.createdAt = {
-          ...(where.createdAt || {}),
-          lte: inclusiveEndDate,
-        };
+        where.createdAt = { ...(where.createdAt || {}), lte: inclusiveEndDate };
       }
 
-      const logs = await (prisma as any).stockLog.findMany({
-        where,
-        include: {
-          material: true,
-          supplierPerson: {
-            include: {
-              naturalPerson: { select: { name: true } },
-              legalPerson: { select: { corporateName: true } },
+      const [logs, total] = await Promise.all([
+        (prisma as any).stockLog.findMany({
+          where,
+          include: {
+            material: true,
+            supplierPerson: {
+              include: {
+                naturalPerson: { select: { name: true } },
+                legalPerson: { select: { corporateName: true } },
+              }
             }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: pagination.skip,
+          take: pagination.limit,
+        }),
+        (prisma as any).stockLog.count({ where }),
+      ]);
 
-      res.json(logs.map((log: any) => ({
+      const formatted = logs.map((log: any) => ({
         ...log,
         supplierName: log.supplierPerson?.naturalPerson?.name || log.supplierPerson?.legalPerson?.corporateName || null,
-      })));
+      }));
+
+      res.json(formatPaginatedResponse(formatted, total, pagination));
     } catch (error) {
       res.status(500).json({ error: 'Erro ao buscar histórico de compras de peças.' });
     }

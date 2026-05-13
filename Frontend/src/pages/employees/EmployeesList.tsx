@@ -4,6 +4,7 @@ import { Search, Plus, Eye, Edit2, Trash2, UserCheck } from 'lucide-react';
 import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
+import Pagination from '../../components/Pagination';
 
 const EmployeesList: React.FC = () => {
   const navigate = useNavigate();
@@ -13,30 +14,51 @@ const EmployeesList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number[]>([]);
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 12;
+
   useEffect(() => {
     setLoading(true);
-    api.get('/employees')
-      .then((data: any) => setEmployees(data))
+    api.get('/employees', {
+      params: {
+        page: currentPage,
+        limit: itemsPerPage,
+        search
+      }
+    })
+      .then((res: any) => {
+        setEmployees(res.data || []);
+        setTotalPages(res.meta?.totalPages || 1);
+        setTotalItems(res.meta?.total || 0);
+      })
       .catch(() => setError('Erro ao carregar funcionários.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const handleView = (id: number) => navigate(`/employees/${id}`);
   const handleEdit = (id: number) => navigate(`/employees/${id}/edit`);
   const handleDelete = (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este funcionário?')) {
       api.delete(`/employees/${id}`)
-        .then(() => setEmployees(employees.filter(e => e.id !== id)))
+        .then(() => {
+          if (employees.length === 1 && currentPage > 1) {
+            setCurrentPage(prev => prev - 1);
+          } else {
+            setCurrentPage(prev => prev);
+          }
+        })
         .catch(() => alert('Erro ao excluir funcionário.'));
     }
   };
 
-  const filtered = employees.filter(emp => {
-    const name = emp.person?.naturalPerson?.name || '';
-    const role = emp.jobRole?.name || '';
-    return name.toLowerCase().includes(search.toLowerCase()) || 
-           role.toLowerCase().includes(search.toLowerCase());
-  });
+  const filtered = employees;
 
   return (
     <div className={styles.listContainer}>
@@ -98,16 +120,16 @@ const EmployeesList: React.FC = () => {
                         <UserCheck size={20} />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600 }}>{emp.person?.naturalPerson?.name || 'N/A'}</div>
+                        <div style={{ fontWeight: 600, color: '#fff' }}>{emp.person?.naturalPerson?.name || 'N/A'}</div>
                         <div style={{ fontSize: 13, color: '#8a99a8' }}>{emp.person?.email || 'Sem e-mail'}</div>
                       </div>
                     </div>
                   </td>
                   <td className={styles.tableCell}>
-                    <div style={{ fontWeight: 500 }}>{emp.jobRole?.name || 'N/A'}</div>
+                    <div style={{ fontWeight: 500, color: '#e2e8f0' }}>{emp.jobRole?.name || 'N/A'}</div>
                     <div style={{ fontSize: 13, color: '#8a99a8' }}>{emp.workArea?.name || 'N/A'}</div>
                   </td>
-                  <td className={styles.tableCell}>{emp.matricula || '-'}</td>
+                  <td className={styles.tableCell} style={{ color: '#94a3b8' }}>{emp.matricula || '-'}</td>
                   <td className={styles.tableCell}>
                     <span className={`${styles.badge} ${emp.status === 'Ativo' ? styles.badgeActive : styles.badgeInactive}`}>
                       {emp.status}
@@ -125,14 +147,26 @@ const EmployeesList: React.FC = () => {
             </tbody>
           </table>
 
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+
           <div className={styles.footer}>
             <div className={styles.batchActions}>
-              <button className={styles.batchBtn} disabled={selected.length === 0}>
+              <button 
+                className={styles.batchBtn} 
+                disabled={selected.length === 0}
+                onClick={() => alert(`Ações em lote para ${selected.length} funcionários.`)}
+              >
                 Excluir Selecionados ({selected.length})
               </button>
             </div>
             <div className={styles.stats}>
-              {filtered.length} funcionários encontrados
+              {totalItems} funcionários encontrados
             </div>
           </div>
         </>

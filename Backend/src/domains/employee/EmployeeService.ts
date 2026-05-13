@@ -1,15 +1,21 @@
 import prisma from '../../services/prisma';
 
 export const EmployeeService = {
-  async list() {
-    return prisma.employee.findMany({
-      include: {
-        person: { include: { naturalPerson: true } },
-        jobRole: true,
-        workArea: true,
-        user: true
-      }
-    });
+  async list(skip?: number, take?: number) {
+    return Promise.all([
+      prisma.employee.findMany({
+        include: {
+          person: { include: { naturalPerson: true } },
+          jobRole: true,
+          workArea: true,
+          user: true
+        },
+        skip,
+        take,
+        orderBy: { person: { naturalPerson: { name: 'asc' } } }
+      }),
+      prisma.employee.count()
+    ]);
   },
   async get(id: number) {
     return prisma.employee.findUnique({

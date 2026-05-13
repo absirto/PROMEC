@@ -6,6 +6,7 @@ import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
 import Skeleton from '../../components/Skeleton';
+import Pagination from '../../components/Pagination';
 
 const requestStatusColor: Record<string, string> = {
   OPEN: '#f59e0b',
@@ -26,7 +27,6 @@ interface NewPurchaseFormData {
   }[];
 }
 
-// Componente para gerenciar a baixa de uma solicitação específica
 const PurchaseFulfillmentForm: React.FC<{ 
   request: any, 
   people: any[], 
@@ -187,40 +187,88 @@ const PurchasesList: React.FC = () => {
     status: '',
   });
 
+  // Paginação
+  const [histPage, setHistPage] = useState(1);
+  const [histTotalPages, setHistTotalPages] = useState(1);
+  const [histTotalItems, setHistTotalItems] = useState(0);
+
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditTotalPages, setAuditTotalPages] = useState(1);
+  const [auditTotalItems, setAuditTotalItems] = useState(0);
+
+  const [reqPage, setReqPage] = useState(1);
+  const [reqTotalPages, setReqTotalPages] = useState(1);
+  const [reqTotalItems, setReqTotalItems] = useState(0);
+
+  const itemsPerPage = 8;
+
   const getPersonName = (person: any) => {
     if (!person) return '-';
     return person.naturalPerson?.name || person.legalPerson?.corporateName || '-';
   };
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchHistory = useCallback(async () => {
     try {
       const historyParams = new URLSearchParams();
       if (filters.startDate) historyParams.set('startDate', filters.startDate);
       if (filters.endDate) historyParams.set('endDate', filters.endDate);
       if (filters.supplierPersonId) historyParams.set('supplierPersonId', filters.supplierPersonId);
+      historyParams.set('page', String(histPage));
+      historyParams.set('limit', String(itemsPerPage));
 
-      const [requests, history, allPeople, logs] = await Promise.all([
-        api.get('/service-orders/purchase-requests'),
-        api.get(`/service-orders/purchase-history?${historyParams.toString()}`),
-        api.get('/people'),
-        api.get('/dashboard/audit-logs?module=Suprimentos').catch(() => [])
-      ]);
-
-      setPurchaseRequests(requests || []);
-      setPurchaseHistory(history || []);
-      setPeople(allPeople || []);
-      setEmissions(logs || []);
+      const res: any = await api.get(`/stock/purchases?${historyParams.toString()}`);
+      setPurchaseHistory(res.data || []);
+      setHistTotalPages(res.meta?.totalPages || 1);
+      setHistTotalItems(res.meta?.total || 0);
     } catch (err) {
-      showToast('Erro ao carregar dados de suprimentos.', 'error');
-    } finally {
-      setLoading(false);
+      showToast('Erro ao carregar histórico.', 'error');
     }
-  }, [filters, showToast]);
+  }, [filters, histPage, showToast]);
+
+  const fetchAudit = useCallback(async () => {
+    try {
+      const res: any = await api.get('/dashboard/audit-logs', { 
+        params: { module: 'Suprimentos', page: auditPage, limit: itemsPerPage } 
+      });
+      setEmissions(res.data || []);
+      setAuditTotalPages(res.meta?.totalPages || 1);
+      setAuditTotalItems(res.meta?.total || 0);
+    } catch (err) {
+      setEmissions([]);
+    }
+  }, [auditPage]);
+
+  const fetchRequests = useCallback(async () => {
+    try {
+      const res: any = await api.get('/service-orders/purchase-requests', {
+        params: { page: reqPage, limit: itemsPerPage }
+      });
+      setPurchaseRequests(res.data || res || []);
+      setReqTotalPages(res.meta?.totalPages || 1);
+      setReqTotalItems(res.meta?.total || 0);
+    } catch (err) {
+      showToast('Erro ao carregar solicitações.', 'error');
+    }
+  }, [reqPage, showToast]);
+
+  const fetchBaseData = useCallback(async () => {
+    try {
+      const allPeople = await api.get('/people');
+      setPeople(allPeople || []);
+    } catch (err) {
+      showToast('Erro ao carregar pessoas.', 'error');
+    }
+  }, [showToast]);
 
   useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
+    setLoading(true);
+    Promise.all([fetchHistory(), fetchAudit(), fetchRequests(), fetchBaseData()]).finally(() => setLoading(false));
+  }, [fetchHistory, fetchAudit, fetchRequests, fetchBaseData]);
+
+  const handleApplyFilters = () => {
+    setHistPage(1);
+    fetchHistory();
+  };
 
   const exportToExcel = () => {
     const exportData = purchaseHistory.map(item => ({
@@ -251,7 +299,7 @@ const PurchasesList: React.FC = () => {
             <p style={{ color: '#8a99a8', fontSize: 13, margin: 0 }}>Fulfillment de solicitações e rastreabilidade de entradas</p>
           </div>
         </div>
-        <button className={styles.newBtn} onClick={() => void fetchData()}>
+        <button className={styles.newBtn} onClick={() => { setHistPage(1); setAuditPage(1); setReqPage(1); }}>
           <RefreshCw size={18} /> Atualizar
         </button>
       </div>
@@ -276,7 +324,7 @@ const PurchasesList: React.FC = () => {
           <option value="">Todos os Fornecedores</option>
           {people.map(p => <option key={p.id} value={p.id}>{getPersonName(p)}</option>)}
         </select>
-        <button className={styles.newBtn} onClick={() => void fetchData()}><Search size={18} /> Filtrar</button>
+        <button className={styles.newBtn} onClick={handleApplyFilters}><Search size={18} /> Filtrar</button>
         <button className={styles.actionBtn} onClick={exportToExcel} disabled={purchaseHistory.length === 0}><FileDown size={18} /> Exportar Excel</button>
       </div>
 
@@ -302,10 +350,17 @@ const PurchasesList: React.FC = () => {
                   key={request.id} 
                   request={request} 
                   people={people} 
-                  onSuccess={fetchData} 
+                  onSuccess={() => { setReqPage(1); fetchRequests(); fetchHistory(); fetchAudit(); }} 
                   getPersonName={getPersonName} 
                 />
               ))}
+              <Pagination
+                currentPage={reqPage}
+                totalPages={reqTotalPages}
+                onPageChange={setReqPage}
+                totalItems={reqTotalItems}
+                itemsPerPage={itemsPerPage}
+              />
             </div>
           )}
         </div>
@@ -339,6 +394,13 @@ const PurchasesList: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                <Pagination
+                  currentPage={histPage}
+                  totalPages={histTotalPages}
+                  onPageChange={setHistPage}
+                  totalItems={histTotalItems}
+                  itemsPerPage={itemsPerPage}
+                />
               </div>
             )}
           </div>
@@ -363,6 +425,13 @@ const PurchasesList: React.FC = () => {
                     <strong>{log.action}</strong> por {log.user?.firstName || 'Sistema'} em {new Date(log.createdAt).toLocaleDateString('pt-BR')}
                   </div>
                 ))}
+                <Pagination
+                  currentPage={auditPage}
+                  totalPages={auditTotalPages}
+                  onPageChange={setAuditPage}
+                  totalItems={auditTotalItems}
+                  itemsPerPage={itemsPerPage}
+                />
               </div>
             )}
           </div>

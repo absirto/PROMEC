@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { EmployeeService } from './EmployeeService';
+import { getPaginationParams, formatPaginatedResponse } from '../../utils/pagination';
 
 export const EmployeeController = {
   async list(req: Request, res: Response) {
     try {
-      const employees = await EmployeeService.list();
-      res.json(employees);
+      const pagination = getPaginationParams(req);
+      const [employees, total] = await EmployeeService.list(pagination.skip, pagination.limit);
+      res.json(formatPaginatedResponse(employees, total, pagination));
     } catch (error: any) {
       res.status(500).json({ message: 'Erro ao listar funcionários', error: error.message });
     }

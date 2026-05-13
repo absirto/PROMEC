@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../services/prisma';
 import { startOfDay, subDays, endOfDay, format } from 'date-fns';
 import { logger } from '../utils/logger';
+import { getPaginationParams, formatPaginatedResponse } from '../utils/pagination';
 
 function isSchemaDriftError(error: any) {
   const code = error?.code;
@@ -23,7 +24,6 @@ export const DashboardController = {
         };
       }
 
-      // 1. Generic Counts
       const [peopleCount, employeesCount, ordersCount, materialsCount] = await Promise.all([
         prisma.person.count(),
         prisma.employee.count(),
@@ -31,16 +31,12 @@ export const DashboardController = {
         prisma.material.count()
       ]);
 
-      // 2. Orders per Status
       const ordersByStatus = await prisma.serviceOrder.groupBy({
         by: ['status'],
         where: whereClause,
         _count: { id: true }
       });
 
-      // 3. Financial Performance (Last 7 days or filtered period)
-      // If we have filters, we might want to show the period differently, 
-      // but let's stick to 7 days for the chart unless specified.
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const date = subDays(new Date(), i);
         return {
@@ -76,12 +72,10 @@ export const DashboardController = {
         return {
           name: day.label,
           revenue: totalRevenue,
-          // Mock costs for now (about 40% of revenue)
           costs: totalRevenue * 0.4
         };
       }));
 
-      // 3.1 Operational Efficiency (industrial floor)
       const operationsWhere: any = {};
       if (startDate || endDate) {
         operationsWhere.startAt = {
@@ -157,7 +151,6 @@ export const DashboardController = {
       const efficiencyDenominator = totalWorkedHours + totalDowntimeHours;
       const globalEfficiencyPercent = efficiencyDenominator > 0 ? (totalWorkedHours / efficiencyDenominator) * 100 : 0;
 
-      // 3.2 Weekly trend by work center (7 days)
       const trendReferenceDate = endDate ? new Date(endDate as string) : new Date();
       const trend7Days = Array.from({ length: 7 }, (_, i) => {
         const date = subDays(trendReferenceDate, i);
@@ -249,7 +242,6 @@ export const DashboardController = {
         };
       });
 
-      // 4. Recent Activities
       const recentOrders = await prisma.serviceOrder.findMany({
         where: whereClause,
         take: 5,
@@ -267,13 +259,8 @@ export const DashboardController = {
         type: order.status === 'Concluída' ? 'success' : 'info'
       }));
 
-      // 5. Materials in low stock (Mock calculation from StockLogs)
-      // For a real app, you'd aggregate StockLogs per material
-
-      // Busca todos os materiais
       const materials = await prisma.material.findMany();
 
-      // Para cada material, busca os logs e calcula o estoque
       let lowStockCount = 0;
       try {
         for (const m of materials) {
@@ -292,7 +279,6 @@ export const DashboardController = {
         }
       }
 
-      // 6. Detailed Revenue Breakdown (Lifetime or filtered)
       const completedOrders = await prisma.serviceOrder.findMany({
         where: { 
           ...whereClause,
@@ -352,8 +338,47 @@ export const DashboardController = {
         activities
       });
     } catch (error: any) {
-      logger.error('DashboardController.getStats falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
+      logger.error('DashboardController.getStats falhou: %s', error?.message || 'erro desconhecido');
       res.status(500).json({ error: 'Erro ao processar dados do dashboard' });
+    }
+  },
+
+  async getAuditLogs(req: Request, res: Response) {
+    try {
+      const pagination = getPaginationParams(req, 20);
+      const { module, entity } = req.query;
+      
+      const where: any = {};
+      if (entity) where.entity = String(entity);
+      if (module) {
+        if (module === 'Suprimentos') {
+          where.entity = { in: ['Material', 'StockLog', 'PurchaseRequest'] };
+        }
+      }
+
+      const [logs, total] = await Promise.all([
+        (prisma as any).auditLog.findMany({
+          where,
+          take: pagination.limit,
+          skip: pagination.skip,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          }
+        }),
+        (prisma as any).auditLog.count({ where })
+      ]);
+
+      res.json(formatPaginatedResponse(logs, total, pagination));
+    } catch (error: any) {
+      logger.error('DashboardController.getAuditLogs falhou: %s', error?.message);
+      res.status(500).json({ error: 'Erro ao buscar logs de auditoria' });
     }
   }
 };

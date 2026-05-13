@@ -46,13 +46,60 @@
 }
 
 .title {
-  font-size: clamp(28px, 3.5vw, 42px);
-  font-weight: 900;
+  font-size: clamp(24px, 3.5vw, 36px);
+  font-weight: 800;
   margin: 0;
-  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #f1f5f9;
   letter-spacing: -0.03em;
+}
+
+/* Tabs System */
+.tabsContainer {
+  display: flex;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 6px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 32px 0;
+  width: fit-content;
+  backdrop-filter: blur(10px);
+}
+
+.tabButton {
+  padding: 10px 20px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s var(--spring);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.tabButton:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tabButtonActive {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.tabButton svg {
+  opacity: 0.6;
+}
+
+.tabButtonActive svg {
+  opacity: 1;
 }
 
 .backBtn {
@@ -96,12 +143,12 @@
 .label {
   font-size: 11px;
   font-weight: 800;
-  color: var(--text-muted);
+  color: #64748b;
   display: flex;
   align-items: center;
   gap: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
 }
 
 .inputWrapper {
@@ -113,7 +160,7 @@
 .inputIcon {
   position: absolute;
   left: 20px;
-  color: var(--text-muted);
+  color: #475569;
   transition: all 0.4s var(--spring);
 }
 

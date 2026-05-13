@@ -91,7 +91,7 @@
 .materialName {
   font-size: 18px;
   font-weight: 800;
-  color: #fff;
+  color: var(--text-main);
   margin-bottom: 4px;
 }
 
@@ -145,8 +145,8 @@
   padding: 12px;
   border-radius: 14px;
   border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.03);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.3s;
   display: flex;
@@ -158,9 +158,9 @@
 }
 
 .actionBtn:hover {
-  background: var(--bg-card);
+  background: rgba(255, 255, 255, 0.05);
   border-color: var(--primary);
-  color: var(--primary);
+  color: #fff;
 }
 
 .deleteBtn:hover {

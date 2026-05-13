@@ -390,28 +390,34 @@ export const ServiceOrderController = {
       }
       if (status) where.status = status;
 
-      const quotations = await (prisma as any).purchaseQuotation.findMany({
-        where,
-        include: {
-          supplierPerson: { include: { naturalPerson: true, legalPerson: true } },
-          purchaseRequest: {
-            include: {
-              serviceOrder: { select: { id: true, traceCode: true, description: true } },
-              items: { include: { material: true } },
+      const pagination = getPaginationParams(req);
+      const [quotations, total] = await Promise.all([
+        (prisma as any).purchaseQuotation.findMany({
+          where,
+          include: {
+            supplierPerson: { include: { naturalPerson: true, legalPerson: true } },
+            purchaseRequest: {
+              include: {
+                serviceOrder: { select: { id: true, traceCode: true, description: true } },
+                items: { include: { material: true } },
+              }
+            },
+            items: {
+              include: {
+                material: true,
+                purchaseRequestItem: true,
+              },
+              orderBy: { id: 'asc' },
             }
           },
-          items: {
-            include: {
-              material: true,
-              purchaseRequestItem: true,
-            },
-            orderBy: { id: 'asc' },
-          }
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+          orderBy: { createdAt: 'desc' },
+          skip: pagination.skip,
+          take: pagination.limit,
+        }),
+        (prisma as any).purchaseQuotation.count({ where }),
+      ]);
 
-      return res.json(quotations);
+      return res.json(formatPaginatedResponse(quotations, total, pagination));
     } catch (error: any) {
       logger.error('ServiceOrderController.listPurchaseQuotations falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       return res.json([]);
@@ -754,21 +760,27 @@ export const ServiceOrderController = {
         };
       }
 
-      const requests = await (prisma as any).purchaseRequest.findMany({
-        where,
-        include: {
-          serviceOrder: { select: { id: true, traceCode: true, description: true } },
-          items: {
-            include: {
-              material: { select: { id: true, name: true, unit: true, price: true } }
-            },
-            orderBy: { id: 'asc' }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+      const pagination = getPaginationParams(req);
+      const [requests, total] = await Promise.all([
+        (prisma as any).purchaseRequest.findMany({
+          where,
+          include: {
+            serviceOrder: { select: { id: true, traceCode: true, description: true } },
+            items: {
+              include: {
+                material: { select: { id: true, name: true, unit: true, price: true } }
+              },
+              orderBy: { id: 'asc' }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: pagination.skip,
+          take: pagination.limit,
+        }),
+        (prisma as any).purchaseRequest.count({ where }),
+      ]);
 
-      return res.json(requests);
+      return res.json(formatPaginatedResponse(requests, total, pagination));
     } catch (error: any) {
       if (isSchemaDriftError(error)) {
         logger.warn('ServiceOrderController.listPurchaseRequests retornando vazio por drift de schema: %s', error?.message || 'erro desconhecido');

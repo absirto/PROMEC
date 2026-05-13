@@ -5,6 +5,7 @@ import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
 import Skeleton from '../../components/Skeleton';
+import Pagination from '../../components/Pagination';
 
 interface StockMovementFormData {
   materialId: string;
@@ -26,6 +27,18 @@ const StockList: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Paginação Movimentações
+  const [logPage, setLogPage] = useState(1);
+  const [logTotalPages, setLogTotalPages] = useState(1);
+  const [logTotalItems, setLogTotalItems] = useState(0);
+
+  // Paginação Compras
+  const [purPage, setPurPage] = useState(1);
+  const [purTotalPages, setPurTotalPages] = useState(1);
+  const [purTotalItems, setPurTotalItems] = useState(0);
+
+  const itemsPerPage = 10;
+
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<StockMovementFormData>({
     defaultValues: {
       type: 'IN',
@@ -45,29 +58,45 @@ const StockList: React.FC = () => {
     return person.naturalPerson?.name || person.legalPerson?.corporateName || '-';
   };
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchLogs = useCallback(async () => {
     try {
-      const [logsData, purchasesData, materialsData, peopleData] = await Promise.all([
-        api.get('/stock'),
-        api.get('/stock/purchases'),
+      const res: any = await api.get('/stock', { params: { page: logPage, limit: itemsPerPage } });
+      setLogs(res.data || []);
+      setLogTotalPages(res.meta?.totalPages || 1);
+      setLogTotalItems(res.meta?.total || 0);
+    } catch (err) {
+      showToast('Erro ao carregar histórico de estoque.', 'error');
+    }
+  }, [logPage, showToast]);
+
+  const fetchPurchases = useCallback(async () => {
+    try {
+      const res: any = await api.get('/stock/purchases', { params: { page: purPage, limit: itemsPerPage } });
+      setPurchaseLogs(res.data || []);
+      setPurTotalPages(res.meta?.totalPages || 1);
+      setPurTotalItems(res.meta?.total || 0);
+    } catch (err) {
+      showToast('Erro ao carregar histórico de compras.', 'error');
+    }
+  }, [purPage, showToast]);
+
+  const fetchBaseData = useCallback(async () => {
+    try {
+      const [materialsData, peopleData] = await Promise.all([
         api.get('/materials'),
         api.get('/people')
       ]);
-      setLogs((Array.isArray(logsData) ? logsData : logsData?.data) || []);
-      setPurchaseLogs((Array.isArray(purchasesData) ? purchasesData : purchasesData?.data) || []);
       setMaterials(Array.isArray(materialsData) ? materialsData : []);
       setPeople(Array.isArray(peopleData) ? peopleData : []);
     } catch (err) {
-      showToast('Erro ao carregar dados de estoque.', 'error');
-    } finally {
-      setLoading(false);
+      showToast('Erro ao carregar dados básicos.', 'error');
     }
   }, [showToast]);
 
   useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
+    setLoading(true);
+    Promise.all([fetchLogs(), fetchPurchases(), fetchBaseData()]).finally(() => setLoading(false));
+  }, [fetchLogs, fetchPurchases, fetchBaseData]);
 
   const onSubmit = async (data: StockMovementFormData) => {
     if (data.type === 'IN') {
@@ -88,7 +117,10 @@ const StockList: React.FC = () => {
       showToast('Movimentação registrada com sucesso!');
       setShowModal(false);
       reset();
-      void fetchData();
+      setLogPage(1);
+      setPurPage(1);
+      fetchLogs();
+      fetchPurchases();
     } catch (err) {
       showToast('Erro ao registrar movimentação.', 'error');
     } finally {
@@ -156,6 +188,16 @@ const StockList: React.FC = () => {
         </table>
       </div>
 
+      {!loading && logs.length > 0 && (
+        <Pagination
+          currentPage={logPage}
+          totalPages={logTotalPages}
+          onPageChange={setLogPage}
+          totalItems={logTotalItems}
+          itemsPerPage={itemsPerPage}
+        />
+      )}
+
       <div className={styles.tableContainer} style={{ marginTop: 40, background: 'rgba(255,255,255,0.01)' }}>
         <h3 style={{ margin: '20px 20px 14px 20px', color: '#f1f5f9', fontSize: 18 }}>Histórico de Compras de Peças</h3>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -193,6 +235,16 @@ const StockList: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {!loading && purchaseLogs.length > 0 && (
+        <Pagination
+          currentPage={purPage}
+          totalPages={purTotalPages}
+          onPageChange={setPurPage}
+          totalItems={purTotalItems}
+          itemsPerPage={itemsPerPage}
+        />
+      )}
 
       {showModal && (
         <div style={{
