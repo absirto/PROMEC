@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Search, Eye, Edit2, Trash2, UserPlus } from 'lucide-react';
+import { Users, Search, Eye, Edit2, Trash2, UserPlus, Database } from 'lucide-react';
 import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
@@ -30,7 +30,7 @@ const PeopleList: React.FC = () => {
       }
     })
       .then((res: any) => {
-        setPeople(res);
+        setPeople(res.data || []);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
       })
@@ -117,30 +117,30 @@ const PeopleList: React.FC = () => {
                   <td className={styles.tableCell}>
                     <div className={styles.mainInfoCell}>
                       <div className={styles.avatar}>
-                        <Users size={20} />
+                        {p.type === 'J' ? <Database size={20} /> : <Users size={20} />}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600, color: '#fff' }}>{p.naturalPerson?.name || p.legalPerson?.corporateName || 'Sem Nome'}</div>
-                        <div style={{ fontSize: 13, color: '#8a99a8' }}>{p.contacts?.[0]?.value || 'Sem contato'}</div>
+                        <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: 15 }}>{p.naturalPerson?.name || p.legalPerson?.corporateName || 'Sem Nome'}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{p.contacts?.[0]?.value || 'Sem contato'}</div>
                       </div>
                     </div>
                   </td>
-                  <td className={styles.tableCell} style={{ fontWeight: 500 }}>{p.naturalPerson?.cpf || p.legalPerson?.cnpj || '-'}</td>
+                  <td className={styles.tableCell} style={{ fontWeight: 700, fontFamily: 'Outfit' }}>{p.naturalPerson?.cpf || p.legalPerson?.cnpj || '-'}</td>
                   <td className={styles.tableCell}>
-                    <span style={{ 
-                      fontSize: 12, padding: '2px 8px', borderRadius: 4, 
-                      background: p.type === 'J' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(0, 230, 176, 0.1)',
-                      color: p.type === 'J' ? '#3b82f6' : '#00e6b0'
+                    <span className={`${styles.badge} ${p.type === 'J' ? styles.badgeActive : styles.badgeInactive}`} style={{ 
+                      background: p.type === 'J' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                      color: p.type === 'J' ? 'var(--primary-bright)' : 'var(--accent)',
+                      borderColor: p.type === 'J' ? 'rgba(14, 165, 233, 0.2)' : 'rgba(16, 185, 129, 0.2)'
                     }}>
                       {p.type === 'J' ? 'Jurídica' : 'Física'}
                     </span>
                   </td>
                   <td className={styles.tableCell}>{p.naturalPerson?.rg || p.legalPerson?.stateRegistration || '-'}</td>
                   <td className={styles.tableCell} style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                      <button onClick={() => handleView(p.id)} className={`${styles.actionBtn} ${styles.viewBtn}`}><Eye size={16} /></button>
-                      <button onClick={() => handleEdit(p.id)} className={`${styles.actionBtn} ${styles.editBtn}`}><Edit2 size={16} /></button>
-                      <button onClick={() => handleDelete(p.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`}><Trash2 size={16} /></button>
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                      <button onClick={() => handleView(p.id)} className={`${styles.actionBtn} ${styles.viewBtn}`} title="Visualizar"><Eye size={16} /></button>
+                      <button onClick={() => handleEdit(p.id)} className={`${styles.actionBtn} ${styles.editBtn}`} title="Editar"><Edit2 size={16} /></button>
+                      <button onClick={() => handleDelete(p.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Excluir"><Trash2 size={16} /></button>
                     </div>
                   </td>
                 </tr>

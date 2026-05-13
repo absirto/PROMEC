@@ -191,6 +191,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </nav>
 
         <div className={styles.sidebarFooter}>
+          <div className={styles.versionBadge}>
+            v1.1.0
+          </div>
           <button className={styles.logoutBtn} onClick={handleLogout}>
             <LogOut size={20} />
             <span>Sair do Sistema</span>

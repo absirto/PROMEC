@@ -55,6 +55,12 @@
   flex: 1;
   padding: 0 20px;
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.nav::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .navSection {
@@ -157,6 +163,21 @@
 .sidebarFooter {
   padding: 32px 20px;
   border-top: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.versionBadge {
+  align-self: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--primary-bright);
+  background: rgba(14, 165, 233, 0.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(14, 165, 233, 0.15);
 }
 
 .logoutBtn {
@@ -293,9 +314,39 @@
   .sidebar {
     position: fixed;
     transform: translateX(-100%);
+    width: 280px;
   }
   .sidebarOpen {
     transform: translateX(0);
+  }
+  .mobileCloseBtn {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s var(--spring);
+    align-items: center;
+    justify-content: center;
+  }
+  .mobileCloseBtn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    transform: rotate(90deg);
+  }
+  .mobileMenuBtn {
+    display: flex;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--primary-bright);
+    padding: 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s var(--spring);
+    align-items: center;
+    justify-content: center;
   }
 }
 
