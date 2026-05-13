@@ -27,7 +27,7 @@ const MaterialsList: React.FC = () => {
       params: { page: currentPage, limit: itemsPerPage, search }
     })
       .then((res: any) => {
-        setMaterials((Array.isArray(res) ? res : res?.data) || []);
+        setMaterials(res || []);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
       })

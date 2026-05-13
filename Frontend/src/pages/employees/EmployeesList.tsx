@@ -30,7 +30,7 @@ const EmployeesList: React.FC = () => {
       }
     })
       .then((res: any) => {
-        setEmployees(res.data || []);
+        setEmployees(res || []);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
       })

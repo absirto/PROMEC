@@ -217,7 +217,7 @@ const PurchasesList: React.FC = () => {
       historyParams.set('limit', String(itemsPerPage));
 
       const res: any = await api.get(`/stock/purchases?${historyParams.toString()}`);
-      setPurchaseHistory(res.data || []);
+      setPurchaseHistory(res || []);
       setHistTotalPages(res.meta?.totalPages || 1);
       setHistTotalItems(res.meta?.total || 0);
     } catch (err) {
@@ -230,7 +230,7 @@ const PurchasesList: React.FC = () => {
       const res: any = await api.get('/dashboard/audit-logs', { 
         params: { module: 'Suprimentos', page: auditPage, limit: itemsPerPage } 
       });
-      setEmissions(res.data || []);
+      setEmissions(res || []);
       setAuditTotalPages(res.meta?.totalPages || 1);
       setAuditTotalItems(res.meta?.total || 0);
     } catch (err) {
@@ -243,7 +243,7 @@ const PurchasesList: React.FC = () => {
       const res: any = await api.get('/service-orders/purchase-requests', {
         params: { page: reqPage, limit: itemsPerPage }
       });
-      setPurchaseRequests(res.data || res || []);
+      setPurchaseRequests(res || []);
       setReqTotalPages(res.meta?.totalPages || 1);
       setReqTotalItems(res.meta?.total || 0);
     } catch (err) {

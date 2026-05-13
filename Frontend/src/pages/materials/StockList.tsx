@@ -61,7 +61,7 @@ const StockList: React.FC = () => {
   const fetchLogs = useCallback(async () => {
     try {
       const res: any = await api.get('/stock', { params: { page: logPage, limit: itemsPerPage } });
-      setLogs(res.data || []);
+      setLogs(res || []);
       setLogTotalPages(res.meta?.totalPages || 1);
       setLogTotalItems(res.meta?.total || 0);
     } catch (err) {
@@ -72,7 +72,7 @@ const StockList: React.FC = () => {
   const fetchPurchases = useCallback(async () => {
     try {
       const res: any = await api.get('/stock/purchases', { params: { page: purPage, limit: itemsPerPage } });
-      setPurchaseLogs(res.data || []);
+      setPurchaseLogs(res || []);
       setPurTotalPages(res.meta?.totalPages || 1);
       setPurTotalItems(res.meta?.total || 0);
     } catch (err) {

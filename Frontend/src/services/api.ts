@@ -48,17 +48,28 @@ api.interceptors.response.use(
     // Isso evita quebrar o .map() e permite acessar .meta se necessário.
     if (result && !Array.isArray(result) && Array.isArray(result.data)) {
       const dataArray = result.data;
-      // Anexa os metadados diretamente na array
+      
+      // Anexa os metadados
       Object.defineProperty(dataArray, 'meta', {
         value: result.meta,
-        enumerable: false, // não aparece em loops normais
+        enumerable: false,
         configurable: true
       });
+
+      // NOVIDADE: Permite que componentes que fazem res.data ainda funcionem
+      // mesmo que o interceptor tenha retornado a array diretamente.
+      Object.defineProperty(dataArray, 'data', {
+        value: dataArray,
+        enumerable: false,
+        configurable: true
+      });
+
       Object.defineProperty(dataArray, 'isPaginated', {
         value: true,
         enumerable: false,
         configurable: true
       });
+
       return dataArray;
     }
 
