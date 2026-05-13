@@ -319,35 +319,6 @@
   .sidebarOpen {
     transform: translateX(0);
   }
-  .mobileCloseBtn {
-    display: flex;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
-    color: var(--text-secondary);
-    padding: 10px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s var(--spring);
-    align-items: center;
-    justify-content: center;
-  }
-  .mobileCloseBtn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-    transform: rotate(90deg);
-  }
-  .mobileMenuBtn {
-    display: flex;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    color: var(--primary-bright);
-    padding: 12px;
-    border-radius: 14px;
-    cursor: pointer;
-    transition: all 0.3s var(--spring);
-    align-items: center;
-    justify-content: center;
-  }
 }
 
 /* Fix for Select Options */

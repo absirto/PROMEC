@@ -136,14 +136,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <Wrench size={24} />
           </div>
           <span className={styles.logoText}>ProMEC</span>
-          <button
-            type="button"
-            className={styles.mobileCloseBtn}
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="Fechar menu"
-          >
-            <X size={18} />
-          </button>
         </div>
 
         <nav className={styles.nav}>
@@ -203,15 +195,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       <main className={styles.content}>
         <header className={styles.topBar}>
-          <button
-            type="button"
-            className={styles.mobileMenuBtn}
-            onClick={() => setIsMobileMenuOpen(true)}
-            aria-label="Abrir menu"
-          >
-            <Menu size={18} />
-          </button>
-
           <div className={styles.topBarActions}>
             <button 
               className={styles.globalSearchBtn} 
