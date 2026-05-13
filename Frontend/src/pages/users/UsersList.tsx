@@ -15,7 +15,7 @@ const UsersList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/users')
-      .then((data: any) => setUsers(data))
+      .then((data: any) => setUsers(Array.isArray(data) ? data : (data?.data || [])))
       .catch(() => setError('Erro ao carregar usuários.'))
       .finally(() => setLoading(false));
   }, []);

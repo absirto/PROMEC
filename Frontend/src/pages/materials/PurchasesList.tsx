@@ -67,11 +67,11 @@ const PurchasesList: React.FC = () => {
         api.get('/reports/emissions?reportKey=purchases&limit=8').catch(() => []),
       ]);
 
-      setPurchaseRequests(Array.isArray(requestsData) ? requestsData : []);
-      setPurchaseHistory(Array.isArray(historyData) ? historyData : []);
-      setPeople(Array.isArray(peopleData) ? peopleData : []);
+      setPurchaseRequests((Array.isArray(requestsData) ? requestsData : requestsData?.data) || []);
+      setPurchaseHistory((Array.isArray(historyData) ? historyData : historyData?.data) || []);
+      setPeople((Array.isArray(peopleData) ? peopleData : peopleData?.data) || []);
       setSettings(settingsData || null);
-      setEmissions(Array.isArray(emissionsData) ? emissionsData : []);
+      setEmissions((Array.isArray(emissionsData) ? emissionsData : emissionsData?.data) || []);
     } catch {
       showToast('Erro ao carregar central de compras.', 'error');
     } finally {

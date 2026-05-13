@@ -30,7 +30,7 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
 
   useEffect(() => {
     api.get('/groups')
-      .then((res: any) => setGroups(res))
+      .then((res: any) => setGroups(res?.data || res || []))
       .catch(() => showToast('Erro ao carregar grupos.', 'error'));
 
     if (id && (isEdit || isView)) {

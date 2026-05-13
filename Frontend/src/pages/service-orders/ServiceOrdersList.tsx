@@ -90,7 +90,7 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
       }
     })
       .then((res: any) => {
-        setOrders(res.data || []);
+        setOrders((Array.isArray(res) ? res : res?.data) || []);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
       })

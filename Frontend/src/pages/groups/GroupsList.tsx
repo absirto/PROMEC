@@ -14,7 +14,7 @@ const GroupsList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/groups')
-      .then((data: any) => setGroups(data))
+      .then((data: any) => setGroups(Array.isArray(data) ? data : (data?.data || [])))
       .catch(() => setError('Erro ao carregar grupos de acesso.'))
       .finally(() => setLoading(false));
   }, []);

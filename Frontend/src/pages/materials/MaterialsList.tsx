@@ -29,7 +29,7 @@ const MaterialsList: React.FC = () => {
       }
     })
       .then((res: any) => {
-        setMaterials(res.data || []);
+        setMaterials((Array.isArray(res) ? res : res?.data) || []);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
       })

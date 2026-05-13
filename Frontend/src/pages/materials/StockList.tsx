@@ -37,8 +37,8 @@ const StockList: React.FC = () => {
         api.get('/materials'),
         api.get('/people')
       ]);
-      setLogs(logsData);
-      setPurchaseLogs(Array.isArray(purchasesData) ? purchasesData : []);
+      setLogs((Array.isArray(logsData) ? logsData : logsData?.data) || []);
+      setPurchaseLogs((Array.isArray(purchasesData) ? purchasesData : purchasesData?.data) || []);
       setMaterials(Array.isArray(materialsData) ? materialsData : []);
       setPeople(Array.isArray(peopleData) ? peopleData : []);
     } catch (err) {

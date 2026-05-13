@@ -29,7 +29,7 @@ const PeopleList: React.FC = () => {
       }
     })
       .then((res: any) => {
-        setPeople(res.data || []);
+        setPeople((Array.isArray(res) ? res : res?.data) || []);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
       })

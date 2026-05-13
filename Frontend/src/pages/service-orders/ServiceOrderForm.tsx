@@ -23,11 +23,18 @@ interface ServiceOrderFormProps {
   listPath?: string;
 }
 
-const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, showFinancialData = true, listPath = '/service-orders' }) => {
+const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, showFinancialData: propShowFinancialData = true, listPath = '/service-orders' }) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { showToast } = useToast();
-  const isOperationalView = Boolean(isView && !showFinancialData);
+  
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const userPermissions = user?.group?.permissions || [];
+  const hasFinanceAccess = user?.role === 'admin' || userPermissions.includes('financeiro:visualizar');
+  
+  const showFinancialData = propShowFinancialData && hasFinanceAccess;
+  const isOperationalView = !showFinancialData;
   
   const [formData, setFormData] = useState({
     description: '',
@@ -298,9 +305,13 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, sho
       };
     });
 
-    const invalid = payloadItems.some((item: any) => !Number.isFinite(item.quantity) || item.quantity <= 0 || ((!item.unitCost || item.unitCost <= 0) && (!item.totalPaid || item.totalPaid <= 0)));
+    const invalid = payloadItems.some((item: any) => {
+      const invalidQty = !Number.isFinite(item.quantity) || item.quantity <= 0;
+      const invalidCost = showFinancialData && (!item.unitCost || item.unitCost <= 0) && (!item.totalPaid || item.totalPaid <= 0);
+      return invalidQty || invalidCost;
+    });
     if (invalid) {
-      showToast('Informe quantidade e custo (unitário ou total) para os itens pendentes.', 'warning');
+      showToast(showFinancialData ? 'Informe quantidade e custo (unitário ou total) para os itens pendentes.' : 'Informe a quantidade válida para os itens pendentes.', 'warning');
       return;
     }
 
@@ -926,7 +937,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, sho
                                       <div style={{ color: '#e2e8f0', fontSize: 12, marginBottom: 6 }}>
                                         {item.material?.name}: falta {Number(item.shortageQty || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1 })} {item.unit || item.material?.unit || ''}
                                       </div>
-                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                                      <div style={{ display: 'grid', gridTemplateColumns: showFinancialData ? '1fr 1fr 1fr' : '1fr', gap: 8 }}>
                                         <input
                                           type="number"
                                           min={0}
@@ -937,26 +948,30 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, sho
                                           value={input.quantity}
                                           onChange={(e) => handleItemInputChange(item.id, 'quantity', e.target.value)}
                                         />
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          step="0.01"
-                                          className={styles.formInput}
-                                          placeholder="Custo unitário"
-                                          disabled={isView || fulfillingRequestId === request.id}
-                                          value={input.unitCost}
-                                          onChange={(e) => handleItemInputChange(item.id, 'unitCost', e.target.value)}
-                                        />
-                                        <input
-                                          type="number"
-                                          min={0}
-                                          step="0.01"
-                                          className={styles.formInput}
-                                          placeholder="Total pago"
-                                          disabled={isView || fulfillingRequestId === request.id}
-                                          value={input.totalPaid}
-                                          onChange={(e) => handleItemInputChange(item.id, 'totalPaid', e.target.value)}
-                                        />
+                                        {showFinancialData && (
+                                          <>
+                                            <input
+                                              type="number"
+                                              min={0}
+                                              step="0.01"
+                                              className={styles.formInput}
+                                              placeholder="Custo unitário"
+                                              disabled={isView || fulfillingRequestId === request.id}
+                                              value={input.unitCost}
+                                              onChange={(e) => handleItemInputChange(item.id, 'unitCost', e.target.value)}
+                                            />
+                                            <input
+                                              type="number"
+                                              min={0}
+                                              step="0.01"
+                                              className={styles.formInput}
+                                              placeholder="Total pago"
+                                              disabled={isView || fulfillingRequestId === request.id}
+                                              value={input.totalPaid}
+                                              onChange={(e) => handleItemInputChange(item.id, 'totalPaid', e.target.value)}
+                                            />
+                                          </>
+                                        )}
                                       </div>
                                     </div>
                                   );

@@ -14,7 +14,7 @@ const ServicesCatalogList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/services')
-      .then((data: any) => setServices(data))
+      .then((data: any) => setServices(Array.isArray(data) ? data : (data?.data || [])))
       .catch(() => setError('Erro ao carregar serviços.'))
       .finally(() => setLoading(false));
   }, []);

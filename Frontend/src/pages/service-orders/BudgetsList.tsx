@@ -9,6 +9,12 @@ const BudgetsList: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Check permissions for financial data
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const userPermissions = user?.group?.permissions || [];
+  const hasFinanceAccess = user?.role === 'admin' || userPermissions.includes('financeiro:visualizar');
+
   // Filtros
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -21,7 +27,8 @@ const BudgetsList: React.FC = () => {
       .then((data: any) => {
         // Filter specifically for "Orçamento" status initially or just show all but label it Budget
         // The user wants a specialized Budget module, so let's show items with 'Orçamento' status.
-        setOrders(data.filter((o: any) => o.status === 'Orçamento'));
+        const ordersArray = Array.isArray(data) ? data : (data?.data || []);
+        setOrders(ordersArray.filter((o: any) => o.status === 'Orçamento'));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -127,7 +134,7 @@ const BudgetsList: React.FC = () => {
               <th style={{ paddingLeft: 20 }}>Ref #</th>
               <th>Cliente</th>
               <th>Data Emissão</th>
-              <th style={{ textAlign: 'right' }}>Valor Estimado</th>
+              {hasFinanceAccess && <th style={{ textAlign: 'right' }}>Valor Estimado</th>}
               <th style={{ textAlign: 'center' }}>Ações</th>
             </tr>
           </thead>
@@ -145,9 +152,11 @@ const BudgetsList: React.FC = () => {
                     {new Date(order.openingDate).toLocaleDateString()}
                   </div>
                 </td>
-                <td className={styles.tableCell} style={{ textAlign: 'right', fontWeight: 800, color: '#00e6b0' }}>
-                   R$ {calculateBudgetTotal(order).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </td>
+                {hasFinanceAccess && (
+                  <td className={styles.tableCell} style={{ textAlign: 'right', fontWeight: 800, color: '#00e6b0' }}>
+                     R$ {calculateBudgetTotal(order).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </td>
+                )}
                 <td className={styles.tableCell} style={{ textAlign: 'center' }}>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                     <button onClick={() => handleView(order.id)} className={`${styles.actionBtn} ${styles.viewBtn}`} title="Visualizar"><Eye size={16} /></button>

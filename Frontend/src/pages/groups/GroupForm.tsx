@@ -24,7 +24,7 @@ const GroupForm: React.FC<GroupFormProps> = ({ isEdit, isView }) => {
   useEffect(() => {
     // Carregar todas as permissões disponíveis
     api.get('/groups/permissions')
-      .then((data: any) => setAvailablePermissions(data))
+      .then((data: any) => setAvailablePermissions(data?.data || data || []))
       .catch(console.error);
 
     if (id && (isEdit || isView)) {

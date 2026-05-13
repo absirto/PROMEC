@@ -15,7 +15,7 @@ const EmployeesList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/employees')
-      .then((data: any) => setEmployees(data))
+      .then((data: any) => setEmployees(Array.isArray(data) ? data : (data?.data || [])))
       .catch(() => setError('Erro ao carregar funcionários.'))
       .finally(() => setLoading(false));
   }, []);

@@ -14,7 +14,7 @@ const QualityControlsList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api.get('/quality-controls')
-      .then((data: any) => setControls(data))
+      .then((data: any) => setControls(Array.isArray(data) ? data : (data?.data || [])))
       .catch(() => setError('Erro ao carregar controles.'))
       .finally(() => setLoading(false));
   }, []);

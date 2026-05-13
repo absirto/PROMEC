@@ -25,7 +25,7 @@ const FinanceList: React.FC = () => {
         api.get('/finance'),
         api.get('/finance/summary')
       ]);
-      setTransactions(transData);
+      setTransactions((Array.isArray(transData) ? transData : transData?.data) || []);
       setSummary(summaryData);
     } catch (err) {
       showToast('Erro ao carregar dados financeiros.', 'error');
