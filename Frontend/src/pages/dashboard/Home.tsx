@@ -4,6 +4,7 @@ import {
   ArrowUpRight, ArrowDownRight, Clock, CheckCircle2,
   TrendingUp, Wallet, Activity, Percent
 } from 'lucide-react';
+import Skeleton from '../../components/Skeleton';
 import api from '../../services/api';
 import styles from './Home.module.css';
 
@@ -166,7 +167,47 @@ const Home: React.FC = () => {
   ];
 
   if (loading) {
-    return <div className={styles.dashboardContainer}>Carregando painel de controle...</div>;
+    return (
+      <div className={styles.dashboardContainer}>
+        <header className={styles.welcomeHeader} style={{ marginBottom: 20 }}>
+          <div>
+            <Skeleton width="250px" height="32px" style={{ marginBottom: 8 }} />
+            <Skeleton width="400px" height="18px" />
+          </div>
+          <Skeleton width="150px" height="36px" borderRadius="12px" />
+        </header>
+
+        <section style={{ 
+          background: 'rgba(255,255,255,0.02)', 
+          padding: '20px 30px', 
+          borderRadius: 24, 
+          marginBottom: 40,
+          display: 'flex',
+          gap: 24,
+          border: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <div style={{ flex: 1 }}><Skeleton height="40px" borderRadius="12px" /></div>
+          <div style={{ width: 180 }}><Skeleton height="40px" borderRadius="12px" /></div>
+          <div style={{ width: 180 }}><Skeleton height="40px" borderRadius="12px" /></div>
+          <div style={{ width: 100 }}><Skeleton height="40px" borderRadius="12px" /></div>
+        </section>
+
+        <section className={styles.statsGrid}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className={styles.statCard}>
+              <Skeleton variant="circle" width="48px" height="48px" style={{ marginBottom: 16 }} />
+              <Skeleton width="100%" height="28px" style={{ marginBottom: 8 }} />
+              <Skeleton width="60%" height="16px" />
+            </div>
+          ))}
+        </section>
+
+        <section className={styles.chartsGrid} style={{ marginTop: 40 }}>
+          <div className={styles.chartCard}><Skeleton height="350px" borderRadius="20px" /></div>
+          <div className={styles.chartCard}><Skeleton height="350px" borderRadius="20px" /></div>
+        </section>
+      </div>
+    );
   }
 
   return (

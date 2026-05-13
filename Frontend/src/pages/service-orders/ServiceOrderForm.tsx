@@ -8,6 +8,7 @@ import {
 import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
+import Skeleton from '../../components/Skeleton';
 
 declare global {
   interface Window {
@@ -87,10 +88,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, sho
       api.get('/services'),
       api.get('/employees')
     ]).then(([p, m, s, e]: any[]) => {
-      setPeople(p);
-      setAvailableMaterials(m);
-      setAvailableServices(s);
-      setEmployees(e);
+      setPeople(p.data || p);
+      setAvailableMaterials(m.data || m);
+      setAvailableServices(s.data || s);
+      setEmployees(e.data || e);
     }).catch((err: any) => showToast('Erro ao carregar dados auxiliares.', 'error'));
 
     if (id && (isEdit || isView)) {
@@ -558,6 +559,26 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ isEdit, isView, sho
       setSavingOperation(false);
     }
   };
+
+  if (loading && !id) {
+    return (
+      <div className={styles.formContainer}>
+        <div className={styles.glassCard}>
+          <div className={styles.header}>
+             <Skeleton width="300px" height="32px" />
+             <Skeleton width="100px" height="36px" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 30 }}>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i}><Skeleton height="45px" borderRadius="10px" /></div>
+            ))}
+            <div style={{ gridColumn: 'span 2' }}><Skeleton height="150px" borderRadius="10px" /></div>
+            <div style={{ gridColumn: 'span 2' }}><Skeleton height="150px" borderRadius="10px" /></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.formContainer} style={{ animation: 'fadeIn 0.5s ease-out' }}>

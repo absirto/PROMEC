@@ -5,6 +5,7 @@ import api from '../../services/api';
 import styles from '../../styles/common/BaseForm.module.css';
 import { useToast } from '../../components/ToastProvider';
 import { maskCNPJ, maskCPF } from '../../utils/masks';
+import Skeleton from '../../components/Skeleton';
 
 interface EmployeeFormProps {
   isEdit?: boolean;
@@ -43,7 +44,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
 
     Promise.all(dataPromises)
       .then(([peopleData, rolesData, areasData, usersData]: any[]) => {
-        setPeople(peopleData);
+        setPeople(peopleData.data || peopleData);
         setRoles(rolesData);
         setAreas(areasData);
         setUsers(usersData);
@@ -111,6 +112,24 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
       setLoading(false);
     }
   };
+
+  if (loading && !id) {
+    return (
+      <div className={styles.formContainer}>
+        <div className={styles.glassCard}>
+          <div className={styles.header}>
+             <Skeleton width="250px" height="32px" />
+             <Skeleton width="80px" height="36px" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 30 }}>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i}><Skeleton height="45px" borderRadius="10px" /></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.formContainer} style={{ animation: 'fadeIn 0.5s ease-out' }}>

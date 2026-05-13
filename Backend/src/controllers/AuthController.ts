@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../services/prisma';
 import { JWT_SECRET } from '../config/security';
+import { expandPermissions } from '../utils/permissions';
 
 export const AuthController = {
   async login(req: Request, res: Response) {
@@ -25,13 +26,13 @@ export const AuthController = {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json(invalidMsg);
     const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '8h' });
-    // Monta lista de permissões do grupo
+    // Monta lista de permissões do grupo de forma segura
     const group = user.group ? {
       id: user.group.id,
       name: user.group.name,
       description: user.group.description,
-      permissions: user.group.permissions.map(gp => gp.permission.name)
-    } : null;
+      permissions: expandPermissions(user.group.permissions.map(gp => gp.permission.name))
+    } : { id: 0, name: 'Sem Grupo', permissions: user.role === 'admin' ? expandPermissions(['admin']) : [] };
     return res.json({
       token,
       user: {
