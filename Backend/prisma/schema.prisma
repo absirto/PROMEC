@@ -470,3 +470,18 @@ model Transaction {
   orderId      Int?
   serviceOrder ServiceOrder? @relation(fields: [orderId], references: [id])
 }
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  entity    String   // 'Person', 'Material', 'User', etc.
+  entityId  Int
+  action    String   // 'CREATE', 'UPDATE', 'DELETE'
+  userId    Int?
+  userEmail String?
+  oldData   Json?
+  newData   Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

@@ -28,7 +28,11 @@ export const qcPhotoUpload = multer({
   storage,
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const ok = /^image\/(jpeg|png|webp|gif)$/i.test(file.mimetype);
-    cb(null, ok);
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('Tipo de arquivo não suportado. Use apenas JPG, PNG, WEBP ou GIF.') as any, false);
+    }
   },
 });

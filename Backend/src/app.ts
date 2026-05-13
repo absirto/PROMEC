@@ -106,7 +106,10 @@ if (process.env.NODE_ENV !== 'test') {
     const serverAdapter = new ExpressAdapter();
     serverAdapter.setBasePath('/admin/queues');
     createBullBoard({ queues: [new BullAdapter(generalQueue)], serverAdapter });
-    app.use('/admin/queues', serverAdapter.getRouter());
+    
+    // Importar middlewares de segurança
+    const { authenticateToken, requireRole } = require('./middleware/auth');
+    app.use('/admin/queues', authenticateToken, requireRole('admin'), serverAdapter.getRouter());
   }
 }
 

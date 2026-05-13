@@ -5,6 +5,8 @@ import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
 
+import Pagination from '../../components/Pagination';
+
 interface ServiceOrdersListProps {
   showFinancialData?: boolean;
   title?: string;
@@ -39,6 +41,12 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
   const [pcpLoading, setPcpLoading] = useState(false);
   const [pcpCalendarLoading, setPcpCalendarLoading] = useState(false);
   const [savingPlan, setSavingPlan] = useState(false);
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 15;
   
   // Filtros
   const [search, setSearch] = useState('');
@@ -71,11 +79,24 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
 
   const loadOrders = useCallback(() => {
     setLoading(true);
-    api.get('/service-orders')
-      .then((data: any) => setOrders(data))
+    api.get('/service-orders', {
+      params: {
+        page: currentPage,
+        limit: itemsPerPage,
+        search,
+        status: statusFilter,
+        startDate,
+        endDate,
+      }
+    })
+      .then((res: any) => {
+        setOrders(res.data || []);
+        setTotalPages(res.meta?.totalPages || 1);
+        setTotalItems(res.meta?.total || 0);
+      })
       .catch(() => showToast('Erro ao carregar ordens de serviço.', 'error'))
       .finally(() => setLoading(false));
-  }, [showToast]);
+  }, [showToast, currentPage, search, statusFilter, startDate, endDate]);
 
   const displayedOrders = useMemo(() => {
     if (!showFinancialData) return orders;
@@ -305,20 +326,14 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
     return conflictIds;
   }, [pcpOverview]);
 
-  const filtered = displayedOrders.filter(order => {
-    const matchSearch = order.person?.naturalPerson?.name?.toLowerCase().includes(search.toLowerCase()) || 
-                      order.person?.legalPerson?.corporateName?.toLowerCase().includes(search.toLowerCase()) ||
-                      order.description?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = !statusFilter || order.status === statusFilter;
-    
-    // Filtro por data
-    const orderDate = new Date(order.openingDate).getTime();
-    const matchStart = !startDate || orderDate >= new Date(startDate).getTime();
-    const matchEnd = !endDate || orderDate <= new Date(endDate).getTime();
-    const matchConflict = !showOnlyConflicts || conflictOrderIds.has(Number(order.id));
+  const filtered = useMemo(() => {
+    if (!showOnlyConflicts) return displayedOrders;
+    return displayedOrders.filter(order => conflictOrderIds.has(Number(order.id)));
+  }, [displayedOrders, showOnlyConflicts, conflictOrderIds]);
 
-    return matchSearch && matchStatus && matchStart && matchEnd && matchConflict;
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, startDate, endDate]);
 
   const clearFilters = () => {
     setSearch('');
@@ -689,6 +704,16 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
             ))}
           </tbody>
         </table>
+      )}
+
+      {!loading && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+        />
       )}
 
       {batchEditorOpen && (

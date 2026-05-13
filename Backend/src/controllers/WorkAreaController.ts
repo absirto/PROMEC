@@ -50,10 +50,22 @@ export const WorkAreaController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+
+      // 1. Verificar se há funcionários vinculados
+      const usageCount = await prisma.employee.count({
+        where: { workAreaId: id }
+      });
+
+      if (usageCount > 0) {
+        return res.status(400).json({ 
+          message: `Não é possível excluir: esta área está vinculada a ${usageCount} funcionário(s).` 
+        });
+      }
+
       await prisma.workArea.delete({ where: { id } });
       res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: 'Erro ao deletar área.' });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Erro ao deletar área.', details: error.message });
     }
   }
 };

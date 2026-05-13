@@ -50,10 +50,22 @@ export const JobRoleController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+
+      // 1. Verificar se há funcionários vinculados
+      const usageCount = await prisma.employee.count({
+        where: { jobRoleId: id }
+      });
+
+      if (usageCount > 0) {
+        return res.status(400).json({ 
+          message: `Não é possível excluir: este cargo está vinculado a ${usageCount} funcionário(s).` 
+        });
+      }
+
       await prisma.jobRole.delete({ where: { id } });
       res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: 'Erro ao deletar cargo.' });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Erro ao deletar cargo.', details: error.message });
     }
   }
 };

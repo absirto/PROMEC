@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Package, Search, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
+import Pagination from '../../components/Pagination';
 
 const MaterialsList: React.FC = () => {
   const navigate = useNavigate();
@@ -12,20 +13,47 @@ const MaterialsList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number[]>([]);
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 12;
+
   useEffect(() => {
     setLoading(true);
-    api.get('/materials')
-      .then((data: any) => setMaterials(data))
+    api.get('/materials', {
+      params: {
+        page: currentPage,
+        limit: itemsPerPage,
+        search
+      }
+    })
+      .then((res: any) => {
+        setMaterials(res.data || []);
+        setTotalPages(res.meta?.totalPages || 1);
+        setTotalItems(res.meta?.total || 0);
+      })
       .catch(() => setError('Erro ao carregar materiais.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const handleView = (id: number) => navigate(`/materials/${id}`);
   const handleEdit = (id: number) => navigate(`/materials/${id}/edit`);
   const handleDelete = (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este material?')) {
       api.delete(`/materials/${id}`)
-        .then(() => setMaterials(materials.filter(m => m.id !== id)))
+        .then(() => {
+          if (materials.length === 1 && currentPage > 1) {
+            setCurrentPage(prev => prev - 1);
+          } else {
+            // Recarregar a página atual
+            setCurrentPage(prev => prev);
+          }
+        })
         .catch(() => alert('Erro ao excluir material.'));
     }
   };
@@ -34,10 +62,7 @@ const MaterialsList: React.FC = () => {
     setSelected(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   };
 
-  const filtered = materials.filter(m => 
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    (m.description || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = materials; // O filtro agora é feito no backend
 
   return (
     <div className={styles.listContainer}>
@@ -123,6 +148,14 @@ const MaterialsList: React.FC = () => {
             </tbody>
           </table>
 
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+
           <div className={styles.footer}>
             <div className={styles.batchActions}>
               <button 
@@ -134,7 +167,7 @@ const MaterialsList: React.FC = () => {
               </button>
             </div>
             <div className={styles.stats}>
-              Exibindo {filtered.length} de {materials.length} materiais
+              Total: {totalItems} materiais
             </div>
           </div>
         </>

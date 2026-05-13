@@ -59,6 +59,30 @@ export const EmployeeService = {
     });
   },
   async delete(id: number) {
+    // 1. Verificar se está vinculado a inspeções de qualidade
+    const qcCount = await prisma.qualityControl.count({
+      where: { inspectorId: id }
+    });
+    if (qcCount > 0) {
+      throw new Error(`Não é possível excluir: funcionário vinculado a ${qcCount} inspeção(ões) de qualidade.`);
+    }
+
+    // 2. Verificar se possui registros de operação (apontamentos)
+    const logCount = await prisma.serviceOrderOperationLog.count({
+      where: { employeeId: id }
+    });
+    if (logCount > 0) {
+      throw new Error(`Não é possível excluir: funcionário possui ${logCount} registro(s) de operação em Ordens de Serviço.`);
+    }
+
+    // 3. Verificar se está vinculado a serviços prestados em OS
+    const serviceCount = await prisma.serviceOrderService.count({
+      where: { employeeId: id }
+    });
+    if (serviceCount > 0) {
+      throw new Error(`Não é possível excluir: funcionário vinculado a ${serviceCount} serviço(s) em Ordens de Serviço.`);
+    }
+
     return prisma.employee.delete({ where: { id } });
   },
 };

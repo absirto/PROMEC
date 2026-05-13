@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Users, Search, Eye, Edit2, Trash2, UserPlus } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
+import Pagination from '../../components/Pagination';
 
 const PeopleList: React.FC = () => {
   const navigate = useNavigate();
@@ -12,30 +13,51 @@ const PeopleList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number[]>([]);
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 12;
+
   useEffect(() => {
     setLoading(true);
-    api.get('/people')
-      .then((data: any) => setPeople(data))
+    api.get('/people', {
+      params: {
+        page: currentPage,
+        limit: itemsPerPage,
+        search
+      }
+    })
+      .then((res: any) => {
+        setPeople(res.data || []);
+        setTotalPages(res.meta?.totalPages || 1);
+        setTotalItems(res.meta?.total || 0);
+      })
       .catch(() => setError('Erro ao carregar pessoas.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [currentPage, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const handleView = (id: number) => navigate(`/people/${id}`);
   const handleEdit = (id: number) => navigate(`/people/${id}/edit`);
   const handleDelete = (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir esta pessoa?')) {
       api.delete(`/people/${id}`)
-        .then(() => setPeople(people.filter(p => p.id !== id)))
+        .then(() => {
+          if (people.length === 1 && currentPage > 1) {
+            setCurrentPage(prev => prev - 1);
+          } else {
+            setCurrentPage(prev => prev);
+          }
+        })
         .catch(() => alert('Erro ao excluir pessoa.'));
     }
   };
 
-  const filtered = people.filter(p => {
-    const name = p.naturalPerson?.name || p.legalPerson?.corporateName || '';
-    const doc = p.naturalPerson?.cpf || p.legalPerson?.cnpj || '';
-    return name.toLowerCase().includes(search.toLowerCase()) || 
-           doc.toLowerCase().includes(search.toLowerCase());
-  });
+  const filtered = people; // O filtro agora é feito no backend
 
   return (
     <div className={styles.listContainer}>
@@ -125,6 +147,14 @@ const PeopleList: React.FC = () => {
             </tbody>
           </table>
 
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+
           <div className={styles.footer}>
             <div className={styles.batchActions}>
               <button 
@@ -136,7 +166,7 @@ const PeopleList: React.FC = () => {
               </button>
             </div>
             <div className={styles.stats}>
-              {filtered.length} registros encontrados
+              Total: {totalItems} registros encontrados
             </div>
           </div>
         </>

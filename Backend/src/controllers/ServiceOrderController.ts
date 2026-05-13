@@ -3,6 +3,8 @@ import prisma from '../services/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { generateQuotationPDF } from '../utils/pdfQuotation';
+import { getPaginationParams, formatPaginatedResponse } from '../utils/pagination';
+import { AuditService } from '../services/AuditService';
 
 function generateTraceCode() {
   const d = new Date();
@@ -15,8 +17,8 @@ function generateTraceCode() {
 
 function getActor(req: Request) {
   const authReq = req as AuthRequest;
-  const id = authReq.user?.id ? Number(authReq.user.id) : null;
-  const email = authReq.user?.email ? String(authReq.user.email) : null;
+  const id = authReq.user?.id ? Number(authReq.user.id) : undefined;
+  const email = authReq.user?.email ? String(authReq.user.email) : undefined;
   return { id, email };
 }
 
@@ -1444,27 +1446,61 @@ export const ServiceOrderController = {
 
   async list(req: Request, res: Response) {
     try {
-      const orders = await prisma.serviceOrder.findMany({
-        include: {
-          person: { include: { naturalPerson: true, legalPerson: true } },
-          services: { include: { service: true, employee: true } },
-          materials: { include: { material: true } },
-          qualityControls: true,
-          transactions: true,
-          traces: {
-            orderBy: { createdAt: 'desc' },
-            take: 1,
-            select: {
-              id: true,
-              action: true,
-              changedByEmail: true,
-              createdAt: true,
-            },
-          }
-        },
-        orderBy: { openingDate: 'desc' }
-      });
-      res.json(orders.map(enrichFinancials));
+      const pagination = getPaginationParams(req);
+      const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const startDate = typeof req.query.startDate === 'string' ? new Date(req.query.startDate) : undefined;
+      const endDate = typeof req.query.endDate === 'string' ? new Date(req.query.endDate) : undefined;
+
+      const where: any = {};
+      if (status) where.status = status;
+      if (startDate && !Number.isNaN(startDate.getTime())) {
+        where.openingDate = { ...where.openingDate, gte: startDate };
+      }
+      if (endDate && !Number.isNaN(endDate.getTime())) {
+        const inclusiveEndDate = new Date(endDate);
+        inclusiveEndDate.setHours(23, 59, 59, 999);
+        where.openingDate = { ...where.openingDate, lte: inclusiveEndDate };
+      }
+      if (search) {
+        where.OR = [
+          { traceCode: { contains: search, mode: 'insensitive' } },
+          { partCode: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { person: { naturalPerson: { name: { contains: search, mode: 'insensitive' } } } },
+          { person: { legalPerson: { corporateName: { contains: search, mode: 'insensitive' } } } },
+        ];
+      }
+
+      const [orders, total] = await Promise.all([
+        prisma.serviceOrder.findMany({
+          where,
+          include: {
+            person: { include: { naturalPerson: true, legalPerson: true } },
+            services: { include: { service: true, employee: true } },
+            materials: { include: { material: true } },
+            qualityControls: true,
+            transactions: true,
+            traces: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              select: {
+                id: true,
+                action: true,
+                changedByEmail: true,
+                createdAt: true,
+              },
+            }
+          },
+          orderBy: { openingDate: 'desc' },
+          skip: pagination.skip,
+          take: pagination.limit,
+        }),
+        prisma.serviceOrder.count({ where }),
+      ]);
+
+      const enriched = orders.map(enrichFinancials);
+      res.json(formatPaginatedResponse(enriched, total, pagination));
     } catch (error) {
       res.status(500).json({ status: 'error', message: 'Erro ao listar ordens de serviço.' });
     }
@@ -1549,11 +1585,20 @@ export const ServiceOrderController = {
               partCode: created.partCode,
               batchCode: created.batchCode,
               workCenter: created.workCenter,
-              plannedStartDate: created.plannedStartDate,
-              plannedEndDate: created.plannedEndDate,
-              plannedHours: created.plannedHours,
+              plannedStartDate: created.plannedStartDate ?? undefined,
+              plannedEndDate: created.plannedEndDate ?? undefined,
+              plannedHours: created.plannedHours ?? undefined,
             }
           }
+        });
+
+        await AuditService.log({
+          entity: 'ServiceOrder',
+          entityId: created.id,
+          action: 'CREATE',
+          userId: actor.id,
+          userEmail: actor.email,
+          newData: created,
         });
 
         return tx.serviceOrder.findUnique({
