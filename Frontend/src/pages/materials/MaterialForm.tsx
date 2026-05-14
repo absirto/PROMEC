@@ -87,7 +87,10 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
                 className={styles.formInput}
                 type="text"
                 disabled={isView}
-                {...register('name', { required: 'O nome do material é obrigatório' })}
+                {...register('name', { 
+                  required: 'O nome do material é obrigatório',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' }
+                })}
                 placeholder="Ex: Óleo 5W30, Pastilha de Freio..."
               />
             </div>

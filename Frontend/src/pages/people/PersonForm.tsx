@@ -147,21 +147,21 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
           tradeName: data.tradeName,
           cnpj: data.document.replace(/\D/g, '')
         } : undefined,
-        addresses: [
+        addresses: data.address.zipCode ? [
           {
-            cep: data.address.zipCode,
+            cep: data.address.zipCode.replace(/\D/g, ''),
             logradouro: data.address.street,
             numero: data.address.number,
             bairro: data.address.neighborhood,
             cidade: data.address.city,
-            uf: data.address.state,
-            complemento: data.address.complement,
-            type: 'PRINCIPAL'
+            uf: (data.address.state || '').slice(0, 2).toUpperCase(),
+            complemento: data.address.complement || '',
+            type: 'RESIDENCIAL'
           }
-        ],
+        ] : [],
         contacts: [
           ...(data.email ? [{ type: 'EMAIL', value: data.email }] : []),
-          ...(data.phone ? [{ type: 'PHONE', value: data.phone }] : [])
+          ...(data.phone ? [{ type: 'TELEFONE', value: data.phone.replace(/\D/g, '') }] : [])
         ]
       };
 
@@ -223,6 +223,12 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 disabled={isView || isEdit}
                 {...register('document', { 
                   required: 'O documento é obrigatório',
+                  validate: (val) => {
+                    const clean = val.replace(/\D/g, '');
+                    if (personType === 'F' && clean.length !== 11) return 'CPF deve ter 11 dígitos';
+                    if (personType === 'J' && clean.length !== 14) return 'CNPJ deve ter 14 dígitos';
+                    return true;
+                  },
                   onChange: (e) => {
                     const val = e.target.value;
                     setValue('document', personType === 'F' ? maskCPF(val) : maskCNPJ(val));
@@ -252,7 +258,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
               <input 
                 className={styles.formInput} 
                 disabled={isView}
-                {...register('name', { required: 'Este campo é obrigatório' })}
+                {...register('name', { 
+                  required: 'Este campo é obrigatório',
+                  minLength: { value: 3, message: 'O nome/razão social deve ter no mínimo 3 caracteres' }
+                })}
               />
             </div>
             {errors.name && <span className={styles.errorMessage}>{errors.name.message}</span>}
@@ -317,6 +326,7 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 disabled={isView}
                 {...register('address.zipCode', {
+                  required: 'CEP é obrigatório',
                   onChange: (e) => {
                     const val = maskCEP(e.target.value);
                     setValue('address.zipCode', val);
@@ -325,6 +335,7 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 })}
               />
             </div>
+            {errors.address?.zipCode && <span className={styles.errorMessage}>{errors.address.zipCode.message}</span>}
           </div>
 
           <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
@@ -334,9 +345,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
               <input 
                 className={styles.formInput} 
                 disabled={isView}
-                {...register('address.street')}
+                {...register('address.street', { required: 'Rua é obrigatória' })}
               />
             </div>
+            {errors.address?.street && <span className={styles.errorMessage}>{errors.address.street.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -346,9 +358,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 style={{ paddingLeft: 14 }} 
                 disabled={isView}
-                {...register('address.number')}
+                {...register('address.number', { required: 'Nº é obrigatório' })}
               />
             </div>
+            {errors.address?.number && <span className={styles.errorMessage}>{errors.address.number.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -358,9 +371,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 style={{ paddingLeft: 14 }} 
                 disabled={isView}
-                {...register('address.neighborhood')}
+                {...register('address.neighborhood', { required: 'Bairro é obrigatório' })}
               />
             </div>
+            {errors.address?.neighborhood && <span className={styles.errorMessage}>{errors.address.neighborhood.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -370,9 +384,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 style={{ paddingLeft: 14 }} 
                 disabled={isView}
-                {...register('address.city')}
+                {...register('address.city', { required: 'Cidade é obrigatória' })}
               />
             </div>
+            {errors.address?.city && <span className={styles.errorMessage}>{errors.address.city.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -382,9 +397,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 style={{ paddingLeft: 14 }} 
                 disabled={isView}
-                {...register('address.state')}
+                {...register('address.state', { required: 'UF é obrigatório' })}
               />
             </div>
+            {errors.address?.state && <span className={styles.errorMessage}>{errors.address.state.message}</span>}
           </div>
 
           {!isView && (

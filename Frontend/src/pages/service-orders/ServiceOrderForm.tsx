@@ -150,8 +150,21 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       const payload = {
         ...data,
         personId: parseInt(data.personId),
-        materials: data.materials.map(m => ({ ...m, materialId: parseInt(m.materialId), totalPrice: m.quantity * m.unitPrice })),
-        services: data.services.map(s => ({ ...s, serviceId: parseInt(s.serviceId), totalPrice: s.hoursWorked * s.unitPrice }))
+        materials: (data.materials || []).map(m => ({ 
+          ...m, 
+          materialId: parseInt(m.materialId), 
+          quantity: Number(m.quantity) || 0,
+          unitPrice: Number(m.unitPrice) || 0,
+          totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0)
+        })),
+        services: (data.services || []).map(s => ({ 
+          ...s, 
+          serviceId: parseInt(s.serviceId), 
+          employeeId: s.employeeId ? parseInt(s.employeeId) : null,
+          hoursWorked: Number(s.hoursWorked) || 0,
+          unitPrice: Number(s.unitPrice) || 0,
+          totalPrice: (Number(s.hoursWorked) || 0) * (Number(s.unitPrice) || 0)
+        }))
       };
       if (id) await api.put(`/service-orders/${id}`, payload);
       else await api.post('/service-orders', payload);

@@ -106,7 +106,10 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
               <User className={styles.inputIcon} size={18} />
               <input
                 className={styles.formInput}
-                {...register('firstName', { required: 'O primeiro nome é obrigatório' })}
+                {...register('firstName', { 
+                  required: 'O primeiro nome é obrigatório',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' }
+                })}
                 disabled={isView}
               />
             </div>
@@ -115,14 +118,18 @@ const UserForm: React.FC<UserFormProps> = ({ isEdit, isView }) => {
 
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Sobrenome</label>
-            <div className={styles.inputWrapper}>
+            <div className={`${styles.inputWrapper} ${errors.lastName ? styles.inputError : ''}`}>
               <User className={styles.inputIcon} size={18} />
               <input
                 className={styles.formInput}
-                {...register('lastName')}
+                {...register('lastName', { 
+                  required: 'O sobrenome é obrigatório',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' }
+                })}
                 disabled={isView}
               />
             </div>
+            {errors.lastName && <span className={styles.errorMessage}>{errors.lastName.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>

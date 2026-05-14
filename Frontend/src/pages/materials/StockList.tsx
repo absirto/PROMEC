@@ -110,7 +110,9 @@ const StockList: React.FC = () => {
     try {
       await api.post('/stock', {
         ...data,
-        supplierPersonId: data.type === 'IN' ? Number(data.supplierPersonId) : undefined,
+        materialId: parseInt(data.materialId),
+        quantity: parseFloat(data.quantity),
+        supplierPersonId: data.type === 'IN' && data.supplierPersonId ? Number(data.supplierPersonId) : undefined,
         unitCost: data.unitCost ? Number(data.unitCost) : undefined,
         totalPaid: data.totalPaid ? Number(data.totalPaid) : undefined,
       });

@@ -110,7 +110,10 @@ const GroupForm: React.FC<GroupFormProps> = ({ isEdit, isView }) => {
                 className={styles.formInput}
                 type="text"
                 disabled={isView}
-                {...register('name', { required: 'Obrigatório' })}
+                {...register('name', { 
+                  required: 'Obrigatório',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' }
+                })}
                 placeholder="Ex: Equipe de Vendas, Operadores de Pista..."
               />
             </div>

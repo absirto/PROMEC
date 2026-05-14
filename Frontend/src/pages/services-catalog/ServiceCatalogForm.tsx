@@ -89,7 +89,10 @@ const ServiceCatalogForm: React.FC<ServiceCatalogFormProps> = ({ isEdit, isView 
                 className={styles.formInput}
                 type="text"
                 disabled={isView}
-                {...register('name', { required: 'O nome é obrigatório' })}
+                {...register('name', { 
+                  required: 'O nome é obrigatório',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' }
+                })}
                 placeholder="Ex: Manutenção Preventiva Motor"
               />
             </div>
