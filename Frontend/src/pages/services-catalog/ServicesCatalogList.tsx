@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Tag, Search, Plus, Eye, Edit2, Trash2, Banknote } from 'lucide-react';
+import { Tag, Search, Plus, Eye, Edit2, Trash2, Banknote, RefreshCcw } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 
@@ -10,6 +10,7 @@ const ServicesCatalogList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -17,14 +18,16 @@ const ServicesCatalogList: React.FC = () => {
       .then((data: any) => setServices(Array.isArray(data) ? data : (data?.data || [])))
       .catch(() => setError('Erro ao carregar serviços.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = () => setRefreshKey(prev => prev + 1);
 
   const handleView = (id: number) => navigate(`/services-catalog/${id}`);
   const handleEdit = (id: number) => navigate(`/services-catalog/${id}/edit`);
   const handleDelete = (id: number) => {
     if (window.confirm('Excluir este serviço do catálogo?')) {
       api.delete(`/services/${id}`)
-        .then(() => setServices(services.filter(s => s.id !== id)))
+        .then(() => handleRefresh())
         .catch(() => alert('Erro ao excluir serviço.'));
     }
   };
@@ -53,6 +56,13 @@ const ServicesCatalogList: React.FC = () => {
           <Link to="/services-catalog/new" className={styles.newBtn}>
             <Plus size={20} /> Novo Serviço
           </Link>
+          <button 
+            className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`}
+            onClick={handleRefresh}
+            title="Atualizar Lista"
+          >
+            <RefreshCcw size={20} />
+          </button>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as XLSX from 'xlsx';
-import { ShoppingCart, RefreshCw, Filter, CheckCircle2, Clock3, FileDown, Search, FileSpreadsheet } from 'lucide-react';
+import { ShoppingCart, RefreshCcw, Filter, CheckCircle2, Clock3, FileDown, Search, FileSpreadsheet } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
@@ -299,8 +299,12 @@ const PurchasesList: React.FC = () => {
             <p style={{ color: '#8a99a8', fontSize: 13, margin: 0 }}>Fulfillment de solicitações e rastreabilidade de entradas</p>
           </div>
         </div>
-        <button className={styles.newBtn} onClick={() => { setHistPage(1); setAuditPage(1); setReqPage(1); }}>
-          <RefreshCw size={18} /> Atualizar
+        <button 
+          className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`} 
+          onClick={() => { setHistPage(1); setAuditPage(1); setReqPage(1); }}
+          title="Atualizar Listas"
+        >
+          <RefreshCcw size={20} />
         </button>
       </div>
 

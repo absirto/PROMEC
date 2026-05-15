@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Search, Plus, Eye, Edit2, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Package, Search, Plus, Eye, Edit2, Trash2, LayoutGrid, List, RefreshCcw, Tag, Coins } from 'lucide-react';
 import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import commonStyles from '../../styles/common/BaseList.module.css';
@@ -14,6 +14,7 @@ const MaterialsList: React.FC = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,7 +34,9 @@ const MaterialsList: React.FC = () => {
       })
       .catch(() => setError('Erro ao carregar materiais.'))
       .finally(() => setLoading(false));
-  }, [currentPage, search]);
+  }, [currentPage, search, refreshKey]);
+
+  const handleRefresh = () => setRefreshKey(prev => prev + 1);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -44,100 +47,115 @@ const MaterialsList: React.FC = () => {
   const handleDelete = (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este material?')) {
       api.delete(`/materials/${id}`)
-        .then(() => setCurrentPage(prev => prev))
+        .then(() => handleRefresh())
         .catch(() => alert('Erro ao excluir material.'));
     }
   };
 
   return (
     <div className={commonStyles.listContainer}>
-      <div className={commonStyles.header}>
-        <h2 className={commonStyles.title}>Almoxarifado</h2>
+      <header className={commonStyles.header}>
+        <div className={commonStyles.headerInfo}>
+          <h2 className={commonStyles.title}>Catálogo de Materiais</h2>
+          <p className={commonStyles.stats}>{totalItems} itens catalogados no almoxarifado</p>
+        </div>
+
         <div className={commonStyles.controls}>
           <div className={styles.viewToggle}>
             <button 
               className={`${styles.toggleBtn} ${viewMode === 'table' ? styles.toggleBtnActive : ''}`}
               onClick={() => setViewMode('table')}
+              title="Lista"
             >
               <List size={18} />
             </button>
             <button 
               className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.toggleBtnActive : ''}`}
               onClick={() => setViewMode('grid')}
+              title="Grade"
             >
               <LayoutGrid size={18} />
             </button>
           </div>
           
-          <div style={{ position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', left: 14, top: 18, color: '#64748b' }} />
+          <div className={commonStyles.searchWrapper}>
+            <Search size={16} className={commonStyles.searchIcon} />
             <input
               type="text"
               className={commonStyles.searchInput}
               placeholder="Buscar item..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: 44 }}
             />
           </div>
           
+          <button 
+            className={`${commonStyles.refreshBtn} ${loading ? commonStyles.refreshBtnLoading : ''}`}
+            onClick={handleRefresh}
+            title="Atualizar"
+          >
+            <RefreshCcw size={18} />
+          </button>
+
           <button onClick={() => navigate('/materials/new')} className={commonStyles.newBtn}>
-            <Plus size={20} /> Adicionar Item
+            <Plus size={18} />
+            <span>Adicionar</span>
           </button>
         </div>
-      </div>
+      </header>
 
       {loading && (
         viewMode === 'table' ? 
         <SkeletonTable columns={5} rows={8} /> : 
         <div className={styles.materialsGrid}>
-          {[1,2,3,4,5,6].map(i => <div key={i} style={{ height: 380, borderRadius: 32, background: 'rgba(255,255,255,0.02)' }} className="skeleton-pulse" />)}
+          {[1,2,3,4,5,6].map(i => <div key={i} className={styles.skeletonCard} />)}
         </div>
       )}
 
       {!loading && !error && (
-        <>
+        <div className="animate-fade-in">
           {viewMode === 'table' ? (
             <table className={commonStyles.tableContainer}>
               <thead className={commonStyles.tableHeader}>
                 <tr>
-                  <th>Material</th>
-                  <th>Unidade</th>
-                  <th>Preço Base</th>
-                  <th>Disponibilidade</th>
-                  <th style={{ textAlign: 'center' }}>Ações</th>
+                  <th>Material / Especificação</th>
+                  <th>Unidade / Preço</th>
+                  <th>Status Operacional</th>
+                  <th style={{ textAlign: 'right' }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {materials.map(m => (
                   <tr key={m.id} className={commonStyles.tableRow}>
                     <td className={commonStyles.tableCell}>
-                      <div className={commonStyles.mainInfoCell} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div className={commonStyles.mainInfoCell}>
                         <div className={commonStyles.avatar}>
                           <Package size={20} />
                         </div>
                         <div>
-                          <div style={{ fontWeight: 700, color: '#fff' }}>{m.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.description || 'Sem descrição técnica'}</div>
+                          <span className={commonStyles.primaryText}>{m.name}</span>
+                          <span className={commonStyles.secondaryText}>{m.description || 'Sem descrição técnica'}</span>
                         </div>
                       </div>
                     </td>
-                    <td className={commonStyles.tableCell}>{m.unit}</td>
                     <td className={commonStyles.tableCell}>
-                      <span style={{ fontWeight: 800, color: 'var(--accent)' }}>
-                        R$ {Number(m.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
+                      <div>
+                        <span className={commonStyles.primaryText} style={{ color: 'var(--primary)' }}>
+                          R$ {Number(m.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                        <span className={commonStyles.secondaryText}>por {m.unit}</span>
+                      </div>
                     </td>
                     <td className={commonStyles.tableCell}>
                       <span className={`${commonStyles.badge} ${m.active !== false ? commonStyles.badgeActive : commonStyles.badgeInactive}`}>
-                        {m.active !== false ? 'Ativo' : 'Indisponível'}
+                        {m.active !== false ? 'Em Linha' : 'Desativado'}
                       </span>
                     </td>
-                    <td className={commonStyles.tableCell} style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                        <button onClick={() => handleView(m.id)} className={`${commonStyles.actionBtn} ${commonStyles.viewBtn}`} title="Visualizar"><Eye size={16} /></button>
-                        <button onClick={() => handleEdit(m.id)} className={`${commonStyles.actionBtn} ${commonStyles.editBtn}`} title="Editar"><Edit2 size={16} /></button>
-                        <button onClick={() => handleDelete(m.id)} className={`${commonStyles.actionBtn} ${commonStyles.deleteBtn}`} title="Excluir"><Trash2 size={16} /></button>
+                    <td className={commonStyles.tableCell} style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                        <button onClick={() => handleView(m.id)} className={`${commonStyles.actionBtn} ${commonStyles.viewBtn}`} title="Visualizar"><Eye size={18} /></button>
+                        <button onClick={() => handleEdit(m.id)} className={`${commonStyles.actionBtn} ${commonStyles.editBtn}`} title="Editar"><Edit2 size={18} /></button>
+                        <button onClick={() => handleDelete(m.id)} className={`${commonStyles.actionBtn} ${commonStyles.deleteBtn}`} title="Excluir"><Trash2 size={18} /></button>
                       </div>
                     </td>
                   </tr>
@@ -150,7 +168,7 @@ const MaterialsList: React.FC = () => {
                 <div key={m.id} className={styles.materialCard}>
                   <div className={styles.cardHeader}>
                     <div className={styles.imagePlaceholder}>
-                      <Package size={32} />
+                      <Package size={24} />
                     </div>
                     <div className={styles.priceTag}>
                       R$ {Number(m.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -164,8 +182,8 @@ const MaterialsList: React.FC = () => {
 
                   <div className={styles.stockSection}>
                     <div className={styles.stockLabel}>
-                      <span>Nível de Disponibilidade</span>
-                      <span style={{ color: m.active !== false ? 'var(--success)' : 'var(--danger)' }}>
+                      <span>{m.unit}</span>
+                      <span style={{ color: m.active !== false ? 'var(--primary)' : 'var(--danger)' }}>
                         {m.active !== false ? 'Operacional' : 'Indisponível'}
                       </span>
                     </div>
@@ -173,8 +191,8 @@ const MaterialsList: React.FC = () => {
                       <div 
                         className={styles.progressFill} 
                         style={{ 
-                          width: m.active !== false ? '85%' : '0%', 
-                          background: m.active !== false ? 'linear-gradient(90deg, var(--primary), var(--success))' : 'var(--danger)',
+                          width: m.active !== false ? '100%' : '0%', 
+                          background: m.active !== false ? 'var(--primary)' : 'var(--danger)',
                           boxShadow: m.active !== false ? '0 0 10px var(--primary-glow)' : 'none'
                         }} 
                       />
@@ -182,13 +200,13 @@ const MaterialsList: React.FC = () => {
                   </div>
 
                   <div className={styles.cardActions}>
-                    <button onClick={() => handleView(m.id)} className={styles.actionBtn} title="Ver Detalhes">
-                      <Eye size={16} /> Detalhes
+                    <button onClick={() => handleView(m.id)} className={styles.actionBtn}>
+                      <Eye size={16} />
                     </button>
-                    <button onClick={() => handleEdit(m.id)} className={styles.actionBtn} title="Editar">
+                    <button onClick={() => handleEdit(m.id)} className={styles.actionBtn}>
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => handleDelete(m.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Excluir">
+                    <button onClick={() => handleDelete(m.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -197,7 +215,8 @@ const MaterialsList: React.FC = () => {
             </div>
           )}
 
-          <div style={{ marginTop: 48 }}>
+          <div className={commonStyles.footer}>
+            <div className={commonStyles.batchActions}></div>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -206,13 +225,7 @@ const MaterialsList: React.FC = () => {
               itemsPerPage={itemsPerPage}
             />
           </div>
-
-          <div className={commonStyles.footer}>
-            <div style={{ color: 'var(--text-muted)', fontSize: 14, fontWeight: 600 }}>
-              Exibindo <span style={{ color: '#fff' }}>{materials.length}</span> de <span style={{ color: '#fff' }}>{totalItems}</span> itens catalogados
-            </div>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

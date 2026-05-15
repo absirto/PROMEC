@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Shield, Search, Plus, Edit2, Trash2, Key } from 'lucide-react';
+import { Shield, Search, Plus, Edit2, Trash2, Key, RefreshCcw } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 
@@ -10,6 +10,7 @@ const GroupsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -17,13 +18,15 @@ const GroupsList: React.FC = () => {
       .then((data: any) => setGroups(Array.isArray(data) ? data : (data?.data || [])))
       .catch(() => setError('Erro ao carregar grupos de acesso.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = () => setRefreshKey(prev => prev + 1);
 
   const handleEdit = (id: number) => navigate(`/groups/${id}/edit`);
   const handleDelete = (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este grupo?')) {
       api.delete(`/groups/${id}`)
-        .then(() => setGroups(groups.filter(g => g.id !== id)))
+        .then(() => handleRefresh())
         .catch(() => alert('Erro ao excluir grupo.'));
     }
   };
@@ -51,6 +54,13 @@ const GroupsList: React.FC = () => {
           <Link to="/groups/new" className={styles.newBtn}>
             <Plus size={20} /> Novo Grupo
           </Link>
+          <button 
+            className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`}
+            onClick={handleRefresh}
+            title="Atualizar Lista"
+          >
+            <RefreshCcw size={20} />
+          </button>
         </div>
       </div>
 

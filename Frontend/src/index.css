@@ -1,26 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap');
 
 :root {
-  /* Brand Colors - More Vibrant */
-  --primary: #0ea5e9;
-  --primary-bright: #38bdf8;
-  --primary-glow: rgba(14, 165, 233, 0.4);
-  --accent: #10b981;
-  --accent-glow: rgba(16, 185, 129, 0.35);
+  /* ProMEC Identity - Deep Night & Neon Mint */
+  --primary: #2dd4bf; /* Neon Mint */
+  --primary-bright: #00ffa3;
+  --primary-glow: rgba(45, 212, 191, 0.3);
   
-  /* Backgrounds & Glass - Deeper & Clearer */
-  --bg-deep: #020617;
-  --bg-darker: #010409;
-  --bg-card: rgba(15, 23, 42, 0.7);
-  --glass-bg: rgba(30, 41, 59, 0.5);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-light: rgba(255, 255, 255, 0.2);
-  --glass-blur: blur(16px);
+  --bg-deep: #0b1120;
+  --bg-surface: #1e293b;
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --bg-elevated: rgba(51, 65, 85, 0.5);
   
-  /* Text - High Contrast */
-  --text-main: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
+  /* Glassmorphism */
+  --glass-bg: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-blur: blur(12px);
+  
+  /* Typography - Slate Palette */
+  --text-main: #f1f5f9;      /* Slate-100 */
+  --text-secondary: #94a3b8; /* Slate-400 */
+  --text-muted: #64748b;    /* Slate-500 */
   
   /* Semantic */
   --success: #10b981;
@@ -28,79 +27,56 @@
   --danger: #ef4444;
   --info: #0ea5e9;
   
-  /* Shadows */
-  --shadow-sm: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 35px 60px -15px rgba(0, 0, 0, 0.6);
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
   
-  /* Animations */
+  /* Transitions */
   --spring: cubic-bezier(0.4, 0, 0.2, 1);
-  --spring-bouncy: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --spring-smooth: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-html, body {
-  width: 100%;
-  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-deep);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-deep);
   color: var(--text-main);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
-  position: relative;
+  line-height: 1.6;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Inter', sans-serif; /* User asked for Inter or Geist */
   letter-spacing: -0.02em;
+  font-weight: 700;
 }
 
-/* Premium Background Animated Orbs */
-body::before, body::after {
+/* Subtlest background decoration */
+body::before {
   content: '';
   position: fixed;
-  width: 60vw;
-  height: 60vw;
-  border-radius: 50%;
-  filter: blur(140px);
+  inset: 0;
+  background: 
+    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
   z-index: -1;
-  opacity: 0.12;
   pointer-events: none;
-  animation: float 25s infinite alternate ease-in-out;
 }
 
-body::before {
-  background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-  top: -15%;
-  left: -10%;
-}
-
-body::after {
-  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
-  bottom: -15%;
-  right: -10%;
-  animation-delay: -12.5s;
-}
-
-@keyframes float {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  100% { transform: translate(15%, 15%) scale(1.15) rotate(15deg); }
-}
-
-/* Custom Ultra-Thin Scrollbar */
+/* Elegant Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -108,80 +84,37 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background-clip: padding-box;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
+  background: var(--text-muted);
 }
 
-/* Global Utility Classes */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
+/* Utility Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.text-gradient {
-  background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
-.glow-on-hover:hover {
-  box-shadow: 0 0 30px var(--primary-glow);
-  border-color: var(--primary);
+.animate-fade-in {
+  animation: fadeIn 0.6s var(--spring-smooth) forwards;
 }
 
-/* Skeleton Loading Refinement */
-.skeleton {
-  background-color: rgba(30, 41, 59, 0.6);
-  border-radius: 12px;
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton::after {
-  content: "";
-  position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(
-    90deg,
-    transparent 0,
-    rgba(255, 255, 255, 0.05) 30%,
-    rgba(255, 255, 255, 0.08) 60%,
-    transparent 100%
-  );
-  animation: shimmer 2.5s infinite;
-}
-
-@keyframes shimmer {
-  100% { transform: translateX(100%); }
-}
-
-/* Global Focus Style */
+/* Global Focus Refinement */
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 4px;
 }
 
-@media (max-width: 768px) {
-  body::before, body::after {
-    width: 90vw;
-    height: 90vw;
-    filter: blur(100px);
-    opacity: 0.1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation: none !important;
-    transition: none !important;
-  }
+/* Selection */
+::selection {
+  background: var(--primary-glow);
+  color: var(--text-main);
 }

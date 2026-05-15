@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Plus, ArrowUpCircle, ArrowDownCircle, History, Save, X } from 'lucide-react';
+import { Plus, ArrowUpCircle, ArrowDownCircle, History, Save, X, RefreshCcw } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
@@ -93,10 +93,14 @@ const StockList: React.FC = () => {
     }
   }, [showToast]);
 
-  useEffect(() => {
+  const handleRefresh = useCallback(() => {
     setLoading(true);
     Promise.all([fetchLogs(), fetchPurchases(), fetchBaseData()]).finally(() => setLoading(false));
   }, [fetchLogs, fetchPurchases, fetchBaseData]);
+
+  useEffect(() => {
+    handleRefresh();
+  }, [handleRefresh]);
 
   const onSubmit = async (data: StockMovementFormData) => {
     if (data.type === 'IN') {
@@ -139,9 +143,18 @@ const StockList: React.FC = () => {
           </div>
           <h2 className={styles.title} style={{ margin: 0 }}>Histórico de Movimentações</h2>
         </div>
-        <button className={styles.newBtn} onClick={() => { reset(); setShowModal(true); }}>
-          <Plus size={20} /> Nova Movimentação
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className={styles.newBtn} onClick={() => { reset(); setShowModal(true); }}>
+            <Plus size={20} /> Nova Movimentação
+          </button>
+          <button 
+            className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`}
+            onClick={handleRefresh}
+            title="Atualizar Dados"
+          >
+            <RefreshCcw size={20} />
+          </button>
+        </div>
       </div>
 
       <div className={styles.tableContainer} style={{ marginTop: 24 }}>

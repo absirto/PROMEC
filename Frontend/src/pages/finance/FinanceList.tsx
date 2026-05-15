@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Wallet, ArrowUpRight, ArrowDownLeft, Plus } from 'lucide-react';
+import { Wallet, ArrowUpRight, ArrowDownLeft, Plus, RefreshCcw } from 'lucide-react';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
 import { useToast } from '../../components/ToastProvider';
@@ -60,9 +60,18 @@ const FinanceList: React.FC = () => {
           </div>
           <h2 className={styles.title} style={{ margin: 0 }}>Fluxo de Caixa</h2>
         </div>
-        <button className={styles.newBtn} onClick={() => setShowModal(true)}>
-          <Plus size={20} /> Nova Transação
-        </button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className={styles.newBtn} onClick={() => setShowModal(true)}>
+            <Plus size={20} /> Nova Transação
+          </button>
+          <button 
+            className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`}
+            onClick={fetchData}
+            title="Atualizar Dados"
+          >
+            <RefreshCcw size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Sumário */}

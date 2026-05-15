@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Plus, Eye, Edit2, Trash2, UserCheck } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Trash2, UserCheck, RefreshCcw, Briefcase, Mail } from 'lucide-react';
 import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
@@ -13,6 +13,7 @@ const EmployeesList: React.FC = () => {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,7 +37,9 @@ const EmployeesList: React.FC = () => {
       })
       .catch(() => setError('Erro ao carregar funcionários.'))
       .finally(() => setLoading(false));
-  }, [currentPage, search]);
+  }, [currentPage, search, refreshKey]);
+
+  const handleRefresh = () => setRefreshKey(prev => prev + 1);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -47,13 +50,7 @@ const EmployeesList: React.FC = () => {
   const handleDelete = (id: number) => {
     if (window.confirm('Tem certeza que deseja excluir este funcionário?')) {
       api.delete(`/employees/${id}`)
-        .then(() => {
-          if (employees.length === 1 && currentPage > 1) {
-            setCurrentPage(prev => prev - 1);
-          } else {
-            setCurrentPage(prev => prev);
-          }
-        })
+        .then(() => handleRefresh())
         .catch(() => alert('Erro ao excluir funcionário.'));
     }
   };
@@ -62,52 +59,64 @@ const EmployeesList: React.FC = () => {
 
   return (
     <div className={styles.listContainer}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>Funcionários</h2>
+      <header className={styles.header}>
+        <div className={styles.headerInfo}>
+          <h2 className={styles.title}>Quadro de Funcionários</h2>
+          <p className={styles.stats}>{totalItems} colaboradores ativos na organização</p>
+        </div>
+
         <div className={styles.controls}>
-          <div style={{ position: 'relative' }}>
-            <Search size={18} style={{ position: 'absolute', left: 12, top: 12, color: '#5c6b7a' }} />
+          <div className={styles.searchWrapper}>
+            <Search size={16} className={styles.searchIcon} />
             <input
               type="text"
               className={styles.searchInput}
-              placeholder="Pesquisar funcionário..."
+              placeholder="Pesquisar colaborador..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: 40 }}
             />
           </div>
+
+          <button 
+            className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`}
+            onClick={handleRefresh}
+            title="Atualizar"
+          >
+            <RefreshCcw size={18} />
+          </button>
+
           <Link to="/employees/new" className={styles.newBtn}>
-            <Plus size={20} /> Novo Funcionário
+            <Plus size={18} />
+            <span>Novo</span>
           </Link>
         </div>
-      </div>
+      </header>
 
-      {loading && <SkeletonTable columns={6} rows={6} />}
+      {loading && <SkeletonTable columns={5} rows={10} />}
       {error && <div className={styles.badge + ' ' + styles.badgeInactive}>{error}</div>}
 
       {!loading && !error && (
-        <>
+        <div className="animate-fade-in">
           <table className={styles.tableContainer}>
             <thead className={styles.tableHeader}>
               <tr>
-                <th style={{ width: 40, paddingLeft: 20 }}>
+                <th style={{ width: 40 }}>
                   <input 
                     type="checkbox" 
                     onChange={e => setSelected(e.target.checked ? filtered.map(item => item.id) : [])}
                     checked={selected.length === filtered.length && filtered.length > 0}
                   />
                 </th>
-                <th>Funcionário</th>
-                <th>Cargo / Área</th>
-                <th>Matrícula</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'center' }}>Ações</th>
+                <th>Colaborador / Identificação</th>
+                <th>Cargo / Departamento</th>
+                <th>Matrícula / Status</th>
+                <th style={{ textAlign: 'right' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(emp => (
                 <tr key={emp.id} className={styles.tableRow}>
-                  <td style={{ paddingLeft: 20 }}>
+                  <td>
                     <input 
                       type="checkbox" 
                       checked={selected.includes(emp.id)}
@@ -117,29 +126,36 @@ const EmployeesList: React.FC = () => {
                   <td className={styles.tableCell}>
                     <div className={styles.mainInfoCell}>
                       <div className={styles.avatar}>
-                        <UserCheck size={20} />
+                        <UserCheck size={18} />
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600, color: '#fff' }}>{emp.person?.naturalPerson?.name || 'N/A'}</div>
-                        <div style={{ fontSize: 13, color: '#8a99a8' }}>{emp.person?.email || 'Sem e-mail'}</div>
+                        <span className={styles.primaryText}>{emp.person?.naturalPerson?.name || 'N/A'}</span>
+                        <span className={styles.secondaryText}>
+                          <Mail size={12} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          {emp.person?.email || 'Sem e-mail'}
+                        </span>
                       </div>
                     </div>
                   </td>
                   <td className={styles.tableCell}>
-                    <div style={{ fontWeight: 500, color: '#e2e8f0' }}>{emp.jobRole?.name || 'N/A'}</div>
-                    <div style={{ fontSize: 13, color: '#8a99a8' }}>{emp.workArea?.name || 'N/A'}</div>
+                    <div>
+                      <span className={styles.primaryText}>{emp.jobRole?.name || 'N/A'}</span>
+                      <span className={styles.secondaryText}>{emp.workArea?.name || 'N/A'}</span>
+                    </div>
                   </td>
-                  <td className={styles.tableCell} style={{ color: '#94a3b8' }}>{emp.matricula || '-'}</td>
                   <td className={styles.tableCell}>
-                    <span className={`${styles.badge} ${emp.status === 'Ativo' ? styles.badgeActive : styles.badgeInactive}`}>
-                      {emp.status}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <span className={styles.primaryText} style={{ fontFamily: 'monospace' }}>{emp.matricula || '-'}</span>
+                      <span className={`${styles.badge} ${emp.status === 'Ativo' ? styles.badgeActive : styles.badgeInactive}`}>
+                        {emp.status}
+                      </span>
+                    </div>
                   </td>
-                  <td className={styles.tableCell} style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                      <button onClick={() => handleView(emp.id)} className={`${styles.actionBtn} ${styles.viewBtn}`}><Eye size={16} /></button>
-                      <button onClick={() => handleEdit(emp.id)} className={`${styles.actionBtn} ${styles.editBtn}`}><Edit2 size={16} /></button>
-                      <button onClick={() => handleDelete(emp.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`}><Trash2 size={16} /></button>
+                  <td className={styles.tableCell} style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                      <button onClick={() => handleView(emp.id)} className={`${styles.actionBtn} ${styles.viewBtn}`} title="Ver"><Eye size={18} /></button>
+                      <button onClick={() => handleEdit(emp.id)} className={`${styles.actionBtn} ${styles.editBtn}`} title="Editar"><Edit2 size={18} /></button>
+                      <button onClick={() => handleDelete(emp.id)} className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Excluir"><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>
@@ -147,29 +163,29 @@ const EmployeesList: React.FC = () => {
             </tbody>
           </table>
 
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-          />
-
           <div className={styles.footer}>
             <div className={styles.batchActions}>
-              <button 
-                className={styles.batchBtn} 
-                disabled={selected.length === 0}
-                onClick={() => alert(`Ações em lote para ${selected.length} funcionários.`)}
-              >
-                Excluir Selecionados ({selected.length})
-              </button>
+              {selected.length > 0 && (
+                <button 
+                  className={styles.actionBtn}
+                  style={{ opacity: 1, color: 'var(--danger)', fontSize: 13, fontWeight: 700 }}
+                  onClick={() => alert(`Ações em lote para ${selected.length} colaboradores.`)}
+                >
+                  <Trash2 size={14} style={{ marginRight: 6 }} />
+                  Remover Selecionados
+                </button>
+              )}
             </div>
-            <div className={styles.stats}>
-              {totalItems} funcionários encontrados
-            </div>
+            
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
           </div>
-        </>
+        </div>
       )}
     </div>
   );

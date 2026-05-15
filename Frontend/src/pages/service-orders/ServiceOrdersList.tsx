@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Plus, Eye, Edit2, Calendar, Filter, X } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Calendar, Filter, X, RefreshCcw } from 'lucide-react';
 import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
@@ -126,7 +126,6 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
       .catch(() => setPcpOverview({ centers: [] }))
       .finally(() => setPcpLoading(false));
   }, [pcpStartDate, pcpEndDate, dailyCapacityHours]);
-
   const loadPcpCalendar = useCallback(() => {
     setPcpCalendarLoading(true);
     api.get('/service-orders/pcp/calendar', {
@@ -142,6 +141,12 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
       .catch(() => setPcpCalendar({ days: [], centers: [], shiftConfig: [] }))
       .finally(() => setPcpCalendarLoading(false));
   }, [pcpStartDate, pcpEndDate, dailyCapacityHours]);
+
+  const handleRefresh = useCallback(() => {
+    loadOrders();
+    loadPcpOverview();
+    loadPcpCalendar();
+  }, [loadOrders, loadPcpOverview, loadPcpCalendar]);
 
   useEffect(() => {
     loadOrders();
@@ -387,9 +392,18 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
             Só Conflitos ({conflictCount})
           </button>
         </div>
-        <Link to="/service-orders/new" className={styles.newBtn}>
-          <Plus size={20} /> Nova OS
-        </Link>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Link to="/service-orders/new" className={styles.newBtn}>
+            <Plus size={20} /> Nova OS
+          </Link>
+          <button 
+            className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`}
+            onClick={handleRefresh}
+            title="Atualizar Listas"
+          >
+            <RefreshCcw size={20} />
+          </button>
+        </div>
       </div>
 
       <div style={{

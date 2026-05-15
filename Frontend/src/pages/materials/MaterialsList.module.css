@@ -4,84 +4,80 @@
 
 .viewToggle {
   display: flex;
-  background: rgba(15, 23, 42, 0.5);
-  padding: 6px;
-  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: var(--glass-blur);
+  padding: 4px;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   gap: 4px;
 }
 
 .toggleBtn {
-  padding: 8px 16px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
+  justify-content: center;
 }
 
 .toggleBtnActive {
-  background: var(--bg-card);
+  background: var(--bg-surface);
   color: var(--primary);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 0 10px var(--primary-glow);
 }
 
 .materialsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-  margin-top: 32px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
 }
 
 .materialCard {
-  background: var(--bg-card);
-  backdrop-filter: var(--glass-blur);
+  background: var(--bg-surface);
   border: 1px solid var(--glass-border);
-  border-radius: 32px;
+  border-radius: var(--radius-lg);
   padding: 24px;
-  transition: all 0.5s var(--spring-bouncy);
-  position: relative;
-  overflow: hidden;
+  transition: all 0.4s var(--spring-smooth);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .materialCard:hover {
-  transform: translateY(-12px) scale(1.02);
-  border-color: var(--primary-bright);
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 20px var(--primary-glow);
+  transform: translateY(-8px);
+  border-color: var(--primary);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 15px var(--primary-glow);
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .imagePlaceholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--primary);
-  border: 1px solid var(--glass-border);
 }
 
 .priceTag {
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--accent);
-  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.02em;
 }
 
 .materialInfo {
@@ -89,43 +85,44 @@
 }
 
 .materialName {
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-main);
   margin-bottom: 4px;
 }
 
 .materialDesc {
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.5;
 }
 
 .stockSection {
-  margin-top: 24px;
-  padding-top: 24px;
+  margin-top: 20px;
+  padding-top: 20px;
   border-top: 1px solid var(--glass-border);
 }
 
 .stockLabel {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
-  font-weight: 900;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .progressBar {
-  height: 8px;
+  height: 6px;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -136,40 +133,51 @@
 
 .cardActions {
   display: flex;
-  gap: 10px;
-  margin-top: 24px;
+  gap: 8px;
+  margin-top: 20px;
 }
 
 .actionBtn {
   flex: 1;
-  padding: 12px;
-  border-radius: 14px;
+  padding: 10px;
+  border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: rgba(255, 255, 255, 0.02);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
 }
 
 .actionBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(45, 212, 191, 0.05);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--primary);
+  filter: drop-shadow(0 0 5px var(--primary-glow));
 }
 
 .deleteBtn:hover {
   border-color: var(--danger);
   color: var(--danger);
+  background: rgba(239, 68, 68, 0.05);
+  filter: none;
+}
+
+.skeletonCard {
+  height: 320px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 @media (max-width: 768px) {
-  .materialsGrid {
-    grid-template-columns: 1fr;
-  }
+  .materialsGrid { grid-template-columns: 1fr; }
 }

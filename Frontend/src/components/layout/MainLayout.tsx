@@ -5,7 +5,8 @@ import {
   ClipboardCheck, Tag, Settings, LogOut,
   Shield, Wallet, Database, ShoppingCart,
   LayoutDashboard, Layers, FileText, Menu, X,
-  ClipboardList, BarChart3, Search, ChevronRight
+  ClipboardList, BarChart3, Search, ChevronRight,
+  ChevronLeft, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import styles from './MainLayout.module.css';
 import { clearStoredSession } from '../../utils/authSession';
@@ -20,6 +21,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
@@ -64,6 +67,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [expandedSections, setExpandedSections] = useState<string[]>(['Principal', 'Operacional', 'Financeiro', 'Cadastros', 'Relatórios', 'Configurações']);
 
   const toggleSection = (title: string) => {
+    if (isCollapsed) {
+      setIsCollapsed(false);
+      if (!expandedSections.includes(title)) {
+        setExpandedSections(prev => [...prev, title]);
+      }
+      return;
+    }
     setExpandedSections(prev => 
       prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
     );
@@ -130,12 +140,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         onClick={() => setIsMobileMenuOpen(false)}
       />
 
-      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : ''}`}>
+      <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : ''} ${isCollapsed ? styles.sidebarCollapsed : ''}`}>
         <div className={styles.sidebarHeader}>
           <div className={styles.logoIcon}>
-            <Wrench size={24} />
+            <Wrench size={22} />
           </div>
           <span className={styles.logoText}>ProMEC</span>
+          <button className={styles.collapseToggle} onClick={() => setIsCollapsed(!isCollapsed)}>
+            {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
 
         <nav className={styles.nav}>
@@ -148,7 +161,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             );
 
             if (visibleItems.length === 0) return null;
-            const isExpanded = expandedSections.includes(section.title);
+            const isExpanded = expandedSections.includes(section.title) && !isCollapsed;
 
             return (
               <div key={idx} className={`${styles.navSection} ${isExpanded ? styles.sectionExpanded : ''}`}>
@@ -157,9 +170,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   onClick={() => toggleSection(section.title)}
                 >
                   <span className={styles.sectionLabel}>{section.title}</span>
-                  <div className={styles.sectionToggle}>
-                    <ChevronRight size={12} className={isExpanded ? styles.rotate90 : ''} />
-                  </div>
+                  {!isCollapsed && (
+                    <div className={styles.sectionToggle}>
+                      <ChevronRight size={12} className={isExpanded ? styles.rotate90 : ''} />
+                    </div>
+                  )}
                 </div>
                 
                 <div className={styles.sectionItems}>
@@ -167,13 +182,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <NavLink 
                       key={item.to}
                       to={item.to}
+                      title={isCollapsed ? item.label : undefined}
                       className={({ isActive }) => 
                         `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
                       }
                     >
-                      <item.icon size={18} />
-                      <span>{item.label}</span>
-                      {location.pathname === item.to && <div className={styles.activeDot} />}
+                      <item.icon size={20} />
+                      <span className={styles.navLabel}>{item.label}</span>
                     </NavLink>
                   ))}
                 </div>
@@ -183,12 +198,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <div className={styles.versionBadge}>
-            v1.1.0
-          </div>
-          <button className={styles.logoutBtn} onClick={handleLogout}>
+          <button className={styles.logoutBtn} onClick={handleLogout} title={isCollapsed ? "Sair do Sistema" : undefined}>
             <LogOut size={20} />
-            <span>Sair do Sistema</span>
+            <span className={styles.navLabel}>Sair do Sistema</span>
           </button>
         </div>
       </aside>
@@ -197,24 +209,31 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <header className={styles.topBar}>
           <div className={styles.topBarActions}>
             <button 
+              className={styles.mobileMenuBtn} 
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu size={24} />
+            </button>
+
+            <button 
               className={styles.globalSearchBtn} 
               onClick={() => (window as any).dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
               title="Busca Global (Ctrl + K)"
             >
               <Search size={18} />
-              <span>Buscar...</span>
+              <span className={styles.searchPlaceholder}>Busca Global...</span>
               <kbd>⌘K</kbd>
             </button>
-
-            <div className={styles.pageLabel}>
-              {currentPageLabel}
-            </div>
           </div>
           
-          <div className={styles.userInfo} onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{user?.firstName} {user?.lastName}</div>
-              <div style={{ color: '#00e6b0', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' }}>{user?.group?.name}</div>
+          <div className={styles.topBarCenter}>
+             <div className={styles.pageLabel}>{currentPageLabel}</div>
+          </div>
+
+          <div className={styles.userInfo} onClick={() => navigate('/profile')}>
+            <div className={styles.userText}>
+              <div className={styles.userName}>{user?.firstName} {user?.lastName}</div>
+              <div className={styles.userRole}>{user?.group?.name}</div>
             </div>
             <div className={styles.userAvatar}>
               {user?.firstName?.charAt(0)}
@@ -223,7 +242,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </header>
 
         <div className={styles.mainOutlet}>
-          <Breadcrumbs />
+          <div className={styles.breadWrap}>
+            <Breadcrumbs />
+          </div>
           {children}
         </div>
       </main>

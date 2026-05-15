@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Plus, Eye, Edit2, Calendar, Filter, X } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Calendar, Filter, X, RefreshCcw } from 'lucide-react';
 import SkeletonTable from '../../components/SkeletonTable';
 import api from '../../services/api';
 import styles from '../../styles/common/BaseList.module.css';
@@ -9,6 +9,7 @@ const BudgetsList: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Check permissions for financial data
   const userStr = localStorage.getItem('user');
@@ -26,13 +27,13 @@ const BudgetsList: React.FC = () => {
     setLoading(true);
     api.get('/service-orders')
       .then((data: any) => {
-        // Filter specifically for "Orçamento" status initially or just show all but label it Budget
-        // The user wants a specialized Budget module, so let's show items with 'Orçamento' status.
         setOrders(data.filter((o: any) => o.status === 'Orçamento'));
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = () => setRefreshKey(prev => prev + 1);
 
   const handleView = (id: number) => navigate(`/service-orders/${id}`);
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
@@ -85,9 +86,18 @@ const BudgetsList: React.FC = () => {
             <Filter size={18} /> Filtros {filtered.length !== orders.length && '(Ativos)'}
           </button>
         </div>
-        <Link to="/service-orders/new" className={styles.newBtn}>
-          <Plus size={20} /> Novo Orçamento
-        </Link>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Link to="/service-orders/new" className={styles.newBtn}>
+            <Plus size={20} /> Novo Orçamento
+          </Link>
+          <button 
+            className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`}
+            onClick={handleRefresh}
+            title="Atualizar Lista"
+          >
+            <RefreshCcw size={20} />
+          </button>
+        </div>
       </div>
 
       {showFilters && (

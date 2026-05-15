@@ -10,7 +10,7 @@ import {
   FileDown,
   FileText,
   Printer,
-  RefreshCw,
+  RefreshCcw,
   Search,
   WandSparkles,
   Save,
@@ -233,8 +233,12 @@ const QuotationsList: React.FC = () => {
             <p style={{ color: '#8a99a8', fontSize: 13, margin: 0 }}>Gestão de propostas e análise de melhor custo-benefício</p>
           </div>
         </div>
-        <button className={styles.newBtn} onClick={() => void fetchData()}>
-          <RefreshCw size={18} /> Atualizar
+        <button 
+          className={`${styles.refreshBtn} ${loading ? styles.refreshBtnLoading : ''}`} 
+          onClick={() => void fetchData()}
+          title="Atualizar Dados"
+        >
+          <RefreshCcw size={20} />
         </button>
       </div>
 
