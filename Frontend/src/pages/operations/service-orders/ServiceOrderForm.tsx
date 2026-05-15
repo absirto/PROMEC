@@ -12,6 +12,8 @@ import api from '../../../services/api';
 import styles from '../../../styles/common/BaseForm.module.css';
 import { useToast } from '../../../components/ToastProvider';
 import Skeleton from '../../../components/Skeleton';
+import AuditTimeline from '../../../components/AuditTimeline';
+import QuickPersonModal from '../../../components/QuickPersonModal';
 
 interface OSItemMaterial {
   materialId: string;
@@ -64,6 +66,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const { id } = useParams();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'general' | 'items' | 'operations'>('general');
+  const [showQuickPerson, setShowQuickPerson] = useState(false);
   
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -105,7 +108,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const [employees, setEmployees] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
     setLoading(true);
     Promise.all([
       api.get('/people').catch(() => []),
@@ -117,7 +120,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       setAvailableMaterials(m);
       setAvailableServices(s);
       setEmployees(e);
-    });
+    }).finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
 
     if (id && (isEdit || isView)) {
       api.get(`/service-orders/${id}`).then((data: any) => {
@@ -131,9 +138,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           materials: (data.materials || []).map((m: any) => ({ ...m, materialId: m.materialId?.toString() })),
           services: (data.services || []).map((s: any) => ({ ...s, serviceId: s.serviceId?.toString(), employeeId: s.employeeId?.toString() }))
         });
-      }).finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+      });
     }
   }, [id, isEdit, isView, reset]);
 
@@ -201,7 +206,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           </button>
         </header>
 
-        {/* Navigation Tabs - Modern Glassmorphism */}
         <nav className={styles.tabsContainer}>
           <button 
             type="button"
@@ -228,7 +232,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
 
         <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
           
-          {/* TAB: GENERAL */}
           {activeTab === 'general' && (
             <div className={styles.fullWidth} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, animation: 'fadeIn 0.4s var(--spring-smooth)' }}>
               <div className={styles.fieldGroup} style={{ gridColumn: 'span 2' }}>
@@ -252,6 +255,16 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                     <option value="">Selecione o cliente...</option>
                     {people.map(p => <option key={p.id} value={p.id}>{p.naturalPerson?.name || p.legalPerson?.corporateName}</option>)}
                   </select>
+                  {!isView && (
+                    <button 
+                       type="button" 
+                       className={styles.quickAddBtn} 
+                       onClick={() => setShowQuickPerson(true)}
+                       title="Novo Cliente"
+                     >
+                       <Plus size={16} />
+                     </button>
+                  )}
                 </div>
               </div>
 
@@ -466,6 +479,24 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
 
         </form>
       </div>
+
+      {id && (isEdit || isView) && (
+        <div style={{ marginTop: 32 }}>
+          <AuditTimeline entity="ServiceOrder" entityId={Number(id)} />
+        </div>
+      )}
+
+      {showQuickPerson && (
+        <QuickPersonModal 
+          onClose={() => setShowQuickPerson(false)} 
+          onSuccess={(newPerson) => {
+            setPeople(prev => [...prev, newPerson]);
+            setValue('personId', newPerson.id.toString());
+            setShowQuickPerson(false);
+            showToast('Cliente cadastrado e selecionado!');
+          }} 
+        />
+      )}
     </div>
   );
 };

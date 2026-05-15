@@ -7,10 +7,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
+    "types": ["node", "jest"],
     "rootDir": "."
   },
-  "include": ["src", "prisma"],
+  "include": ["src", "prisma", "tests"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "compilerOptions": {

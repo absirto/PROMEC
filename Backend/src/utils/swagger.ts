@@ -23,12 +23,12 @@ const swaggerDefinition = {
 
 const options = {
   swaggerDefinition,
-  apis: [path.join(__dirname, '../routes/*.js'), path.join(__dirname, '../controllers/*.js')],
+  apis: [path.join(__dirname, '../modules/*/routes/*.js'), path.join(__dirname, '../modules/*/controllers/*.js')],
 };
 
 const optionsDev = {
   swaggerDefinition,
-  apis: [path.join(__dirname, '../routes/*.ts'), path.join(__dirname, '../controllers/*.ts')],
+  apis: [path.join(__dirname, '../modules/*/routes/*.ts'), path.join(__dirname, '../modules/*/controllers/*.ts')],
 };
 
 export const swaggerSpec = swaggerJSDoc(

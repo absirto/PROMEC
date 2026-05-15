@@ -485,3 +485,17 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
 }
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String
+  type      String   // 'INFO', 'WARNING', 'ERROR', 'SUCCESS'
+  read      Boolean  @default(false)
+  userId    Int?     // Se null, é global (Broadcast)
+  link      String?  // Link opcional para navegação no frontend
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}

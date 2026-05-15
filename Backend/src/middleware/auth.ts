@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config/security';
-import prisma from '../services/prisma';
+import prisma from '../core/prisma';
 import { expandPermissions } from '../utils/permissions';
 
 export interface AuthRequest extends Request {

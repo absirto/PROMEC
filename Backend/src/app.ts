@@ -11,9 +11,9 @@ import { connectRedis, redisClient } from './utils/redis';
 import { setupSwagger, swaggerSpec } from './utils/swagger';
 import { setupSentry } from './utils/sentry';
 import { requestIdMiddleware } from './middleware/requestId';
-import prisma from './services/prisma';
+import prisma from './core/prisma';
 import { logger } from './utils/logger';
-import { sanitizeBody } from './middleware/validation/sanitizeBody';
+import { sanitizeBody } from './middleware/sanitizeBody';
 
 dotenv.config();
 if (process.env.NODE_ENV !== 'test') {
@@ -95,7 +95,7 @@ app.get('/ready', async (_req, res) => {
 
 if (process.env.NODE_ENV !== 'test') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { generalQueue } = require('./services/queue') as { generalQueue: { add: unknown } | null };
+  const { generalQueue } = require('./core/queue') as { generalQueue: { add: unknown } | null };
   if (generalQueue) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { ExpressAdapter } = require('@bull-board/express');
@@ -119,13 +119,22 @@ app.get('/openapi.json', (_req, res) => {
 
 app.use((_req, res, next) => {
   const oldJson = res.json.bind(res);
-  res.json = function (this: express.Response, data: unknown) {
+  res.json = function (this: express.Response, data: any) {
+    // Se for erro (>= 400), não envelopa
     if (this.statusCode >= 400) {
       return oldJson(data);
     }
-    if (data && typeof data === 'object' && (data as { status?: string }).status === 'error') {
+    
+    // Se já estiver envelopado ou for nulo/vazio, não envelopa novamente
+    if (data && typeof data === 'object' && (data.status === 'success' || data.status === 'error')) {
       return oldJson(data);
     }
+
+    // Se for um objeto com 'data' (ex: vindo do formatPaginatedResponse), envelopa mas mantém o topo
+    if (data && typeof data === 'object' && data.data && data.meta) {
+       return oldJson({ status: 'success', ...data });
+    }
+
     return oldJson({ status: 'success', data });
   };
   next();

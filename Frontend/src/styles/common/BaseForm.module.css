@@ -227,6 +227,27 @@
   color: #0b1120;
 }
 
+.quickAddBtn {
+  position: absolute;
+  right: 8px;
+  background: var(--primary);
+  color: #0b1120;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quickAddBtn:hover {
+  background: var(--primary-bright);
+  transform: scale(1.05);
+}
+
 @media (max-width: 768px) {
   .formGrid {
     grid-template-columns: 1fr;

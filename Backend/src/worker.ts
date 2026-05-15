@@ -1,4 +1,4 @@
-import { generalQueue } from './services/queue';
+import { generalQueue } from './core/queue';
 import { logger } from './utils/logger';
 
 if (!generalQueue) {

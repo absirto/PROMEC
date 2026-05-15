@@ -12,6 +12,7 @@ import styles from './MainLayout.module.css';
 import { clearStoredSession } from '../../utils/authSession';
 import Breadcrumbs from '../Breadcrumbs';
 import CommandPalette from '../CommandPalette';
+import NotificationCenter from '../NotificationCenter';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -224,6 +225,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               <span className={styles.searchPlaceholder}>Busca Global...</span>
               <kbd>⌘K</kbd>
             </button>
+
+            <NotificationCenter />
           </div>
           
           <div className={styles.topBarCenter}>

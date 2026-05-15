@@ -1,4 +1,4 @@
-import { generalQueue } from '../services/queue';
+import { generalQueue } from '../core/queue';
 
 export async function addToQueue(type: string, payload: unknown) {
   if (!generalQueue) return;

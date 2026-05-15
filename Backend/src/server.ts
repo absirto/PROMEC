@@ -1,10 +1,17 @@
+import http from 'http';
 import app from './app';
 import { logger } from './utils/logger';
+import { SocketService } from './core/SocketService';
 
 const PORT = process.env.PORT || 3000;
 
-const server = app.listen(PORT, () => {
-  logger.info(`Servidor rodando na porta ${PORT}`);
+const server = http.createServer(app);
+
+// Inicializa WebSockets
+SocketService.init(server);
+
+server.listen(PORT, () => {
+  logger.info(`Servidor rodando na porta ${PORT} [HTTP + WebSockets]`);
 });
 
 process.on('SIGTERM', () => {
