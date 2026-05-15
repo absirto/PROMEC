@@ -1,70 +1,40 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Command, Wrench, Users, Package, FileText, X, LayoutDashboard } from 'lucide-react';
+import { Search, Users, Package, Wrench, Home, Settings, X, Command } from 'lucide-react';
 import styles from './CommandPalette.module.css';
 
 const CommandPalette: React.FC = () => {
-  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const commands = [
-    { label: 'Dashboard', to: '/', icon: LayoutDashboard, category: 'Navegação' },
-    { label: 'Ordens de Serviço', to: '/service-orders', icon: Wrench, category: 'Operacional' },
-    { label: 'Nova Ordem de Serviço', to: '/service-orders/new', icon: Wrench, category: 'Ações Rápidas' },
-    { label: 'Estoque', to: '/stock', icon: Package, category: 'Suprimentos' },
-    { label: 'Materiais', to: '/materials', icon: Package, category: 'Suprimentos' },
-    { label: 'Pessoas', to: '/people', icon: Users, category: 'Cadastros' },
-    { label: 'Nova Pessoa', to: '/people/new', icon: Users, category: 'Ações Rápidas' },
-    { label: 'Configurações', to: '/settings', icon: FileText, category: 'Sistema' },
+    { id: 'home', title: 'Ir para Dashboard', icon: Home, action: () => navigate('/') },
+    { id: 'people', title: 'Gerenciar Pessoas', icon: Users, action: () => navigate('/people') },
+    { id: 'people-new', title: 'Cadastrar Nova Pessoa', icon: Users, action: () => navigate('/people/new'), subtext: 'Atalho rápido' },
+    { id: 'materials', title: 'Estoque de Materiais', icon: Package, action: () => navigate('/materials') },
+    { id: 'os', title: 'Ordens de Serviço', icon: Wrench, action: () => navigate('/service-orders') },
+    { id: 'settings', title: 'Configurações do Sistema', icon: Settings, action: () => navigate('/settings') },
   ];
 
   const filteredCommands = commands.filter(cmd => 
-    cmd.label.toLowerCase().includes(search.toLowerCase()) ||
-    cmd.category.toLowerCase().includes(search.toLowerCase())
+    cmd.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsOpen(prev => !prev);
-      }
-      if (e.key === 'Escape') {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      setIsOpen(prev => !prev);
+    }
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      inputRef.current?.focus();
-      setSearch('');
-      setSelectedIndex(0);
-    }
-  }, [isOpen]);
-
-  const handleSelect = (to: string) => {
-    navigate(to);
-    setIsOpen(false);
-  };
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      setSelectedIndex(prev => (prev + 1) % filteredCommands.length);
-    } else if (e.key === 'ArrowUp') {
-      setSelectedIndex(prev => (prev - 1 + filteredCommands.length) % filteredCommands.length);
-    } else if (e.key === 'Enter') {
-      if (filteredCommands[selectedIndex]) {
-        handleSelect(filteredCommands[selectedIndex].to);
-      }
-    }
-  };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   if (!isOpen) return null;
 
@@ -73,40 +43,37 @@ const CommandPalette: React.FC = () => {
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <div className={styles.searchBar}>
           <Search size={20} className={styles.searchIcon} />
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="O que você está procurando? (Ctrl + K)"
+          <input 
+            autoFocus
+            type="text" 
+            placeholder="O que você deseja fazer? (Esc para fechar)" 
+            className={styles.input}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            onKeyDown={onKeyDown}
-            className={styles.input}
           />
-          <div className={styles.shortcutHint}>ESC para fechar</div>
+          <div className={styles.kbd}>ESC</div>
         </div>
 
         <div className={styles.results}>
-          {filteredCommands.length > 0 ? (
-            filteredCommands.map((cmd, idx) => (
-              <div
-                key={cmd.to}
-                className={`${styles.resultItem} ${idx === selectedIndex ? styles.resultItemActive : ''}`}
-                onClick={() => handleSelect(cmd.to)}
-                onMouseEnter={() => setSelectedIndex(idx)}
-              >
-                <div className={styles.itemIcon}>
-                  <cmd.icon size={18} />
-                </div>
-                <div className={styles.itemInfo}>
-                  <div className={styles.itemLabel}>{cmd.label}</div>
-                  <div className={styles.itemCategory}>{cmd.category}</div>
-                </div>
-                {idx === selectedIndex && (
-                  <div className={styles.enterHint}>Pressione Enter</div>
-                )}
+          {filteredCommands.map(cmd => (
+            <button 
+              key={cmd.id} 
+              className={styles.resultItem}
+              onClick={() => {
+                cmd.action();
+                setIsOpen(false);
+              }}
+            >
+              <div className={styles.itemIcon}>
+                <cmd.icon size={18} />
               </div>
-            ))
-          ) : (
+              <div className={styles.itemInfo}>
+                <span className={styles.itemTitle}>{cmd.title}</span>
+                {cmd.subtext && <span className={styles.itemSubtext}>{cmd.subtext}</span>}
+              </div>
+            </button>
+          ))}
+          {filteredCommands.length === 0 && (
             <div className={styles.noResults}>
               Nenhum comando encontrado para "{search}"
             </div>
@@ -114,8 +81,10 @@ const CommandPalette: React.FC = () => {
         </div>
 
         <div className={styles.footer}>
-          <span>Use as setas para navegar</span>
-          <Command size={14} />
+          <span>Pressione <span className={styles.kbd}>ENTER</span> para selecionar</span>
+          <div className={styles.brand}>
+            <Command size={12} /> ProMEC Intelligence
+          </div>
         </div>
       </div>
     </div>

@@ -1,0 +1,231 @@
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.pcpSection {
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.pcpHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.pcpTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pcpTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.pcpControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pcpInput {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 6px 12px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+}
+
+.pcpSeparator {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.centersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.centerCard {
+  background: rgba(2, 6, 23, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  transition: transform 0.3s;
+}
+
+.centerCard:hover {
+  transform: translateY(-4px);
+  border-color: rgba(45, 212, 191, 0.2);
+}
+
+.centerHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.centerName {
+  font-weight: 700;
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.centerPercent {
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.progressBar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s var(--spring-smooth);
+}
+
+.centerMetrics {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Table Enhancements */
+.osNumber {
+  font-weight: 800;
+  color: var(--primary);
+  font-family: 'Outfit';
+}
+
+.clientCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metricsCell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.operationalValue {
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.financialValue {
+  color: var(--success);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.pcpBadge {
+  font-size: 11px;
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  width: fit-content;
+  font-weight: 700;
+}
+
+.dateCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.pcpActionBtn {
+  background: rgba(45, 212, 191, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pcpActionBtn:hover {
+  background: var(--primary);
+  color: #0b1120;
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.rowConflict {
+  background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.rowConflict:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.toolBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  padding: 8px 16px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.toolBtn:hover {
+  border-color: var(--primary);
+  color: var(--text-main);
+}
+
+.toolBtnActive {
+  background: rgba(45, 212, 191, 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.toolBtnDanger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+@media (max-width: 1200px) {
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .statsGrid { grid-template-columns: 1fr; }
+  .pcpHeader { flex-direction: column; align-items: flex-start; gap: 16px; }
+}

@@ -5,45 +5,56 @@ import { ThemeProvider } from './theme';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/ToastProvider';
 
-const ReportsDashboard = lazy(() => import('./pages/reports/ReportsDashboard'));
-const OperationalReports = lazy(() => import('./pages/reports/OperationalReports'));
-const AdministrativeReports = lazy(() => import('./pages/reports/AdministrativeReports'));
-const ServiceOrdersReport = lazy(() => import('./pages/reports/ServiceOrdersReport'));
-const StockMovementsReport = lazy(() => import('./pages/reports/StockMovementsReport'));
-const ProductionReport = lazy(() => import('./pages/reports/ProductionReport'));
-const QualityReport = lazy(() => import('./pages/reports/QualityReport'));
-const FinancialFlowReport = lazy(() => import('./pages/reports/FinancialFlowReport'));
-const AccountsReport = lazy(() => import('./pages/reports/AccountsReport'));
-const TeamPerformanceReport = lazy(() => import('./pages/reports/TeamPerformanceReport'));
-const UsersSummaryReport = lazy(() => import('./pages/reports/UsersSummaryReport'));
-const ProfitabilityReport = lazy(() => import('./pages/reports/ProfitabilityReport'));
+// Analytics & Dashboard
+const Home = lazy(() => import('./pages/analytics/dashboard/Home'));
+const ReportsDashboard = lazy(() => import('./pages/analytics/reports/ReportsDashboard'));
+const OperationalReports = lazy(() => import('./pages/analytics/reports/OperationalReports'));
+const AdministrativeReports = lazy(() => import('./pages/analytics/reports/AdministrativeReports'));
+const ServiceOrdersReport = lazy(() => import('./pages/analytics/reports/ServiceOrdersReport'));
+const StockMovementsReport = lazy(() => import('./pages/analytics/reports/StockMovementsReport'));
+const ProductionReport = lazy(() => import('./pages/analytics/reports/ProductionReport'));
+const QualityReport = lazy(() => import('./pages/analytics/reports/QualityReport'));
+const FinancialFlowReport = lazy(() => import('./pages/analytics/reports/FinancialFlowReport'));
+const AccountsReport = lazy(() => import('./pages/analytics/reports/AccountsReport'));
+const TeamPerformanceReport = lazy(() => import('./pages/analytics/reports/TeamPerformanceReport'));
+const UsersSummaryReport = lazy(() => import('./pages/analytics/reports/UsersSummaryReport'));
+const ProfitabilityReport = lazy(() => import('./pages/analytics/reports/ProfitabilityReport'));
+
+// Authentication
 const Login = lazy(() => import('./pages/auth/Login'));
-const Home = lazy(() => import('./pages/dashboard/Home'));
-const Profile = lazy(() => import('./pages/users/Profile'));
+
+// Operations
+const EmployeesList = lazy(() => import('./pages/operations/employees/EmployeesList'));
+const EmployeeForm = lazy(() => import('./pages/operations/employees/EmployeeForm'));
+const MaterialsList = lazy(() => import('./pages/operations/materials/MaterialsList'));
+const MaterialForm = lazy(() => import('./pages/operations/materials/MaterialForm'));
+const PeopleList = lazy(() => import('./pages/operations/people/PeopleList'));
+const PersonForm = lazy(() => import('./pages/operations/people/PersonForm'));
+const QualityControlsList = lazy(() => import('./pages/operations/quality-controls/QualityControlsList'));
+const QualityControlForm = lazy(() => import('./pages/operations/quality-controls/QualityControlForm'));
+const ServiceOrdersList = lazy(() => import('./pages/operations/service-orders/ServiceOrdersList'));
+const ServiceOrderForm = lazy(() => import('./pages/operations/service-orders/ServiceOrderForm'));
+const BudgetsList = lazy(() => import('./pages/operations/service-orders/BudgetsList'));
+const ServicesCatalogList = lazy(() => import('./pages/operations/services-catalog/ServicesCatalogList'));
+const ServiceCatalogForm = lazy(() => import('./pages/operations/services-catalog/ServiceCatalogForm'));
+const StockList = lazy(() => import('./pages/operations/materials/StockList'));
+const PurchasesList = lazy(() => import('./pages/operations/materials/PurchasesList'));
+const QuotationsList = lazy(() => import('./pages/operations/materials/QuotationsList'));
+
+// Admin & Profile
+const Profile = lazy(() => import('./pages/admin/users/Profile'));
+const UsersList = lazy(() => import('./pages/admin/users/UsersList'));
+const UserForm = lazy(() => import('./pages/admin/users/UserForm'));
+const GroupsList = lazy(() => import('./pages/admin/groups/GroupsList'));
+const GroupForm = lazy(() => import('./pages/admin/groups/GroupForm'));
+const SettingsForm = lazy(() => import('./pages/admin/settings/SettingsForm'));
+const AuxiliaryTables = lazy(() => import('./pages/admin/settings/AuxiliaryTables'));
+
+// Financial
+const FinanceList = lazy(() => import('./pages/financial/finance/FinanceList'));
+
+// Layout
 const MainLayout = lazy(() => import('./components/layout/MainLayout'));
-const EmployeesList = lazy(() => import('./pages/employees/EmployeesList'));
-const EmployeeForm = lazy(() => import('./pages/employees/EmployeeForm'));
-const MaterialsList = lazy(() => import('./pages/materials/MaterialsList'));
-const MaterialForm = lazy(() => import('./pages/materials/MaterialForm'));
-const PeopleList = lazy(() => import('./pages/people/PeopleList'));
-const PersonForm = lazy(() => import('./pages/people/PersonForm'));
-const QualityControlsList = lazy(() => import('./pages/quality-controls/QualityControlsList'));
-const QualityControlForm = lazy(() => import('./pages/quality-controls/QualityControlForm'));
-const ServiceOrdersList = lazy(() => import('./pages/service-orders/ServiceOrdersList'));
-const ServiceOrderForm = lazy(() => import('./pages/service-orders/ServiceOrderForm'));
-const BudgetsList = lazy(() => import('./pages/service-orders/BudgetsList'));
-const ServicesCatalogList = lazy(() => import('./pages/services-catalog/ServicesCatalogList'));
-const ServiceCatalogForm = lazy(() => import('./pages/services-catalog/ServiceCatalogForm'));
-const UsersList = lazy(() => import('./pages/users/UsersList'));
-const UserForm = lazy(() => import('./pages/users/UserForm'));
-const GroupsList = lazy(() => import('./pages/groups/GroupsList'));
-const GroupForm = lazy(() => import('./pages/groups/GroupForm'));
-const StockList = lazy(() => import('./pages/materials/StockList'));
-const PurchasesList = lazy(() => import('./pages/materials/PurchasesList'));
-const QuotationsList = lazy(() => import('./pages/materials/QuotationsList'));
-const FinanceList = lazy(() => import('./pages/finance/FinanceList'));
-const SettingsForm = lazy(() => import('./pages/settings/SettingsForm'));
-const AuxiliaryTables = lazy(() => import('./pages/settings/AuxiliaryTables'));
 
 const AppLayout = () => (
   <ProtectedRoute>
@@ -59,7 +70,7 @@ function App() {
       <ToastProvider>
         <ErrorBoundary>
           <BrowserRouter>
-            <Suspense fallback={<div>Carregando...</div>}>
+            <Suspense fallback={<div style={{ background: '#0b1120', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2dd4bf', fontWeight: 800 }}>Carregando ProMEC...</div>}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={<AppLayout />}>
