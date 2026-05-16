@@ -243,7 +243,7 @@ export const ReportsController = {
         supplierName: log.supplierPerson?.naturalPerson?.name || log.supplierPerson?.legalPerson?.corporateName || null,
       }));
 
-      const pdfBuffer = generatePurchasesPDF(
+      const pdfBuffer = await generatePurchasesPDF(
         purchaseRequests,
         normalizedHistory,
         {
@@ -310,7 +310,7 @@ export const ReportsController = {
       const admins = await (prisma as any).user.count({ where: { role: 'admin' } });
       const users = await (prisma as any).user.count({ where: { role: 'user' } });
       const settings = await getSettings();
-      const pdfBuffer = generateUsersSummaryPDF({ total, admins, users }, (settings?.logoUrl ?? undefined));
+      const pdfBuffer = await generateUsersSummaryPDF({ total, admins, users }, (settings?.logoUrl ?? undefined));
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="resumo_usuarios_ativos.pdf"');
       res.send(pdfBuffer);

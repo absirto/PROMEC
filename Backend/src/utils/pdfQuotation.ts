@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { addPremiumHeader, addPremiumFooter, PDF_COLORS, ensurePageSpace } from './pdfCommon';
 
 function formatCurrency(value: number) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -7,12 +8,6 @@ function formatCurrency(value: number) {
 function formatDate(value: string | Date | null | undefined) {
   if (!value) return '—';
   return new Date(value).toLocaleDateString('pt-BR');
-}
-
-function ensureSpace(doc: PDFKit.PDFDocument, neededHeight = 40) {
-  if (doc.y + neededHeight > doc.page.height - 60) {
-    doc.addPage();
-  }
 }
 
 function drawCard(
@@ -48,29 +43,17 @@ export function generateQuotationPDF(
     const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
     const buffers: Buffer[] = [];
 
+    // Anexa a logo para o addPremiumHeader usar
+    if (companyInfo?.companyLogo) {
+      (doc as any).companyLogo = companyInfo.companyLogo;
+    }
+
     doc.on('data', (chunk: Buffer) => buffers.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
 
-    const generatedAt = new Date().toLocaleString('pt-BR');
-
     const renderHeader = () => {
-      if (companyInfo?.companyLogo) {
-        try {
-          const logo = companyInfo.companyLogo;
-          if (logo.startsWith('data:image/')) {
-            const b64 = logo.split(',')[1];
-            doc.image(Buffer.from(b64, 'base64'), 40, 20, { width: 40 });
-          } else {
-            doc.image(logo, 40, 20, { width: 40 });
-          }
-        } catch { /* ignora */ }
-      }
-      doc.fillColor('#1a237e').fontSize(18).text('Cotação de Compras', 90, 30, { align: 'left' });
-      doc.fillColor('#64748b').fontSize(9).text(companyInfo?.companyName || 'ProMEC', 90, 52);
-      doc.moveTo(40, 72).lineTo(555, 72).stroke('#cbd5e1');
-      doc.x = 40;
-      doc.y = 84;
+      addPremiumHeader(doc, 'Cotação de Compras', companyInfo?.companyName);
     };
 
     doc.on('pageAdded', renderHeader);
@@ -84,7 +67,7 @@ export function generateQuotationPDF(
     const reqCode = quotation.purchaseRequest?.code || `#${quotation.purchaseRequestId || ''}`;
     const osCode  = quotation.purchaseRequest?.serviceOrder?.traceCode || '—';
 
-    doc.fillColor('#1e293b').fontSize(12).font('Helvetica-Bold')
+    doc.fillColor(PDF_COLORS.primary).fontSize(12).font('Helvetica-Bold')
       .text(`Cotação #${quotation.id}  —  ${supplier}`, 40, doc.y);
     doc.font('Helvetica');
     doc.moveDown(0.5);
@@ -111,22 +94,22 @@ export function generateQuotationPDF(
 
     const cardW = (555 - 40 - 15) / 4;
     const cy = doc.y;
-    drawCard(doc, 40,                    cy, cardW, 'Total Bruto',    formatCurrency(totalBruto),   '#3b82f6');
-    drawCard(doc, 40 + (cardW + 5),      cy, cardW, 'Impostos',       formatCurrency(totalTax),     '#f59e0b');
+    drawCard(doc, 40,                    cy, cardW, 'Total Bruto',    formatCurrency(totalBruto),   PDF_COLORS.info);
+    drawCard(doc, 40 + (cardW + 5),      cy, cardW, 'Impostos',       formatCurrency(totalTax),     PDF_COLORS.warning);
     drawCard(doc, 40 + (cardW + 5) * 2,  cy, cardW, 'Frete',          formatCurrency(totalFreight), '#8b5cf6');
-    drawCard(doc, 40 + (cardW + 5) * 3,  cy, cardW, 'Total Líquido',  formatCurrency(totalLiquid),  '#10b981');
+    drawCard(doc, 40 + (cardW + 5) * 3,  cy, cardW, 'Total Líquido',  formatCurrency(totalLiquid),  PDF_COLORS.success);
 
     doc.y = cy + 64;
     doc.moveDown(0.5);
 
     // ── Tabela de itens ──
-    ensureSpace(doc, 60);
+    ensurePageSpace(doc, 60);
     const colX    = [40, 200, 250, 290, 340, 390, 440, 490];
     const headers = ['Material', 'Unid.', 'Qtd', 'Unitário', 'IPI', 'ICMS', 'ST', 'Total'];
 
     const thY = doc.y;
     doc.save();
-    doc.rect(40, thY, 515, 18).fill('#1e3a5f');
+    doc.rect(40, thY, 515, 18).fill(PDF_COLORS.primary);
     doc.fillColor('#ffffff').fontSize(8).font('Helvetica-Bold');
     headers.forEach((h, i) => {
       doc.text(h, colX[i], thY + 5, { width: i < 7 ? colX[i + 1] - colX[i] - 4 : 60, align: i > 1 ? 'right' : 'left' });
@@ -135,10 +118,8 @@ export function generateQuotationPDF(
     doc.font('Helvetica');
     doc.y = thY + 20;
 
-    let lastRowY = doc.y;
-
     items.forEach((item: any, idx: number) => {
-      ensureSpace(doc, 20);
+      ensurePageSpace(doc, 20);
       const matName  = item.material?.name || item.purchaseRequestItem?.material?.name || `Item ${idx + 1}`;
       const unit     = item.material?.unit || '—';
       const qty      = Number(item.quantity || 0);
@@ -149,8 +130,8 @@ export function generateQuotationPDF(
       const total    = qty * unitCost + ipi + icms + st;
 
       const rowTop = doc.y;
-      doc.rect(40, rowTop, 515, 16).fill(idx % 2 === 0 ? '#f8fafc' : '#ffffff');
-      doc.fillColor('#0f172a').fontSize(8);
+      doc.rect(40, rowTop, 515, 16).fill(idx % 2 === 0 ? PDF_COLORS.bg : '#ffffff');
+      doc.fillColor(PDF_COLORS.text).fontSize(8);
       doc.text(matName,                                         colX[0], rowTop + 4, { width: 155, ellipsis: true });
       doc.text(unit,                                            colX[1], rowTop + 4, { width: 45, align: 'left' });
       doc.text(qty % 1 === 0 ? String(qty) : qty.toFixed(2),   colX[2], rowTop + 4, { width: 35, align: 'right' });
@@ -160,30 +141,19 @@ export function generateQuotationPDF(
       doc.text(st   > 0 ? st.toFixed(2)   : '—',               colX[6], rowTop + 4, { width: 45, align: 'right' });
       doc.text(formatCurrency(total),                           colX[7], rowTop + 4, { width: 65, align: 'right' });
       doc.y = rowTop + 18;
-      lastRowY = doc.y;
     });
 
-    doc.moveTo(40, lastRowY).lineTo(555, lastRowY).stroke('#cbd5e1');
+    doc.moveTo(40, doc.y).lineTo(555, doc.y).stroke(PDF_COLORS.border);
     doc.moveDown(0.4);
     const totalRowY = doc.y;
-    doc.fillColor('#1e293b').fontSize(9).font('Helvetica-Bold')
+    doc.fillColor(PDF_COLORS.primary).fontSize(9).font('Helvetica-Bold')
       .text('TOTAL LÍQUIDO', 40, totalRowY, { width: 430, align: 'right' });
-    doc.fillColor('#10b981').fontSize(11)
+    doc.fillColor(PDF_COLORS.success).fontSize(11)
       .text(formatCurrency(totalLiquid), 470, totalRowY - 1, { width: 85, align: 'right' });
     doc.y = totalRowY + 16;
     doc.font('Helvetica');
 
-    // ── Rodapé ──
-    const range = (doc as any).bufferedPageRange();
-    for (let i = 0; i < range.count; i++) {
-      doc.switchToPage(range.start + i);
-      doc.fillColor('#94a3b8').fontSize(8)
-        .text(
-          `Gerado em: ${generatedAt}   |   Página ${i + 1} de ${range.count}`,
-          40, doc.page.height - 40,
-          { align: 'center', width: 515 }
-        );
-    }
+    addPremiumFooter(doc);
 
     doc.end();
   });
