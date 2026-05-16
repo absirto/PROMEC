@@ -127,18 +127,46 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     loadData();
 
     if (id && (isEdit || isView)) {
-      api.get(`/service-orders/${id}`).then((data: any) => {
-        reset({
-          ...data,
-          personId: data.personId?.toString() || '',
-          openingDate: data.openingDate?.split('T')[0] || '',
-          estimatedFinishDate: data.estimatedFinishDate?.split('T')[0] || '',
-          plannedStartDate: data.plannedStartDate?.split('T')[0] || '',
-          plannedEndDate: data.plannedEndDate?.split('T')[0] || '',
-          materials: (data.materials || []).map((m: any) => ({ ...m, materialId: m.materialId?.toString() })),
-          services: (data.services || []).map((s: any) => ({ ...s, serviceId: s.serviceId?.toString(), employeeId: s.employeeId?.toString() }))
-        });
-      });
+      setLoading(true);
+      api.get(`/service-orders/${id}`)
+        .then((data: any) => {
+          if (!data) {
+            showToast('Dados da OS não encontrados.', 'error');
+            navigate(listPath);
+            return;
+          }
+
+          const formatDate = (dateStr: any) => {
+            if (!dateStr) return '';
+            if (typeof dateStr !== 'string') return '';
+            return dateStr.split('T')[0];
+          };
+
+          reset({
+            ...data,
+            personId: data.personId?.toString() || '',
+            openingDate: formatDate(data.openingDate),
+            estimatedFinishDate: formatDate(data.estimatedFinishDate),
+            plannedStartDate: formatDate(data.plannedStartDate),
+            plannedEndDate: formatDate(data.plannedEndDate),
+            materials: (data.materials || []).map((m: any) => ({ 
+              ...m, 
+              materialId: m.materialId?.toString(),
+              totalPrice: Number(m.totalPrice) || 0
+            })),
+            services: (data.services || []).map((s: any) => ({ 
+              ...s, 
+              serviceId: s.serviceId?.toString(), 
+              employeeId: s.employeeId?.toString(),
+              totalPrice: Number(s.totalPrice) || 0
+            }))
+          });
+        })
+        .catch((err: any) => {
+          console.error('Erro ao carregar OS:', err);
+          showToast('Não foi possível carregar os detalhes desta Ordem de Serviço.', 'error');
+        })
+        .finally(() => setLoading(false));
     }
   }, [id, isEdit, isView, reset]);
 

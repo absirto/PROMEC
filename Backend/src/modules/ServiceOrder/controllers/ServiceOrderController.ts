@@ -1178,9 +1178,11 @@ export const ServiceOrderController = {
 
   async get(req: Request, res: Response) {
     try {
-      const id = Number(req.params.id);
+      const { id } = req.params;
+      logger.debug('ServiceOrderController.get: Buscando OS %s', id);
+
       const order = await prisma.serviceOrder.findUnique({
-        where: { id },
+        where: { id: Number(id) },
         include: {
           person: { include: { naturalPerson: true, legalPerson: true } },
           services: { include: { service: true, employee: true } },
@@ -1192,12 +1194,22 @@ export const ServiceOrderController = {
           }
         }
       });
-      if (!order) return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada' });
+
+      if (!order) {
+        logger.warn('ServiceOrderController.get: OS %s não encontrada', id);
+        return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada' });
+      }
+
+      logger.debug('ServiceOrderController.get: Enriquecendo dados financeiros para OS %s', id);
       const enriched = FinancialService.enrichFinancials(order);
+      
+      logger.debug('ServiceOrderController.get: Sanitizando dados para OS %s', id);
       const sanitized = FinancialService.sanitizeOrder(enriched, req);
-      res.json(sanitized);
-    } catch (error) {
-      res.status(500).json({ status: 'error', message: 'Erro ao buscar ordem de serviço.' });
+      
+      return res.json(sanitized);
+    } catch (error: any) {
+      logger.error('ServiceOrderController.get falhou para OS %s: %s', req.params.id, error.message, { stack: error.stack });
+      return res.status(500).json({ status: 'error', message: 'Erro ao buscar ordem de serviço.' });
     }
   },
 

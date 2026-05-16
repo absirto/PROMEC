@@ -46,6 +46,8 @@ export const FinancialService = {
   },
 
   enrichFinancials(order: any) {
+    if (!order) return { financials: {} };
+    
     const materials = Array.isArray(order.materials) ? order.materials : [];
     const services = Array.isArray(order.services) ? order.services : [];
     const transactions = Array.isArray(order.transactions) ? order.transactions : [];

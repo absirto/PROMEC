@@ -29,7 +29,8 @@ const AuditTimeline: React.FC<AuditTimelineProps> = ({ entity, entityId }) => {
     const fetchLogs = async () => {
       try {
         const response = await api.get(`/audit/${entity}/${entityId}`);
-        setLogs(response.data);
+        // O interceptor do api.ts já retorna .data (ou o próprio objeto com .data como property)
+        setLogs(Array.isArray(response) ? response : response?.data || []);
       } catch (error) {
         console.error('Erro ao buscar logs de auditoria:', error);
       } finally {

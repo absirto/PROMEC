@@ -73,6 +73,17 @@ api.interceptors.response.use(
       return dataArray;
     }
 
+    // Se for uma array simples ou objeto simples, também anexamos .data para compatibilidade
+    if (result && typeof result === 'object') {
+       if (!Object.prototype.hasOwnProperty.call(result, 'data')) {
+         Object.defineProperty(result, 'data', {
+           value: result,
+           enumerable: false,
+           configurable: true
+         });
+       }
+    }
+
     return result;
   },
   (error) => {
