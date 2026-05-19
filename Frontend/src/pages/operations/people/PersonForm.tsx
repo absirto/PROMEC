@@ -185,7 +185,7 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
             <h2 className={styles.title}>
               {isView ? 'Ficha de Cadastro' : isEdit ? 'Edição de Dados' : 'Novo Cadastro'}
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, fontWeight: 500 }}>
               {isView ? 'Consulta de informações detalhadas' : 'Preencha os campos abaixo para atualizar o sistema'}
             </p>
           </div>
@@ -195,7 +195,6 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
-          {/* Sessão Identificação */}
           <div className={styles.fullWidth}>
             <div className={styles.sectionTitle}>
               <User size={18} /> Identificação Principal
@@ -286,7 +285,6 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
             </div>
           )}
 
-          {/* Sessão Contato */}
           <div className={styles.fullWidth}>
             <div className={styles.sectionTitle} style={{ marginTop: 24 }}>
               <Mail size={18} /> Canais de Comunicação
@@ -322,7 +320,6 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
             </div>
           </div>
 
-          {/* Sessão Endereço */}
           <div className={styles.fullWidth}>
             <div className={styles.sectionTitle} style={{ marginTop: 24 }}>
               <MapPin size={18} /> Localização Geográfica

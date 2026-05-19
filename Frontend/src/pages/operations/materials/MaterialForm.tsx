@@ -89,7 +89,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
             <h2 className={styles.title}>
               {isView ? 'Ficha Técnica do Item' : isEdit ? 'Edição de Material' : 'Novo Registro de Insumo'}
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, fontWeight: 500 }}>
               {isView ? 'Consulta de especificações e valores de mercado' : 'Preencha os dados técnicos para o catálogo de almoxarifado'}
             </p>
           </div>
@@ -99,7 +99,6 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className={styles.formGrid}>
-          {/* Sessão Identificação */}
           <div className={styles.fullWidth}>
             <div className={styles.sectionTitle}>
               <Layers size={18} /> Especificações Técnicas
@@ -135,7 +134,6 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
             />
           </div>
 
-          {/* Sessão Comercial */}
           <div className={styles.fullWidth}>
             <div className={styles.sectionTitle} style={{ marginTop: 24 }}>
               <CreditCard size={18} /> Configuração Comercial
@@ -159,6 +157,7 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
                 placeholder="0.00"
               />
             </div>
+            {errors.price && <span className={styles.errorMessage}>{errors.price.message}</span>}
           </div>
 
           <div className={styles.fieldGroup}>
@@ -177,19 +176,19 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
           </div>
 
           <div className={styles.fullWidth}>
-            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '16px', border: '1px solid var(--glass-border)' }}>
-              <label style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: 14, cursor: isView ? 'default' : 'pointer', fontWeight: 600 }}>
+            <div className={styles.bentoSection} style={{ marginTop: 24 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 16, cursor: isView ? 'default' : 'pointer' }}>
                 <input
                   type="checkbox"
                   disabled={isView}
                   {...register('active')}
-                  style={{ width: 22, height: 22, cursor: 'pointer', accentColor: 'var(--primary)' }}
+                  style={{ width: 20, height: 20, cursor: 'pointer', accentColor: 'var(--primary)' }}
                 />
                 <div>
-                  Disponibilidade em Linha
-                  <p style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 400, marginTop: 4 }}>
+                  <span style={{ display: 'block', fontWeight: 700, color: 'var(--text-main)', fontSize: 14 }}>Disponibilidade em Linha</span>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 500 }}>
                     Itens desativados não aparecerão na criação de novas Ordens de Serviço.
-                  </p>
+                  </span>
                 </div>
               </label>
             </div>
