@@ -21,6 +21,7 @@ import {
 import api from '../../../services/api';
 import styles from '../../../styles/common/BaseList.module.css';
 import pageStyles from './QuotationsList.module.css';
+import formStyles from '../../../styles/common/BaseForm.module.css';
 import { useToast } from '../../../components/ToastProvider';
 import Skeleton from '../../../components/Skeleton';
 
@@ -221,10 +222,6 @@ const QuotationsList: React.FC = () => {
     };
   }, [watchedItems, watchedFreight]);
 
-  return (
-import formStyles from '../../../styles/common/BaseForm.module.css';
-
-// ... inside the component
   return (
     <div className={styles.listContainer} style={{ animation: 'fadeIn 0.5s var(--spring-smooth)' }}>
       <div className={styles.header}>
