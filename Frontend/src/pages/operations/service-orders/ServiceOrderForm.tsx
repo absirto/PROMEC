@@ -421,6 +421,87 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                 </div>
               </div>
 
+              {/* Serviços Grid */}
+              <div style={{ marginBottom: 48 }}>
+                <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Hammer size={20} color="var(--primary)" />
+                    <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: 18, fontWeight: 700 }}>Serviços & Mão de Obra</h3>
+                  </div>
+                  {!isView && (
+                    <button type="button" onClick={() => appendService({ serviceId: '', employeeId: '', description: '', hoursWorked: 1, unitPrice: 0, totalPrice: 0 })} className={styles.addItemBtn}>
+                      <Plus size={16} /> Adicionar Serviço
+                    </button>
+                  )}
+                </header>
+
+                <div className={styles.tableWrapper}>
+                  <table className={styles.itemsTable}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left' }}>Serviço / Atividade</th>
+                        <th style={{ width: 180 }}>Responsável</th>
+                        <th style={{ width: 100 }}>Horas</th>
+                        <th style={{ width: 120, textAlign: 'right' }}>Valor H/Un</th>
+                        <th style={{ width: 120, textAlign: 'right' }}>Total</th>
+                        {!isView && <th style={{ width: 60 }}></th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {serviceFields.map((field, idx) => (
+                        <tr key={field.id}>
+                          <td>
+                            <select className={styles.formSelect} disabled={isView} {...register(`services.${idx}.serviceId`, {
+                              onChange: (e) => {
+                                const s = availableServices.find(x => x.id.toString() === e.target.value);
+                                if (s) {
+                                  setValue(`services.${idx}.unitPrice`, s.basePrice);
+                                  setValue(`services.${idx}.totalPrice`, (watchedServices[idx]?.hoursWorked || 1) * s.basePrice);
+                                }
+                              }
+                            })} style={{ paddingLeft: 12 }}>
+                              <option value="">Selecione um serviço...</option>
+                              {availableServices.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <select className={styles.formSelect} disabled={isView} {...register(`services.${idx}.employeeId`)} style={{ paddingLeft: 12 }}>
+                              <option value="">Alocar depois...</option>
+                              {employees.map(e => <option key={e.id} value={e.id}>{e.person?.naturalPerson?.name}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <input type="number" step="0.1" className={styles.formInput} disabled={isView} {...register(`services.${idx}.hoursWorked`, {
+                              onChange: (e) => setValue(`services.${idx}.totalPrice`, (parseFloat(e.target.value) || 0) * (watchedServices[idx]?.unitPrice || 0))
+                            })} style={{ paddingLeft: 12, textAlign: 'center' }} />
+                          </td>
+                          <td>
+                            <input type="number" step="0.01" className={styles.formInput} style={{ textAlign: 'right', paddingLeft: 12 }} disabled={isView} {...register(`services.${idx}.unitPrice`, {
+                              onChange: (e) => setValue(`services.${idx}.totalPrice`, (parseFloat(e.target.value) || 0) * (watchedServices[idx]?.hoursWorked || 0))
+                            })} />
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
+                            R$ {(watchedServices[idx]?.totalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
+                          {!isView && (
+                            <td style={{ textAlign: 'center' }}>
+                              <button type="button" onClick={() => removeService(idx)} className={styles.removeBtn}><Trash2 size={16} /></button>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                      {serviceFields.length === 0 && (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>
+                            Nenhum serviço planejado para esta OS.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               {/* Financial Summary Bento */}
               {showFinancialData && (
                 <div className={styles.financialBento}>

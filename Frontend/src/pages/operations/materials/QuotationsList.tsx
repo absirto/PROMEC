@@ -222,15 +222,19 @@ const QuotationsList: React.FC = () => {
   }, [watchedItems, watchedFreight]);
 
   return (
-    <div className={styles.listContainer} style={{ animation: 'fadeIn 0.5s ease-out' }}>
+import formStyles from '../../../styles/common/BaseForm.module.css';
+
+// ... inside the component
+  return (
+    <div className={styles.listContainer} style={{ animation: 'fadeIn 0.5s var(--spring-smooth)' }}>
       <div className={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ background: 'rgba(56, 189, 248, 0.12)', color: '#38bdf8', padding: 10, borderRadius: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ background: 'var(--primary-soft)', color: 'var(--primary)', padding: 12, borderRadius: 12 }}>
             <FileText size={24} />
           </div>
           <div>
             <h2 className={styles.title} style={{ margin: 0 }}>Central de Cotações</h2>
-            <p style={{ color: '#8a99a8', fontSize: 13, margin: 0 }}>Gestão de propostas e análise de melhor custo-benefício</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0, fontWeight: 500 }}>Gestão de propostas e análise de melhor custo-benefício</p>
           </div>
         </div>
         <button 
@@ -246,10 +250,10 @@ const QuotationsList: React.FC = () => {
         {/* Formulário de Nova Cotação */}
         <div className={pageStyles.panelCard}>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-               <h3 style={{ margin: 0, color: '#f1f5f9', fontSize: 18 }}>Nova Proposta</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+               <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: 18, fontWeight: 700 }}>Nova Proposta</h3>
                <div style={{ display: 'flex', gap: 10 }}>
-                  <div style={{ padding: '4px 12px', background: 'rgba(56,189,248,0.1)', color: '#38bdf8', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
+                  <div style={{ padding: '4px 12px', background: 'var(--primary-soft)', color: 'var(--primary)', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
                     {summary.filled}/{summary.count} itens
                   </div>
                   <div style={{ padding: '4px 12px', background: 'rgba(16,185,129,0.1)', color: '#10b981', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>
@@ -259,90 +263,90 @@ const QuotationsList: React.FC = () => {
             </div>
 
             <div className={pageStyles.twoColumnForm}>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Solicitação (Requisição)</label>
-                <select className={styles.searchInput} style={{ width: '100%' }} {...register('purchaseRequestId', { required: true })}>
+              <div className={formStyles.fieldGroup}>
+                <label className={formStyles.label}>Solicitação (Requisição)</label>
+                <select className={formStyles.formSelect} style={{ paddingLeft: 12 }} {...register('purchaseRequestId', { required: true })}>
                   <option value="">Selecione...</option>
                   {purchaseRequests.filter(r => r.status !== 'CLOSED').map(r => (
                     <option key={r.id} value={r.id}>{r.code} - {r.serviceOrder?.traceCode || 'Geral'}</option>
                   ))}
                 </select>
               </div>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Fornecedor</label>
-                <select className={styles.searchInput} style={{ width: '100%' }} {...register('supplierPersonId', { required: true })}>
+              <div className={formStyles.fieldGroup}>
+                <label className={formStyles.label}>Fornecedor</label>
+                <select className={formStyles.formSelect} style={{ paddingLeft: 12 }} {...register('supplierPersonId', { required: true })}>
                   <option value="">Selecione...</option>
                   {people.map(p => <option key={p.id} value={p.id}>{getPersonName(p)}</option>)}
                 </select>
               </div>
             </div>
 
-            <div className={pageStyles.metaGrid} style={{ marginTop: 12 }}>
-               <div className={styles.fieldGroup}>
-                <label className={styles.label}>Frete</label>
+            <div className={pageStyles.metaGrid}>
+               <div className={formStyles.fieldGroup}>
+                <label className={formStyles.label}>Frete</label>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <select className={styles.searchInput} style={{ width: 100 }} {...register('freightMode')}>
+                  <select className={formStyles.formSelect} style={{ width: 100, paddingLeft: 12 }} {...register('freightMode')}>
                     <option value="CIF">CIF</option>
                     <option value="FOB">FOB</option>
                   </select>
-                  <input type="number" step="0.01" className={styles.searchInput} placeholder="R$ 0,00" {...register('freightCost')} />
+                  <input type="number" step="0.01" className={formStyles.formInput} style={{ paddingLeft: 12 }} placeholder="R$ 0,00" {...register('freightCost')} />
                 </div>
               </div>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Entrega (dias)</label>
-                <input type="number" className={styles.searchInput} {...register('deliveryLeadTimeDays')} />
+              <div className={formStyles.fieldGroup}>
+                <label className={formStyles.label}>Entrega (dias)</label>
+                <input type="number" className={formStyles.formInput} style={{ paddingLeft: 12 }} {...register('deliveryLeadTimeDays')} />
               </div>
-              <div className={styles.fieldGroup}>
-                <label className={styles.label}>Validade</label>
-                <input type="date" className={styles.searchInput} {...register('validUntil')} />
+              <div className={formStyles.fieldGroup}>
+                <label className={formStyles.label}>Validade</label>
+                <input type="date" className={formStyles.formInput} style={{ paddingLeft: 12 }} {...register('validUntil')} />
               </div>
             </div>
 
-            <div className={pageStyles.itemsTableWrap} style={{ marginTop: 24 }}>
+            <div className={pageStyles.itemsTableWrap}>
                <table className={pageStyles.itemsTable}>
                  <thead>
                    <tr>
-                     <th style={{ width: '30%' }}>Material</th>
-                     <th>Qtd Pendente</th>
-                     <th>Custo Unit.</th>
-                     <th>Impostos (R$)</th>
-                     <th>Total Item</th>
+                     <th style={{ width: '35%' }}>Material</th>
+                     <th style={{ width: 100 }}>Qtd</th>
+                     <th style={{ width: 120 }}>Unitário</th>
+                     <th style={{ width: 160 }}>Impostos (R$)</th>
+                     <th style={{ width: 140 }}>Total Item</th>
                    </tr>
                  </thead>
                  <tbody>
                    {fields.map((field, index) => (
                      <tr key={field.id}>
                        <td>
-                         <div style={{ fontWeight: 700, color: '#f1f5f9' }}>{field.materialName}</div>
-                         <div style={{ fontSize: 11, color: '#94a3b8' }}>Un: {field.unit} | Ref: {formatCurrency(field.priceReference)}</div>
+                         <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: 13 }}>{field.materialName}</div>
+                         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Un: {field.unit} | Ref: {formatCurrency(field.priceReference)}</div>
                        </td>
                        <td>
-                         <input type="number" step="0.01" className={styles.searchInput} style={{ width: 80 }} {...register(`items.${index}.quantity` as any, { onChange: () => handleCalcItemTotal(index) })} />
+                         <input type="number" step="0.01" className={formStyles.formInput} style={{ paddingLeft: 12, height: 38 }} {...register(`items.${index}.quantity` as any, { onChange: () => handleCalcItemTotal(index) })} />
                        </td>
                        <td>
-                         <input type="number" step="0.01" className={styles.searchInput} style={{ width: 100 }} {...register(`items.${index}.unitCost` as any, { onChange: () => handleCalcItemTotal(index) })} />
+                         <input type="number" step="0.01" className={formStyles.formInput} style={{ paddingLeft: 12, height: 38 }} {...register(`items.${index}.unitCost` as any, { onChange: () => handleCalcItemTotal(index) })} />
                        </td>
                        <td>
                          <div style={{ display: 'flex', gap: 4 }}>
-                           <input type="number" step="0.01" placeholder="IPI" className={styles.searchInput} style={{ width: 60, fontSize: 11 }} {...register(`items.${index}.ipiValue` as any, { onChange: () => handleCalcItemTotal(index) })} />
-                           <input type="number" step="0.01" placeholder="ICMS" className={styles.searchInput} style={{ width: 60, fontSize: 11 }} {...register(`items.${index}.icmsValue` as any, { onChange: () => handleCalcItemTotal(index) })} />
+                           <input type="number" step="0.01" placeholder="IPI" title="IPI" className={formStyles.formInput} style={{ paddingLeft: 8, height: 38, fontSize: 11 }} {...register(`items.${index}.ipiValue` as any, { onChange: () => handleCalcItemTotal(index) })} />
+                           <input type="number" step="0.01" placeholder="ICMS" title="ICMS" className={formStyles.formInput} style={{ paddingLeft: 8, height: 38, fontSize: 11 }} {...register(`items.${index}.icmsValue` as any, { onChange: () => handleCalcItemTotal(index) })} />
                          </div>
                        </td>
                        <td>
-                         <input type="number" step="0.01" readOnly className={styles.searchInput} style={{ width: 110, background: 'rgba(255,255,255,0.02)', color: '#10b981', fontWeight: 800 }} {...register(`items.${index}.totalPaid` as any)} />
+                         <input type="number" step="0.01" readOnly className={formStyles.formInput} style={{ paddingLeft: 12, height: 38, background: 'var(--bg-main)', color: 'var(--primary)', fontWeight: 800, border: 'none' }} {...register(`items.${index}.totalPaid` as any)} />
                        </td>
                      </tr>
                    ))}
                    {fields.length === 0 && (
-                     <tr><td colSpan={5} style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Aguardando seleção de solicitação...</td></tr>
+                     <tr><td colSpan={5} style={{ padding: 64, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>Aguardando seleção de solicitação...</td></tr>
                    )}
                  </tbody>
                </table>
             </div>
 
-            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
-               <button type="submit" disabled={saving || fields.length === 0} className={styles.submitBtn} style={{ width: 'auto', padding: '12px 40px' }}>
-                  {saving ? 'Gravando...' : <><Save size={18} style={{ marginRight: 8 }} /> Salvar Cotação</>}
+            <div style={{ marginTop: 32, display: 'flex', justifyContent: 'flex-end' }}>
+               <button type="submit" disabled={saving || fields.length === 0} className={formStyles.submitBtn} style={{ width: 'auto', padding: '12px 48px', marginTop: 0 }}>
+                  {saving ? 'Gravando...' : <><Save size={18} /> Salvar Cotação</>}
                </button>
             </div>
           </form>
@@ -351,43 +355,43 @@ const QuotationsList: React.FC = () => {
         {/* Listagem de Cotações e Comparativo */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div className={pageStyles.panelCard}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#f1f5f9', fontSize: 16 }}>Análise de Propostas</h3>
+            <h3 style={{ margin: '0 0 20px 0', color: 'var(--text-main)', fontSize: 16, fontWeight: 700 }}>Análise de Propostas</h3>
             
             {loading ? (
-               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                 {[1,2,3].map(i => <Skeleton key={i} height="80px" borderRadius="16px" />)}
+               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                 {[1,2,3].map(i => <Skeleton key={i} height="100px" borderRadius="16px" />)}
                </div>
             ) : quotations.length === 0 ? (
-               <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Nenhuma cotação para análise.</div>
+               <div style={{ padding: 64, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>Nenhuma cotação para análise.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {quotations.map(q => {
                   const total = getQuotationTotal(q);
                   return (
-                    <div key={q.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, padding: 14 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div key={q.id} style={{ background: 'var(--bg-main)', border: '1px solid var(--border-subtle)', borderRadius: 16, padding: 16, transition: 'all 0.2s' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                          <div>
-                            <div style={{ fontWeight: 800, color: '#f1f5f9' }}>{getPersonName(q.supplierPerson)}</div>
-                            <div style={{ fontSize: 12, color: '#94a3b8' }}>Ref: {q.purchaseRequest?.code}</div>
+                            <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: 14 }}>{getPersonName(q.supplierPerson)}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Ref: {q.purchaseRequest?.code}</div>
                          </div>
                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: '#10b981', fontWeight: 800 }}>{formatCurrency(total)}</div>
-                            <div style={{ fontSize: 11, color: '#64748b' }}>{q.items?.length || 0} itens</div>
+                            <div style={{ color: 'var(--primary)', fontWeight: 800, fontSize: 16 }}>{formatCurrency(total)}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{q.items?.length || 0} itens</div>
                          </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+                      <div style={{ display: 'flex', gap: 10, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
                          <button className={pageStyles.miniAction} onClick={() => window.open(api.defaults.baseURL + `/service-orders/purchase-quotations/${q.id}/pdf`)}>
-                           <Printer size={14} /> PDF
+                           <Printer size={14} /> <span>PDF</span>
                          </button>
                          {q.status === 'OPEN' && (
-                           <button className={pageStyles.miniAction} style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }} onClick={async () => {
+                           <button className={pageStyles.miniAction} style={{ background: 'var(--primary)', color: 'var(--primary-fg)', borderColor: 'var(--primary)' }} onClick={async () => {
                              if(window.confirm('Deseja aprovar esta cotação e gerar a compra?')) {
                                await api.post(`/service-orders/purchase-quotations/${q.id}/approve`, {});
                                showToast('Cotação aprovada!');
                                void fetchData();
                              }
                            }}>
-                             <CheckCircle2 size={14} /> Aprovar
+                             <CheckCircle2 size={14} /> <span>Aprovar</span>
                            </button>
                          )}
                       </div>
