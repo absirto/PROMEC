@@ -221,10 +221,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
               {isView ? `Ordem de Serviço #${id}` : isEdit ? `Editando OS #${id}` : 'Novo Orçamento de Serviço'}
             </h2>
             <div className={styles.statusRow}>
-              <div className={styles.badgeLabel} style={{ background: 'rgba(45, 212, 191, 0.1)', color: 'var(--primary)' }}>
+              <div className={styles.badgeLabel}>
                 <Activity size={12} /> Operacional
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, fontWeight: 500 }}>
                 {isView ? 'Histórico completo e apontamentos' : 'Planejamento de recursos e cronograma técnico'}
               </p>
             </div>
@@ -333,12 +333,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
               </div>
 
               <div className={styles.fieldGroup}>
-                <label className={styles.label}>Solicitação do Cliente / Problema Relatado</label>
-                <textarea className={styles.formTextarea} disabled={isView} {...register('problemDescription')} style={{ minHeight: 140 }} placeholder="Descreva os sintomas ou a solicitação original..." />
+                <label className={styles.label}>Solicitação do Cliente</label>
+                <textarea className={styles.formTextarea} disabled={isView} {...register('problemDescription')} style={{ minHeight: 120 }} placeholder="Descreva os sintomas..." />
               </div>
               <div className={styles.fieldGroup}>
-                <label className={styles.label}>Diagnóstico Técnico / Observações</label>
-                <textarea className={styles.formTextarea} disabled={isView} {...register('technicalDiagnosis')} style={{ minHeight: 140 }} placeholder="Parecer técnico preliminar..." />
+                <label className={styles.label}>Diagnóstico Técnico</label>
+                <textarea className={styles.formTextarea} disabled={isView} {...register('technicalDiagnosis')} style={{ minHeight: 120 }} placeholder="Parecer técnico preliminar..." />
               </div>
             </div>
           )}
@@ -352,11 +352,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <Package size={20} color="var(--primary)" />
-                    <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: 18 }}>Materiais & Peças</h3>
+                    <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: 18, fontWeight: 700 }}>Materiais & Peças</h3>
                   </div>
                   {!isView && (
                     <button type="button" onClick={() => appendMaterial({ materialId: '', quantity: 1, unitPrice: 0, totalPrice: 0 })} className={styles.addItemBtn}>
-                      <Plus size={16} /> Adicionar Item
+                      <Plus size={16} /> Adicionar Material
                     </button>
                   )}
                 </header>
@@ -384,7 +384,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                                   setValue(`materials.${idx}.totalPrice`, (watchedMaterials[idx]?.quantity || 1) * m.price); 
                                 }
                               }
-                            })}>
+                            })} style={{ paddingLeft: 12 }}>
                               <option value="">Selecione um material...</option>
                               {availableMaterials.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                             </select>
@@ -392,14 +392,14 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                           <td>
                             <input type="number" className={styles.formInput} disabled={isView} {...register(`materials.${idx}.quantity`, { 
                               onChange: (e) => setValue(`materials.${idx}.totalPrice`, (parseFloat(e.target.value) || 0) * (watchedMaterials[idx]?.unitPrice || 0)) 
-                            })} />
+                            })} style={{ paddingLeft: 12, textAlign: 'center' }} />
                           </td>
                           <td>
-                            <input type="number" step="0.01" className={styles.formInput} style={{ textAlign: 'right' }} disabled={isView} {...register(`materials.${idx}.unitPrice`, { 
+                            <input type="number" step="0.01" className={styles.formInput} style={{ textAlign: 'right', paddingLeft: 12 }} disabled={isView} {...register(`materials.${idx}.unitPrice`, { 
                               onChange: (e) => setValue(`materials.${idx}.totalPrice`, (parseFloat(e.target.value) || 0) * (watchedMaterials[idx]?.quantity || 0)) 
                             })} />
                           </td>
-                          <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--primary)' }}>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
                             R$ {(watchedMaterials[idx]?.totalPrice || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </td>
                           {!isView && (
@@ -411,7 +411,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                       ))}
                       {materialFields.length === 0 && (
                         <tr>
-                          <td colSpan={5} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)', fontSize: 13 }}>
+                          <td colSpan={5} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>
                             Nenhum material adicionado a este orçamento.
                           </td>
                         </tr>
@@ -440,23 +440,23 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                       </div>
                     </div>
                     <div className={styles.infoBox}>
-                      <Info size={16} />
-                      <p>Os totais são calculados em tempo real incluindo insumos e mão de obra planejada.</p>
+                      <Info size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                      <p style={{ margin: 0 }}>Os totais são calculados em tempo real incluindo insumos e mão de obra planejada.</p>
                     </div>
                   </div>
 
                   <div className={styles.financialSummary}>
                     <div className={styles.summaryRow}>
                       <span>Subtotal Materiais</span>
-                      <span>{totals.matTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{totals.matTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                     <div className={styles.summaryRow}>
                       <span>Subtotal Serviços</span>
-                      <span>{totals.svcTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{totals.svcTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                     <div className={styles.divider} />
                     <div className={styles.totalBlock}>
-                      <span className={styles.totalLabel}>INVESTIMENTO TOTAL</span>
+                      <span className={styles.totalLabel}>Investimento Total Estimado</span>
                       <span className={styles.totalValue}>{totals.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
                     </div>
                   </div>

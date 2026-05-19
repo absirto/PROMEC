@@ -36,24 +36,24 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {toasts.map(toast => (
           <div key={toast.id} style={{
-            background: toast.type === 'success' ? '#00e6b0' : 
-                        toast.type === 'error' ? '#ef4444' : 
-                        toast.type === 'warning' ? '#f59e0b' : '#3b82f6',
-            color: '#fff',
+            background: toast.type === 'success' ? 'var(--success)' : 
+                        toast.type === 'error' ? 'var(--danger)' : 
+                        toast.type === 'warning' ? 'var(--warning)' : 'var(--info)',
+            color: 'var(--text-inverse)',
             padding: '16px 20px',
-            borderRadius: 12,
-            boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: 'var(--shadow-md)',
             display: 'flex',
             alignItems: 'center',
             gap: 12,
             minWidth: 300,
-            animation: 'slideInRight 0.3s ease-out'
+            animation: 'slideInRight 0.3s var(--spring-smooth)'
           }}>
             {toast.type === 'success' ? <CheckCircle size={20} /> : 
              toast.type === 'error' ? <AlertCircle size={20} /> : 
              toast.type === 'warning' ? <AlertTriangle size={20} /> : <Info size={20} />}
             <span style={{ flex: 1, fontWeight: 600 }}>{toast.message}</span>
-            <button onClick={() => removeToast(toast.id)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 4 }}>
+            <button onClick={() => removeToast(toast.id)} style={{ background: 'none', border: 'none', color: 'inherit', opacity: 0.8, cursor: 'pointer', padding: 4 }}>
               <X size={18} />
             </button>
           </div>

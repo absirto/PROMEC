@@ -4,22 +4,17 @@
   align-items: flex-start;
   min-height: 85vh;
   padding: clamp(32px, 5vw, 100px) clamp(16px, 3vw, 32px);
-  animation: slideUp 0.8s var(--spring-smooth);
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  animation: fadeIn 0.6s var(--spring-smooth);
 }
 
 .glassCard {
   background: var(--bg-surface);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: clamp(24px, 5vw, 64px);
   width: 100%;
   max-width: 960px;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-md);
   position: relative;
 }
 
@@ -42,11 +37,11 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: transparent;
+  background: var(--bg-main);
   color: var(--text-secondary);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-subtle);
   padding: 10px 20px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -54,9 +49,9 @@
 }
 
 .backBtn:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-surface);
   color: var(--text-main);
-  border-color: var(--text-secondary);
+  border-color: var(--border-strong);
 }
 
 .formGrid {
@@ -101,9 +96,9 @@
 .formInput, .formSelect, .formTextarea {
   width: 100%;
   padding: 14px 16px 14px 44px;
-  background: var(--bg-deep);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
   color: var(--text-main);
   font-size: 15px;
   outline: none;
@@ -119,7 +114,7 @@
 .formInput:focus, .formSelect:focus, .formTextarea:focus {
   border-color: var(--primary);
   background: var(--bg-surface);
-  box-shadow: 0 0 0 4px var(--primary-glow);
+  box-shadow: 0 0 0 4px var(--primary-soft);
 }
 
 .formInput:focus + .inputIcon, .inputWrapper:focus-within .inputIcon {
@@ -143,9 +138,9 @@
   width: 100%;
   margin-top: 32px;
   background: var(--primary);
-  color: #0b1120;
+  color: var(--primary-fg);
   padding: 16px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 16px;
   font-weight: 700;
   border: none;
@@ -155,13 +150,12 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  box-shadow: 0 0 0 rgba(45, 212, 191, 0);
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: var(--primary-bright);
+  background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px var(--primary-glow);
+  box-shadow: var(--shadow-md);
 }
 
 .submitBtn:disabled {
@@ -177,22 +171,21 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  opacity: 0.9;
 }
 
 .toggleContainer {
   display: flex;
-  background: var(--bg-deep);
+  background: var(--bg-main);
   padding: 4px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   gap: 4px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-subtle);
 }
 
 .toggleBtn {
   flex: 1;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -205,7 +198,7 @@
 .toggleBtnActive {
   background: var(--bg-surface);
   color: var(--primary);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 .lookupBtn {
@@ -213,9 +206,9 @@
   right: 8px;
   background: var(--bg-surface);
   color: var(--primary);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border-subtle);
   padding: 6px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
@@ -224,18 +217,18 @@
 
 .lookupBtn:hover {
   background: var(--primary);
-  color: #0b1120;
+  color: var(--primary-fg);
 }
 
 .quickAddBtn {
   position: absolute;
   right: 8px;
   background: var(--primary);
-  color: #0b1120;
+  color: var(--primary-fg);
   border: none;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -244,13 +237,304 @@
 }
 
 .quickAddBtn:hover {
-  background: var(--primary-bright);
+  background: var(--primary-hover);
   transform: scale(1.05);
 }
 
+/* Tabs System */
+.tabsContainer {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 32px;
+  background: var(--bg-main);
+  padding: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.tabButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tabButton:hover {
+  color: var(--text-main);
+  background: var(--bg-surface);
+}
+
+.tabButtonActive {
+  background: var(--bg-surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Header Enhancements */
+.headerTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Bento Sections */
+.bentoSection {
+  background: var(--bg-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  margin-top: 12px;
+}
+
+.sectionHeaderMini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bentoGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* Items Table */
+.tableWrapper {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.itemsTable th {
+  background: var(--bg-main);
+  padding: 12px 16px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.itemsTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.addItemBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid var(--primary-soft);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.addItemBtn:hover {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+
+.removeBtn {
+  background: rgba(239, 68, 68, 0.05);
+  color: var(--danger);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.removeBtn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Financial Summary */
+.financialBento {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  margin-top: 32px;
+  padding: 24px;
+  background: var(--bg-main);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.financialInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.infoBox {
+  display: flex;
+  gap: 12px;
+  background: var(--bg-surface);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.financialSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 8px 0;
+}
+
+.totalBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.totalLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.totalValue {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+/* Empty State / Animations */
+.emptyModuleState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.spinningIcon {
+  color: var(--primary);
+  margin-bottom: 24px;
+  opacity: 0.5;
+}
+
+.opStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.opStatCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.opStatVal {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.opStatLab {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Footer */
+.formFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.footerInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 @media (max-width: 768px) {
-  .formGrid {
+  .financialBento {
     grid-template-columns: 1fr;
-    gap: 20px;
+  }
+  .bentoGrid3 {
+    grid-template-columns: 1fr;
+  }
+  .tabsContainer {
+    flex-direction: column;
   }
 }

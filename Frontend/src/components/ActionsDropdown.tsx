@@ -39,19 +39,19 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ onEdit, onDelete, onV
                 style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#e0e0e0',
+                    color: 'var(--text-secondary)',
                     cursor: 'pointer',
                     padding: '8px',
-                    borderRadius: '50%',
+                    borderRadius: 'var(--radius-full)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.2rem'
+                    transition: 'all 0.2s'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-                <EllipsisVertical />
+                <EllipsisVertical size={20} />
             </button>
             
             {isOpen && (
@@ -59,26 +59,79 @@ const ActionsDropdown: React.FC<ActionsDropdownProps> = ({ onEdit, onDelete, onV
                     position: 'absolute',
                     right: 0,
                     top: '100%',
-                    background: '#232323',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-md)',
                     zIndex: 10,
-                    minWidth: 120
+                    minWidth: 140,
+                    padding: '4px',
+                    marginTop: '4px'
                 }}>
                     {onView && (
-                        <button onClick={onView} style={{ display: 'flex', alignItems: 'center', width: '100%', background: 'none', border: 'none', color: '#e0e0e0', padding: '8px 12px', cursor: 'pointer' }}>
-                            <Eye style={{ marginRight: 8 }} /> Visualizar
+                        <button 
+                            onClick={onView} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                width: '100%', 
+                                background: 'none', 
+                                border: 'none', 
+                                color: 'var(--text-main)', 
+                                padding: '8px 12px', 
+                                cursor: 'pointer',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '14px',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <Eye size={16} style={{ marginRight: 8 }} /> Visualizar
                         </button>
                     )}
                     {onEdit && (
-                        <button onClick={onEdit} style={{ display: 'flex', alignItems: 'center', width: '100%', background: 'none', border: 'none', color: '#e0e0e0', padding: '8px 12px', cursor: 'pointer' }}>
-                            <Pencil style={{ marginRight: 8 }} /> Editar
+                        <button 
+                            onClick={onEdit} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                width: '100%', 
+                                background: 'none', 
+                                border: 'none', 
+                                color: 'var(--text-main)', 
+                                padding: '8px 12px', 
+                                cursor: 'pointer',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '14px',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-main)'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <Pencil size={16} style={{ marginRight: 8 }} /> Editar
                         </button>
                     )}
                     {onDelete && (
-                        <button onClick={onDelete} style={{ display: 'flex', alignItems: 'center', width: '100%', background: 'none', border: 'none', color: '#e0e0e0', padding: '8px 12px', cursor: 'pointer' }}>
-                            <Trash2 style={{ marginRight: 8 }} /> Excluir
+                        <button 
+                            onClick={onDelete} 
+                            style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                width: '100%', 
+                                background: 'none', 
+                                border: 'none', 
+                                color: 'var(--danger)', 
+                                padding: '8px 12px', 
+                                cursor: 'pointer',
+                                borderRadius: 'var(--radius-sm)',
+                                fontSize: '14px',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.05)'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                            <Trash2 size={16} style={{ marginRight: 8 }} /> Excluir
                         </button>
                     )}
                 </div>

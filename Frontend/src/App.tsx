@@ -70,7 +70,7 @@ function App() {
       <ToastProvider>
         <ErrorBoundary>
           <BrowserRouter>
-            <Suspense fallback={<div style={{ background: '#0b1120', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2dd4bf', fontWeight: 800 }}>Carregando ProMEC...</div>}>
+            <Suspense fallback={<div style={{ background: 'var(--bg-main)', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 800 }}>Carregando ProMEC...</div>}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/" element={<AppLayout />}>
