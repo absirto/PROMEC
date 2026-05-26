@@ -37,7 +37,7 @@ export const serviceOrderCreateSchema = Joi.object({
   profitPercent: Joi.number().min(0).default(0),
   services: Joi.array().items(nestedServiceSchema).default([]),
   materials: Joi.array().items(nestedMaterialSchema).default([])
-});
+}).unknown(true);
 
 export const serviceOrderUpdateSchema = Joi.object({
   traceCode: Joi.string().trim().max(50).allow(null, ''),
@@ -58,4 +58,4 @@ export const serviceOrderUpdateSchema = Joi.object({
   profitPercent: Joi.number().min(0),
   services: Joi.array().items(nestedServiceSchema),
   materials: Joi.array().items(nestedMaterialSchema)
-}).min(1);
+}).min(1).unknown(true);
