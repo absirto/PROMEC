@@ -97,6 +97,12 @@ export const StockController = {
       const createdLog = await prisma.$transaction(async (tx) => {
         const txAny = tx as any;
 
+        // Adquire um bloqueio pessimista na linha do material para serializar movimentações concorrentes
+        await tx.material.update({
+          where: { id: parsedMaterialId },
+          data: { updatedAt: new Date() }
+        });
+
         if (movementType === 'IN') {
           const parsedTotalPaid = totalPaid !== undefined && totalPaid !== null ? Number(totalPaid) : null;
           const parsedUnitCost = unitCost !== undefined && unitCost !== null ? Number(unitCost) : null;

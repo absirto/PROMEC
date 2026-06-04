@@ -29,9 +29,19 @@ const formatDateInput = (date: Date) => {
 
 const formatDateLabel = (dateValue: string | Date | null | undefined) => {
   if (!dateValue) return '-';
+  if (typeof dateValue === 'string') {
+    const parts = dateValue.split('T');
+    if (parts[0].includes('-')) {
+      const [year, month, day] = parts[0].split('-');
+      return `${day}/${month}/${year}`;
+    }
+  }
   const d = new Date(dateValue);
   if (Number.isNaN(d.getTime())) return '-';
-  return d.toLocaleDateString('pt-BR');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const year = d.getUTCFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
@@ -434,7 +444,7 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
                   <td className={commonStyles.tableCell}>
                     <div className={styles.dateCell}>
                       <Calendar size={14} />
-                      {new Date(order.openingDate).toLocaleDateString()}
+                      {formatDateLabel(order.openingDate)}
                     </div>
                   </td>
                   <td className={commonStyles.tableCell}>
