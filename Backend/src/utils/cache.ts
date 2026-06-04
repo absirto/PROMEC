@@ -26,7 +26,14 @@ export async function cacheGet<T = any>(key: string): Promise<T | null> {
 export async function cacheDel(key: string) {
   if (!isRedisReady()) return;
   try {
-    await redisClient.del(key);
+    if (key.includes('*')) {
+      const keys = await redisClient.keys(key);
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    } else {
+      await redisClient.del(key);
+    }
   } catch (err) {
     // Silently fail cache
   }

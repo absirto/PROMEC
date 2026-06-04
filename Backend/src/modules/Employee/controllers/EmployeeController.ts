@@ -49,6 +49,9 @@ export const EmployeeController = {
       await EmployeeService.delete(id);
       res.status(204).send();
     } catch (error: any) {
+      if (error.message === 'NOT_FOUND') {
+        return res.status(404).json({ error: 'Funcionário não encontrado.' });
+      }
       res.status(400).json({ error: error.message });
     }
   },

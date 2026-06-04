@@ -94,6 +94,11 @@ export const UserController = {
     try {
       const id = Number(req.params.id);
 
+      const exists = await prisma.user.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
       // 1. Verificar se é um funcionário
       const employee = await prisma.employee.findUnique({
         where: { userId: id }

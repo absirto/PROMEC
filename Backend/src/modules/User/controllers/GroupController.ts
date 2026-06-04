@@ -80,28 +80,37 @@ export const GroupController = {
   },
 
   async delete(req: Request, res: Response) {
-    const id = Number(req.params.id);
+    try {
+      const id = Number(req.params.id);
 
-    // 1. Verificar se há usuários vinculados
-    const userCount = await prisma.user.count({
-      where: { groupId: id }
-    });
+      const exists = await prisma.group.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ message: 'Grupo não encontrado' });
+      }
 
-    if (userCount > 0) {
-      return res.status(400).json({ 
-        message: `Não é possível excluir: existem ${userCount} usuário(s) vinculado(s) a este grupo.` 
+      // 1. Verificar se há usuários vinculados
+      const userCount = await prisma.user.count({
+        where: { groupId: id }
       });
+
+      if (userCount > 0) {
+        return res.status(400).json({ 
+          message: `Não é possível excluir: existem ${userCount} usuário(s) vinculado(s) a este grupo.` 
+        });
+      }
+
+      // 2. Remover permissões vinculadas
+      await prisma.groupPermission.deleteMany({
+        where: { groupId: id }
+      });
+
+      // 3. Deletar o grupo
+      await prisma.group.delete({ where: { id } });
+      
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: 'Erro ao deletar grupo', error: error.message });
     }
-
-    // 2. Remover permissões vinculadas
-    await prisma.groupPermission.deleteMany({
-      where: { groupId: id }
-    });
-
-    // 3. Deletar o grupo
-    await prisma.group.delete({ where: { id } });
-    
-    res.status(204).end();
   },
 
   async listPermissions(req: Request, res: Response) {

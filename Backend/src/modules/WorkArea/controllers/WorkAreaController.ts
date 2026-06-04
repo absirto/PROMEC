@@ -51,6 +51,11 @@ export const WorkAreaController = {
     try {
       const id = Number(req.params.id);
 
+      const exists = await prisma.workArea.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ error: 'Área não encontrada.' });
+      }
+
       // 1. Verificar se há funcionários vinculados
       const usageCount = await prisma.employee.count({
         where: { workAreaId: id }

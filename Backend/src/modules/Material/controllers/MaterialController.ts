@@ -105,7 +105,7 @@ export const MaterialController = {
         newData: material,
       });
 
-      await cacheDel('materials:list');
+      await cacheDel('materials:list*');
       res.status(201).json(material);
     } catch (error: any) {
       logger.error('MaterialController.create falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
@@ -152,7 +152,7 @@ export const MaterialController = {
         newData: material,
       });
 
-      await cacheDel('materials:list');
+      await cacheDel('materials:list*');
       res.json(material);
     } catch (error: any) {
       if (error?.code === 'P2025') {
@@ -193,7 +193,7 @@ export const MaterialController = {
         oldData: oldMaterial,
       });
 
-      await cacheDel('materials:list');
+      await cacheDel('materials:list*');
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ status: 'error', message: 'Erro ao deletar material.', details: error.message });

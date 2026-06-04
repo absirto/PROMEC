@@ -118,6 +118,12 @@ export const QualityControlController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      
+      const exists = await prisma.qualityControl.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ status: 'error', message: 'Controle não encontrado.' });
+      }
+
       const photos = await prisma.qualityPhoto.findMany({ where: { qualityControlId: id } });
       for (const p of photos) {
         await unlinkStorage(p.storagePath);

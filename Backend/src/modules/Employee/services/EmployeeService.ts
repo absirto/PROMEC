@@ -65,6 +65,11 @@ export const EmployeeService = {
     });
   },
   async delete(id: number) {
+    const exists = await prisma.employee.findUnique({ where: { id } });
+    if (!exists) {
+      throw new Error('NOT_FOUND');
+    }
+
     // 1. Verificar se está vinculado a inspeções de qualidade
     const qcCount = await prisma.qualityControl.count({
       where: { inspectorId: id }
