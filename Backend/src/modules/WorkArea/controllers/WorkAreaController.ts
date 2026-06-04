@@ -36,6 +36,12 @@ export const WorkAreaController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      
+      const exists = await prisma.workArea.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ error: 'Área não encontrada.' });
+      }
+
       const { name } = req.body;
       const area = await prisma.workArea.update({
         where: { id },

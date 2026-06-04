@@ -55,28 +55,38 @@ export const GroupController = {
   },
 
   async update(req: Request, res: Response) {
-    const id = Number(req.params.id);
-    const { name, permissionKeys } = req.body;
+    try {
+      const id = Number(req.params.id);
 
-    // Primeiro remove todas as permissões antigas
-    await prisma.groupPermission.deleteMany({
-      where: { groupId: id }
-    });
-
-    const group = await prisma.group.update({
-      where: { id },
-      data: {
-        name,
-        permissions: {
-          create: permissionKeys.map((key: string) => ({
-            permission: {
-              connect: { name: key }
-            }
-          }))
-        }
+      const exists = await prisma.group.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ message: 'Grupo não encontrado' });
       }
-    });
-    res.json(group);
+
+      const { name, permissionKeys } = req.body;
+
+      // Primeiro remove todas as permissões antigas
+      await prisma.groupPermission.deleteMany({
+        where: { groupId: id }
+      });
+
+      const group = await prisma.group.update({
+        where: { id },
+        data: {
+          name,
+          permissions: {
+            create: permissionKeys.map((key: string) => ({
+              permission: {
+                connect: { name: key }
+              }
+            }))
+          }
+        }
+      });
+      res.json(group);
+    } catch (error: any) {
+      res.status(500).json({ message: 'Erro ao atualizar grupo', error: error.message });
+    }
   },
 
   async delete(req: Request, res: Response) {

@@ -73,6 +73,12 @@ export const UserController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+
+      const exists = await prisma.user.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
       const { firstName, lastName, email, role, groupId, password } = req.body;
       const data: Prisma.UserUpdateInput = {};
       if (firstName !== undefined) data.firstName = firstName;

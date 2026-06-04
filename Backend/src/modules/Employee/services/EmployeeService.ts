@@ -47,6 +47,11 @@ export const EmployeeService = {
     });
   },
   async update(id: number, data: any) {
+    const exists = await prisma.employee.findUnique({ where: { id } });
+    if (!exists) {
+      throw new Error('NOT_FOUND');
+    }
+
     return prisma.employee.update({
       where: { id },
       data: {

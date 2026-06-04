@@ -36,6 +36,12 @@ export const JobRoleController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+
+      const exists = await prisma.jobRole.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ error: 'Cargo não encontrado.' });
+      }
+
       const { name } = req.body;
       const role = await prisma.jobRole.update({
         where: { id },

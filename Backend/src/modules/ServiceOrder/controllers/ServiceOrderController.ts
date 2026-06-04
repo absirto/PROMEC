@@ -1319,6 +1319,11 @@ export const ServiceOrderController = {
       const actor = getActor(req);
 
       const order = await prisma.$transaction(async (tx) => {
+        const existing = await tx.serviceOrder.findUnique({ where: { id } });
+        if (!existing) {
+          throw new Error('NOT_FOUND');
+        }
+
         const updated = await (tx.serviceOrder as any).update({
           where: { id },
           data: {
@@ -1412,6 +1417,9 @@ export const ServiceOrderController = {
 
       res.json(FinancialService.enrichFinancials(order));
     } catch (error: any) {
+      if (error.message === 'NOT_FOUND') {
+        return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
+      }
       console.error('Erro ao atualizar OS:', error);
       res.status(400).json({ status: 'error', message: 'Erro ao atualizar ordem de serviço.', details: error.message });
     }

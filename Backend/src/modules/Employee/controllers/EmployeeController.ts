@@ -38,7 +38,10 @@ export const EmployeeController = {
       const id = Number(req.params.id);
       const employee = await EmployeeService.update(id, req.body);
       res.json(employee);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === 'NOT_FOUND') {
+        return res.status(404).json({ error: 'Funcionário não encontrado.' });
+      }
       res.status(400).json({ error: 'Erro ao atualizar funcionário.' });
     }
   },

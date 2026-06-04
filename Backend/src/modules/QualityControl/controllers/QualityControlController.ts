@@ -99,6 +99,12 @@ export const QualityControlController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+
+      const exists = await prisma.qualityControl.findUnique({ where: { id } });
+      if (!exists) {
+        return res.status(404).json({ status: 'error', message: 'Controle não encontrado.' });
+      }
+
       const data = req.body;
       const control = await (prisma.qualityControl as any).update({
         where: { id },
