@@ -16,7 +16,6 @@
     "react-router-dom": "^7.14.0",
     "recharts": "^3.8.1",
     "socket.io-client": "^4.8.3",
-    "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "scripts": {
@@ -28,12 +27,6 @@
     "docker:run": "docker run --rm -p 3000:80 promec-frontend",
     "docker:build:prod-api": "docker build --build-arg VITE_API_URL=https://api.ucalcom.com/v1 -t promec-frontend .",
     "ops:install": "bash scripts/ops/install_frontend.sh"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [
@@ -50,7 +43,6 @@
   "devDependencies": {
     "@types/axios": "^0.9.36",
     "@types/css-modules": "^1.0.5",
-    "@types/jest": "^29.5.11",
     "@types/react-dom": "^18.2.7",
     "@types/react-icons": "^2.2.7",
     "@types/react-router-dom": "^5.3.3",
