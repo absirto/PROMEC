@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
 // Compatibilidade de Jest para Vitest
-globalThis.jest = vi as any;
+(globalThis as any).jest = vi as any;
 
 
 // Mock global do useToast para evitar necessidade de ToastProvider nos testes unitários
