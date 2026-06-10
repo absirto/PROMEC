@@ -1,0 +1,9 @@
+{
+  "name": "promec-monorepo",
+  "version": "1.2.0",
+  "private": true,
+  "workspaces": [
+    "Backend",
+    "Frontend"
+  ]
+}

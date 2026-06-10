@@ -9,9 +9,10 @@ const router = Router();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { status: 'error', message: 'Muitas tentativas de login/registro a partir deste IP. Tente novamente mais tarde.' }
 });
 
 const allowPublicRegister = process.env.ALLOW_PUBLIC_REGISTER === 'true';

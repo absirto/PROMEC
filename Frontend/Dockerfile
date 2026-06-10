@@ -4,8 +4,8 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Argumento para a URL da API (deve ser passado no build do compose)
-ARG REACT_APP_API_URL
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
 COPY package*.json ./
 RUN npm install --legacy-peer-deps

@@ -36,13 +36,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, permission })
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       clearStoredSession();
       setToken(null);
     }, remainingTime);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
     };
   }, [token]);
 

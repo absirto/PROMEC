@@ -1,5 +1,5 @@
 {
-  "name": "frontend-cra",
+  "name": "frontend-vite",
   "version": "1.2.0",
   "private": true,
   "dependencies": {
@@ -14,22 +14,20 @@
     "react-hook-form": "^7.75.0",
     "react-icons": "^5.6.0",
     "react-router-dom": "^7.14.0",
-    "react-scripts": "5.0.1",
     "recharts": "^3.8.1",
     "socket.io-client": "^4.8.3",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "vite",
+    "build": "tsc && vite build",
     "generate:api-types": "openapi-typescript ../openapi/v1.json -o src/generated/api-v1.ts",
-    "test": "react-scripts test",
+    "test": "vitest run",
     "docker:build": "docker build -t promec-frontend .",
     "docker:run": "docker run --rm -p 3000:80 promec-frontend",
-    "docker:build:prod-api": "docker build --build-arg REACT_APP_API_URL=https://api.ucalcom.com/v1 -t promec-frontend .",
-    "ops:install": "bash scripts/ops/install_frontend.sh",
-    "eject": "react-scripts eject"
+    "docker:build:prod-api": "docker build --build-arg VITE_API_URL=https://api.ucalcom.com/v1 -t promec-frontend .",
+    "ops:install": "bash scripts/ops/install_frontend.sh"
   },
   "eslintConfig": {
     "extends": [
@@ -56,8 +54,12 @@
     "@types/react-dom": "^18.2.7",
     "@types/react-icons": "^2.2.7",
     "@types/react-router-dom": "^5.3.3",
+    "@vitejs/plugin-react": "^4.3.0",
     "cypress": "^12.17.4",
+    "jsdom": "^24.1.0",
     "openapi-typescript": "^7.6.1",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vitest": "^1.6.0"
   }
 }

@@ -11,12 +11,12 @@ function redirectToLogin() {
   }
 }
 
-const defaultApiUrl = process.env.NODE_ENV === 'development'
+const defaultApiUrl = import.meta.env.DEV
   ? 'http://localhost:3001/v1'
   : '/v1';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || defaultApiUrl,
+  baseURL: import.meta.env.VITE_API_URL || defaultApiUrl,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -77,9 +77,9 @@ api.interceptors.response.use(
     if (result && typeof result === 'object') {
        if (!Object.prototype.hasOwnProperty.call(result, 'data')) {
          Object.defineProperty(result, 'data', {
-           value: result,
-           enumerable: false,
-           configurable: true
+            value: result,
+            enumerable: false,
+            configurable: true
          });
        }
     }
@@ -93,7 +93,9 @@ api.interceptors.response.use(
         ? data
         : typeof data?.message === 'string'
           ? data.message
-          : undefined;
+          : typeof data?.error === 'string'
+            ? data.error
+            : undefined;
 
       if (error.response.status === 401 || message === 'Token inválido' || message === 'Não autenticado') {
         redirectToLogin();

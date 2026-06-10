@@ -7,8 +7,8 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 cd "$PROJECT_ROOT"
 
-if [ -n "$REACT_APP_API_URL" ]; then
-	docker build --build-arg REACT_APP_API_URL="$REACT_APP_API_URL" -t promec-frontend .
+if [ -n "$VITE_API_URL" ]; then
+	docker build --build-arg VITE_API_URL="$VITE_API_URL" -t promec-frontend .
 else
 	docker build -t promec-frontend .
 fi

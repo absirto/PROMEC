@@ -21,6 +21,15 @@ interface SettingsFormData {
   logoUrl: string;
 }
 
+const getAssetUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001/v1').replace(/\/v1$/, '');
+  return `${apiBaseUrl}/${url.replace(/^\//, '')}`;
+};
+
 const SettingsForm: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -58,23 +67,36 @@ const SettingsForm: React.FC = () => {
             logoUrl: data.logoUrl || ''
           };
           reset(formatted);
-          if (data.logoUrl) setLogoPreview(data.logoUrl);
+          if (data.logoUrl) setLogoPreview(getAssetUrl(data.logoUrl));
         }
       })
       .catch(() => showToast('Erro ao carregar configurações.', 'error'))
       .finally(() => setFetching(false));
   }, [reset, showToast]);
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setLogoPreview(base64);
-        setValue('logoUrl', base64, { shouldDirty: true });
-      };
-      reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append('logo', file);
+      
+      setLoading(true);
+      try {
+        const response = await api.post('/settings/logo', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        const uploadedLogoUrl = response.logoUrl;
+        setLogoPreview(getAssetUrl(uploadedLogoUrl));
+        setValue('logoUrl', uploadedLogoUrl, { shouldDirty: true });
+        showToast('Logotipo carregado com sucesso!');
+      } catch (err: any) {
+        console.error('Erro ao fazer upload do logotipo:', err);
+        showToast(typeof err === 'string' ? err : 'Erro ao fazer upload do logotipo.', 'error');
+      } finally {
+        setLoading(false);
+      }
     }
   };
   

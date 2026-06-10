@@ -88,10 +88,11 @@ const Login: React.FC = () => {
             <p style={{ color: '#8a99a8', marginBottom: 40, fontSize: 14 }}>Insira suas credenciais para entrar</p>
             
             <div className={styles['input-container']}>
-              <label className={styles['input-label']}>E-mail</label>
+              <label htmlFor="email" className={styles['input-label']}>E-mail</label>
               <div className={`${styles['input-field-wrapper']} ${errors.email ? styles['input-error'] : ''}`}>
                 <Mail className={styles['input-icon']} size={20} />
                 <input
+                  id="email"
                   type="email"
                   className={styles['input-field']}
                   placeholder="admin@promec.com"
@@ -101,10 +102,11 @@ const Login: React.FC = () => {
             </div>
 
             <div className={styles['input-container']}>
-              <label className={styles['input-label']}>Senha</label>
+              <label htmlFor="password" className={styles['input-label']}>Senha</label>
               <div className={`${styles['input-field-wrapper']} ${errors.password ? styles['input-error'] : ''}`}>
                 <Lock className={styles['input-icon']} size={20} />
                 <input
+                  id="password"
                   type="password"
                   className={styles['input-field']}
                   placeholder="••••••••"

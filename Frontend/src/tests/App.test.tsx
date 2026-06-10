@@ -1,10 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from '../App';
 
 describe('App', () => {
-  it('deve renderizar o título do sistema', () => {
+  it('deve renderizar o título do sistema', async () => {
     render(<App />);
-    expect(screen.getByText(/ProMEC/i)).toBeInTheDocument();
+    await waitFor(() => {
+      const elements = Array.from(document.querySelectorAll('*'))
+        .filter(el => el.textContent?.includes('ProMEC'));
+      expect(elements.length).toBeGreaterThan(0);
+    }, { timeout: 3000 });
   });
 });

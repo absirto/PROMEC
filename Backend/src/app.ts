@@ -15,6 +15,8 @@ import prisma from './core/prisma';
 import { logger } from './utils/logger';
 import { sanitizeBody } from './middleware/sanitizeBody';
 
+import path from 'path';
+
 dotenv.config();
 if (process.env.NODE_ENV !== 'test') {
   setupSentry();
@@ -50,6 +52,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use('/uploads/public', express.static(path.join(process.cwd(), 'uploads', 'public')));
 app.use(sanitizeBody);
 app.use(requestIdMiddleware);
 app.use(rateLimit({

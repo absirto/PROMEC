@@ -30,4 +30,17 @@ export class SettingsController {
       res.status(500).json({ error: 'Erro ao atualizar configurações.' });
     }
   }
+
+  static async uploadLogo(req: Request, res: Response) {
+    try {
+      const file = (req as Request & { file?: Express.Multer.File }).file;
+      if (!file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
+      }
+      const logoUrl = `/uploads/public/logo/${file.filename}`;
+      res.status(201).json({ logoUrl });
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao fazer upload do logotipo.' });
+    }
+  }
 }

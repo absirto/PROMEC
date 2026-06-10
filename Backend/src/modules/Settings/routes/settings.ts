@@ -3,6 +3,7 @@ import { SettingsController } from '../controllers/SettingsController';
 import { authenticateToken, requirePermission } from '../../../middleware/auth';
 import { validateBody } from '../../../middleware/validateBody';
 import { settingsSchema } from '../settingsSchema';
+import { logoUpload } from '../../../middleware/logoUpload';
 
 const router = Router();
 
@@ -10,5 +11,6 @@ const router = Router();
 router.get('/', authenticateToken, requirePermission('configuracoes:gerenciar'), SettingsController.get);
 router.post('/', authenticateToken, requirePermission('configuracoes:gerenciar'), validateBody(settingsSchema), SettingsController.update);
 router.put('/', authenticateToken, requirePermission('configuracoes:gerenciar'), validateBody(settingsSchema), SettingsController.update);
+router.post('/logo', authenticateToken, requirePermission('configuracoes:gerenciar'), logoUpload.single('logo'), SettingsController.uploadLogo);
 
 export default router;

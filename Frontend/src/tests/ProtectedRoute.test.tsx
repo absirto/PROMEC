@@ -1,10 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
+import { vi } from 'vitest';
 
-jest.mock('react-router-dom', () => ({
+vi.mock('react-router-dom', () => ({
   Navigate: ({ to }: { to: string }) => <div>Navegando para {to}</div>,
-}), { virtual: true });
+}));
 
 import ProtectedRoute from '../ProtectedRoute';
 
@@ -28,12 +29,12 @@ function renderProtectedRoute() {
 describe('ProtectedRoute', () => {
   beforeEach(() => {
     localStorage.clear();
-    jest.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it('redireciona imediatamente quando o token já expirou', () => {
@@ -47,7 +48,7 @@ describe('ProtectedRoute', () => {
     expect(localStorage.getItem('user')).toBeNull();
   });
 
-  it('derruba a sessão automaticamente quando o token vence com a tela aberta', () => {
+  it('derruba a sessão automaticamente quando o token vence com a tela aberta', async () => {
     localStorage.setItem('token', createToken(Date.now() + 1_500));
     localStorage.setItem('user', JSON.stringify({ role: 'user', group: { permissions: [] } }));
 
@@ -55,8 +56,8 @@ describe('ProtectedRoute', () => {
 
     expect(screen.getByText('Área restrita')).toBeInTheDocument();
 
-    act(() => {
-      jest.advanceTimersByTime(2_000);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_000);
     });
 
     expect(screen.getByText('Navegando para /login')).toBeInTheDocument();
