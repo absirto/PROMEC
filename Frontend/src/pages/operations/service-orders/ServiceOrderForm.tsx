@@ -177,17 +177,18 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       const payload = {
         ...data,
         personId: parseInt(data.personId),
+        taxPercent: Number(data.taxPercent) || 0,
+        profitPercent: Number(data.profitPercent) || 0,
         materials: (data.materials || []).map(m => ({ 
-          ...m, 
           materialId: parseInt(m.materialId), 
           quantity: Number(m.quantity) || 0,
           unitPrice: Number(m.unitPrice) || 0,
           totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0)
         })),
         services: (data.services || []).map(s => ({ 
-          ...s, 
           serviceId: parseInt(s.serviceId), 
           employeeId: s.employeeId ? parseInt(s.employeeId) : null,
+          description: s.description || '',
           hoursWorked: Number(s.hoursWorked) || 0,
           unitPrice: Number(s.unitPrice) || 0,
           totalPrice: (Number(s.hoursWorked) || 0) * (Number(s.unitPrice) || 0)
@@ -197,8 +198,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       else await api.post('/service-orders', payload);
       showToast('Ordem de Serviço salva com sucesso!');
       navigate(listPath);
-    } catch {
-      showToast('Erro ao salvar Ordem de Serviço.', 'error');
+    } catch (err: any) {
+      console.error('Erro ao salvar OS:', err);
+      const msg = typeof err === 'string' ? err : 'Erro ao salvar Ordem de Serviço.';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -455,8 +458,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                               onChange: (e) => {
                                 const s = availableServices.find(x => x.id.toString() === e.target.value);
                                 if (s) {
-                                  setValue(`services.${idx}.unitPrice`, s.basePrice);
-                                  setValue(`services.${idx}.totalPrice`, (watchedServices[idx]?.hoursWorked || 1) * s.basePrice);
+                                  setValue(`services.${idx}.unitPrice`, s.price);
+                                  setValue(`services.${idx}.totalPrice`, (watchedServices[idx]?.hoursWorked || 1) * s.price);
                                 }
                               }
                             })} style={{ paddingLeft: 12 }}>

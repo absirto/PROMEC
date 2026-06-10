@@ -7,14 +7,14 @@ const nestedServiceSchema = Joi.object({
   hoursWorked: Joi.number().min(0).default(0),
   unitPrice: Joi.number().min(0).default(0),
   totalPrice: Joi.number().min(0).default(0)
-});
+}).unknown(true);
 
 const nestedMaterialSchema = Joi.object({
   materialId: Joi.number().integer().required(),
   quantity: Joi.number().min(0).required(),
   unitPrice: Joi.number().min(0).default(0),
   totalPrice: Joi.number().min(0).default(0)
-});
+}).unknown(true);
 
 export const serviceOrderCreateSchema = Joi.object({
   traceCode: Joi.string().trim().max(50).allow(null, ''),
