@@ -35,13 +35,7 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: 'guidortas25@gmail.com' },
-    update: {
-      password: hashedPassword,
-      firstName: 'Guilherme',
-      lastName: 'Dortas',
-      role: 'admin',
-      groupId: adminGroup.id,
-    },
+    update: {}, // Evita sobrescrever senha e dados de cadastro no banco em produção
     create: {
       email: 'guidortas25@gmail.com',
       password: hashedPassword,
