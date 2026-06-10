@@ -14,7 +14,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -22,11 +22,13 @@
     "types": [
       "node",
       "vite/client",
+      "vitest",
       "vitest/globals"
     ],
     "baseUrl": ".",
     "paths": {
-      "vitest": ["../node_modules/vitest"]
+      "vitest": ["../node_modules/vitest"],
+      "vitest/*": ["../node_modules/vitest/*"]
     }
   },
   "include": [
