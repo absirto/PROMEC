@@ -23,7 +23,11 @@
       "node",
       "vite/client",
       "vitest/globals"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "vitest": ["../node_modules/vitest"]
+    }
   },
   "include": [
     "src"
