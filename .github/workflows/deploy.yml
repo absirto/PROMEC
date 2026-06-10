@@ -18,8 +18,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            # Ajuste o caminho abaixo para a pasta exata do projeto no seu VPS
-            cd ~/PROMEC || cd /var/www/PROMEC
+            cd ~/PROMEC 
             
             git pull origin main
             docker compose -f docker-compose.prod.yml up -d --build
