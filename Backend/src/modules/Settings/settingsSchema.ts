@@ -6,7 +6,7 @@ export const settingsSchema = Joi.object({
   cnpj: Joi.string().max(30).allow('', null),
   companyName: Joi.string().max(120).allow('', null),
   contactEmail: Joi.string().email().allow('', null),
-  logoUrl: Joi.string().max(1000).allow('', null),
+  logoUrl: Joi.string().allow('', null),
   phone: Joi.string().max(30).allow('', null),
   systemTheme: Joi.string().max(20).allow('', null),
 }).min(1);
