@@ -114,7 +114,7 @@ const QuotationsList: React.FC = () => {
       const [requestsData, quotationsData, peopleData] = await Promise.all([
         api.get('/service-orders/purchase-requests'),
         api.get('/service-orders/purchase-quotations'),
-        api.get('/people'),
+        api.get('/people', { params: { all: true } }),
       ]);
       setPurchaseRequests(Array.isArray(requestsData) ? requestsData : []);
       setQuotations(Array.isArray(quotationsData) ? quotationsData : []);

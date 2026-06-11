@@ -44,6 +44,21 @@ export const MaterialController = {
         where.name = { contains: search, mode: 'insensitive' };
       }
 
+      if (req.query.all === 'true') {
+        const cacheKeyAll = `materials:list:all:s${search}`;
+        const cachedAll = await cacheGet(cacheKeyAll);
+        if (cachedAll) return res.json(cachedAll);
+
+        const materials = await prisma.material.findMany({
+          where,
+          orderBy: { name: 'asc' },
+        });
+
+        const sanitized = materials.map((m: any) => sanitizeMaterial(m, req));
+        await cacheSet(cacheKeyAll, sanitized, 120);
+        return res.json(sanitized);
+      }
+
       const [materials, total] = await Promise.all([
         prisma.material.findMany({
           where,

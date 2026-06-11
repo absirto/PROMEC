@@ -47,7 +47,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isEdit, isView }) => {
   useEffect(() => {
     setLoading(true);
     const dataPromises = [
-      api.get('/people').catch(() => []),
+      api.get('/people', { params: { all: true } }).catch(() => []),
       api.get('/job-roles').catch(() => []),
       api.get('/work-areas').catch(() => []),
       api.get('/users').catch(() => [])

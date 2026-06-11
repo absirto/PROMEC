@@ -83,8 +83,8 @@ const StockList: React.FC = () => {
   const fetchBaseData = useCallback(async () => {
     try {
       const [materialsData, peopleData] = await Promise.all([
-        api.get('/materials'),
-        api.get('/people')
+        api.get('/materials', { params: { all: true } }),
+        api.get('/people', { params: { all: true } })
       ]);
       setMaterials(Array.isArray(materialsData) ? materialsData : []);
       setPeople(Array.isArray(peopleData) ? peopleData : []);

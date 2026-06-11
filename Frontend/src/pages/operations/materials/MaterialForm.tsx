@@ -41,7 +41,13 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
     if (id && (isEdit || isView)) {
       setLoading(true);
       api.get(`/materials/${id}`)
-        .then((data: any) => reset(data))
+        .then((data: any) => reset({
+          name: data.name || '',
+          description: data.description || '',
+          price: data.price || 0,
+          unit: data.unit || '',
+          active: data.active !== undefined ? data.active : true
+        }))
         .catch(() => showToast('Erro ao carregar material.', 'error'))
         .finally(() => setLoading(false));
     }
@@ -52,11 +58,19 @@ const MaterialForm: React.FC<MaterialFormProps> = ({ isEdit, isView }) => {
     
     setLoading(true);
     try {
+      const payload = {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        unit: data.unit,
+        active: data.active
+      };
+
       if (isEdit) {
-        await api.put(`/materials/${id}`, data);
+        await api.put(`/materials/${id}`, payload);
         showToast('Material atualizado com sucesso!');
       } else {
-        await api.post('/materials', data);
+        await api.post('/materials', payload);
         showToast('Novo material cadastrado!');
       }
       navigate('/materials');

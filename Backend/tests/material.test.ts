@@ -47,7 +47,12 @@ describe('Material API', () => {
     const res = await request(app)
       .put(`${API_ROOT}/materials/${materialId}`)
       .set(adminAuthHeader())
-      .send({ name: 'Material Atualizado' });
+      .send({ 
+        name: 'Material Atualizado',
+        id: materialId,
+        createdAt: '2026-06-11T13:49:27.000Z',
+        updatedAt: '2026-06-11T13:49:27.000Z'
+      });
     expect(res.status).toBe(200);
     expect(res.body.data.name).toBe('Material Atualizado');
   });

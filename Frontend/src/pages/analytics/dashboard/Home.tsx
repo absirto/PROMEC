@@ -47,7 +47,7 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    api.get('/people')
+    api.get('/people', { params: { all: true } })
       .then((res: any) => setPeople((Array.isArray(res) ? res : res?.data) || []))
       .catch(console.error);
   }, []);

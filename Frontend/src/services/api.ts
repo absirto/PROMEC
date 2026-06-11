@@ -40,7 +40,11 @@ api.interceptors.response.use(
     
     // Unwraps { status: 'success', data: ... }
     if (result && result.status === 'success') {
-      result = result.data;
+      // Se for um envelope de sucesso paginado, não removemos o envelope agora,
+      // pois precisamos das propriedades 'data' e 'meta' no bloco seguinte.
+      if (!(Array.isArray(result.data) && result.meta)) {
+        result = result.data;
+      }
     }
 
     // Se for um objeto paginado { data: [], meta: {} }

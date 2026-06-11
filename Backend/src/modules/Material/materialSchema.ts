@@ -17,6 +17,9 @@ export const materialCreateSchema = Joi.object({
 });
 
 export const materialUpdateSchema = Joi.object({
+  id: Joi.any(),
+  createdAt: Joi.any(),
+  updatedAt: Joi.any(),
   name: Joi.string().trim().min(2).max(255),
   description: Joi.string().allow(null, '').max(1000),
   price: Joi.number().positive().precision(2),

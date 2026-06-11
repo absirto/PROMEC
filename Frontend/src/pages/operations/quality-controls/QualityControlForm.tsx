@@ -38,8 +38,8 @@ const QualityControlForm: React.FC<QualityControlFormProps> = ({ isEdit, isView 
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      api.get('/service-orders').catch(() => []),
-      api.get('/materials').catch(() => [])
+      api.get('/service-orders', { params: { all: true } }).catch(() => []),
+      api.get('/materials', { params: { all: true } }).catch(() => [])
     ]).then(([ordersData, materialsData]: any[]) => {
       setOrders((Array.isArray(ordersData) ? ordersData : ordersData?.data) || []);
       setMaterials((Array.isArray(materialsData) ? materialsData : materialsData?.data) || []);

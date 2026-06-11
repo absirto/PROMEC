@@ -253,7 +253,7 @@ const PurchasesList: React.FC = () => {
 
   const fetchBaseData = useCallback(async () => {
     try {
-      const allPeople = await api.get('/people');
+      const allPeople = await api.get('/people', { params: { all: true } });
       setPeople(allPeople || []);
     } catch (err) {
       showToast('Erro ao carregar pessoas.', 'error');

@@ -1141,6 +1141,24 @@ export const ServiceOrderController = {
         ];
       }
 
+      if (req.query.all === 'true') {
+        const orders = await prisma.serviceOrder.findMany({
+          where,
+          include: {
+            person: { include: { naturalPerson: true, legalPerson: true } },
+            services: { include: { service: true, employee: true } },
+            materials: { include: { material: true } },
+            qualityControls: true,
+            transactions: true,
+          },
+          orderBy: { openingDate: 'desc' },
+        });
+
+        const enriched = orders.map(o => FinancialService.enrichFinancials(o));
+        const sanitized = enriched.map(o => FinancialService.sanitizeOrder(o, req));
+        return res.json(sanitized);
+      }
+
       const [orders, total] = await Promise.all([
         prisma.serviceOrder.findMany({
           where,

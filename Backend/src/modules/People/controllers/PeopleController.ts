@@ -31,6 +31,20 @@ export const PeopleController = {
         ];
       }
 
+      if (req.query.all === 'true') {
+        const people = await prisma.person.findMany({
+          where,
+          include: {
+            naturalPerson: true,
+            legalPerson: { include: { representatives: true } },
+            addresses: true,
+            contacts: true
+          },
+          orderBy: { updatedAt: 'desc' },
+        });
+        return res.json(people);
+      }
+
       const [people, total] = await Promise.all([
         prisma.person.findMany({
           where,

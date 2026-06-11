@@ -111,8 +111,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const loadData = () => {
     setLoading(true);
     Promise.all([
-      api.get('/people').catch(() => []),
-      api.get('/materials').catch(() => []),
+      api.get('/people', { params: { all: true } }).catch(() => []),
+      api.get('/materials', { params: { all: true } }).catch(() => []),
       api.get('/services').catch(() => []),
       api.get('/employees').catch(() => [])
     ]).then(([p, m, s, e]) => {
