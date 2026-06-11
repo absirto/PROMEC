@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, Plus, Eye, Edit2, Calendar, Filter, X, RefreshCcw, 
   Activity, Clock, AlertTriangle, CheckCircle2, LayoutDashboard, 
-  GanttChartSquare, Settings2, Zap, Target
+  GanttChartSquare, Settings2, Zap, Target, Printer
 } from 'lucide-react';
 import SkeletonTable from '../../../components/SkeletonTable';
 import api from '../../../services/api';
@@ -66,6 +66,7 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
   const itemsPerPage = 15;
   
   // Filtros
+  const [activeTab, setActiveTab] = useState<'active' | 'cancelled'>('active');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -101,7 +102,8 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
         page: currentPage,
         limit: itemsPerPage,
         search,
-        status: statusFilter,
+        status: activeTab === 'cancelled' ? 'Cancelada' : statusFilter,
+        excludeCancelled: activeTab === 'active' && !statusFilter ? 'true' : undefined,
         startDate,
         endDate,
       }
@@ -113,7 +115,7 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
       })
       .catch(() => showToast('Erro ao carregar ordens de serviço.', 'error'))
       .finally(() => setLoading(false));
-  }, [showToast, currentPage, search, statusFilter, startDate, endDate]);
+  }, [showToast, currentPage, search, statusFilter, startDate, endDate, activeTab]);
 
   const displayedOrders = useMemo(() => {
     if (!showFinancialData) return orders;
@@ -179,6 +181,22 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
 
   const handleView = (id: number) => navigate(`${viewPathBase}/${id}`);
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
+  const handleDownloadPDF = async (id: number) => {
+    try {
+      const response = await api.get(`/service-orders/${id}/pdf`, { responseType: 'blob' });
+      const blob = new Blob([response as any], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `os-${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      showToast('Erro ao gerar PDF da ordem de serviço.', 'error');
+    }
+  };
 
   const openPlanEditor = (order: any) => {
     setQuickPlanConflicts([]);
@@ -249,19 +267,22 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, startDate, endDate]);
+  }, [search, statusFilter, startDate, endDate, activeTab]);
 
   const clearFilters = () => {
     setSearch('');
     setStatusFilter('');
     setStartDate('');
     setEndDate('');
+    setShowOnlyConflicts(false);
   };
 
   const totalPlanned = (pcpOverview?.centers || []).reduce((acc: number, c: any) => acc + (c.plannedHours || 0), 0);
   const totalCapacity = (pcpOverview?.centers || []).reduce((acc: number, c: any) => acc + (c.capacityHours || 0), 0);
   const totalLoadPercent = totalCapacity > 0 ? (totalPlanned / totalCapacity) * 100 : 0;
   const conflictCount = conflictOrderIds.size;
+
+  const hasActiveFilters = Boolean(search || statusFilter || startDate || endDate || showOnlyConflicts);
 
   return (
     <div className={commonStyles.listContainer}>
@@ -384,6 +405,24 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
         </div>
       </section>
 
+      {/* Abas: Ativas vs Canceladas */}
+      <div className={styles.tabsContainer}>
+        <button 
+          className={`${styles.tabBtn} ${activeTab === 'active' ? styles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('active')}
+        >
+          <Clock size={16} />
+          <span>Ordens de Serviço</span>
+        </button>
+        <button 
+          className={`${styles.tabBtn} ${activeTab === 'cancelled' ? styles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('cancelled')}
+        >
+          <AlertTriangle size={16} />
+          <span>Canceladas</span>
+        </button>
+      </div>
+
       {loading ? (
         <SkeletonTable columns={7} rows={10} />
       ) : filtered.length > 0 ? (
@@ -460,6 +499,7 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                       <button onClick={() => handleView(order.id)} className={`${commonStyles.actionBtn} ${commonStyles.viewBtn}`}><Eye size={16} /></button>
                       <button onClick={() => handleEdit(order.id)} className={`${commonStyles.actionBtn} ${commonStyles.editBtn}`}><Edit2 size={16} /></button>
+                      <button onClick={() => handleDownloadPDF(order.id)} className={`${commonStyles.actionBtn} ${commonStyles.viewBtn}`} title="Imprimir PDF"><Printer size={16} /></button>
                       <button onClick={() => openPlanEditor(order)} className={styles.pcpActionBtn}>PCP</button>
                     </div>
                   </td>
@@ -479,10 +519,34 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
         </div>
       ) : (
         <EmptyState 
-          title="Nenhuma Ordem de Serviço"
-          description="A base de operações está limpa. Inicie uma nova OS para começar o planejamento."
-          actionLabel="Nova Ordem de Serviço"
-          onAction={() => navigate('/service-orders/new')}
+          title={
+            hasActiveFilters 
+              ? "Nenhum resultado encontrado" 
+              : activeTab === 'cancelled' 
+                ? "Nenhuma OS Cancelada" 
+                : "Nenhuma Ordem de Serviço"
+          }
+          description={
+            hasActiveFilters
+              ? "Não encontramos nenhuma ordem de serviço correspondente à sua busca ou filtros aplicados."
+              : activeTab === 'cancelled' 
+                ? "Não há registros de ordens de serviço canceladas no sistema."
+                : "A base de operações está limpa. Inicie uma nova OS para começar o planejamento."
+          }
+          actionLabel={
+            hasActiveFilters 
+              ? "Limpar Filtros" 
+              : activeTab === 'cancelled' 
+                ? undefined 
+                : "Nova Ordem de Serviço"
+          }
+          onAction={
+            hasActiveFilters 
+              ? clearFilters 
+              : activeTab === 'cancelled' 
+                ? undefined 
+                : () => navigate('/service-orders/new')
+          }
         />
       )}
     </div>

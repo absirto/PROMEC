@@ -3,6 +3,8 @@ import prisma from '../../../core/prisma';
 import { AuthRequest } from '../../../middleware/auth';
 import { logger } from '../../../utils/logger';
 import { generateQuotationPDF } from '../../../utils/pdfQuotation';
+import { generateSingleServiceOrderPDF } from '../../../utils/pdfSingleServiceOrder';
+import { getSettings } from '../../../utils/pdfSettings';
 import { getPaginationParams, formatPaginatedResponse } from '../../../utils/pagination';
 import { AuditService } from '../../Audit/services/AuditService';
 import { FinancialService } from '../../Finance/services/FinancialService';
@@ -232,6 +234,53 @@ export const ServiceOrderController = {
     } catch (error: any) {
       logger.error('getPurchaseQuotationPDF falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
       return res.status(500).json({ status: 'error', message: 'Erro ao gerar PDF da cotação.' });
+    }
+  },
+
+  async getServiceOrderPDF(req: Request, res: Response) {
+    try {
+      const orderId = Number(req.params.id);
+      if (!Number.isFinite(orderId) || orderId <= 0) {
+        return res.status(400).json({ status: 'error', message: 'Ordem de serviço inválida.' });
+      }
+
+      const order = await prisma.serviceOrder.findUnique({
+        where: { id: orderId },
+        include: {
+          person: { include: { naturalPerson: true, legalPerson: true } },
+          services: { include: { service: true, employee: true } },
+          materials: { include: { material: true } },
+          qualityControls: true,
+          transactions: true,
+        }
+      });
+
+      if (!order) {
+        return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
+      }
+
+      const settings = await getSettings();
+      const companyInfo = settings
+        ? {
+            companyName: settings.companyName ?? undefined,
+            cnpj: settings.cnpj ?? undefined,
+            phone: settings.phone ?? undefined,
+            address: settings.address ?? undefined,
+            companyLogo: settings.logoUrl ?? undefined,
+          }
+        : undefined;
+
+      const pdfBuffer = await generateSingleServiceOrderPDF(order, companyInfo);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="os-${orderId}.pdf"`
+      );
+      return res.end(pdfBuffer);
+    } catch (error: any) {
+      logger.error('getServiceOrderPDF falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
+      return res.status(500).json({ status: 'error', message: 'Erro ao gerar PDF da ordem de serviço.' });
     }
   },
 
@@ -1118,11 +1167,16 @@ export const ServiceOrderController = {
       const pagination = getPaginationParams(req);
       const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
       const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const excludeCancelled = req.query.excludeCancelled === 'true';
       const startDate = typeof req.query.startDate === 'string' ? new Date(req.query.startDate) : undefined;
       const endDate = typeof req.query.endDate === 'string' ? new Date(req.query.endDate) : undefined;
 
       const where: any = {};
-      if (status) where.status = status;
+      if (status) {
+        where.status = status;
+      } else if (excludeCancelled) {
+        where.status = { not: 'Cancelada' };
+      }
       if (startDate && !Number.isNaN(startDate.getTime())) {
         where.openingDate = { ...where.openingDate, gte: startDate };
       }

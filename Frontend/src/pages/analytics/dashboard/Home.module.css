@@ -1,174 +1,377 @@
 .dashboardContainer {
-  padding: 32px;
-  max-width: 1600px;
-  margin: 0 auto;
-  animation: fadeIn 0.8s var(--spring-smooth);
+  padding: 40px 32px 32px 32px;
+  min-height: calc(100vh - 64px);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.6s var(--spring-smooth) both;
 }
 
-.welcomeHeader {
+/* ====================== GRID SYSTEM ====================== */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Headers */
+.leftHeader {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+}
+
+.rightHeader {
+  grid-column: span 2;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 48px;
+  padding-bottom: 8px;
+}
+
+.rightHeaderTitle {
+  font-size: 13px;
+  font-weight: 800;
+  color: #374151;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .badgeLabel {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: rgba(0, 230, 176, 0.08);
+  color: #00e6b0;
+  border: 1px solid rgba(0, 230, 176, 0.18);
   padding: 6px 12px;
   border-radius: var(--radius-full);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 16px;
-  border: 1px solid var(--primary-soft);
+  margin-bottom: 12px;
+  width: fit-content;
 }
 
 .welcomeTitle {
-  font-size: 48px;
+  font-size: 42px;
   font-weight: 800;
-  color: var(--text-main);
-  letter-spacing: -0.04em;
-  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .welcomeSubtitle {
-  color: var(--text-secondary);
-  font-size: 16px;
-  margin-top: 12px;
+  color: #7a8b9e;
+  font-size: 14px;
+  margin-top: 8px;
 }
 
 .refreshBtn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
-  padding: 12px 24px;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #374151;
+  padding: 10px 18px;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
 }
 
 .refreshBtn:hover {
-  border-color: var(--primary);
-  background: var(--bg-main);
-  transform: translateY(-2px);
+  border-color: #5865F2;
+  color: #5865F2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.08);
 }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  margin-bottom: 48px;
+/* ====================== CARD WRAPPERS & STYLING ====================== */
+
+/* Dark/Glass Theme Cascade */
+.darkCardWrapper {
+  grid-column: span 1;
+  --bg-surface: rgba(21, 28, 40, 0.75);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --text-main: #FFFFFF;
+  --text-muted: #7a8b9e;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--radius-lg);
 }
 
-/* Bento Grid Layout */
-.bentoGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(2, minmax(280px, auto));
-  gap: 24px;
+/* Light Theme Cascade */
+.lightCardWrapper {
+  grid-column: span 1;
+  --bg-surface: #FFFFFF;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+  --text-main: #111827;
+  --text-muted: #4b5563;
+  --primary-soft: rgba(88, 101, 242, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
-.bentoItem {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+/* Glass chart card (Finance) */
+.glassChartCard {
+  grid-column: span 2;
+  background: rgba(21, 28, 40, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: var(--radius-lg);
   padding: 32px;
-  transition: all 0.4s var(--spring-smooth);
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
-.bentoItem:hover {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-md);
-}
-
-.large { grid-column: span 3; }
-.medium { grid-row: span 2; }
-
-.bentoHeader {
+.glassChartHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.bentoTitle {
-  font-size: 20px;
+.glassChartTitle {
+  font-size: 18px;
   font-weight: 700;
-  color: var(--text-main);
+  color: #ffffff;
   letter-spacing: -0.02em;
 }
 
-.bentoSubtitle {
+.glassChartSubtitle {
   font-size: 13px;
-  color: var(--text-muted);
+  color: #7a8b9e;
   margin-top: 4px;
 }
 
-.chartContainer {
-  margin-top: 32px;
-  width: 100%;
+.glassChartAction {
+  background: rgba(88, 101, 242, 0.1);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.efficiencyCircle {
-  height: 200px;
+.chartContainer {
+  margin-top: 16px;
+}
+
+.chartContainerMini {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Light Efficiency widget */
+.lightEfficiencyCard {
+  grid-column: span 2;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+}
+
+.lightCardHeader {
+  margin-bottom: 24px;
+}
+
+.lightCardTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.lightCardSubtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Efficiency Layout split */
+.efficiencyDashboard {
+  display: grid;
+  grid-template-columns: 1fr 1px 1.2fr;
+  gap: 28px;
+  align-items: center;
+  height: 100%;
+}
+
+.efficiencyOverview {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
+}
+
+.efficiencyCircle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
 }
 
 .efficiencyValue {
   font-size: 48px;
   font-weight: 900;
-  color: var(--primary);
+  color: #5865F2;
+  line-height: 1;
 }
 
 .efficiencyLabel {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  margin-top: 8px;
+  font-weight: 600;
 }
 
-.efficiencyBar {
+.efficiencyMetrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
   width: 100%;
-  height: 8px;
-  background: var(--bg-main);
-  border-radius: 4px;
-  margin-top: 24px;
+  margin-top: 8px;
+}
+
+.efficiencyMetricItem {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.efficiencyMetricVal {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.efficiencyMetricLab {
+  display: block;
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.efficiencyDivider {
+  width: 100%;
+  height: 100%;
+  background: #f3f4f6;
+}
+
+.centerEfficiencyList {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.centerListTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.centersScroll {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.centerItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.centerMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.centerName {
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.centerValue {
+  color: #111827;
+  font-weight: 700;
+}
+
+.centerProgressBar {
+  width: 100%;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 
-.efficiencyFill {
+.centerProgressFill {
   height: 100%;
-  background: var(--primary);
-  border-radius: 4px;
-  transition: width 1s var(--spring-smooth);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+/* Bottom elements */
+.darkBottomCard {
+  grid-column: span 1;
+  background: rgba(21, 28, 40, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.lightBottomCard {
+  grid-column: span 2;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
 .activityList {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
+  margin-top: 12px;
 }
 
 .activityItem {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
 }
 
@@ -176,44 +379,207 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-top: 6px;
-  background: var(--primary);
+  margin-top: 5px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(88, 101, 242, 0.4);
+}
+
+.activityContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .activityText {
-  font-size: 14px;
-  color: var(--text-main);
-  font-weight: 500;
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 700;
   line-height: 1.4;
+  margin: 0;
+}
+
+.activityDesc {
+  font-size: 12px;
+  color: #7a8b9e;
+  margin: 0;
 }
 
 .activityTime {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 10px;
+  color: #5c6b7a;
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
+/* Downtime classes */
+.downtimeList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.downtimeItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.downtimeMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.downtimeLabel {
+  color: #7a8b9e;
+  font-weight: 500;
+}
+
+.downtimeVal {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.downtimeProgressBar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.downtimeProgressFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+/* Distribution layouts */
+.distributionContainer {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.distributionLegend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1 1 auto;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.legendValue {
+  color: #111827;
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.emptyText {
+  color: #9ca3af;
+  font-size: 12px;
+  font-style: italic;
+  margin: 12px 0 0 0;
+  text-align: center;
+}
+
+/* System Info / Footer Right */
+.systemInfoFooterWrapper {
+  grid-column: span 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 32px 0 12px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.systemInfoFooter {
+  font-size: 11px;
+  color: #4b5563;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.footerSparkleIcon {
+  font-size: 42px;
+  color: #ffffff;
+  line-height: 1;
+  user-select: none;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
+}
+
+/* Loading layout */
+.loadingGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+/* ====================== RESPONSIVE ====================== */
 @media (max-width: 1200px) {
-  .statsGrid { grid-template-columns: repeat(2, 1fr); }
-  .bentoGrid { grid-template-columns: repeat(2, 1fr); }
-  .large { grid-column: span 2; }
+  .dashboardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .leftHeader, .rightHeader, .glassChartCard, .lightEfficiencyCard, .lightBottomCard, .systemInfoFooterWrapper {
+    grid-column: span 2;
+  }
+  .efficiencyDashboard {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .efficiencyDivider {
+    width: 100%;
+    height: 1px;
+  }
+  .distributionContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .distributionLegend {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
-  .welcomeHeader { flex-direction: column; align-items: flex-start; gap: 24px; }
-  .statsGrid, .bentoGrid { grid-template-columns: 1fr; }
-  .large, .medium { grid-column: span 1; grid-row: auto; }
-}
-
-@media (max-width: 1200px) {
-  .statsGrid { grid-template-columns: repeat(2, 1fr); }
-  .bentoGrid { grid-template-columns: repeat(2, 1fr); }
-  .large { grid-column: span 2; }
-}
-
-@media (max-width: 768px) {
-  .welcomeHeader { flex-direction: column; align-items: flex-start; gap: 24px; }
-  .statsGrid, .bentoGrid { grid-template-columns: 1fr; }
-  .large, .medium { grid-column: span 1; grid-row: auto; }
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+  .leftHeader, .rightHeader, .glassChartCard, .systemInfoFooterWrapper, .darkCardWrapper, .lightCardWrapper, .lightEfficiencyCard, .darkBottomCard, .lightBottomCard {
+    grid-column: span 1;
+  }
+  .rightHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .welcomeTitle {
+    font-size: 32px;
+  }
 }

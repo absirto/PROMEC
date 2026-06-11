@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Users, UserCog, Briefcase, Package, Wrench,
@@ -14,6 +14,82 @@ import Breadcrumbs from '../Breadcrumbs';
 import CommandPalette from '../CommandPalette';
 import NotificationCenter from '../NotificationCenter';
 
+/* ==========================================================================
+   NETWORK MESH — Canvas animado de fundo (nodos + conexões globais)
+   ========================================================================== */
+interface NetworkCanvasProps {
+  isFullWidth?: boolean;
+}
+
+const NetworkCanvas: React.FC<NetworkCanvasProps> = ({ isFullWidth }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animFrameRef = useRef<number>(0);
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const NODES = isFullWidth ? 80 : 45;
+    const CONNECT_DIST = 160;
+    const time = Date.now() * 0.0003;
+
+    const nodes: { x: number; y: number; r: number }[] = [];
+    for (let i = 0; i < NODES; i++) {
+      const baseX = ((i * 137.508) % w);
+      const baseY = ((i * 97.135) % h);
+      const ox = Math.sin(time + i * 0.7) * 12;
+      const oy = Math.cos(time + i * 0.5) * 12;
+      nodes.push({ x: baseX + ox, y: baseY + oy, r: 1.5 + (i % 3) * 0.5 });
+    }
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Conexões
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < CONNECT_DIST) {
+          const alpha = (1 - dist / CONNECT_DIST) * (isFullWidth ? 0.07 : 0.12);
+          ctx.strokeStyle = `rgba(0, 230, 176, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Nodos
+    for (const node of nodes) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
+      ctx.fillStyle = isFullWidth ? 'rgba(0, 230, 176, 0.15)' : 'rgba(0, 230, 176, 0.25)';
+      ctx.fill();
+    }
+
+    animFrameRef.current = requestAnimationFrame(draw);
+  }, [isFullWidth]);
+
+  useEffect(() => {
+    animFrameRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, [draw]);
+
+  return <canvas ref={canvasRef} className={isFullWidth ? styles.networkCanvasFull : styles.networkCanvas} />;
+};
+
 interface MainLayoutProps {
   children: React.ReactNode;
 }
@@ -23,7 +99,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
+
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
 
@@ -75,7 +151,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       }
       return;
     }
-    setExpandedSections(prev => 
+    setExpandedSections(prev =>
       prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
     );
   };
@@ -130,9 +206,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }
   ];
 
-  const userPermissions = user?.group?.permissions?.map((p: any) => 
+  const userPermissions = user?.group?.permissions?.map((p: any) =>
     typeof p === 'string' ? p : (p.permission?.name || p.name)
   ) || [];
+
+  const isDashboard = location.pathname === '/';
 
   return (
     <div className={styles.layoutContainer}>
@@ -154,10 +232,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
         <nav className={styles.nav}>
           {menuSections.map((section, idx) => {
-            const visibleItems = section.items.filter(item => 
-              item.permission === 'any' || 
+            const visibleItems = section.items.filter(item =>
+              item.permission === 'any' ||
               user?.role === 'admin' ||
-              userPermissions.includes(item.permission) || 
+              userPermissions.includes(item.permission) ||
               userPermissions.includes('admin')
             );
 
@@ -166,25 +244,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
             return (
               <div key={idx} className={`${styles.navSection} ${isExpanded ? styles.sectionExpanded : ''}`}>
-                <div 
+                <div
                   className={styles.sectionHeader}
                   onClick={() => toggleSection(section.title)}
                 >
-                  <span className={styles.sectionLabel}>{section.title}</span>
+                  <span className={section.title === 'Principal' && isDashboard ? styles.activePrincipalSection : styles.sectionLabel}>{section.title}</span>
                   {!isCollapsed && (
                     <div className={styles.sectionToggle}>
                       <ChevronRight size={12} className={isExpanded ? styles.rotate90 : ''} />
                     </div>
                   )}
                 </div>
-                
+
                 <div className={styles.sectionItems}>
                   {visibleItems.map(item => (
-                    <NavLink 
+                    <NavLink
                       key={item.to}
                       to={item.to}
                       title={isCollapsed ? item.label : undefined}
-                      className={({ isActive }) => 
+                      className={({ isActive }) =>
                         `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
                       }
                     >
@@ -206,18 +284,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      <main className={styles.content}>
-        <header className={styles.topBar}>
+      <main className={`${styles.content} ${styles.dashboardContent}`}>
+        <NetworkCanvas />
+        <div className={styles.rightBgIllustration} />
+        <header className={`${styles.topBar} ${styles.topBarDashboard}`}>
           <div className={styles.topBarActions}>
-            <button 
-              className={styles.mobileMenuBtn} 
+            <button
+              className={styles.mobileMenuBtn}
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu size={24} />
             </button>
 
-            <button 
-              className={styles.globalSearchBtn} 
+            <button
+              className={`${styles.globalSearchBtn} ${styles.dashboardSearchBtn}`}
               onClick={() => (window as any).dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
               title="Busca Global (Ctrl + K)"
             >
@@ -228,12 +308,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
             <NotificationCenter />
           </div>
-          
+
           <div className={styles.topBarCenter}>
-             <div className={styles.pageLabel}>{currentPageLabel}</div>
+            {!isDashboard && <div className={styles.pageLabel}>{currentPageLabel}</div>}
           </div>
 
-          <div className={styles.userInfo} onClick={() => navigate('/profile')}>
+          <div className={`${styles.userInfo} ${styles.dashboardUserInfo}`} onClick={() => navigate('/profile')}>
             <div className={styles.userText}>
               <div className={styles.userName}>{user?.firstName} {user?.lastName}</div>
               <div className={styles.userRole}>{user?.group?.name}</div>
@@ -245,9 +325,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </header>
 
         <div className={styles.mainOutlet}>
-          <div className={styles.breadWrap}>
-            <Breadcrumbs />
-          </div>
+          {!isDashboard && (
+            <div className={styles.breadWrap}>
+              <Breadcrumbs />
+            </div>
+          )}
           {children}
         </div>
       </main>

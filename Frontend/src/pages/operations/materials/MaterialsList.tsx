@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Search, Plus, Eye, Edit2, Trash2, LayoutGrid, List, RefreshCcw, Tag, Coins, Database, AlertCircle, TrendingUp, ShoppingBag } from 'lucide-react';
+import { Package, Search, Plus, Eye, Edit2, Trash2, LayoutGrid, List, RefreshCcw } from 'lucide-react';
 import SkeletonTable from '../../../components/SkeletonTable';
 import api from '../../../services/api';
 import commonStyles from '../../../styles/common/BaseList.module.css';
 import styles from './MaterialsList.module.css';
 import Pagination from '../../../components/Pagination';
 import EmptyState from '../../../components/EmptyState';
-import StatsCard from '../../../components/StatsCard';
 
 const MaterialsList: React.FC = () => {
   const navigate = useNavigate();
@@ -106,37 +105,7 @@ const MaterialsList: React.FC = () => {
         </div>
       </header>
 
-      {/* Mini Dashboard Insumos */}
-      {!loading && !error && (
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} className="animate-fade-in">
-          <StatsCard 
-            title="Itens no Catálogo" 
-            value={totalItems} 
-            icon={Package} 
-            color="#3b82f6"
-          />
-          <StatsCard 
-            title="Estoque Crítico" 
-            value="3" 
-            icon={AlertCircle} 
-            trend={{ value: 'Atenção', isPositive: false }}
-            color="var(--danger)"
-          />
-          <StatsCard 
-            title="Novas Entradas" 
-            value="14" 
-            icon={ShoppingBag} 
-            color="var(--primary)"
-          />
-          <StatsCard 
-            title="Valor Total" 
-            value="R$ 12.4k" 
-            icon={Coins} 
-            trend={{ value: '+4%', isPositive: true }}
-            color="var(--success)"
-          />
-        </section>
-      )}
+
 
       {loading && (
         viewMode === 'table' ? 

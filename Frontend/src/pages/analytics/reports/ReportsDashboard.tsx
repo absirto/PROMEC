@@ -55,10 +55,10 @@ const ReportsDashboard: React.FC = () => {
           <p className={styles.subtitle}>Relatórios dinâmicos e exportação de dados analíticos para suporte à decisão.</p>
         </div>
         <div className={styles.headerStats}>
-           <div className={styles.miniStat}>
-              <LayoutDashboard size={18} />
-              <span>12 Relatórios Ativos</span>
-           </div>
+            <div className={styles.miniStat}>
+               <LayoutDashboard size={18} />
+               <span>{reportGroups.reduce((acc, g) => acc + g.reports.length, 0)} Relatórios Ativos</span>
+            </div>
            <div className={styles.miniStat}>
               <PieChart size={18} />
               <span>Dados em Tempo Real</span>

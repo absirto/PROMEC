@@ -16,6 +16,7 @@ const PeopleList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [summary, setSummary] = useState({ totalLegal: 0, totalPhysical: 0, totalNewThisMonth: 0 });
 
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,6 +37,11 @@ const PeopleList: React.FC = () => {
         setPeople(res || []);
         setTotalPages(res.meta?.totalPages || 1);
         setTotalItems(res.meta?.total || 0);
+        setSummary({
+          totalLegal: res.meta?.totalLegal || 0,
+          totalPhysical: res.meta?.totalPhysical || 0,
+          totalNewThisMonth: res.meta?.totalNewThisMonth || 0
+        });
       })
       .catch(() => setError('Erro ao carregar pessoas.'))
       .finally(() => setLoading(false));
@@ -107,21 +113,20 @@ const PeopleList: React.FC = () => {
           />
           <StatsCard 
             title="Pessoas Jurídicas" 
-            value={Math.round(totalItems * 0.4)} 
+            value={summary.totalLegal} 
             icon={Building2} 
             color="var(--primary)"
           />
           <StatsCard 
             title="Pessoas Físicas" 
-            value={Math.round(totalItems * 0.6)} 
+            value={summary.totalPhysical} 
             icon={UserCheck} 
             color="#a855f7"
           />
           <StatsCard 
             title="Novos (Mês)" 
-            value="+12" 
+            value={summary.totalNewThisMonth} 
             icon={TrendingUp} 
-            trend={{ value: '+8%', isPositive: true }}
             color="var(--success)"
           />
         </section>

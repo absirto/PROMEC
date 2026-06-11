@@ -93,16 +93,15 @@ const UsersList: React.FC = () => {
             color="#a855f7"
           />
           <StatsCard 
-            title="Sessões Ativas" 
-            value={users.length} 
-            icon={Key} 
+            title="Operadores" 
+            value={users.filter(u => u.role !== 'admin').length} 
+            icon={UserCheck} 
             color="var(--success)"
           />
           <StatsCard 
-            title="Acessos Hoje" 
-            value="12" 
-            icon={UserCheck} 
-            trend={{ value: '+15%', isPositive: true }}
+            title="Grupos Ativos" 
+            value={new Set(users.map(u => u.groupId).filter(Boolean)).size} 
+            icon={ShieldCheck} 
             color="var(--primary)"
           />
         </section>

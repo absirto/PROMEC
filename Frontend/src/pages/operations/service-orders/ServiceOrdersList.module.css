@@ -229,3 +229,45 @@
   .statsGrid { grid-template-columns: 1fr; }
   .pcpHeader { flex-direction: column; align-items: flex-start; gap: 16px; }
 }
+
+.tabsContainer {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  width: fit-content;
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tabBtn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tabBtnActive {
+  background: var(--primary);
+  color: #0b1120;
+  box-shadow: 0 4px 15px var(--primary-glow);
+}
+
+.tabBtnActive:hover {
+  color: #0b1120;
+  background: var(--primary);
+}

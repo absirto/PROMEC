@@ -90,14 +90,14 @@ const GroupsList: React.FC = () => {
             color="var(--primary)"
           />
           <StatsCard 
-            title="Nível de Segurança" 
-            value="Alta" 
+            title="Políticas Configuradas" 
+            value={groups.filter(g => (g.permissionKeys || []).length > 0).length} 
             icon={ShieldCheck} 
             color="var(--success)"
           />
           <StatsCard 
-            title="Auditoria" 
-            value="OK" 
+            title="Chaves Distribuídas" 
+            value={new Set(groups.flatMap(g => g.permissionKeys || [])).size} 
             icon={ShieldAlert} 
             trend={{ value: 'Monitorado', isPositive: true }}
             color="var(--primary)"

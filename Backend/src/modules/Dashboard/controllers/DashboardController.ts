@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../../../core/prisma';
-import { startOfDay, subDays, endOfDay, format } from 'date-fns';
+import { startOfDay, subDays, endOfDay, format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { logger } from '../../../utils/logger';
 import { getPaginationParams, formatPaginatedResponse } from '../../../utils/pagination';
 
@@ -37,20 +37,20 @@ export const DashboardController = {
         _count: { id: true }
       });
 
-      const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const date = subDays(new Date(), i);
+      const last6Months = Array.from({ length: 6 }, (_, i) => {
+        const date = subMonths(new Date(), i);
         return {
-          start: startOfDay(date),
-          end: endOfDay(date),
-          label: format(date, 'eee', { locale: (require('date-fns/locale').ptBR) })
+          start: startOfMonth(date),
+          end: endOfMonth(date),
+          label: format(date, 'MMM', { locale: (require('date-fns/locale').ptBR) })
         };
       }).reverse();
 
-      const financialPerformance = await Promise.all(last7Days.map(async (day) => {
+      const financialPerformance = await Promise.all(last6Months.map(async (month) => {
         const orders = await prisma.serviceOrder.findMany({
           where: {
             ...whereClause,
-            openingDate: { gte: day.start, lte: day.end },
+            openingDate: { gte: month.start, lte: month.end },
             status: 'Concluída'
           },
           include: {
@@ -59,20 +59,24 @@ export const DashboardController = {
           }
         });
 
-        const totalRevenue = orders.reduce((acc, order: any) => {
-          const servicesTotal = order.services.reduce((sAcc: number, s: any) => sAcc + s.totalPrice, 0);
-          const materialsTotal = order.materials.reduce((mAcc: number, m: any) => mAcc + m.totalPrice, 0);
+        let totalRevenue = 0;
+        let totalCost = 0;
+
+        orders.forEach((order: any) => {
+          const servicesTotal = order.services.reduce((sAcc: number, s: any) => sAcc + Number(s.totalPrice || 0), 0);
+          const materialsTotal = order.materials.reduce((mAcc: number, m: any) => mAcc + Number(m.totalPrice || 0), 0);
           const subtotal = servicesTotal + materialsTotal;
           const profitAmount = subtotal * ((order.profitPercent || 0) / 100);
           const baseForTax = subtotal + profitAmount;
           const taxAmount = baseForTax * ((order.taxPercent || 0) / 100);
-          return acc + baseForTax + taxAmount;
-        }, 0);
+          totalRevenue += baseForTax + taxAmount;
+          totalCost += subtotal;
+        });
 
         return {
-          name: day.label,
+          name: month.label.toUpperCase().replace('.', ''),
           revenue: totalRevenue,
-          costs: totalRevenue * 0.4
+          costs: totalCost
         };
       }));
 
@@ -356,24 +360,32 @@ export const DashboardController = {
         }
       }
 
-      const [logs, total] = await Promise.all([
+      const [logsRaw, total] = await Promise.all([
         (prisma as any).auditLog.findMany({
           where,
           take: pagination.limit,
           skip: pagination.skip,
-          orderBy: { createdAt: 'desc' },
-          include: {
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true
-              }
-            }
-          }
+          orderBy: { createdAt: 'desc' }
         }),
         (prisma as any).auditLog.count({ where })
       ]);
+
+      const userIds = Array.from(new Set(logsRaw.map((log: any) => log.userId).filter(Boolean))) as number[];
+      const users = await prisma.user.findMany({
+        where: { id: { in: userIds } },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true
+        }
+      });
+
+      const userMap = new Map(users.map(u => [u.id, u]));
+      const logs = logsRaw.map((log: any) => ({
+        ...log,
+        user: log.userId ? userMap.get(log.userId) || null : null
+      }));
 
       res.json(formatPaginatedResponse(logs, total, pagination));
     } catch (error: any) {

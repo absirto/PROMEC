@@ -21,6 +21,7 @@ router.get('/purchase-quotations', authenticateToken, requirePermission('os:visu
 router.post('/purchase-quotations/:id/approve', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.approvePurchaseQuotation);
 router.get('/purchase-quotations/:id/pdf', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.getPurchaseQuotationPDF);
 router.get('/:id/operations', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listOperations);
+router.get('/:id/pdf', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.getServiceOrderPDF);
 router.get('/:id', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);
 router.post('/', authenticateToken, requirePermission('os:gerenciar'), validateBody(serviceOrderCreateSchema), ServiceOrderController.create);
 router.post('/:id/operations', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.addOperation);

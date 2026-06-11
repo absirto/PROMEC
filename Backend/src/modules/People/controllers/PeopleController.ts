@@ -45,7 +45,10 @@ export const PeopleController = {
         return res.json(people);
       }
 
-      const [people, total] = await Promise.all([
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const [people, total, totalLegal, totalPhysical, totalNewThisMonth] = await Promise.all([
         prisma.person.findMany({
           where,
           include: {
@@ -59,9 +62,17 @@ export const PeopleController = {
           take: pagination.limit,
         }),
         prisma.person.count({ where }),
+        prisma.person.count({ where: { type: 'J' } }),
+        prisma.person.count({ where: { type: 'F' } }),
+        prisma.person.count({ where: { createdAt: { gte: firstDayOfMonth } } })
       ]);
 
-      res.json(formatPaginatedResponse(people, total, pagination));
+      const paginatedResponse = formatPaginatedResponse(people, total, pagination);
+      (paginatedResponse.meta as any).totalLegal = totalLegal;
+      (paginatedResponse.meta as any).totalPhysical = totalPhysical;
+      (paginatedResponse.meta as any).totalNewThisMonth = totalNewThisMonth;
+
+      res.json(paginatedResponse);
     } catch (error) {
       res.status(500).json({ status: 'error', message: 'Erro ao listar pessoas' });
     }

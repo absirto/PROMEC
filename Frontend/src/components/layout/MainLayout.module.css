@@ -91,7 +91,9 @@
   scrollbar-width: none;
 }
 
-.nav::-webkit-scrollbar { display: none; }
+.nav::-webkit-scrollbar {
+  display: none;
+}
 
 .navSection {
   margin-bottom: 24px;
@@ -319,20 +321,116 @@
   cursor: pointer;
 }
 
+/* Dashboard customization classes */
+.dashboardContent {
+  background: linear-gradient(to right, #0B0E14 50%, #CBD5E1 50%) !important;
+  position: relative;
+}
+
+.networkCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50% !important;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.rightBgIllustration {
+  position: absolute;
+  right: -5%;
+  bottom: -5%;
+  width: 48%;
+  height: 65%;
+  background-image: url('/wireframe_vehicle.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.topBarDashboard {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+.dashboardSearchBtn {
+  background: rgba(21, 28, 40, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #8A9ABD !important;
+}
+
+.dashboardSearchBtn kbd {
+  background: rgba(21, 28, 40, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  color: #64748b !important;
+}
+
+.dashboardUserInfo .userName {
+  color: #111827 !important;
+}
+
+.dashboardUserInfo .userRole {
+  color: #5865F2 !important;
+}
+
+.dashboardUserInfo .userAvatar {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: #ffffff !important;
+  color: #5865F2 !important;
+}
+
+.activePrincipalSection {
+  color: var(--primary) !important;
+  font-weight: 800;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
 @media (max-width: 1024px) {
-  .sidebar { width: 80px; }
-  .logoText, .navLabel, .sectionLabel, .searchPlaceholder, .userText { display: none; }
-  .globalSearchBtn { width: 40px; padding: 10px; justify-content: center; }
-  .globalSearchBtn kbd { display: none; }
+  .sidebar {
+    width: 80px;
+  }
+
+  .logoText,
+  .navLabel,
+  .sectionLabel,
+  .searchPlaceholder,
+  .userText {
+    display: none;
+  }
+
+  .globalSearchBtn {
+    width: 40px;
+    padding: 10px;
+    justify-content: center;
+  }
+
+  .globalSearchBtn kbd {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
-  .topBar { padding: 0 16px; }
-  .mobileMenuBtn { display: block; }
+  .topBar {
+    padding: 0 16px;
+  }
+
+  .mobileMenuBtn {
+    display: block;
+  }
+
   .sidebar {
     position: fixed;
     transform: translateX(-100%);
     width: 260px;
   }
-  .sidebarOpen { transform: translateX(0); }
+
+  .sidebarOpen {
+    transform: translateX(0);
+  }
 }

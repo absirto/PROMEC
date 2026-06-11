@@ -1,129 +1,216 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap');
+/* ==========================================================================
+   ProMEC - DESIGN SYSTEM TOKENS (CSS VARIABLES)
+   Industrial Tech Dark Theme
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* Colors - Slate Palette (Light Mode Default) */
-  --slate-50: #f8fafc;
-  --slate-100: #f1f5f9;
-  --slate-200: #e2e8f0;
-  --slate-300: #cbd5e1;
-  --slate-400: #94a3b8;
-  --slate-500: #64748b;
-  --slate-600: #475569;
-  --slate-700: #334155;
-  --slate-800: #1e293b;
-  --slate-900: #0f172a;
-  --slate-950: #020617;
+    /* --- PALETA DE CORES (Industrial Tech) --- */
+    --bg-main: #0B0E14;          /* Fundo ultra-escuro do sistema */
+    --bg-surface: rgba(21, 28, 40, 0.85); /* Fundo dos cards, tabelas e sidebar com glassmorphism */
+    --bg-surface-hover: rgba(28, 35, 48, 0.95); /* Efeito de hover em elementos clicáveis */
+    --border-color: rgba(255, 255, 255, 0.06);     /* Bordas finas de tabelas e divisórias */
 
-  /* Brand - Indigo Professional */
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-fg: #ffffff;
-  --primary-soft: rgba(99, 102, 241, 0.1);
+    /* --- CORES DE MARCA & DESTAQUE --- */
+    --brand-primary: #5865F2;    /* O azul/roxo vibrante dos botões principais */
+    --brand-primary-hover: #4752C4;
+    --brand-text: #FFFFFF;       /* Texto principal */
+    --text-muted: #7A8B9E;       /* Texto secundário / Subtítulos / Ícones inativos */
 
-  /* Semantic */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #0ea5e9;
+    /* --- STATUS INDUSTRIAIS (Feedback Visual) --- */
+    --status-success: #00E676;   /* Verde: Máquina ativa / Orçamento aprovado */
+    --status-warning: #FFD600;   /* Amarelo: Setup / Atenção */
+    --status-danger: #FF5252;    /* Laranja/Vermelho: Crítico / Alerta de Estoque / Sair */
+    --status-info: #00B0FF;      /* Azul: Em análise / Qualidade */
 
-  /* Surfaces */
-  --bg-main: var(--slate-50);
-  --bg-surface: #ffffff;
-  --bg-elevated: #ffffff;
-  --border-subtle: var(--slate-200);
-  --border-strong: var(--slate-300);
+    /* --- TIPOGRAFIA --- */
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
 
-  /* Text */
-  --text-main: var(--slate-900);
-  --text-secondary: var(--slate-600);
-  --text-muted: var(--slate-400);
-  --text-inverse: #ffffff;
+    /* --- ELEVAÇÃO E ARREDONDAMENTO --- */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
 
-  /* Misc */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-full: 9999px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --spring-smooth: cubic-bezier(0.23, 1, 0.32, 1);
-  
-  /* Legacy/Compatibility placeholders */
-  --bg-deep: var(--bg-main);
-  --glass-border: var(--border-subtle);
-  --glass-blur: blur(0px);
-  --primary-bright: var(--primary-hover);
-  --primary-glow: rgba(99, 102, 241, 0.15);
-  --bg-card: var(--bg-surface);
+    --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 20px 50px rgba(0, 0, 0, 0.35);
+
+    /* --- ANIMAÇÕES --- */
+    --spring-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+    --spring: cubic-bezier(0.23, 1, 0.32, 1);
+
+    /* =====================================================================
+       ALIASES DE COMPATIBILIDADE
+       Estes mapeiam os nomes de variáveis usados nos CSS modules existentes
+       para os novos tokens do design system Industrial Tech.
+       ===================================================================== */
+
+    /* Surfaces */
+    --bg-elevated: rgba(28, 35, 48, 0.95);
+    --bg-deep: var(--bg-main);
+    --bg-card: var(--bg-surface);
+
+    /* Borders */
+    --border-subtle: var(--border-color);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --glass-border: var(--border-color);
+    --glass-border-bright: rgba(255, 255, 255, 0.15);
+    --glass-blur: blur(24px);
+
+    /* Brand / Primary */
+    --primary: var(--brand-primary);
+    --primary-hover: var(--brand-primary-hover);
+    --primary-fg: #FFFFFF;
+    --primary-soft: rgba(88, 101, 242, 0.12);
+    --primary-bright: #6C78F7;
+    --primary-glow: rgba(88, 101, 242, 0.2);
+
+    /* Text */
+    --text-main: var(--brand-text);
+    --text-secondary: #8A9ABD;
+    --text-inverse: var(--bg-main);
+
+    /* Semantic status (aliases curtos) */
+    --success: var(--status-success);
+    --warning: var(--status-warning);
+    --danger: var(--status-danger);
+    --info: var(--status-info);
 }
 
-[data-theme='dark'] {
-  --bg-main: var(--slate-950);
-  --bg-surface: var(--slate-900);
-  --bg-elevated: var(--slate-800);
-  --border-subtle: var(--slate-800);
-  --border-strong: var(--slate-700);
-
-  --text-main: var(--slate-50);
-  --text-secondary: var(--slate-400);
-  --text-muted: var(--slate-500);
-  
-  --bg-deep: var(--bg-main);
-  --glass-border: var(--border-subtle);
-  --bg-card: var(--bg-surface);
-}
+/* ==========================================================================
+   RESET & BASE
+   ========================================================================== */
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  line-height: 1.5;
-  transition: background-color 0.3s ease, color 0.3s ease;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
-/* Elegant Scrollbar */
+/* ==========================================================================
+   SCROLLBAR (Estilo Industrial Minimalista)
+   ========================================================================== */
+
 ::-webkit-scrollbar {
-  width: 6px;
+    width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: var(--radius-full);
+    background: var(--border-strong);
+    border-radius: var(--radius-full);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+    background: var(--text-muted);
 }
 
-/* Transitions */
+/* ==========================================================================
+   COMPONENTES UTILITÁRIOS DO DESIGN SYSTEM
+   ========================================================================== */
+
+/* Card padrão (Dashboard, Linhas de Orçamento, etc.) */
+.promec-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.promec-card:hover {
+    background-color: var(--bg-surface-hover);
+    border-color: var(--brand-primary);
+}
+
+/* Botão Principal (Acessar Sistema / Novo Orçamento) */
+.btn-primary {
+    background-color: var(--brand-primary);
+    color: #FFFFFF;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 12px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--brand-primary-hover);
+}
+
+/* Formatação de Valores Monetários / Números de OS (Precisão) */
+.financial-value, .ref-number {
+    font-family: var(--font-mono);
+    font-weight: 500;
+}
+
+/* Badges de Status */
+.badge {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: rgba(0, 230, 118, 0.15);
+    color: var(--status-success);
+}
+
+.badge-warning {
+    background-color: rgba(255, 214, 0, 0.15);
+    color: var(--status-warning);
+}
+
+.badge-danger {
+    background-color: rgba(255, 82, 82, 0.15);
+    color: var(--status-danger);
+}
+
+.badge-info {
+    background-color: rgba(0, 176, 255, 0.15);
+    color: var(--status-info);
+}
+
+/* ==========================================================================
+   ANIMAÇÕES
+   ========================================================================== */
+
 .animate-fade-in {
-  animation: fadeIn 0.4s var(--spring-smooth) forwards;
+    animation: fadeIn 0.4s var(--spring-smooth) forwards;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 :focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }

@@ -11,7 +11,7 @@ import SkeletonTable from '../../../components/SkeletonTable';
 const FinanceList: React.FC = () => {
   const { showToast } = useToast();
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, balance: 0 });
+  const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, balance: 0, predictedMargin: 0 });
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   
@@ -102,10 +102,10 @@ const FinanceList: React.FC = () => {
         />
         <StatsCard 
           title="Margem Prevista" 
-          value="24.5%" 
+          value={`${(summary.predictedMargin || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`} 
           icon={TrendingUp} 
           color="#a855f7"
-          trend={{ value: '+2.1%', isPositive: true }}
+          trend={{ value: 'OS Ativas', isPositive: true }}
         />
       </section>
 
