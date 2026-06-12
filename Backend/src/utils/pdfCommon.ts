@@ -75,6 +75,10 @@ export function addPremiumFooter(doc: any) {
   for (let i = range.start; i < range.start + range.count; i++) {
     doc.switchToPage(i);
     
+    // Temporarily set bottom margin to 0 to prevent text wrapping/drawing from triggering a page break
+    const originalBottomMargin = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+    
     // Linha superior do rodapé
     doc.moveTo(40, doc.page.height - 50).lineTo(555, doc.page.height - 50).strokeColor(PDF_COLORS.border).lineWidth(0.5).stroke();
     
@@ -91,8 +95,12 @@ export function addPremiumFooter(doc: any) {
       doc.page.height - 40,
       { align: 'right', width: 100 }
     );
+
+    // Restore bottom margin
+    doc.page.margins.bottom = originalBottomMargin;
   }
 }
+
 
 /**
  * Desenha um card de métrica (Bento Style)
@@ -101,15 +109,15 @@ export function drawMetricCard(doc: any, x: number, y: number, width: number, la
   const height = 60;
   
   doc.save();
-  // Sombra suave e fundo
-  doc.roundedRect(x, y, width, height, 10).fillAndStroke(PDF_COLORS.bg, PDF_COLORS.border);
+  // Fundo com bordas arredondadas
+  doc.roundedRect(x, y, width, height, 6).fillAndStroke(PDF_COLORS.bg, PDF_COLORS.border);
   
-  // Barra lateral de cor
-  doc.roundedRect(x, y, 6, height, { topLeft: 10, bottomLeft: 10 }).fill(color);
+  // Barra lateral de cor (simples rect, coberta pelo roundedRect acima)
+  doc.rect(x, y + 3, 5, height - 6).fill(color);
   
   // Texto
-  doc.fillColor(PDF_COLORS.secondary).fontSize(8).font('Helvetica').text(label.toUpperCase(), x + 15, y + 15);
-  doc.fillColor(PDF_COLORS.primary).fontSize(16).font('Helvetica-Bold').text(value, x + 15, y + 28);
+  doc.fillColor(PDF_COLORS.secondary).fontSize(8).font('Helvetica').text(label.toUpperCase(), x + 14, y + 15, { width: width - 20 });
+  doc.fillColor(PDF_COLORS.primary).fontSize(14).font('Helvetica-Bold').text(value, x + 14, y + 30, { width: width - 20 });
   
   doc.restore();
 }

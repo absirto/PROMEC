@@ -248,7 +248,7 @@ export const ServiceOrderController = {
         where: { id: orderId },
         include: {
           person: { include: { naturalPerson: true, legalPerson: true } },
-          services: { include: { service: true, employee: true } },
+          services: { include: { service: true, employee: { include: { person: { include: { naturalPerson: true } } } } } },
           materials: { include: { material: true } },
           qualityControls: true,
           transactions: true,
@@ -267,6 +267,7 @@ export const ServiceOrderController = {
             phone: settings.phone ?? undefined,
             address: settings.address ?? undefined,
             companyLogo: settings.logoUrl ?? undefined,
+            email: settings.contactEmail ?? undefined,
           }
         : undefined;
 
