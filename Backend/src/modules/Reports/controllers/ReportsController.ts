@@ -29,7 +29,7 @@ async function registerReportEmission(params: {
   generatedByUserId?: number | null;
   generatedByEmail?: string | null;
 }) {
-  await (prisma as any).reportEmission.create({
+  await prisma.reportEmission.create({
     data: {
       reportKey: params.reportKey,
       exportFormat: params.exportFormat,
@@ -50,7 +50,7 @@ export const ReportsController = {
       const where: any = {};
       if (reportKey) where.reportKey = reportKey;
 
-      const emissions = await (prisma as any).reportEmission.findMany({
+      const emissions = await prisma.reportEmission.findMany({
         where,
         include: {
           generatedBy: {
@@ -130,7 +130,7 @@ export const ReportsController = {
       }
 
       const [purchaseRequests, purchaseHistory] = await Promise.all([
-        (prisma as any).purchaseRequest.findMany({
+        prisma.purchaseRequest.findMany({
           where: requestWhere,
           include: {
             serviceOrder: { select: { id: true, traceCode: true, description: true } },
@@ -141,7 +141,7 @@ export const ReportsController = {
           },
           orderBy: { createdAt: 'desc' }
         }),
-        (prisma as any).stockLog.findMany({
+        prisma.stockLog.findMany({
           where: historyWhere,
           include: {
             material: true,
@@ -211,7 +211,7 @@ export const ReportsController = {
       }
 
       const [purchaseRequests, purchaseHistory, settings] = await Promise.all([
-        (prisma as any).purchaseRequest.findMany({
+        prisma.purchaseRequest.findMany({
           where: requestWhere,
           include: {
             serviceOrder: { select: { id: true, traceCode: true, description: true } },
@@ -222,7 +222,7 @@ export const ReportsController = {
           },
           orderBy: { createdAt: 'desc' }
         }),
-        (prisma as any).stockLog.findMany({
+        prisma.stockLog.findMany({
           where: historyWhere,
           include: {
             material: true,
@@ -289,7 +289,7 @@ export const ReportsController = {
       const { status } = req.query;
       const where: any = {};
       if (status) where.type = status;
-      const accounts = await (prisma as any).transaction.findMany({
+      const accounts = await prisma.transaction.findMany({
         where,
         orderBy: { date: 'asc' }
       });
@@ -306,9 +306,9 @@ export const ReportsController = {
   // Relatório: Resumo de usuários ativos (PDF)
   async adminUsersSummaryPDF(req: Request, res: Response) {
     try {
-      const total = await (prisma as any).user.count();
-      const admins = await (prisma as any).user.count({ where: { role: 'admin' } });
-      const users = await (prisma as any).user.count({ where: { role: 'user' } });
+      const total = await prisma.user.count();
+      const admins = await prisma.user.count({ where: { role: 'admin' } });
+      const users = await prisma.user.count({ where: { role: 'user' } });
       const settings = await getSettings();
       const pdfBuffer = await generateUsersSummaryPDF({ total, admins, users }, (settings?.logoUrl ?? undefined));
       res.setHeader('Content-Type', 'application/pdf');
@@ -322,7 +322,7 @@ export const ReportsController = {
   // Relatório: Desempenho de equipes (PDF)
   async adminTeamPerformancePDF(req: Request, res: Response) {
     try {
-      const performance = await (prisma as any).serviceOrderService.groupBy({
+      const performance = await prisma.serviceOrderService.groupBy({
         by: ['employeeId'],
         _count: { _all: true }
       });
@@ -347,7 +347,7 @@ export const ReportsController = {
           lte: new Date(end as string)
         };
       }
-      const transactions = await (prisma as any).transaction.findMany({ where });
+      const transactions = await prisma.transaction.findMany({ where });
       const summary = transactions.reduce((acc: any, current: any) => {
         if (current.type === 'RECEIVABLE') acc.totalIncome += current.amount;
         else acc.totalExpense += current.amount;
@@ -375,7 +375,7 @@ export const ReportsController = {
           lte: new Date(end as string)
         };
       }
-      const logs = await (prisma as any).stockLog.findMany({
+      const logs = await prisma.stockLog.findMany({
         where,
         include: { material: true },
         orderBy: { createdAt: 'desc' }
@@ -401,7 +401,7 @@ export const ReportsController = {
           lte: new Date(end as string)
         };
       }
-      const byStatus = await (prisma as any).serviceOrder.groupBy({
+      const byStatus = await prisma.serviceOrder.groupBy({
         by: ['status'],
         _count: { _all: true },
         where
@@ -427,7 +427,7 @@ export const ReportsController = {
           lte: new Date(end as string)
         };
       }
-      const byStatus = await (prisma as any).serviceOrder.groupBy({
+      const byStatus = await prisma.serviceOrder.groupBy({
         by: ['status'],
         _count: { _all: true },
         where
@@ -449,7 +449,7 @@ export const ReportsController = {
           lte: new Date(end as string)
         };
       }
-      const logs = await (prisma as any).stockLog.findMany({
+      const logs = await prisma.stockLog.findMany({
         where,
         include: { material: true },
         orderBy: { createdAt: 'desc' }
@@ -498,7 +498,7 @@ export const ReportsController = {
         }
       }
 
-      const production = await (prisma as any).serviceOrderService.findMany({
+      const production = await prisma.serviceOrderService.findMany({
         where,
         include: {
           employee: {
@@ -634,7 +634,7 @@ export const ReportsController = {
           lte: new Date(end as string)
         };
       }
-      const transactions = await (prisma as any).transaction.findMany({ where });
+      const transactions = await prisma.transaction.findMany({ where });
       const summary = transactions.reduce((acc: any, current: any) => {
         if (current.type === 'RECEIVABLE') acc.totalIncome += current.amount;
         else acc.totalExpense += current.amount;
@@ -652,7 +652,7 @@ export const ReportsController = {
       const { status } = req.query;
       const where: any = {};
       if (status) where.type = status;
-      const accounts = await (prisma as any).transaction.findMany({
+      const accounts = await prisma.transaction.findMany({
         where,
         orderBy: { date: 'asc' }
       });
@@ -665,7 +665,7 @@ export const ReportsController = {
   // Relatório: Desempenho de equipes (quantidade de serviços por funcionário)
   async adminTeamPerformance(req: Request, res: Response) {
     try {
-      const performance = await (prisma as any).serviceOrderService.groupBy({
+      const performance = await prisma.serviceOrderService.groupBy({
         by: ['employeeId'],
         where: { employeeId: { not: null } },
         _count: { _all: true },
@@ -755,9 +755,9 @@ export const ReportsController = {
   // Relatório: Resumo de usuários ativos
   async adminUsersSummary(req: Request, res: Response) {
     try {
-      const total = await (prisma as any).user.count();
-      const admins = await (prisma as any).user.count({ where: { role: 'admin' } });
-      const users = await (prisma as any).user.count({ where: { role: 'user' } });
+      const total = await prisma.user.count();
+      const admins = await prisma.user.count({ where: { role: 'admin' } });
+      const users = await prisma.user.count({ where: { role: 'user' } });
       res.json({ total, admins, users });
     } catch (error) {
       res.status(500).json({ error: 'Erro ao gerar resumo de usuários.' });

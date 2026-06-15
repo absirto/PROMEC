@@ -7,7 +7,7 @@ const router = Router();
 // Listar notificações do usuário
 router.get('/', authenticateToken, async (req: any, res) => {
   const userId = req.user?.id;
-  const notifications = await (prisma as any).notification.findMany({
+  const notifications = await prisma.notification.findMany({
     where: {
       OR: [
         { userId },
@@ -23,7 +23,7 @@ router.get('/', authenticateToken, async (req: any, res) => {
 // Marcar como lida
 router.put('/:id/read', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  await (prisma as any).notification.update({
+  await prisma.notification.update({
     where: { id: Number(id) },
     data: { read: true }
   });
@@ -33,7 +33,7 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
 // Marcar todas como lidas
 router.put('/read-all', authenticateToken, async (req: any, res) => {
   const userId = req.user?.id;
-  await (prisma as any).notification.updateMany({
+  await prisma.notification.updateMany({
     where: { userId, read: false },
     data: { read: true }
   });

@@ -126,6 +126,12 @@ export const PurchaseService = {
       const requestItem = requestItemsMap.get(qItem.purchaseRequestItemId);
       if (!requestItem) continue;
 
+      // Adquire um bloqueio pessimista na linha do material para serializar movimentações concorrentes
+      await tx.material.update({
+        where: { id: requestItem.materialId },
+        data: { updatedAt: new Date() }
+      });
+
       const availableShortage = Math.max(0, Number(requestItem.shortageQty || 0));
       if (availableShortage <= 0) continue;
 

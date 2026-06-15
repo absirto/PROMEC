@@ -90,7 +90,7 @@ api.interceptors.response.use(
 
     return result;
   },
-  (error) => {
+  (error: any) => {
     if (error.response && error.response.data) {
       const data = error.response.data;
       const message = typeof data === 'string'
@@ -125,6 +125,15 @@ api.interceptors.response.use(
   }
 );
 
-// Exportamos como 'any' para evitar que o TypeScript reclame nos componentes 
-// sobre a mudança de estrutura causada pelo interceptor (AxiosResponse vs Data).
-export default api as any;
+export interface CustomAxiosInstance {
+  defaults: typeof api.defaults;
+  interceptors: typeof api.interceptors;
+  get<T = any>(url: string, config?: any): Promise<T>;
+  post<T = any>(url: string, data?: any, config?: any): Promise<T>;
+  put<T = any>(url: string, data?: any, config?: any): Promise<T>;
+  delete<T = any>(url: string, config?: any): Promise<T>;
+  patch<T = any>(url: string, data?: any, config?: any): Promise<T>;
+  request<T = any>(config: any): Promise<T>;
+}
+
+export default api as unknown as CustomAxiosInstance;

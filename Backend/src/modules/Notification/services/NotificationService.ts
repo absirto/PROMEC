@@ -11,7 +11,7 @@ export const NotificationService = {
     link?: string;
   }) {
     try {
-      const notification = await (prisma as any).notification.create({
+      const notification = await prisma.notification.create({
         data: {
           title: params.title,
           message: params.message,
@@ -32,14 +32,14 @@ export const NotificationService = {
   },
 
   async markAsRead(notificationId: number) {
-    return (prisma as any).notification.update({
+    return prisma.notification.update({
       where: { id: notificationId },
       data: { read: true }
     });
   },
 
   async listByUser(userId: number) {
-    return (prisma as any).notification.findMany({
+    return prisma.notification.findMany({
       where: {
         OR: [
           { userId },

@@ -4,7 +4,7 @@ import prisma from '../../../core/prisma';
 export const FinanceController = {
   async list(req: Request, res: Response) {
     try {
-      const transactions = await (prisma as any).transaction.findMany({
+      const transactions = await prisma.transaction.findMany({
         include: { serviceOrder: true },
         orderBy: { date: 'desc' }
       });
@@ -17,7 +17,7 @@ export const FinanceController = {
   async create(req: Request, res: Response) {
     try {
       const { type, amount, category, description, orderId } = req.body;
-      const transaction = await (prisma as any).transaction.create({
+      const transaction = await prisma.transaction.create({
         data: {
           type,
           amount: Number(amount),
@@ -34,7 +34,7 @@ export const FinanceController = {
 
   async getSummary(req: Request, res: Response) {
     try {
-      const transactions = await (prisma as any).transaction.findMany();
+      const transactions = await prisma.transaction.findMany();
       const summary = transactions.reduce((acc: any, current: any) => {
         if (current.type === 'RECEIVABLE') acc.totalIncome += current.amount;
         else acc.totalExpense += current.amount;

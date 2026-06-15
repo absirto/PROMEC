@@ -8,9 +8,9 @@ const router = Router();
 router.get('/:entity/:entityId', authenticateToken, async (req, res) => {
   const { entity, entityId } = req.params;
   
-  const logs = await (prisma as any).auditLog.findMany({
+  const logs = await prisma.auditLog.findMany({
     where: {
-      entity,
+      entity: String(entity),
       entityId: Number(entityId)
     },
     orderBy: { createdAt: 'desc' },

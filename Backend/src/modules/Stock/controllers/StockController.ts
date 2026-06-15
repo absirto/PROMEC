@@ -7,7 +7,7 @@ export const StockController = {
     try {
       const pagination = getPaginationParams(req);
       const [logs, total] = await Promise.all([
-        (prisma as any).stockLog.findMany({
+        prisma.stockLog.findMany({
           include: {
             material: true,
             supplierPerson: {
@@ -21,7 +21,7 @@ export const StockController = {
           skip: pagination.skip,
           take: pagination.limit,
         }),
-        (prisma as any).stockLog.count(),
+        prisma.stockLog.count(),
       ]);
       res.json(formatPaginatedResponse(logs, total, pagination));
     } catch (error) {
@@ -50,7 +50,7 @@ export const StockController = {
       }
 
       const [logs, total] = await Promise.all([
-        (prisma as any).stockLog.findMany({
+        prisma.stockLog.findMany({
           where,
           include: {
             material: true,
@@ -65,7 +65,7 @@ export const StockController = {
           skip: pagination.skip,
           take: pagination.limit,
         }),
-        (prisma as any).stockLog.count({ where }),
+        prisma.stockLog.count({ where }),
       ]);
 
       const formatted = logs.map((log: any) => ({

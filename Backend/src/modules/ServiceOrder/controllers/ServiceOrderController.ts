@@ -91,12 +91,6 @@ const OPERATION_TYPES = ['USINAGEM', 'CALDEIRARIA', 'MONTAGEM'];
 const SHIFTS = ['MORNING', 'AFTERNOON', 'NIGHT'];
 const DOWNTIME_CATEGORIES = ['MACHINE', 'MATERIAL', 'SETUP', 'RETRABALHO', 'QUALIDADE', 'OUTROS'];
 
-function isSchemaDriftError(error: any) {
-  const code = error?.code;
-  const message = String(error?.message || '').toLowerCase();
-  return code === 'P2021' || code === 'P2022' || message.includes('does not exist') || message.includes('does not exist in the current database');
-}
-
 
 
 export const ServiceOrderController = {
@@ -128,7 +122,7 @@ export const ServiceOrderController = {
 
       const pagination = getPaginationParams(req);
       const [quotations, total] = await Promise.all([
-        (prisma as any).purchaseQuotation.findMany({
+        prisma.purchaseQuotation.findMany({
           where,
           include: {
             supplierPerson: { include: { naturalPerson: true, legalPerson: true } },
@@ -150,7 +144,7 @@ export const ServiceOrderController = {
           skip: pagination.skip,
           take: pagination.limit,
         }),
-        (prisma as any).purchaseQuotation.count({ where }),
+        prisma.purchaseQuotation.count({ where }),
       ]);
 
       return res.json(formatPaginatedResponse(quotations, total, pagination));
@@ -212,14 +206,14 @@ export const ServiceOrderController = {
         return res.status(404).json({ status: 'error', message: 'Cotação não encontrada.' });
       }
 
-      const settings = await (prisma as any).settings.findFirst();
+      const settings = await prisma.settings.findFirst();
       const companyInfo = settings
         ? {
-            companyName: settings.companyName,
-            cnpj: settings.cnpj,
-            phone: settings.phone,
-            address: settings.address,
-            companyLogo: settings.logoUrl,
+            companyName: settings.companyName ?? undefined,
+            cnpj: settings.cnpj ?? undefined,
+            phone: settings.phone ?? undefined,
+            address: settings.address ?? undefined,
+            companyLogo: settings.logoUrl ?? undefined,
           }
         : undefined;
 
@@ -425,7 +419,7 @@ export const ServiceOrderController = {
 
       const pagination = getPaginationParams(req);
       const [requests, total] = await Promise.all([
-        (prisma as any).purchaseRequest.findMany({
+        prisma.purchaseRequest.findMany({
           where,
           include: {
             serviceOrder: { select: { id: true, traceCode: true, description: true } },
@@ -440,17 +434,13 @@ export const ServiceOrderController = {
           skip: pagination.skip,
           take: pagination.limit,
         }),
-        (prisma as any).purchaseRequest.count({ where }),
+        prisma.purchaseRequest.count({ where }),
       ]);
 
       return res.json(formatPaginatedResponse(requests, total, pagination));
     } catch (error: any) {
-      if (isSchemaDriftError(error)) {
-        logger.warn('ServiceOrderController.listPurchaseRequests retornando vazio por drift de schema: %s', error?.message || 'erro desconhecido');
-        return res.json([]);
-      }
-      logger.error('ServiceOrderController.listPurchaseRequests falhou e retornará vazio: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
-      return res.json([]);
+      logger.error('ServiceOrderController.listPurchaseRequests falhou: %s', error?.message || 'erro desconhecido', { stack: error?.stack });
+      return res.status(500).json({ status: 'error', message: 'Erro ao listar solicitações de compra.' });
     }
   },
 
@@ -513,6 +503,12 @@ export const ServiceOrderController = {
           const requestItem = requestItemsMap.get(item.purchaseRequestItemId);
           if (!requestItem) throw new Error('REQUEST_ITEM_NOT_FOUND');
           if (requestItem.status === 'PURCHASED') continue;
+
+          // Adquire um bloqueio pessimista na linha do material para serializar movimentações concorrentes
+          await tx.material.update({
+            where: { id: requestItem.materialId },
+            data: { updatedAt: new Date() }
+          });
 
           const availableShortage = Math.max(0, Number(requestItem.shortageQty || 0));
           if (availableShortage <= 0) continue;

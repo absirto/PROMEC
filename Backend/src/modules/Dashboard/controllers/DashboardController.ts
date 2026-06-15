@@ -4,12 +4,6 @@ import { startOfDay, subDays, endOfDay, format, subMonths, startOfMonth, endOfMo
 import { logger } from '../../../utils/logger';
 import { getPaginationParams, formatPaginatedResponse } from '../../../utils/pagination';
 
-function isSchemaDriftError(error: any) {
-  const code = error?.code;
-  const message = String(error?.message || '').toLowerCase();
-  return code === 'P2021' || code === 'P2022' || message.includes('does not exist') || message.includes('does not exist in the current database');
-}
-
 export const DashboardController = {
   async getStats(req: Request, res: Response) {
     try {
@@ -93,26 +87,16 @@ export const DashboardController = {
         };
       }
 
-      let operationLogs: any[] = [];
-      try {
-        operationLogs = await prisma.serviceOrderOperationLog.findMany({
-          where: operationsWhere,
-          include: {
-            serviceOrder: {
-              select: {
-                workCenter: true,
-              }
+      const operationLogs = await prisma.serviceOrderOperationLog.findMany({
+        where: operationsWhere,
+        include: {
+          serviceOrder: {
+            select: {
+              workCenter: true,
             }
           }
-        });
-      } catch (error: any) {
-        if (isSchemaDriftError(error)) {
-          logger.warn('Dashboard sem logs operacionais por drift de schema: %s', error?.message || 'erro desconhecido');
-          operationLogs = [];
-        } else {
-          throw error;
         }
-      }
+      });
 
       const efficiencyByCenterMap: Record<string, any> = {};
       const downtimeByCategory: Record<string, number> = {};
@@ -179,26 +163,16 @@ export const DashboardController = {
         trendWhere.serviceOrder = { personId: Number(personId) };
       }
 
-      let trendLogs: any[] = [];
-      try {
-        trendLogs = await prisma.serviceOrderOperationLog.findMany({
-          where: trendWhere,
-          include: {
-            serviceOrder: {
-              select: {
-                workCenter: true,
-              }
+      const trendLogs = await prisma.serviceOrderOperationLog.findMany({
+        where: trendWhere,
+        include: {
+          serviceOrder: {
+            select: {
+              workCenter: true,
             }
           }
-        });
-      } catch (error: any) {
-        if (isSchemaDriftError(error)) {
-          logger.warn('Dashboard sem tendência por drift de schema: %s', error?.message || 'erro desconhecido');
-          trendLogs = [];
-        } else {
-          throw error;
         }
-      }
+      });
 
       const trendByCenterMap: Record<string, any> = {};
 
@@ -266,21 +240,12 @@ export const DashboardController = {
       const materials = await prisma.material.findMany();
 
       let lowStockCount = 0;
-      try {
-        for (const m of materials) {
-          const stockLogs = await prisma.stockLog.findMany({ where: { materialId: m.id } });
-          const currentStock = stockLogs.reduce((acc: number, log) => {
-            return log.type === 'IN' ? acc + log.quantity : acc - log.quantity;
-          }, 0);
-          if (currentStock < 10) lowStockCount++;
-        }
-      } catch (error: any) {
-        if (isSchemaDriftError(error)) {
-          logger.warn('Dashboard sem cálculo de estoque por drift de schema: %s', error?.message || 'erro desconhecido');
-          lowStockCount = 0;
-        } else {
-          throw error;
-        }
+      for (const m of materials) {
+        const stockLogs = await prisma.stockLog.findMany({ where: { materialId: m.id } });
+        const currentStock = stockLogs.reduce((acc: number, log) => {
+          return log.type === 'IN' ? acc + log.quantity : acc - log.quantity;
+        }, 0);
+        if (currentStock < 10) lowStockCount++;
       }
 
       const completedOrders = await prisma.serviceOrder.findMany({
@@ -361,13 +326,13 @@ export const DashboardController = {
       }
 
       const [logsRaw, total] = await Promise.all([
-        (prisma as any).auditLog.findMany({
+        prisma.auditLog.findMany({
           where,
           take: pagination.limit,
           skip: pagination.skip,
           orderBy: { createdAt: 'desc' }
         }),
-        (prisma as any).auditLog.count({ where })
+        prisma.auditLog.count({ where })
       ]);
 
       const userIds = Array.from(new Set(logsRaw.map((log: any) => log.userId).filter(Boolean))) as number[];
