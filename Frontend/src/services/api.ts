@@ -1,5 +1,5 @@
-import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { clearStoredSession, getValidStoredToken } from '../utils/authSession';
+import axios, { AxiosResponse } from 'axios';
+import { clearStoredSession } from '../utils/authSession';
 
 function redirectToLogin() {
   if (typeof window === 'undefined') return;
@@ -17,21 +17,14 @@ const defaultApiUrl = import.meta.env.DEV
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || defaultApiUrl,
+  withCredentials: true, // Envia cookies HttpOnly automaticamente
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor para adicionar token JWT automaticamente
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getValidStoredToken();
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  } else if (config.headers?.Authorization) {
-    delete config.headers.Authorization;
-  }
-  return config;
-});
+// O token JWT agora é enviado automaticamente via Cookie HttpOnly.
+// Não é mais necessário um interceptor de request para injetar o header Authorization.
 
 // Interceptor para tratar respostas padronizadas do backend
 api.interceptors.response.use(

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { clearStoredSession, getRemainingSessionTime, getValidStoredToken } from './utils/authSession';
+import api from './services/api';
+import { clearStoredSession, getStoredUser } from './utils/authSession';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,45 +9,36 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, permission }) => {
-  const [token, setToken] = useState<string | null>(() => getValidStoredToken());
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const user = getStoredUser();
 
   useEffect(() => {
-    const syncToken = () => {
-      setToken(getValidStoredToken());
-    };
-
-    syncToken();
-    window.addEventListener('storage', syncToken);
-
-    return () => {
-      window.removeEventListener('storage', syncToken);
-    };
+    // Validar sessão via cookie HttpOnly chamando /auth/me
+    api.get('/auth/me')
+      .then(() => setAuthState('authenticated'))
+      .catch(() => {
+        clearStoredSession();
+        setAuthState('unauthenticated');
+      });
   }, []);
 
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
+  if (authState === 'loading') {
+    return (
+      <div style={{
+        background: 'var(--bg-main, #0f172a)',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--primary, #00e6b0)',
+        fontWeight: 800
+      }}>
+        Verificando sessão...
+      </div>
+    );
+  }
 
-    const remainingTime = getRemainingSessionTime();
-    if (remainingTime === null) {
-      setToken(null);
-      return;
-    }
-
-    const timeoutId = setTimeout(() => {
-      clearStoredSession();
-      setToken(null);
-    }, remainingTime);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [token]);
-
-  if (!token) {
+  if (authState === 'unauthenticated') {
     return <Navigate to="/login" replace />;
   }
 

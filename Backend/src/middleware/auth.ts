@@ -34,8 +34,15 @@ export function checkPermission(userPermissions: string[], required: string): bo
 }
 
 export async function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  // 1. Tentar ler do cookie HttpOnly (prioridade para browsers)
+  let token = req.cookies?.token;
+
+  // 2. Fallback: ler do header Authorization (apps mobile, Postman, etc.)
+  if (!token) {
+    const authHeader = req.headers['authorization'];
+    token = authHeader && authHeader.split(' ')[1];
+  }
+
   if (!token) return res.status(401).json({ message: 'Token não fornecido' });
 
   try {

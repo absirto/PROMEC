@@ -4,6 +4,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import morgan from 'morgan';
@@ -51,6 +52,7 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(cookieParser());
 app.use(express.json());
 app.use('/uploads/public', express.static(path.join(process.cwd(), 'uploads', 'public')));
 app.use(sanitizeBody);

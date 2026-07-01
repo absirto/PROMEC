@@ -9,7 +9,8 @@ import {
   ChevronLeft, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import styles from './MainLayout.module.css';
-import { clearStoredSession } from '../../utils/authSession';
+import { clearStoredSession, getStoredUser } from '../../utils/authSession';
+import api from '../../services/api';
 import Breadcrumbs from '../Breadcrumbs';
 import CommandPalette from '../CommandPalette';
 import NotificationCenter from '../NotificationCenter';
@@ -100,16 +101,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const user = getStoredUser();
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
   const handleLogout = () => {
-    clearStoredSession();
-    navigate('/login');
+    api.post('/auth/logout')
+      .finally(() => {
+        clearStoredSession();
+        navigate('/login');
+      });
   };
 
   const routeLabels: Record<string, string> = {

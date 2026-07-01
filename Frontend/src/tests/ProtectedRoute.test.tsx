@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { vi } from 'vitest';
@@ -7,16 +7,24 @@ vi.mock('react-router-dom', () => ({
   Navigate: ({ to }: { to: string }) => <div>Navegando para {to}</div>,
 }));
 
+// Mock do api para simular chamadas /auth/me
+vi.mock('../services/api', () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    defaults: { baseURL: '/v1' },
+    interceptors: {
+      request: { use: vi.fn() },
+      response: { use: vi.fn() },
+    },
+  },
+}));
+
 import ProtectedRoute from '../ProtectedRoute';
-
-function createToken(expirationTimeMs: number) {
-  const encode = (value: Record<string, unknown>) => btoa(JSON.stringify(value))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
-
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ exp: Math.ceil(expirationTimeMs / 1000) })}.signature`;
-}
+import api from '../services/api';
 
 function renderProtectedRoute() {
   return render(
@@ -29,39 +37,31 @@ function renderProtectedRoute() {
 describe('ProtectedRoute', () => {
   beforeEach(() => {
     localStorage.clear();
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-  });
-
-  it('redireciona imediatamente quando o token já expirou', () => {
-    localStorage.setItem('token', createToken(Date.now() - 60_000));
-    localStorage.setItem('user', JSON.stringify({ role: 'user', group: { permissions: [] } }));
+  it('redireciona para /login quando a sessão (cookie) é inválida', async () => {
+    // Simula cookie inválido/expirado — /auth/me retorna 401
+    (api.get as ReturnType<typeof vi.fn>).mockRejectedValueOnce({ response: { status: 401 } });
 
     renderProtectedRoute();
 
-    expect(screen.getByText('Navegando para /login')).toBeInTheDocument();
-    expect(localStorage.getItem('token')).toBeNull();
-    expect(localStorage.getItem('user')).toBeNull();
-  });
-
-  it('derruba a sessão automaticamente quando o token vence com a tela aberta', async () => {
-    localStorage.setItem('token', createToken(Date.now() + 1_500));
-    localStorage.setItem('user', JSON.stringify({ role: 'user', group: { permissions: [] } }));
-
-    renderProtectedRoute();
-
-    expect(screen.getByText('Área restrita')).toBeInTheDocument();
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(2_000);
+    await waitFor(() => {
+      expect(screen.getByText('Navegando para /login')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Navegando para /login')).toBeInTheDocument();
-    expect(localStorage.getItem('token')).toBeNull();
     expect(localStorage.getItem('user')).toBeNull();
+  });
+
+  it('renderiza conteúdo protegido quando a sessão (cookie) é válida', async () => {
+    // Simula cookie válido — /auth/me retorna 200
+    (api.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ id: 1, firstName: 'Test' });
+    localStorage.setItem('user', JSON.stringify({ role: 'user', group: { permissions: [] } }));
+
+    renderProtectedRoute();
+
+    await waitFor(() => {
+      expect(screen.getByText('Área restrita')).toBeInTheDocument();
+    });
   });
 });

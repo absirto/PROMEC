@@ -14,6 +14,7 @@ import { useToast } from '../../../components/ToastProvider';
 import Skeleton from '../../../components/Skeleton';
 import AuditTimeline from '../../../components/AuditTimeline';
 import QuickPersonModal from '../../../components/QuickPersonModal';
+import { getStoredUser } from '../../../utils/authSession';
 
 interface OSItemMaterial {
   materialId: string;
@@ -68,8 +69,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const [activeTab, setActiveTab] = useState<'general' | 'items' | 'operations'>('general');
   const [showQuickPerson, setShowQuickPerson] = useState(false);
   
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const user = getStoredUser();
   const hasFinanceAccess = user?.role === 'admin' || user?.group?.permissions?.includes('financeiro:visualizar');
   const showFinancialData = propShowFinancialData && hasFinanceAccess;
 

@@ -5,6 +5,7 @@ import api from '../../../services/api';
 import styles from '../../../styles/common/BaseForm.module.css';
 import { useToast } from '../../../components/ToastProvider';
 import Skeleton from '../../../components/Skeleton';
+import { getStoredUser, setStoredUser } from '../../../utils/authSession';
 
 interface ProfileFormData {
   firstName: string;
@@ -33,9 +34,8 @@ const Profile: React.FC = () => {
   const newPassword = watch('newPassword');
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      const u = JSON.parse(userStr);
+    const u = getStoredUser();
+    if (u) {
       setUserData(u);
       reset({
         firstName: u.firstName || '',
@@ -65,7 +65,7 @@ const Profile: React.FC = () => {
       
       // Atualizar dados no localStorage
       const updatedUser = { ...userData, firstName: data.firstName, lastName: data.lastName, email: data.email };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setStoredUser(updatedUser);
       setUserData(updatedUser);
       
       reset({ ...data, newPassword: '', confirmPassword: '' });

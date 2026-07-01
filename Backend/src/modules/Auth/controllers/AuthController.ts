@@ -5,6 +5,15 @@ import prisma from '../../../core/prisma';
 import { JWT_SECRET } from '../../../config/security';
 import { expandPermissions } from '../../../utils/permissions';
 
+/** Opções padrão para o cookie de autenticação */
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict' as const,
+  path: '/',
+  maxAge: 8 * 60 * 60 * 1000, // 8 horas (mesmo tempo do JWT)
+};
+
 export const AuthController = {
   async login(req: Request, res: Response) {
     const { email, password } = req.body;
@@ -26,6 +35,10 @@ export const AuthController = {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) return res.status(401).json(invalidMsg);
     const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '8h' });
+
+    // Setar o JWT em um Cookie HttpOnly seguro
+    res.cookie('token', token, COOKIE_OPTIONS);
+
     // Monta lista de permissões do grupo de forma segura
     const group = user.group ? {
       id: user.group.id,
@@ -34,7 +47,6 @@ export const AuthController = {
       permissions: expandPermissions(user.group.permissions.map(gp => gp.permission.name))
     } : { id: 0, name: 'Sem Grupo', permissions: user.role === 'admin' ? expandPermissions(['admin']) : [] };
     return res.json({
-      token,
       user: {
         id: user.id,
         firstName: user.firstName,
@@ -63,5 +75,15 @@ export const AuthController = {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ message: 'Usuário não encontrado' });
     return res.json({ id: user.id, firstName: user.firstName, role: user.role, email: user.email });
+  },
+
+  async logout(_req: Request, res: Response) {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict' as const,
+      path: '/',
+    });
+    return res.json({ message: 'Logout realizado com sucesso' });
   },
 };

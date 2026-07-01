@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import api from '../services/api';
+import { getStoredUser } from '../utils/authSession';
 
 export interface Notification {
   id: number;
@@ -30,8 +31,7 @@ export const useNotifications = () => {
   useEffect(() => {
     fetchNotifications();
 
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) : null;
+    const user = getStoredUser();
     
     // Conecta ao WebSocket (usando o baseURL do axios como base)
     const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';

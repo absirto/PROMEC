@@ -183,10 +183,9 @@ const ServiceOrdersList: React.FC<ServiceOrdersListProps> = ({
   const handleEdit = (id: number) => navigate(`/service-orders/${id}/edit`);
   const handleDownloadPDF = async (id: number) => {
     try {
-      const token = localStorage.getItem('token');
       const baseURL = api.defaults.baseURL || '/v1';
       const res = await fetch(`${baseURL}/service-orders/${id}/pdf`, {
-        headers: { Authorization: `Bearer ${token}` }
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Falha ao gerar PDF');
       const blob = await res.blob();

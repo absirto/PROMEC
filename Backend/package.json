@@ -59,6 +59,7 @@
   "devDependencies": {
     "@bull-board/api": "^6.21.0",
     "@bull-board/express": "^6.21.0",
+    "@types/cookie-parser": "^1.4.10",
     "@types/jest": "^30.0.0",
     "@types/supertest": "^7.2.0",
     "supertest": "^7.2.2",

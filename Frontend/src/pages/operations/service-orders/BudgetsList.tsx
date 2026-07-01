@@ -4,6 +4,7 @@ import { Search, Plus, Eye, Edit2, Calendar, Filter, X, RefreshCcw } from 'lucid
 import SkeletonTable from '../../../components/SkeletonTable';
 import api from '../../../services/api';
 import styles from '../../../styles/common/BaseList.module.css';
+import { getStoredUser } from '../../../utils/authSession';
 
 const BudgetsList: React.FC = () => {
   const navigate = useNavigate();
@@ -12,8 +13,7 @@ const BudgetsList: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   
   // Check permissions for financial data
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const user = getStoredUser();
   const userPermissions = user?.group?.permissions || [];
   const hasFinanceAccess = user?.role === 'admin' || userPermissions.includes('financeiro:visualizar');
 
