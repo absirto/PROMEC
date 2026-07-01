@@ -1,7 +1,7 @@
 
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { seedGroupsAndPermissions } from './seed-groups';
 
 const prisma = new PrismaClient();

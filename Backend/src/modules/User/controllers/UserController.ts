@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import type { Prisma } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import prisma from '../../../core/prisma';
 import { addToQueue } from '../../../utils/queueHelper';
 

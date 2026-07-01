@@ -56,7 +56,7 @@ async function giveFullAccess() {
     console.log('Sucesso!');
   } else {
     console.log('Usuário não encontrado. Criando usuário admin padrão...');
-    const hash = await require('bcryptjs').hash('admin123', 10);
+    const hash = await require('bcrypt').hash('admin123', 10);
     await prisma.user.create({
       data: {
         firstName: 'Admin',

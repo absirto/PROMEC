@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { seedGroupsAndPermissions } from '../src/database/seeds/seed-groups';
 
 const prisma = new PrismaClient();
