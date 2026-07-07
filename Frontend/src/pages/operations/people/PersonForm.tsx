@@ -65,8 +65,8 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
           type: person.type as 'F' | 'J',
           name: person.type === 'F' ? (mainData?.name || '') : (mainData?.corporateName || ''),
           tradeName: person.type === 'J' ? (mainData?.tradeName || '') : '',
-          email: person.contacts?.find((c: any) => c.type === 'EMAIL')?.value || '',
-          phone: maskPhone(person.contacts?.find((c: any) => c.type === 'TELEFONE')?.value || ''),
+          email: person.contacts?.find((c: any) => c.type?.toUpperCase() === 'EMAIL')?.value || '',
+          phone: maskPhone(person.contacts?.find((c: any) => ['TELEFONE', 'WHATSAPP', 'CELULAR', 'PHONE'].includes(c.type?.toUpperCase()))?.value || ''),
           document: person.type === 'F' ? maskCPF(mainData?.cpf || '') : maskCNPJ(mainData?.cnpj || ''),
           address: {
             street: mainAddress.logradouro || '',
@@ -232,13 +232,11 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 placeholder={personType === 'F' ? '000.000.000-00' : '00.000.000/0000-00'}
                 disabled={isView || isEdit}
-                {...register('document', { 
-                  required: 'Documento obrigatório',
-                  onChange: (e) => {
-                    const val = e.target.value;
-                    setValue('document', personType === 'F' ? maskCPF(val) : maskCNPJ(val));
-                  }
-                })}
+                {...register('document', { required: 'Documento obrigatório' })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setValue('document', personType === 'F' ? maskCPF(val) : maskCNPJ(val), { shouldValidate: true, shouldDirty: true });
+                }}
               />
               {personType === 'J' && !isView && !isEdit && (
                 <button 
@@ -313,9 +311,10 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 disabled={isView}
                 placeholder="(00) 00000-0000"
-                {...register('phone', {
-                   onChange: (e) => setValue('phone', maskPhone(e.target.value))
-                })}
+                {...register('phone')}
+                onChange={(e) => {
+                  setValue('phone', maskPhone(e.target.value), { shouldValidate: true, shouldDirty: true });
+                }}
               />
             </div>
           </div>
@@ -334,13 +333,12 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
                 className={styles.formInput} 
                 disabled={isView}
                 placeholder="00000-000"
-                {...register('address.zipCode', {
-                  onChange: (e) => {
-                    const val = maskCEP(e.target.value);
-                    setValue('address.zipCode', val);
-                    handleCEP(val);
-                  }
-                })}
+                {...register('address.zipCode')}
+                onChange={(e) => {
+                  const val = maskCEP(e.target.value);
+                  setValue('address.zipCode', val, { shouldValidate: true, shouldDirty: true });
+                  if (val.replace(/\D/g, '').length === 8) handleCEP(val);
+                }}
               />
             </div>
           </div>
