@@ -66,7 +66,7 @@ const PersonForm: React.FC<{ isEdit?: boolean; isView?: boolean }> = ({ isEdit, 
           name: person.type === 'F' ? (mainData?.name || '') : (mainData?.corporateName || ''),
           tradeName: person.type === 'J' ? (mainData?.tradeName || '') : '',
           email: person.contacts?.find((c: any) => c.type === 'EMAIL')?.value || '',
-          phone: maskPhone(person.contacts?.find((c: any) => c.type === 'PHONE')?.value || ''),
+          phone: maskPhone(person.contacts?.find((c: any) => c.type === 'TELEFONE')?.value || ''),
           document: person.type === 'F' ? maskCPF(mainData?.cpf || '') : maskCNPJ(mainData?.cnpj || ''),
           address: {
             street: mainAddress.logradouro || '',
