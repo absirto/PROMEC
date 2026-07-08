@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Search, Plus, Edit2, Trash2, Key, RefreshCcw, Lock, ShieldCheck, ShieldAlert } from 'lucide-react';
 import api from '../../../services/api';
 import commonStyles from '../../../styles/common/BaseList.module.css';
-import styles from './GroupsList.module.css';
+import premiumStyles from './GroupsList.module.css';
 import StatsCard from '../../../components/StatsCard';
 import EmptyState from '../../../components/EmptyState';
 import SkeletonTable from '../../../components/SkeletonTable';
@@ -40,7 +40,7 @@ const GroupsList: React.FC = () => {
   );
 
   return (
-    <div className={commonStyles.listContainer}>
+    <div className={`${commonStyles.listContainer} ${premiumStyles.listWrapper}`}>
       <header className={commonStyles.header}>
         <div className={commonStyles.headerInfo}>
           <h2 className={commonStyles.title}>Políticas de Acesso</h2>
@@ -67,7 +67,7 @@ const GroupsList: React.FC = () => {
             <RefreshCcw size={18} />
           </button>
 
-          <Link to="/groups/new" className={commonStyles.newBtn}>
+          <Link to="/groups/new" className={commonStyles.newBtn} style={{ background: 'linear-gradient(135deg, #a855f7, #7e22ce)', boxShadow: '0 4px 15px rgba(168, 85, 247, 0.4)' }}>
             <Plus size={18} />
             <span>Criar Perfil</span>
           </Link>
@@ -76,7 +76,7 @@ const GroupsList: React.FC = () => {
 
       {/* Mini Dashboard Segurança */}
       {!loading && !error && (
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }} className="animate-fade-in">
+        <section className={`animate-fade-in ${premiumStyles.statsGrid}`}>
           <StatsCard 
             title="Perfis de Acesso" 
             value={groups.length} 
@@ -87,20 +87,20 @@ const GroupsList: React.FC = () => {
             title="Regras Ativas" 
             value={groups.reduce((acc, g) => acc + (g.permissionKeys?.length || 0), 0)} 
             icon={Lock} 
-            color="var(--primary)"
+            color="#2dd4bf"
           />
           <StatsCard 
             title="Políticas Configuradas" 
             value={groups.filter(g => (g.permissionKeys || []).length > 0).length} 
             icon={ShieldCheck} 
-            color="var(--success)"
+            color="#34d399"
           />
           <StatsCard 
             title="Chaves Distribuídas" 
             value={new Set(groups.flatMap(g => g.permissionKeys || [])).size} 
             icon={ShieldAlert} 
             trend={{ value: 'Monitorado', isPositive: true }}
-            color="var(--primary)"
+            color="#a855f7"
           />
         </section>
       )}
@@ -110,7 +110,7 @@ const GroupsList: React.FC = () => {
       {!loading && !error && (
         <div className="animate-fade-in">
           {filtered.length > 0 ? (
-            <table className={commonStyles.tableContainer}>
+            <table className={premiumStyles.premiumTable}>
               <thead className={commonStyles.tableHeader}>
                 <tr>
                   <th style={{ width: 40, textAlign: 'center' }}><input type="checkbox" disabled /></th>
@@ -121,35 +121,27 @@ const GroupsList: React.FC = () => {
               </thead>
               <tbody>
                 {filtered.map(group => (
-                  <tr key={group.id} className={commonStyles.tableRow} onClick={() => handleEdit(group.id)}>
-                    <td className={commonStyles.tableCell} style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                  <tr key={group.id} className={premiumStyles.premiumRow} onClick={() => handleEdit(group.id)}>
+                    <td className={premiumStyles.premiumCell} style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                        <input type="checkbox" />
                     </td>
-                    <td className={commonStyles.tableCell}>
+                    <td className={premiumStyles.premiumCell}>
                       <div className={commonStyles.mainInfoCell}>
-                        <div className={commonStyles.avatar}>
-                          <Shield size={20} />
+                        <div className={premiumStyles.securityAvatar}>
+                          <Shield size={22} />
                         </div>
-                        <span className={commonStyles.primaryText}>{group.name}</span>
+                        <span className={premiumStyles.groupName}>{group.name}</span>
                       </div>
                     </td>
-                    <td className={commonStyles.tableCell}>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <td className={premiumStyles.premiumCell}>
+                      <div className={premiumStyles.permissionsWrapper}>
                         {(group.permissionKeys || []).slice(0, 4).map((key: string) => (
-                          <span key={key} style={{ 
-                            background: 'rgba(45, 212, 191, 0.08)', 
-                            padding: '4px 10px', 
-                            borderRadius: 8, 
-                            fontSize: 11, 
-                            fontWeight: 700,
-                            color: 'var(--primary)',
-                            border: '1px solid rgba(45, 212, 191, 0.2)'
-                          }}>
+                          <span key={key} className={premiumStyles.premiumBadge}>
                             {key}
                           </span>
                         ))}
                         {(group.permissionKeys?.length || 0) > 4 && (
-                          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
+                          <span className={premiumStyles.badgeExtra}>
                             +{(group.permissionKeys?.length || 0) - 4} outras
                           </span>
                         )}
@@ -158,10 +150,10 @@ const GroupsList: React.FC = () => {
                         )}
                       </div>
                     </td>
-                    <td className={commonStyles.tableCell} style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                    <td className={premiumStyles.premiumCell} style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                       <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                        <button onClick={() => handleEdit(group.id)} className={`${commonStyles.actionBtn} ${commonStyles.editBtn}`} title="Editar Permissões"><Edit2 size={18} /></button>
-                        <button onClick={() => handleDelete(group.id)} className={`${commonStyles.actionBtn} ${commonStyles.deleteBtn}`} title="Excluir Grupo"><Trash2 size={18} /></button>
+                        <button onClick={() => handleEdit(group.id)} className={`${premiumStyles.premiumActionBtn} ${premiumStyles.editBtn}`} title="Editar Permissões"><Edit2 size={18} /></button>
+                        <button onClick={() => handleDelete(group.id)} className={`${premiumStyles.premiumActionBtn} ${premiumStyles.deleteBtn}`} title="Excluir Grupo"><Trash2 size={18} /></button>
                       </div>
                     </td>
                   </tr>

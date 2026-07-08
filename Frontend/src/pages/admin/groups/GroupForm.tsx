@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Shield, Key, ArrowLeft, Save, Lock, ShieldCheck, ShieldAlert, CheckSquare, Square, Info } from 'lucide-react';
 import api from '../../../services/api';
 import styles from '../../../styles/common/BaseForm.module.css';
+import premiumStyles from './GroupForm.module.css';
 import { useToast } from '../../../components/ToastProvider';
 import Skeleton from '../../../components/Skeleton';
 
@@ -118,9 +119,9 @@ const GroupForm: React.FC<GroupFormProps> = ({ isEdit, isView }) => {
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Nome Identificador da Política</label>
               <div className={`${styles.inputWrapper} ${errors.name ? styles.inputError : ''}`}>
-                <Shield className={styles.inputIcon} size={18} />
+                <Shield className={`${styles.inputIcon} ${premiumStyles.premiumIcon}`} size={18} />
                 <input
-                  className={styles.formInput}
+                  className={`${styles.formInput} ${premiumStyles.premiumInput}`}
                   type="text"
                   disabled={isView}
                   {...register('name', { 
@@ -138,26 +139,26 @@ const GroupForm: React.FC<GroupFormProps> = ({ isEdit, isView }) => {
               <Lock size={18} /> Matriz de Permissões
             </div>
             
-            <div className={styles.permissionBentoGrid}>
+            <div className={premiumStyles.bentoGrid}>
               {availablePermissions.map(perm => {
                 const isActive = selectedPermissions.includes(perm.name);
                 return (
                   <div 
                     key={perm.id} 
-                    className={`${styles.permissionCard} ${isActive ? styles.permissionCardActive : ''}`}
+                    className={`${premiumStyles.permissionCard} ${isActive ? premiumStyles.permissionCardActive : ''}`}
                     onClick={() => handleTogglePermission(perm.name)}
                   >
-                    <div className={styles.permissionCardHeader}>
-                      <div className={styles.permissionIconWrapper}>
-                        {isActive ? <ShieldCheck size={18} /> : <ShieldAlert size={18} />}
+                    <div className={premiumStyles.cardHeader}>
+                      <div className={premiumStyles.iconWrapper}>
+                        {isActive ? <ShieldCheck size={20} /> : <ShieldAlert size={20} />}
                       </div>
-                      <div className={styles.checkboxWrapper}>
-                        {isActive ? <CheckSquare size={20} color="var(--primary)" /> : <Square size={20} color="var(--text-muted)" />}
+                      <div className={premiumStyles.checkboxWrapper}>
+                        {isActive ? <CheckSquare size={22} color="#a855f7" /> : <Square size={22} color="#475569" />}
                       </div>
                     </div>
-                    <div className={styles.permissionCardBody}>
-                      <h4 className={styles.permissionName}>{perm.name}</h4>
-                      <p className={styles.permissionDesc}>{perm.description || 'Controle de acesso granular ao módulo correspondente.'}</p>
+                    <div className={premiumStyles.cardBody}>
+                      <h4 className={premiumStyles.permissionName}>{perm.name}</h4>
+                      <p className={premiumStyles.permissionDesc}>{perm.description || 'Controle de acesso granular ao módulo correspondente.'}</p>
                     </div>
                   </div>
                 );
