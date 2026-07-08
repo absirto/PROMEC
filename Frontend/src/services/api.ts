@@ -12,7 +12,7 @@ function redirectToLogin() {
 }
 
 const defaultApiUrl = import.meta.env.DEV
-  ? 'http://localhost:3001/v1'
+  ? (import.meta.env.VITE_API_URL as string) || '/v1'
   : '/v1';
 
 const api = axios.create({

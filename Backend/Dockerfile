@@ -40,4 +40,4 @@ COPY --from=builder /app/prisma ./prisma
 EXPOSE 3001
 
 # Servidor vazio: migrações criam tabelas; seed cria grupos, permissões e utilizador inicial
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/src/server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/server.js"]

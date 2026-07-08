@@ -31,16 +31,18 @@ async function main() {
     create: { id: 2, name: 'Escritório' },
   });
 
-  const hashedPassword = await bcrypt.hash('180525@', 10);
+  const email = process.env.ADMIN_DEFAULT_EMAIL || 'admin@admin.com';
+  const password = process.env.ADMIN_DEFAULT_PASSWORD || '123456';
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   await prisma.user.upsert({
-    where: { email: 'guidortas25@gmail.com' },
+    where: { email },
     update: {}, // Evita sobrescrever senha e dados de cadastro no banco em produção
     create: {
-      email: 'guidortas25@gmail.com',
+      email,
       password: hashedPassword,
-      firstName: 'Guilherme',
-      lastName: 'Dortas',
+      firstName: 'Admin',
+      lastName: 'System',
       role: 'admin',
       groupId: adminGroup.id,
     },

@@ -14,17 +14,18 @@ async function main() {
   await prisma.workArea.upsert({ where: { id: 1 }, update: {}, create: { name: 'Fábrica' } });
   await prisma.workArea.upsert({ where: { id: 2 }, update: {}, create: { name: 'Escritório' } });
 
-  // 3. Create PRIMARY USER (Guilherme Dortas)
-  const hashedPassword = await bcrypt.hash('180525@', 10);
+  const email = process.env.ADMIN_DEFAULT_EMAIL || 'admin@admin.com';
+  const password = process.env.ADMIN_DEFAULT_PASSWORD || '123456';
+  const hashedPassword = await bcrypt.hash(password, 10);
   
   await prisma.user.upsert({
-    where: { email: 'guidortas25@gmail.com' },
+    where: { email },
     update: {},
     create: {
-      email: 'guidortas25@gmail.com',
+      email,
       password: hashedPassword,
-      firstName: 'Guilherme',
-      lastName: 'Dortas',
+      firstName: 'Admin',
+      lastName: 'System',
       role: 'admin',
     },
   });
@@ -41,7 +42,7 @@ async function main() {
   });
 
   console.log('✅ Seed finished successfully!');
-  console.log('👤 Primary User: guidortas25@gmail.com / 180525@');
+  console.log('👤 Primary User: check your .env credentials');
 }
 
 main()

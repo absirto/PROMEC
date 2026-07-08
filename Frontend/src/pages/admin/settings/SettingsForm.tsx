@@ -26,7 +26,7 @@ const getAssetUrl = (url: string | null | undefined): string | null => {
   if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
-  const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3001/v1').replace(/\/v1$/, '');
+  const apiBaseUrl = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL as string).replace(/\/v1$/, '') : '';
   return `${apiBaseUrl}/${url.replace(/^\//, '')}`;
 };
 

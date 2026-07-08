@@ -1,6 +1,6 @@
 const http = require('http');
 
-const API = 'http://localhost:3001/v1';
+const API = process.env.API_URL || 'http://localhost:3001/v1';
 
 function request(method, path, body, token) {
   return new Promise((resolve, reject) => {
@@ -32,7 +32,9 @@ function request(method, path, body, token) {
 
 (async () => {
   // Login
-  const login = await request('POST', '/auth/login', { email: 'guidortas25@gmail.com', password: '180525' });
+  const loginEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@admin.com';
+  const loginPassword = process.env.ADMIN_DEFAULT_PASSWORD || '123456';
+  const login = await request('POST', '/auth/login', { email: loginEmail, password: loginPassword });
   const token = login.data.token;
   console.log('✅ Logado');
 

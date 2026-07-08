@@ -4,7 +4,7 @@ import { Express } from 'express';
 import path from 'path';
 
 const defaultPort = process.env.PORT || '3000';
-const swaggerServerUrl = process.env.SWAGGER_SERVER_URL || `http://localhost:${defaultPort}`;
+const swaggerServerUrl = process.env.SWAGGER_SERVER_URL;
 
 const swaggerDefinition = {
   openapi: '3.0.0',

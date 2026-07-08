@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { ServiceOrderController } from '../controllers/ServiceOrderController';
+import { PurchaseController } from '../controllers/PurchaseController';
+import { PCPController } from '../controllers/PCPController';
 import { authenticateToken, requirePermission } from '../../../middleware/auth';
 
 import { validateBody } from '../../../middleware/validateBody';
@@ -9,17 +11,23 @@ const router = Router();
 const ensureNumericId = (req: any, _res: any, next: any) => (/^\d+$/.test(String(req.params.id)) ? next() : next('route'));
 
 router.get('/', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.list);
-router.post('/materials/check', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.checkMaterialsCoverage);
-router.get('/pcp/overview', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpOverview);
-router.get('/pcp/calendar', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.pcpCalendar);
-router.get('/operations/efficiency', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.operationsEfficiency);
-router.post('/purchase-requests', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseRequest);
-router.get('/purchase-requests', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseRequests);
-router.post('/purchase-requests/:id/fulfill', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.fulfillPurchaseRequest);
-router.post('/purchase-quotations', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.createPurchaseQuotation);
-router.get('/purchase-quotations', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listPurchaseQuotations);
-router.post('/purchase-quotations/:id/approve', authenticateToken, requirePermission('os:gerenciar'), ServiceOrderController.approvePurchaseQuotation);
-router.get('/purchase-quotations/:id/pdf', authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.getPurchaseQuotationPDF);
+
+// PCP Endpoints
+router.post('/materials/check', authenticateToken, requirePermission('os:visualizar'), PCPController.checkMaterialsCoverage);
+router.get('/pcp/overview', authenticateToken, requirePermission('os:visualizar'), PCPController.pcpOverview);
+router.get('/pcp/calendar', authenticateToken, requirePermission('os:visualizar'), PCPController.pcpCalendar);
+router.get('/operations/efficiency', authenticateToken, requirePermission('os:visualizar'), PCPController.operationsEfficiency);
+
+// Purchase Endpoints
+router.post('/purchase-requests', authenticateToken, requirePermission('os:gerenciar'), PurchaseController.createPurchaseRequest);
+router.get('/purchase-requests', authenticateToken, requirePermission('os:visualizar'), PurchaseController.listPurchaseRequests);
+router.post('/purchase-requests/:id/fulfill', authenticateToken, requirePermission('os:gerenciar'), PurchaseController.fulfillPurchaseRequest);
+router.post('/purchase-quotations', authenticateToken, requirePermission('os:gerenciar'), PurchaseController.createPurchaseQuotation);
+router.get('/purchase-quotations', authenticateToken, requirePermission('os:visualizar'), PurchaseController.listPurchaseQuotations);
+router.post('/purchase-quotations/:id/approve', authenticateToken, requirePermission('os:gerenciar'), PurchaseController.approvePurchaseQuotation);
+router.get('/purchase-quotations/:id/pdf', authenticateToken, requirePermission('os:visualizar'), PurchaseController.getPurchaseQuotationPDF);
+
+// Service Order Endpoints
 router.get('/:id/operations', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.listOperations);
 router.get('/:id/pdf', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.getServiceOrderPDF);
 router.get('/:id', ensureNumericId, authenticateToken, requirePermission('os:visualizar'), ServiceOrderController.get);

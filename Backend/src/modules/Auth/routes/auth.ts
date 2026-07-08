@@ -24,6 +24,6 @@ if (allowPublicRegister) {
   router.post('/register', authLimiter, authenticateToken, requirePermission('usuarios:gerenciar'), validateBody(registerSchema), AuthController.register);
 }
 router.get('/me', authenticateToken, AuthController.me);
-router.post('/logout', AuthController.logout);
+router.post('/logout', authenticateToken, AuthController.logout);
 
 export default router;

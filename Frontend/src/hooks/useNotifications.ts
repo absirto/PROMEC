@@ -34,7 +34,7 @@ export const useNotifications = () => {
     const user = getStoredUser();
     
     // Conecta ao WebSocket (usando o baseURL do axios como base)
-    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const socketUrl = import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL as string).replace(/\/v1$/, '') : '';
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 

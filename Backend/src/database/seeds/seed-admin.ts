@@ -7,8 +7,8 @@ import { seedGroupsAndPermissions } from './seed-groups';
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'guidortas25@gmail.com';
-  const password = '180525@';
+  const email = process.env.ADMIN_DEFAULT_EMAIL || 'admin@admin.com';
+  const password = process.env.ADMIN_DEFAULT_PASSWORD || '123456';
   const role = 'admin';
   const firstName = 'Guilherme';
   const lastName = 'Dortas';
