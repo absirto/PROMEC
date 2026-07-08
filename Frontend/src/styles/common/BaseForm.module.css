@@ -16,9 +16,7 @@
   padding: clamp(24px, 5vw, 64px);
   width: 100%;
   max-width: 960px;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.45),
-    0 0 30px rgba(88, 101, 242, 0.04);
+  box-shadow: var(--shadow-md);
   position: relative;
 }
 
@@ -56,6 +54,10 @@
   background: var(--bg-surface);
   color: var(--text-main);
   border-color: var(--border-strong);
+}
+
+.backBtn:active {
+  transform: scale(0.98);
 }
 
 .formGrid {
@@ -158,8 +160,12 @@
 
 .submitBtn:hover:not(:disabled) {
   background: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .submitBtn:disabled {
@@ -242,7 +248,10 @@
 
 .quickAddBtn:hover {
   background: var(--primary-hover);
-  transform: scale(1.05);
+}
+
+.quickAddBtn:active {
+  transform: scale(0.95);
 }
 
 /* Tabs System */
