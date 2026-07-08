@@ -9,7 +9,7 @@ import { expandPermissions } from '../../../utils/permissions';
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
   path: '/',
   maxAge: 8 * 60 * 60 * 1000, // 8 horas (mesmo tempo do JWT)
 };
@@ -81,7 +81,7 @@ export const AuthController = {
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict' as const,
+      sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
       path: '/',
     });
     return res.json({ message: 'Logout realizado com sucesso' });
