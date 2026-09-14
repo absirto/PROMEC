@@ -558,6 +558,22 @@ export const ServiceOrderService = {
         throw new Error('NOT_FOUND');
       }
 
+      // materials/services têm FK RESTRICT com ServiceOrder e representam histórico de
+      // faturamento/consumo da OS — cascatear a exclusão apagaria esse histórico
+      // silenciosamente. Bloqueamos e orientamos a cancelar a OS (status já suportado)
+      // em vez de excluí-la.
+      const [materialsCount, servicesCount] = await Promise.all([
+        tx.serviceOrderMaterial.count({ where: { serviceOrderId: id } }),
+        tx.serviceOrderService.count({ where: { serviceOrderId: id } }),
+      ]);
+
+      if (materialsCount > 0 || servicesCount > 0) {
+        const err: any = new Error('HAS_DEPENDENCIES');
+        err.materialsCount = materialsCount;
+        err.servicesCount = servicesCount;
+        throw err;
+      }
+
       await (tx.serviceOrderTrace as any).create({
         data: {
           serviceOrderId: id,

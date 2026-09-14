@@ -247,6 +247,14 @@ export const ServiceOrderController = {
       if (error.message === 'NOT_FOUND') {
         return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
       }
+      if (error.message === 'HAS_DEPENDENCIES') {
+        return res.status(409).json({
+          status: 'error',
+          message: 'Não é possível excluir uma OS com materiais ou serviços vinculados. Cancele a OS em vez de excluí-la.',
+          materialsCount: error.materialsCount,
+          servicesCount: error.servicesCount,
+        });
+      }
       return res.status(500).json({ status: 'error', message: 'Erro ao excluir ordem de serviço.' });
     }
   },
