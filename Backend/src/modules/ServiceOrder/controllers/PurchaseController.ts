@@ -99,16 +99,14 @@ export const PurchaseController = {
       const actor = getActor(req);
 
       const result = await prisma.$transaction(async (tx) => {
-        const approved = await PurchaseService.approveQuotation(tx, quotationId, actor);
-        
-        await NotificationService.notify({
-          title: 'Cotação Aprovada',
-          message: `A cotação ${approved.code} foi aprovada e os itens foram integrados ao estoque.`,
-          type: 'SUCCESS',
-          link: `/service-orders/${approved.purchaseRequest.serviceOrderId}`
-        });
+        return PurchaseService.approveQuotation(tx, quotationId, actor);
+      });
 
-        return approved;
+      await NotificationService.notify({
+        title: 'Cotação Aprovada',
+        message: `A cotação ${result.code} foi aprovada e os itens foram integrados ao estoque.`,
+        type: 'SUCCESS',
+        link: `/service-orders/${result.purchaseRequest.serviceOrderId}`
       });
 
       return res.json(result);
