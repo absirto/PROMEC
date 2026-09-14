@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import prisma from '../../../core/prisma';
 import { SocketService } from '../../../core/SocketService';
 import { logger } from '../../../utils/logger';
@@ -27,7 +28,12 @@ export const NotificationService = {
 
       return notification;
     } catch (error: any) {
+      // Best-effort: não propaga, para não derrubar a operação de negócio que disparou a notificação.
       logger.error('Erro ao criar notificação:', error);
+      Sentry.captureException(error, {
+        extra: { title: params.title, type: params.type, userId: params.userId },
+        tags: { module: 'NotificationService' },
+      });
     }
   },
 
