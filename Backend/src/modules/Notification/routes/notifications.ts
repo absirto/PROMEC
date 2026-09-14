@@ -23,11 +23,18 @@ router.get('/', authenticateToken, async (req: any, res) => {
 // Marcar como lida
 router.put('/:id/read', authenticateToken, async (req, res) => {
   const { id } = req.params;
-  await prisma.notification.update({
-    where: { id: Number(id) },
-    data: { read: true }
-  });
-  res.sendStatus(200);
+  try {
+    await prisma.notification.update({
+      where: { id: Number(id) },
+      data: { read: true }
+    });
+    res.sendStatus(200);
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return res.status(404).json({ status: 'error', message: 'Notificação não encontrada.' });
+    }
+    throw error;
+  }
 });
 
 // Marcar todas como lidas
