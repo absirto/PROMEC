@@ -31,7 +31,11 @@ export const serviceOrderCreateSchema = Joi.object({
   status: Joi.string().required(),
   openingDate: Joi.date().iso().default(() => new Date()),
   closingDate: Joi.date().iso().min(Joi.ref('openingDate')).allow(null, ''),
-  problemDescription: Joi.string().allow(null, ''),
+  problemDescription: Joi.string().trim().required().messages({
+    'string.empty': 'A descrição do problema é obrigatória.',
+    'string.base': 'A descrição do problema é obrigatória.',
+    'any.required': 'A descrição do problema é obrigatória.'
+  }),
   technicalDiagnosis: Joi.string().allow(null, ''),
   taxPercent: Joi.number().min(0).max(100).default(0),
   profitPercent: Joi.number().min(0).default(0),
