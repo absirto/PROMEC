@@ -394,14 +394,9 @@ export const PurchaseController = {
           if (!requestItem) throw new Error('REQUEST_ITEM_NOT_FOUND');
           if (requestItem.status === 'PURCHASED') continue;
 
-          await tx.material.update({
-            where: { id: requestItem.materialId },
-            data: { updatedAt: new Date() }
-          });
+          await PurchaseService.lockMaterialForStockUpdate(tx, requestItem.materialId);
 
-          const availableShortage = Math.max(0, Number(requestItem.shortageQty || 0));
-          if (availableShortage <= 0) continue;
-          const qtyToBuy = Math.min(item.quantity, availableShortage);
+          const qtyToBuy = PurchaseService.resolveQtyToBuy(requestItem, item.quantity);
           if (qtyToBuy <= 0) continue;
 
           const finalUnitCost = item.unitCost && item.unitCost > 0
@@ -412,54 +407,17 @@ export const PurchaseController = {
             throw new Error('ITEM_COST_REQUIRED');
           }
 
-          const finalTotalPaid = item.totalPaid && item.totalPaid > 0 ? item.totalPaid : finalUnitCost * qtyToBuy;
-
-          await txAny.stockLog.create({
-            data: {
-              materialId: requestItem.materialId,
-              quantity: qtyToBuy,
-              type: 'IN',
-              description: item.notes || description || `Compra vinculada à solicitação ${request.code}`,
-              supplierPersonId,
-              unitCost: finalUnitCost,
-              totalPaid: finalTotalPaid,
-              remainingQty: qtyToBuy,
-            }
-          });
-
-          await tx.material.update({
-            where: { id: requestItem.materialId },
-            data: { price: finalUnitCost }
-          });
-
-          const newStockQty = Number(requestItem.stockQty || 0) + qtyToBuy;
-          const newShortageQty = Math.max(0, Number(requestItem.shortageQty || 0) - qtyToBuy);
-          const newStatus = newShortageQty <= 0 ? 'PURCHASED' : 'PARTIAL';
-
-          await txAny.purchaseRequestItem.update({
-            where: { id: requestItem.id },
-            data: {
-              stockQty: newStockQty,
-              shortageQty: newShortageQty,
-              status: newStatus,
-            }
+          await PurchaseService.applyStockEntry(tx, {
+            requestItem,
+            qtyToBuy,
+            unitCost: finalUnitCost,
+            totalPaid: item.totalPaid,
+            supplierPersonId,
+            description: item.notes || description || `Compra vinculada à solicitação ${request.code}`,
           });
         }
 
-        const refreshedItems = await txAny.purchaseRequestItem.findMany({
-          where: { purchaseRequestId: requestId },
-          select: { id: true, status: true }
-        });
-
-        const allPurchased = refreshedItems.every((ri: any) => ri.status === 'PURCHASED');
-        const hasAnyPurchased = refreshedItems.some((ri: any) => ri.status === 'PURCHASED' || ri.status === 'PARTIAL');
-
-        await txAny.purchaseRequest.update({
-          where: { id: requestId },
-          data: {
-            status: allPurchased ? 'CLOSED' : (hasAnyPurchased ? 'PARTIAL' : 'OPEN')
-          }
-        });
+        await PurchaseService.recalculatePurchaseRequestStatus(tx, requestId);
 
         if (request.serviceOrderId) {
           await txAny.serviceOrderTrace.create({

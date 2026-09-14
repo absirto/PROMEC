@@ -102,6 +102,88 @@ export const PurchaseService = {
     return quotation;
   },
 
+  // Adquire um bloqueio pessimista na linha do material para serializar movimentações concorrentes
+  async lockMaterialForStockUpdate(tx: any, materialId: number) {
+    await tx.material.update({
+      where: { id: materialId },
+      data: { updatedAt: new Date() }
+    });
+  },
+
+  resolveQtyToBuy(requestItem: any, requestedQty: number) {
+    const availableShortage = Math.max(0, Number(requestItem.shortageQty || 0));
+    if (availableShortage <= 0) return 0;
+    return Math.min(Number(requestedQty || 0), availableShortage);
+  },
+
+  // Registra a entrada de estoque de um item de solicitação de compra (StockLog IN + preço do material +
+  // cascata de status do item). Compartilhado entre a aprovação de cotação e o fulfill manual da solicitação.
+  async applyStockEntry(tx: any, params: {
+    requestItem: any;
+    qtyToBuy: number;
+    unitCost: number;
+    totalPaid?: number | null;
+    supplierPersonId: number | null;
+    description: string;
+  }) {
+    const txAny = tx as any;
+    const { requestItem, qtyToBuy, unitCost, supplierPersonId, description } = params;
+    const totalPaid = Number(params.totalPaid || 0) > 0 ? Number(params.totalPaid) : unitCost * qtyToBuy;
+
+    // Entrada no estoque
+    await txAny.stockLog.create({
+      data: {
+        materialId: requestItem.materialId,
+        quantity: qtyToBuy,
+        type: 'IN',
+        description,
+        supplierPersonId,
+        unitCost,
+        totalPaid,
+        remainingQty: qtyToBuy,
+      }
+    });
+
+    // Atualiza preço médio/último do material
+    await tx.material.update({
+      where: { id: requestItem.materialId },
+      data: { price: unitCost }
+    });
+
+    const newStockQty = Number(requestItem.stockQty || 0) + qtyToBuy;
+    const newShortageQty = Math.max(0, Number(requestItem.shortageQty || 0) - qtyToBuy);
+    const newStatus = newShortageQty <= 0 ? 'PURCHASED' : 'PARTIAL';
+
+    await txAny.purchaseRequestItem.update({
+      where: { id: requestItem.id },
+      data: {
+        stockQty: newStockQty,
+        shortageQty: newShortageQty,
+        status: newStatus,
+      }
+    });
+
+    return { qtyToBuy, newStockQty, newShortageQty, newStatus };
+  },
+
+  async recalculatePurchaseRequestStatus(tx: any, purchaseRequestId: number) {
+    const txAny = tx as any;
+    const refreshedItems = await txAny.purchaseRequestItem.findMany({
+      where: { purchaseRequestId },
+      select: { id: true, status: true }
+    });
+    const allPurchased = refreshedItems.every((ri: any) => ri.status === 'PURCHASED');
+    const hasAnyPurchased = refreshedItems.some((ri: any) => ri.status === 'PURCHASED' || ri.status === 'PARTIAL');
+    const status = allPurchased ? 'CLOSED' : (hasAnyPurchased ? 'PARTIAL' : 'OPEN');
+
+    await txAny.purchaseRequest.update({
+      where: { id: purchaseRequestId },
+      data: { status }
+    });
+
+    return status;
+  },
+
   async approveQuotation(tx: any, quotationId: number, actor: any) {
     const txAny = tx as any;
     const quotation = await txAny.purchaseQuotation.findUnique({
@@ -126,75 +208,32 @@ export const PurchaseService = {
       const requestItem = requestItemsMap.get(qItem.purchaseRequestItemId);
       if (!requestItem) continue;
 
-      // Adquire um bloqueio pessimista na linha do material para serializar movimentações concorrentes
-      await tx.material.update({
-        where: { id: requestItem.materialId },
-        data: { updatedAt: new Date() }
-      });
+      await PurchaseService.lockMaterialForStockUpdate(tx, requestItem.materialId);
 
-      const availableShortage = Math.max(0, Number(requestItem.shortageQty || 0));
-      if (availableShortage <= 0) continue;
-
-      const qtyToBuy = Math.min(Number(qItem.quantity || 0), availableShortage);
+      const qtyToBuy = PurchaseService.resolveQtyToBuy(requestItem, Number(qItem.quantity || 0));
       if (qtyToBuy <= 0) continue;
 
       const unitCost = Number(qItem.unitCost || 0);
-      const totalPaid = Number(qItem.totalPaid || 0) > 0 ? Number(qItem.totalPaid) : unitCost * qtyToBuy;
 
-      // Entrada no estoque
-      await txAny.stockLog.create({
-        data: {
-          materialId: requestItem.materialId,
-          quantity: qtyToBuy,
-          type: 'IN',
-          description: `Compra por cotação ${quotation.code}`,
-          supplierPersonId: quotation.supplierPersonId,
-          unitCost,
-          totalPaid,
-          remainingQty: qtyToBuy,
-        }
-      });
-
-      // Atualiza preço médio/último do material
-      await tx.material.update({
-        where: { id: requestItem.materialId },
-        data: { price: unitCost }
-      });
-
-      const newStockQty = Number(requestItem.stockQty || 0) + qtyToBuy;
-      const newShortageQty = Math.max(0, Number(requestItem.shortageQty || 0) - qtyToBuy);
-      const newStatus = newShortageQty <= 0 ? 'PURCHASED' : 'PARTIAL';
-
-      await txAny.purchaseRequestItem.update({
-        where: { id: requestItem.id },
-        data: {
-          stockQty: newStockQty,
-          shortageQty: newShortageQty,
-          status: newStatus,
-        }
+      await PurchaseService.applyStockEntry(tx, {
+        requestItem,
+        qtyToBuy,
+        unitCost,
+        totalPaid: Number(qItem.totalPaid || 0),
+        supplierPersonId: quotation.supplierPersonId,
+        description: `Compra por cotação ${quotation.code}`,
       });
     }
 
     // Atualiza status da solicitação
-    const refreshedItems = await txAny.purchaseRequestItem.findMany({
-      where: { purchaseRequestId: quotation.purchaseRequestId },
-      select: { id: true, status: true }
-    });
-    const allPurchased = refreshedItems.every((ri: any) => ri.status === 'PURCHASED');
-    const hasAnyPurchased = refreshedItems.some((ri: any) => ri.status === 'PURCHASED' || ri.status === 'PARTIAL');
+    await PurchaseService.recalculatePurchaseRequestStatus(tx, quotation.purchaseRequestId);
 
-    await txAny.purchaseRequest.update({
-      where: { id: quotation.purchaseRequestId },
-      data: {
-        status: allPurchased ? 'CLOSED' : (hasAnyPurchased ? 'PARTIAL' : 'OPEN')
-      }
+    // Rejeita as demais cotações abertas da mesma solicitação: a aprovação de uma cotação é definitiva
+    // para a solicitação, então as concorrentes deixam de fazer sentido como opção em aberto.
+    await txAny.purchaseQuotation.updateMany({
+      where: { purchaseRequestId: quotation.purchaseRequestId, id: { not: quotationId }, status: 'OPEN' },
+      data: { status: 'REJECTED' }
     });
-
-    // Rejeita outras cotações abertas para a mesma solicitação (opcional dependendo da regra de negócio)
-    // await txAny.purchaseQuotation.updateMany({
-    //   where: { purchaseRequestId: quotation.purchaseRequestId, id: { not: quotationId }, status: 'OPEN' },
-    //   data: { status: 'REJECTED' }
-    // });
 
     const approvedQuotation = await txAny.purchaseQuotation.update({
       where: { id: quotationId },
