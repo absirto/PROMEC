@@ -3,11 +3,7519 @@
  * Do not make direct changes to the file.
  */
 
-export type paths = Record<string, never>;
+export interface paths {
+    "/v1/audit/{entity}/{entityId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista os logs de auditoria de uma entidade específica
+         * @description Requer apenas autenticação (sem permissão adicional — qualquer usuário autenticado pode consultar o histórico de auditoria de qualquer entidade). Retorna as 50 alterações mais recentes, ordenadas por createdAt decrescente.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description Nome da entidade (ex. 'Person', 'Material', 'User').
+                     * @example Person
+                     */
+                    entity: string;
+                    /** @example 42 */
+                    entityId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de logs de auditoria. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["AuditLog"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Autentica um usuário e inicia sessão
+         * @description Endpoint público. Limitado a 10 tentativas a cada 15 minutos por IP (rate limit). Em caso de sucesso, define o cookie HttpOnly `token` (JWT, validade 8h).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["LoginInput"];
+                };
+            };
+            responses: {
+                /** @description Login realizado com sucesso. */
+                200: {
+                    headers: {
+                        /** @description Cookie HttpOnly `token` contendo o JWT da sessão. */
+                        "Set-Cookie"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LoginResponse"];
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                /** @description E-mail ou senha inválidos. */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                /** @description Muitas tentativas a partir deste IP. Tente novamente mais tarde. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cria um novo usuário
+         * @description Por padrão requer autenticação e a permissão `usuarios:gerenciar` (fluxo administrativo de criação de usuários). Fica público, sem autenticação, apenas quando a variável de ambiente `ALLOW_PUBLIC_REGISTER=true` (auto-cadastro habilitado). Limitado por rate limit (10 tentativas / 15 min / IP).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["RegisterInput"];
+                };
+            };
+            responses: {
+                /** @description Usuário criado. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example 10 */
+                            id?: number;
+                            /** Format: email */
+                            email?: string;
+                        };
+                    };
+                };
+                /** @description Payload inválido ou e-mail já cadastrado. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Muitas tentativas a partir deste IP. Tente novamente mais tarde. */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Retorna os dados do usuário autenticado */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Dados do usuário autenticado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            id?: number;
+                            firstName?: string;
+                            role?: string;
+                            /** Format: email */
+                            email?: string;
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                404: components["responses"]["NotFoundError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Encerra a sessão do usuário
+         * @description Limpa o cookie HttpOnly `token`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Logout realizado com sucesso. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example Logout realizado com sucesso */
+                            message?: string;
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/dashboard/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Indicadores agregados do dashboard
+         * @description Requer permissão `dashboard:visualizar`. personId filtra ordens de serviço e logs de operação do cliente informado. startDate/endDate filtram openingDate das OS e startAt dos logs de operação; endDate também é usada como referência para a janela dos últimos 7 dias de efficiencyTrendByCenter. stats.people e stats.lowStock são sempre globais (não respeitam estes filtros) — ver descrição de cada campo na resposta.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    personId?: number;
+                    startDate?: string;
+                    endDate?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Indicadores do dashboard. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["DashboardStatsResponse"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/dashboard/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista a trilha de auditoria do sistema (paginada)
+         * @description Requer permissão `dashboard:visualizar`. entity filtra pelo nome exato da entidade auditada (AuditLog.entity). module aceita apenas o valor "Suprimentos", que filtra entity para os valores ['Material', 'StockLog', 'PurchaseRequest'] — quando informado com esse valor, sobrescreve o filtro de entity; qualquer outro valor de module é ignorado (sem efeito).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    limit?: number;
+                    /** @example Material */
+                    entity?: string;
+                    /**
+                     * @description Único valor com efeito é "Suprimentos"; sobrescreve o filtro de entity quando ambos são informados.
+                     * @example Suprimentos
+                     */
+                    module?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Página de logs de auditoria. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["DashboardAuditLogEntry"][];
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/employees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista funcionários (paginado)
+         * @description Requer a permissão `funcionarios:visualizar`.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @example 1 */
+                    page?: number;
+                    /**
+                     * @description Máximo de 100 itens por página.
+                     * @example 20
+                     */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista paginada de funcionários, ordenada pelo nome da pessoa física vinculada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Employee"][];
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria um novo funcionário
+         * @description Requer a permissão `funcionarios:gerenciar`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EmployeeInput"];
+                };
+            };
+            responses: {
+                /** @description Funcionário criado. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Employee"];
+                        };
+                    };
+                };
+                /** @description Erro de validação Joi, ou falha ao criar (ex.: personId/jobRoleId/workAreaId/userId inexistente, personId já vinculado a outro funcionário, userId já vinculado a outro funcionário, ou status omitido — ver observação em EmployeeInput.status). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"] | components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/employees/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca um funcionário pelo ID
+         * @description Requer a permissão `funcionarios:visualizar`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Funcionário encontrado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Employee"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza um funcionário existente
+         * @description Requer a permissão `funcionarios:gerenciar`. Atualização parcial — todos os campos do payload são opcionais, mas ao menos um deve ser enviado.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EmployeeUpdateInput"];
+                };
+            };
+            responses: {
+                /** @description Funcionário atualizado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Employee"];
+                        };
+                    };
+                };
+                /** @description Erro de validação Joi, ou falha ao atualizar (ex.: jobRoleId/workAreaId/userId inexistente, ou userId já vinculado a outro funcionário). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"] | components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove um funcionário
+         * @description Requer a permissão `funcionarios:gerenciar`. Falha com 400 se o funcionário estiver vinculado a inspeções de qualidade, apontamentos de operação (ServiceOrderOperationLog) ou serviços prestados em Ordens de Serviço (ServiceOrderService).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Funcionário removido com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Existem registros vinculados a este funcionário que impedem a exclusão (mensagem varia conforme o vínculo: inspeções de qualidade, apontamentos de operação ou serviços em Ordens de Serviço). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/job-roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista todos os cargos/funções
+         * @description Requer a permissão `auxiliares`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de cargos. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["JobRole"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria um novo cargo
+         * @description Requer a permissão `auxiliares`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["JobRoleInput"];
+                };
+            };
+            responses: {
+                /** @description Cargo criado. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["JobRole"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/job-roles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca um cargo pelo ID
+         * @description Requer a permissão `auxiliares`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cargo encontrado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["JobRole"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza um cargo existente
+         * @description Requer a permissão `auxiliares`.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["JobRoleInput"];
+                };
+            };
+            responses: {
+                /** @description Cargo atualizado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["JobRole"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove um cargo
+         * @description Requer a permissão `auxiliares`. Falha com 400 se ainda houver funcionários vinculados a este cargo.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cargo removido com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Existem funcionários vinculados a este cargo. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/external/cnpj/{cnpj}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consulta dados de uma empresa pelo CNPJ na Receita Federal (BrasilAPI)
+         * @description Requer a permissão `pessoas:visualizar` por padrão. Fica público, sem autenticação, apenas quando a variável de ambiente `ALLOW_PUBLIC_EXTERNAL_LOOKUP=true`. O CNPJ do path pode conter máscara — apenas os dígitos são considerados, e devem restar exatamente 14 após a limpeza.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description CNPJ com ou sem máscara (apenas dígitos são considerados; deve resultar em 14 dígitos).
+                     * @example 12.345.678/0001-99
+                     */
+                    cnpj: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Empresa encontrada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ExternalCnpjLookupResponse"];
+                        };
+                    };
+                };
+                /** @description CNPJ inválido (não resulta em 14 dígitos após a limpeza). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description CNPJ não encontrado na Receita Federal (BrasilAPI retornou 404). */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/finance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista todas as transações financeiras
+         * @description Requer a permissão `financeiro:visualizar`. Retorna as transações ordenadas por data decrescente; cada uma inclui a ordem de serviço vinculada (orderId), quando houver.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de transações financeiras. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Transaction"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Registra uma nova transação financeira
+         * @description Requer a permissão `financeiro:gerenciar`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TransactionInput"];
+                };
+            };
+            responses: {
+                /** @description Transação criada. A resposta não inclui a ordem de serviço vinculada (o create() não usa include). */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Transaction"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/finance/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retorna o resumo financeiro consolidado
+         * @description Requer a permissão `financeiro:visualizar`. Soma todas as transações (receitas x despesas) e calcula a margem prevista com base nas ordens de serviço não canceladas (materiais + serviços, percentuais de lucro e imposto de cada ordem).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Resumo financeiro. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: {
+                                /**
+                                 * Format: float
+                                 * @description Soma de amount de todas as transações do tipo RECEIVABLE.
+                                 * @example 25000
+                                 */
+                                totalIncome?: number;
+                                /**
+                                 * Format: float
+                                 * @description Soma de amount de todas as transações que não são RECEIVABLE.
+                                 * @example 8000
+                                 */
+                                totalExpense?: number;
+                                /**
+                                 * Format: float
+                                 * @example 17000
+                                 */
+                                balance?: number;
+                                /**
+                                 * Format: float
+                                 * @description Margem prevista (%) das ordens de serviço não canceladas.
+                                 * @example 22.5
+                                 */
+                                predictedMargin?: number;
+                            };
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista materiais
+         * @description Requer a permissão `materiais:visualizar`. Por padrão retorna uma lista paginada. Se `all=true`, ignora a paginação (page/limit são descartados) e retorna todos os materiais que casam com `search` em um array simples dentro de `data`, sem `meta`.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Ignorado quando `all=true`. */
+                    page?: number;
+                    /** @description Ignorado quando `all=true`. */
+                    limit?: number;
+                    /** @description Filtro por substring no nome (case-insensitive). */
+                    search?: string;
+                    /** @description Quando `true`, retorna todos os materiais sem paginação (comparação estrita com a string "true"). */
+                    all?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de materiais. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Material"][];
+                            meta?: components["schemas"]["PaginationMeta"];
+                        } | {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Material"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria um novo material
+         * @description Requer a permissão `materiais:gerenciar`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["MaterialInput"];
+                };
+            };
+            responses: {
+                /** @description Material criado. A resposta não passa pela sanitização financeira (price sempre presente). */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Material"];
+                        };
+                    };
+                };
+                /** @description Payload inválido (Joi) ou preço não-positivo. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"] | components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/materials/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca um material pelo ID
+         * @description Requer a permissão `materiais:visualizar`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Material encontrado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Material"];
+                        };
+                    };
+                };
+                /** @description ID de material inválido (não é um inteiro positivo). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza um material existente
+         * @description Requer a permissão `materiais:gerenciar`. Atualização parcial: qualquer subconjunto dos campos abaixo pode ser enviado, desde que ao menos um esteja presente. A resposta não passa pela sanitização financeira (price sempre presente).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name?: string;
+                        description?: string | null;
+                        /** Format: float */
+                        price?: number;
+                        unit?: string;
+                        active?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Material atualizado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Material"];
+                        };
+                    };
+                };
+                /** @description ID inválido, payload inválido (Joi exige ao menos 1 campo) ou preço não-positivo. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"] | components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove um material
+         * @description Requer a permissão `materiais:gerenciar`. Falha com 400 se o material estiver referenciado em alguma Ordem de Serviço (ServiceOrderMaterial).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Material removido com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Material em uso em uma ou mais Ordens de Serviço. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                /** @description Erro interno inesperado. Neste endpoint o corpo inclui também `details` com a mensagem da exceção original. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista as notificações do usuário autenticado
+         * @description Requer apenas autenticação (sem permissão adicional). Retorna as notificações pessoais do usuário (userId igual ao usuário autenticado) e as notificações globais (userId nulo), ordenadas por createdAt decrescente e limitadas às 30 mais recentes.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de notificações. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Notification"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Marca uma notificação como lida
+         * @description Requer apenas autenticação (sem permissão adicional) — não verifica se a notificação pertence ao usuário autenticado antes de atualizar. Responde via res.sendStatus(200): o corpo é o texto simples "OK" (Content-Type text/plain), fora do envelope { status, data } padrão. Se o id não existir, a atualização falha no Prisma e a rota não trata o erro — cai no error handler genérico, retornando 500 (não 404).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notificação marcada como lida. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Marca todas as notificações do usuário autenticado como lidas
+         * @description Requer apenas autenticação (sem permissão adicional). Atualiza em lote as notificações com userId igual ao usuário autenticado e read=false (não afeta notificações globais). Responde via res.sendStatus(200): o corpo é o texto simples "OK" (Content-Type text/plain), fora do envelope { status, data } padrão.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notificações marcadas como lidas. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista pessoas (clientes, fornecedores, funcionários)
+         * @description Requer a permissão `pessoas:visualizar`. Por padrão retorna resultado paginado, com contagens agregadas em `meta`. Se `all=true`, ignora a paginação e retorna todos os registros que atendem ao filtro em um array simples.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Filtro (contém, case-insensitive) por nome da pessoa física, razão social/nome fantasia da pessoa jurídica, CPF ou CNPJ. */
+                    search?: string;
+                    /** @description Filtra por tipo de pessoa. */
+                    type?: "F" | "J";
+                    /**
+                     * @description Quando igual a `"true"`, retorna todos os registros sem paginação.
+                     * @example true
+                     */
+                    all?: string;
+                    /** @description Ignorado quando `all=true`. */
+                    page?: number;
+                    /** @description Ignorado quando `all=true`. */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de pessoas. O formato varia conforme `all`: array simples (sem `meta`) quando `all=true`, ou resultado paginado (com `meta` incluindo `totalLegal`, `totalPhysical` e `totalNewThisMonth`, além dos campos padrão de paginação) caso contrário. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Person"][];
+                        } | {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Person"][];
+                            meta?: components["schemas"]["PaginationMeta"] & {
+                                /** @example 10 */
+                                totalLegal?: number;
+                                /** @example 32 */
+                                totalPhysical?: number;
+                                /** @example 3 */
+                                totalNewThisMonth?: number;
+                            };
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria uma nova pessoa (física ou jurídica)
+         * @description Requer a permissão `pessoas:gerenciar`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PersonInput"];
+                };
+            };
+            responses: {
+                /** @description Pessoa criada. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Person"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/people/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca uma pessoa pelo ID
+         * @description Requer a permissão `pessoas:visualizar`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Pessoa encontrada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Person"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza uma pessoa existente
+         * @description Requer a permissão `pessoas:gerenciar`. `addresses` e `contacts`, quando enviados, substituem integralmente as listas existentes; o mesmo vale para `representatives` dentro de `legalPerson`.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PersonUpdateInput"];
+                };
+            };
+            responses: {
+                /** @description Pessoa atualizada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Person"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove uma pessoa
+         * @description Requer a permissão `pessoas:gerenciar`. Falha com 400 se a pessoa tiver Ordens de Serviço vinculadas, for um funcionário cadastrado, ou (como fornecedor) tiver entradas de estoque ou cotações de compra vinculadas.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Pessoa removida com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Existem registros vinculados que impedem a exclusão. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/quality-controls/photos/{photoId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Faz o download do arquivo binário de uma foto de controle de qualidade
+         * @description Requer a permissão `qualidade:visualizar`. Retorna o arquivo bruto salvo em disco, com `Content-Type` dinâmico conforme o tipo armazenado; esta resposta não passa pelo envelope padrão `{ status, data }`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    photoId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Conteúdo binário do arquivo da foto. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/octet-stream": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Foto sem arquivo associado, ou arquivo ausente em disco. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/quality-controls/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove uma foto de um controle de qualidade
+         * @description Requer a permissão `qualidade:gerenciar`. Remove o registro no banco e, se existir, o arquivo correspondente em disco.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    photoId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Foto removida com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/quality-controls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista todos os controles de qualidade
+         * @description Requer a permissão `qualidade:visualizar`. Sem paginação e sem filtros de busca — retorna todos os registros, cada um com a Ordem de Serviço, o inspetor (com a pessoa/nome aninhados) e as fotos associadas.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de controles de qualidade. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: (components["schemas"]["QualityControl"] & {
+                                /** @description Ordem de serviço vinculada — todos os campos escalares do modelo ServiceOrder, sem relações aninhadas (ver módulo ServiceOrders para o schema completo). */
+                                serviceOrder?: {
+                                    id?: number;
+                                    traceCode?: string | null;
+                                    partCode?: string | null;
+                                    batchCode?: string | null;
+                                    workCenter?: string | null;
+                                    /** Format: date-time */
+                                    plannedStartDate?: string | null;
+                                    /** Format: date-time */
+                                    plannedEndDate?: string | null;
+                                    /** Format: float */
+                                    plannedHours?: number | null;
+                                    description?: string | null;
+                                    personId?: number | null;
+                                    status?: string;
+                                    /** Format: date-time */
+                                    openingDate?: string;
+                                    /** Format: date-time */
+                                    closingDate?: string | null;
+                                    problemDescription?: string;
+                                    technicalDiagnosis?: string | null;
+                                    /** Format: float */
+                                    profitPercent?: number | null;
+                                    /** Format: float */
+                                    taxPercent?: number | null;
+                                } | null;
+                                /** @description Funcionário inspetor, com a pessoa e o nome (naturalPerson) aninhados. Formato diferente do usado em GET /v1/quality-controls/{id}, que não aninha a pessoa. */
+                                inspector?: {
+                                    id?: number;
+                                    personId?: number;
+                                    jobRoleId?: number | null;
+                                    workAreaId?: number | null;
+                                    userId?: number | null;
+                                    matricula?: string | null;
+                                    status?: string;
+                                    person?: {
+                                        id?: number;
+                                        /** @enum {string} */
+                                        type?: "F" | "J";
+                                        /** Format: date-time */
+                                        createdAt?: string;
+                                        /** Format: date-time */
+                                        updatedAt?: string;
+                                        naturalPerson?: components["schemas"]["NaturalPerson"] | null;
+                                    };
+                                } | null;
+                                photos?: components["schemas"]["QualityPhoto"][];
+                            })[];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Registra um novo controle de qualidade
+         * @description Requer a permissão `qualidade:gerenciar`. Sem validação de payload (não há middleware `validateBody` nesta rota).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["QualityControlInput"];
+                };
+            };
+            responses: {
+                /** @description Controle de qualidade criado (sem relações aninhadas). */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["QualityControl"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/quality-controls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca um controle de qualidade pelo ID
+         * @description Requer a permissão `qualidade:visualizar`. Inclui a Ordem de Serviço, o inspetor (dados do funcionário, sem a pessoa aninhada), não conformidades, medições e fotos.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Controle de qualidade encontrado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["QualityControl"] & {
+                                /** @description Ordem de serviço vinculada — todos os campos escalares do modelo ServiceOrder, sem relações aninhadas (ver módulo ServiceOrders para o schema completo). */
+                                serviceOrder?: {
+                                    id?: number;
+                                    traceCode?: string | null;
+                                    partCode?: string | null;
+                                    batchCode?: string | null;
+                                    workCenter?: string | null;
+                                    /** Format: date-time */
+                                    plannedStartDate?: string | null;
+                                    /** Format: date-time */
+                                    plannedEndDate?: string | null;
+                                    /** Format: float */
+                                    plannedHours?: number | null;
+                                    description?: string | null;
+                                    personId?: number | null;
+                                    status?: string;
+                                    /** Format: date-time */
+                                    openingDate?: string;
+                                    /** Format: date-time */
+                                    closingDate?: string | null;
+                                    problemDescription?: string;
+                                    technicalDiagnosis?: string | null;
+                                    /** Format: float */
+                                    profitPercent?: number | null;
+                                    /** Format: float */
+                                    taxPercent?: number | null;
+                                } | null;
+                                /** @description Funcionário inspetor — campos escalares do modelo Employee, sem a pessoa aninhada (formato diferente do usado em GET /v1/quality-controls). */
+                                inspector?: {
+                                    id?: number;
+                                    personId?: number;
+                                    jobRoleId?: number | null;
+                                    workAreaId?: number | null;
+                                    userId?: number | null;
+                                    matricula?: string | null;
+                                    status?: string;
+                                } | null;
+                                nonConformities?: components["schemas"]["NonConformity"][];
+                                measurements?: components["schemas"]["Measurement"][];
+                                photos?: components["schemas"]["QualityPhoto"][];
+                            };
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza um controle de qualidade existente
+         * @description Requer a permissão `qualidade:gerenciar`. Sem validação de payload (não há middleware `validateBody` nesta rota).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["QualityControlInput"];
+                };
+            };
+            responses: {
+                /** @description Controle de qualidade atualizado (sem relações aninhadas). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["QualityControl"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove um controle de qualidade
+         * @description Requer a permissão `qualidade:gerenciar`. Também remove do disco os arquivos das fotos associadas antes de excluir o registro.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Controle de qualidade removido com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/quality-controls/{qualityControlId}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anexa uma foto a um controle de qualidade
+         * @description Requer a permissão `qualidade:gerenciar`. Upload multipart (campo `file`); aceita apenas JPEG, PNG, WEBP ou GIF, até 8MB — arquivos fora desses limites são rejeitados pelo middleware de upload antes de chegar ao controller.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    qualityControlId: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": components["schemas"]["QualityPhotoInput"];
+                };
+            };
+            responses: {
+                /** @description Foto anexada. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["QualityPhoto"];
+                        };
+                    };
+                };
+                /** @description Arquivo não enviado (campo `file` ausente). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        /**
+                         * @example {
+                         *       "status": "error",
+                         *       "message": "Ficheiro de imagem obrigatório (campo file)."
+                         *     }
+                         */
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/emissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista o histórico de emissões de relatórios
+         * @description Requer permissão `relatorios:visualizar`. Retorna as emissões mais recentes primeiro (orderBy createdAt desc), opcionalmente filtradas por reportKey.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /**
+                     * @description Filtra pelo identificador do relatório.
+                     * @example purchases
+                     */
+                    reportKey?: string;
+                    /** @description Quantidade máxima de registros retornados. */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Histórico de emissões. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportEmission"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Registra uma emissão de relatório no histórico
+         * @description Requer permissão `relatorios:visualizar`. Usado para registrar manualmente a auditoria de geração/exportação de um relatório.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReportEmissionInput"];
+                };
+            };
+            responses: {
+                /** @description Emissão registrada. Resposta literal `{ "status": "success" }`, sem campo `data` — o controller já retorna um objeto com `status: 'success'`, então o responseWrapperMiddleware o repassa sem alterações. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                        };
+                    };
+                };
+                /** @description `reportKey` ou `exportFormat` não informados no body. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/service-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de ordens de serviço agrupadas por status
+         * @description Requer permissão `relatorios:visualizar`. Filtra por openingDate quando start e end são informados juntos (o filtro só é aplicado se ambos estiverem presentes).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Data inicial (openingDate >=). Só tem efeito se end também for informado. */
+                    start?: string;
+                    /** @description Data final (openingDate <=). Só tem efeito se start também for informado. */
+                    end?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contagem de ordens de serviço por status. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportServiceOrdersByStatusItem"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/service-orders/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de ordens de serviço por status e período, em PDF
+         * @description Requer permissão `relatorios:visualizar`. Mesma consulta de GET /v1/reports/operational/service-orders (start/end filtram openingDate, ambos precisam estar presentes), renderizada em PDF.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Arquivo PDF do relatório (relatorio_ordens_servico.pdf). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório operacional de compras (solicitações e histórico de entradas)
+         * @description Requer permissão `relatorios:visualizar`. start/end filtram por createdAt tanto as solicitações de compra quanto o histórico de entradas de estoque — cada parâmetro é aplicado de forma independente (não é necessário informar os dois). status filtra o status da solicitação de compra (PurchaseRequest.status). supplierPersonId filtra apenas o histórico de entradas de estoque (StockLog) pelo fornecedor.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                    /**
+                     * @description Status da solicitação de compra (PurchaseRequest.status).
+                     * @example OPEN
+                     */
+                    status?: string;
+                    /** @description Filtra apenas o histórico de entradas de estoque (StockLog.supplierPersonId). */
+                    supplierPersonId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Solicitações de compra e histórico de entradas de estoque com custo unitário. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportPurchasesResponse"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/purchases/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório operacional de compras, em PDF
+         * @description Requer permissão `relatorios:visualizar`. Mesma consulta e mesmos parâmetros de GET /v1/reports/operational/purchases, renderizada em PDF. Diferente dos demais relatórios em PDF deste módulo, este endpoint também registra automaticamente uma ReportEmission (reportKey "purchases", exportFormat "PDF") com o hash SHA-256 do arquivo gerado.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                    status?: string;
+                    supplierPersonId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Arquivo PDF do relatório (relatorio_compras.pdf). */
+                200: {
+                    headers: {
+                        /** @description SHA-256 do PDF gerado (mesmo valor gravado em ReportEmission.fileHash). */
+                        "X-Report-Hash"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/stock-movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de movimentações de estoque no período
+         * @description Requer permissão `relatorios:visualizar`. Filtra por createdAt quando start e end são informados juntos (o filtro só é aplicado se ambos estiverem presentes).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Movimentações de estoque (StockLog) do período, com o material relacionado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportStockMovementLogItem"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/stock-movements/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de movimentações de estoque no período, em PDF
+         * @description Requer permissão `relatorios:visualizar`. Mesma consulta de GET /v1/reports/operational/stock-movements (start/end filtram createdAt, ambos precisam estar presentes), renderizada em PDF.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Arquivo PDF do relatório (relatorio_movimentacao_estoque.pdf). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/production": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de produção por funcionário/área de trabalho
+         * @description Requer permissão `relatorios:visualizar`. start/end filtram pela openingDate da ordem de serviço vinculada ao lançamento; cada parâmetro é aplicado de forma independente. employeeId filtra o funcionário responsável pelo lançamento; workAreaId filtra pela área de trabalho do funcionário. Não possui variante em PDF.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                    employeeId?: number;
+                    workAreaId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lançamentos de serviço executado, um por funcionário/serviço/OS. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportOperationalProductionEntry"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/operational/quality": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de controle de qualidade
+         * @description Requer permissão `relatorios:visualizar`. start/end filtram pela inspectionDate; cada parâmetro é aplicado de forma independente. status filtra o status do controle de qualidade. inspectorId filtra pelo funcionário inspetor responsável. Não possui variante em PDF.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                    status?: string;
+                    inspectorId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Controles de qualidade do período, com contadores de medições e não conformidades. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportQualityControlEntry"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/financial-flow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de fluxo financeiro (entradas/saídas) no período
+         * @description Requer permissão `relatorios:visualizar`. Filtra Transaction.date quando start e end são informados juntos (o filtro só é aplicado se ambos estiverem presentes).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Totais de receita, despesa e saldo do período. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportFinancialFlowSummary"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/financial-flow/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de fluxo financeiro no período, em PDF
+         * @description Requer permissão `relatorios:visualizar`. Mesma consulta de GET /v1/reports/admin/financial-flow (start/end filtram Transaction.date, ambos precisam estar presentes), renderizada em PDF.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Arquivo PDF do relatório (relatorio_fluxo_financeiro.pdf). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de contas (lançamentos financeiros)
+         * @description Requer permissão `relatorios:visualizar`. O parâmetro de query `status` filtra, na implementação atual, o campo `type` do lançamento financeiro (ex. RECEIVABLE/PAYABLE) — nome do parâmetro mantido conforme o controller.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /**
+                     * @description Filtra por Transaction.type, apesar do nome do parâmetro.
+                     * @example RECEIVABLE
+                     */
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lançamentos financeiros, ordenados por data (asc). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportTransactionEntry"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/accounts/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de contas, em PDF
+         * @description Requer permissão `relatorios:visualizar`. Mesma consulta de GET /v1/reports/admin/accounts, renderizada em PDF.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Filtra por Transaction.type, apesar do nome do parâmetro. */
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Arquivo PDF do relatório (relatorio_contas.pdf). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/team-performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de desempenho de equipes
+         * @description Requer permissão `relatorios:visualizar`. Sem parâmetros de filtro — agrega todos os lançamentos de serviço (ServiceOrderService) por funcionário (employeeId not null).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Quantidade de serviços, horas e receita totais por funcionário. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportTeamPerformanceEntry"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/team-performance/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de desempenho de equipes, em PDF
+         * @description Requer permissão `relatorios:visualizar`. Sem parâmetros de filtro. Observação: esta variante em PDF agrega apenas a quantidade de serviços por employeeId (sem nome do funcionário, horas ou receita) — dados menos completos que os de GET /v1/reports/admin/team-performance.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Arquivo PDF do relatório (relatorio_desempenho_equipes.pdf). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/users-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resumo de usuários do sistema
+         * @description Requer permissão `relatorios:visualizar`. Sem parâmetros de filtro. Conta o total de usuários e a quantidade por role (admin/user) — apesar do nome do arquivo PDF associado ("resumo_usuarios_ativos"), não há filtro por status/atividade: o total inclui todos os usuários cadastrados.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Totais de usuários por role. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportUsersSummary"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/users-summary/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resumo de usuários do sistema, em PDF
+         * @description Requer permissão `relatorios:visualizar`. Mesma consulta de GET /v1/reports/admin/users-summary, renderizada em PDF.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Arquivo PDF do relatório (resumo_usuarios_ativos.pdf). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports/admin/profitability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Relatório de rentabilidade por ordem de serviço
+         * @description Requer permissão `relatorios:visualizar`. Considera apenas ordens de serviço com status "Concluída" (filtro fixo). start/end filtram openingDate quando informados juntos (o filtro só é aplicado se ambos estiverem presentes). Não possui variante em PDF.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    start?: string;
+                    end?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Rentabilidade calculada por ordem de serviço concluída. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ReportProfitabilityEntry"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista serviços
+         * @description Requer a permissão `auxiliares`.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    limit?: number;
+                    /** @description Filtro por substring no nome (case-insensitive). */
+                    search?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista paginada de serviços. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Service"][];
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria um novo serviço
+         * @description Requer a permissão `auxiliares`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ServiceInput"];
+                };
+            };
+            responses: {
+                /** @description Serviço criado. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Service"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/services/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca um serviço pelo ID
+         * @description Requer a permissão `auxiliares`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Serviço encontrado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Service"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza um serviço existente
+         * @description Requer a permissão `auxiliares`. Não é uma atualização parcial: name e price são sempre reenviados (mesmo schema de validação do POST).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ServiceInput"];
+                };
+            };
+            responses: {
+                /** @description Serviço atualizado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Service"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove um serviço
+         * @description Requer a permissão `auxiliares`. Falha com 400 se o serviço estiver referenciado em alguma Ordem de Serviço (ServiceOrderService).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Serviço removido com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Serviço em uso em uma ou mais Ordens de Serviço. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                /** @description Erro interno inesperado. Neste endpoint o corpo inclui também `details` com a mensagem da exceção original. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista ordens de serviço
+         * @description Requer permissão `os:visualizar`. Suporta paginação, busca textual e filtros de status/período. Se `all=true`, ignora a paginação e retorna todos os registros que atendem aos filtros em `data` (sem `meta`, sem `qualityControls`/`transactions` sanitizados de forma diferente — mesma sanitização se aplica). A resposta é sanitizada por FinancialService.sanitizeOrder (ver schema ServiceOrder); cada item traz apenas o último registro de `traces`, com campos reduzidos {id, action, changedByEmail, createdAt}.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Ignorado quando all=true. */
+                    page?: number;
+                    /** @description Ignorado quando all=true. */
+                    limit?: number;
+                    /** @description Se true, retorna todos os registros (sem paginação) como array simples em data. */
+                    all?: boolean;
+                    /** @description Busca por traceCode, partCode, description ou nome/razão social do cliente. */
+                    search?: string;
+                    /** @description Filtro exato de status. Tem prioridade sobre excludeCancelled. */
+                    status?: string;
+                    /** @description Se true (e status não informado), exclui OS com status "Cancelada". */
+                    excludeCancelled?: boolean;
+                    /** @description Filtra openingDate >= startDate. */
+                    startDate?: string;
+                    /** @description Filtra openingDate <= endDate (fim do dia, 23:59:59.999). */
+                    endDate?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de ordens de serviço. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ServiceOrder"][];
+                            /** @description Ausente quando all=true. */
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Erro ao listar ordens de serviço. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Cria uma nova ordem de serviço
+         * @description Requer permissão `os:gerenciar`. Diferente de GET, esta resposta NÃO passa por FinancialService.sanitizeOrder — os campos financeiros (profitPercent, taxPercent, financials) e os preços de materials/services são sempre incluídos, independente da permissão financeira do usuário. A resposta inclui apenas person, services e materials (sem qualityControls, transactions ou traces). Dispara uma notificação assíncrona de "Nova OS Aberta".
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ServiceOrderInput"];
+                };
+            };
+            responses: {
+                /** @description Ordem de serviço criada. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ServiceOrder"];
+                        };
+                    };
+                };
+                /** @description Erro de validação Joi ou erro ao criar (ex. personId inexistente). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/materials/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verifica a cobertura de estoque para uma lista de materiais
+         * @description Requer permissão `os:visualizar`. Calcula, para cada material informado, o saldo atual em estoque (soma de StockLog IN menos OUT) e a ruptura (shortage) em relação à quantidade solicitada. Itens com materialId inválido ou quantity <= 0 são ignorados silenciosamente; se nenhum item restar, retorna items vazio com totais zerados (coveragePercent 100).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        materials?: {
+                            materialId?: number;
+                            quantity?: number;
+                        }[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Cobertura de estoque calculada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: {
+                                items?: {
+                                    materialId?: number;
+                                    materialName?: string;
+                                    unit?: string;
+                                    requestedQty?: number;
+                                    stockQty?: number;
+                                    shortageQty?: number;
+                                    coveragePercent?: number;
+                                    /** @enum {string} */
+                                    status?: "SHORTAGE" | "OK";
+                                }[];
+                                totals?: {
+                                    requestedQty?: number;
+                                    stockQty?: number;
+                                    shortageQty?: number;
+                                    coveragePercent?: number;
+                                };
+                            };
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/pcp/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Visão consolidada de carga de trabalho por centro de trabalho (PCP)
+         * @description Requer permissão `os:visualizar`. Considera apenas OS com status diferente de "Concluída"/ "Cancelada" cuja janela planejada (plannedStartDate/plannedEndDate) sobrepõe o período informado.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Default é a data/hora atual. */
+                    startDate?: string;
+                    /** @description Default é startDate + 6 dias. */
+                    endDate?: string;
+                    dailyCapacityHours?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Visão PCP calculada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: {
+                                /** Format: date-time */
+                                periodStart?: string;
+                                /** Format: date-time */
+                                periodEnd?: string;
+                                dailyCapacityHours?: number;
+                                days?: number;
+                                centers?: {
+                                    workCenter?: string;
+                                    ordersCount?: number;
+                                    plannedHours?: number;
+                                    capacityHours?: number;
+                                    loadPercent?: number;
+                                    orders?: {
+                                        id?: number;
+                                        traceCode?: string | null;
+                                        description?: string | null;
+                                        status?: string;
+                                        workCenter?: string | null;
+                                        /** Format: date-time */
+                                        plannedStartDate?: string | null;
+                                        /** Format: date-time */
+                                        plannedEndDate?: string | null;
+                                        plannedHours?: number | null;
+                                    }[];
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Período inválido (datas não parseáveis). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/pcp/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Calendário diário/por turno de carga de trabalho por centro de trabalho (PCP)
+         * @description Requer permissão `os:visualizar`. Distribui as horas planejadas de cada OS proporcionalmente pelos dias do período (spanDays) e pelos turnos configurados. Considera apenas OS com status diferente de "Concluída"/"Cancelada" e com plannedStartDate/plannedEndDate definidos.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Default é a data atual (início do dia). */
+                    startDate?: string;
+                    /** @description Default é startDate + 6 dias. */
+                    endDate?: string;
+                    morningHours?: number;
+                    afternoonHours?: number;
+                    nightHours?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendário PCP calculado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: {
+                                /** Format: date-time */
+                                periodStart?: string;
+                                /** Format: date-time */
+                                periodEnd?: string;
+                                days?: string[];
+                                shiftConfig?: {
+                                    /** @enum {string} */
+                                    key?: "morning" | "afternoon" | "night";
+                                    /** @enum {string} */
+                                    label?: "Manha" | "Tarde" | "Noite";
+                                    hours?: number;
+                                }[];
+                                centers?: {
+                                    workCenter?: string;
+                                    days?: {
+                                        /** @example 2026-09-14 */
+                                        date?: string;
+                                        plannedHours?: number;
+                                        capacityHours?: number;
+                                        loadPercent?: number;
+                                        shifts?: {
+                                            key?: string;
+                                            label?: string;
+                                            capacityHours?: number;
+                                            plannedHours?: number;
+                                            loadPercent?: number;
+                                        }[];
+                                        orderIds?: number[];
+                                    }[];
+                                }[];
+                            };
+                        };
+                    };
+                };
+                /** @description Período inválido (datas não parseáveis ou início maior que fim). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/operations/efficiency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Eficiência operacional agregada por centro de trabalho e tipo de operação
+         * @description Requer permissão `os:visualizar`. Agrega os apontamentos (ServiceOrderOperationLog) cujo startAt está no período informado. efficiencyPercent = workedHours / (workedHours + downtimeMinutes/60).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Default é 30 dias atrás. */
+                    startDate?: string;
+                    /** @description Default é a data/hora atual. */
+                    endDate?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Eficiência operacional calculada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: {
+                                /** Format: date-time */
+                                periodStart?: string;
+                                /** Format: date-time */
+                                periodEnd?: string;
+                                totals?: {
+                                    workedHours?: number;
+                                    downtimeMinutes?: number;
+                                    efficiencyPercent?: number;
+                                };
+                                /** @description Mapa dinâmico categoria de parada -> minutos totais. */
+                                downtimeByCategory?: {
+                                    [key: string]: number;
+                                };
+                                byCenterAndOperation?: {
+                                    workCenter?: string;
+                                    operationType?: string;
+                                    logsCount?: number;
+                                    ordersCount?: number;
+                                    workedHours?: number;
+                                    downtimeMinutes?: number;
+                                    efficiencyPercent?: number;
+                                }[];
+                            };
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/purchase-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista solicitações de compra
+         * @description Requer permissão `os:visualizar`. Em caso de erro interno, retorna 200 com lista vazia em `data` (sem `meta`) em vez de um erro — comportamento atual do controller (catch retorna res.json([])).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    serviceOrderId?: number;
+                    status?: "OPEN" | "PARTIAL" | "CLOSED";
+                    /** @description Filtra createdAt >= startDate. */
+                    startDate?: string;
+                    /** @description Filtra createdAt <= endDate (fim do dia, 23:59:59.999). */
+                    endDate?: string;
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de solicitações de compra (ou array vazio em caso de erro interno, ver acima). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["PurchaseRequest"][];
+                            /** @description Ausente na resposta de fallback de erro (data vazio). */
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria uma solicitação de compra (PurchaseRequest) a partir de itens em ruptura
+         * @description Requer permissão `os:gerenciar`. Gera um código sequencial (SC-AAAAMMDD-HHmm-XXXX). Se serviceOrderId for informado, registra um ServiceOrderTrace (action PURCHASE_REQUEST_CREATE) na OS vinculada.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestInput"];
+                };
+            };
+            responses: {
+                /** @description Solicitação de compra criada. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["PurchaseRequest"];
+                        };
+                    };
+                };
+                /** @description Nenhum item em ruptura informado, ou erro ao gerar a solicitação. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description OS informada não encontrada, ou um ou mais materiais não encontrados. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/purchase-requests/{id}/fulfill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registra a compra (entrada de estoque) de itens de uma solicitação de compra
+         * @description Requer permissão `os:gerenciar`. Para cada item processado, adquire um lock pessimista no material, calcula a quantidade efetivamente comprada (limitada ao shortageQty restante), cria um StockLog de entrada (IN), atualiza o preço do material e recalcula o status do PurchaseRequestItem (PARTIAL/PURCHASED) e da PurchaseRequest (OPEN/PARTIAL/CLOSED). Registra um ServiceOrderTrace (action PURCHASE_REQUEST_FULFILL) se a solicitação estiver vinculada a uma OS.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da solicitação de compra (PurchaseRequest).
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PurchaseRequestFulfillInput"];
+                };
+            };
+            responses: {
+                /** @description Solicitação de compra atualizada após o registro da compra. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["PurchaseRequest"];
+                        };
+                    };
+                };
+                /** @description Payload inválido ou custo do item não informado. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Solicitação, item da solicitação ou fornecedor não encontrado. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/purchase-quotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista cotações de compra
+         * @description Requer permissão `os:visualizar`. Em caso de erro interno, retorna 200 com lista vazia em `data` (sem `meta`) em vez de um erro — comportamento atual do controller (catch retorna res.json([])).
+         */
+        get: {
+            parameters: {
+                query?: {
+                    purchaseRequestId?: number;
+                    status?: "OPEN" | "APPROVED" | "REJECTED";
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de cotações de compra (ou array vazio em caso de erro interno, ver acima). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["PurchaseQuotation"][];
+                            /** @description Ausente na resposta de fallback de erro (data vazio). */
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria uma cotação de compra (PurchaseQuotation) vinculada a uma solicitação de compra
+         * @description Requer permissão `os:gerenciar`. Gera um código sequencial (COT-AAAAMMDD-HHmm-XXXX). Sem validação Joi (ver PurchaseQuotationInput) — erros de payload malformado ou FK inválida (ex.: purchaseRequestId/supplierPersonId/materialId/purchaseRequestItemId inexistentes) retornam 400 com a mensagem de erro lançada pelo Prisma ou pelo runtime.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PurchaseQuotationInput"];
+                };
+            };
+            responses: {
+                /** @description Cotação de compra criada. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["PurchaseQuotation"];
+                        };
+                    };
+                };
+                /** @description Payload inválido ou erro ao criar a cotação (mensagem varia conforme a causa). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/purchase-quotations/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprova uma cotação de compra
+         * @description Requer permissão `os:gerenciar`. Para cada item da cotação, adquire lock pessimista no material, calcula a quantidade a comprar (limitada ao shortageQty restante do PurchaseRequestItem) e cria um StockLog de entrada (IN). Recalcula o status da PurchaseRequest e rejeita (status REJECTED) as demais cotações OPEN da mesma solicitação. Dispara uma notificação assíncrona de "Cotação Aprovada". Não há tratamento especial de erros — qualquer falha (inclusive cotação inexistente ou já processada) retorna 400 com error.message bruto.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da cotação (PurchaseQuotation).
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cotação aprovada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["PurchaseQuotation"];
+                        };
+                    };
+                };
+                /** @description Cotação inexistente, cotação não está mais OPEN, ou outro erro (ex. Prisma). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/purchase-quotations/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gera o PDF de uma cotação de compra
+         * @description Requer permissão `os:visualizar`. Retorna o binário do PDF (não passa pelo envelope JSON padrão).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da cotação (PurchaseQuotation).
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description PDF da cotação gerado com sucesso. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                /** @description ID de cotação inválido. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/{id}/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista os apontamentos operacionais (ServiceOrderOperationLog) de uma OS
+         * @description Requer permissão `os:visualizar`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da ordem de serviço.
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de apontamentos operacionais, mais recentes primeiro. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ServiceOrderOperationLog"][];
+                        };
+                    };
+                };
+                /** @description ID de OS inválido. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Registra um apontamento operacional (mão de obra/parada) para uma OS
+         * @description Requer permissão `os:gerenciar`. Sem validação Joi (ver ServiceOrderOperationLogInput). Registra um ServiceOrderTrace (action OP_LOG_CREATE).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da ordem de serviço.
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ServiceOrderOperationLogInput"];
+                };
+            };
+            responses: {
+                /** @description Apontamento operacional criado. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ServiceOrderOperationLog"];
+                        };
+                    };
+                };
+                /** @description ID de OS inválido, campo obrigatório inválido/ausente, ou erro genérico. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description OS ou funcionário não encontrado. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gera o PDF de uma ordem de serviço
+         * @description Requer permissão `os:visualizar`. Retorna o binário do PDF (não passa pelo envelope JSON padrão).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da ordem de serviço.
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description PDF da OS gerado com sucesso. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                /** @description ID de OS inválido. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca uma ordem de serviço pelo ID
+         * @description Requer permissão `os:visualizar`. Resposta sanitizada por FinancialService.sanitizeOrder (ver schema ServiceOrder) e com o histórico completo de `traces`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da ordem de serviço.
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Ordem de serviço encontrada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ServiceOrder"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Ordem de serviço não encontrada. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza uma ordem de serviço existente
+         * @description Requer permissão `os:gerenciar`. Diferente de GET, esta resposta NÃO passa por FinancialService.sanitizeOrder — os campos financeiros e os preços de materials/services são sempre incluídos, independente da permissão financeira do usuário. Inclui qualityControls, transactions e os 20 traces mais recentes. Se services/materials forem informados no corpo, substituem por completo os registros existentes.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da ordem de serviço.
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ServiceOrderUpdateInput"];
+                };
+            };
+            responses: {
+                /** @description Ordem de serviço atualizada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ServiceOrder"];
+                        };
+                    };
+                };
+                /** @description Erro de validação Joi, ou erro ao atualizar. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Ordem de serviço não encontrada. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove uma ordem de serviço
+         * @description Requer permissão `os:gerenciar`. Também registra um ServiceOrderTrace (action DELETE) antes da exclusão.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da ordem de serviço.
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Ordem de serviço removida com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Ordem de serviço não encontrada. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/service-orders/plan/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Replaneja em lote (workCenter/janela/horas) várias ordens de serviço
+         * @description Requer permissão `os:gerenciar`. Valida a janela de cada OS individualmente e verifica conflitos de agenda tanto contra OS não incluídas no lote (externalConflicts) quanto entre as próprias OS do lote (internalConflicts) no mesmo workCenter. Se não houver conflitos, aplica a atualização em massa e registra um ServiceOrderTrace (action PLAN_BATCH_UPDATE) por OS.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ServiceOrderPlanBatchInput"];
+                };
+            };
+            responses: {
+                /** @description Replanejamento em lote aplicado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: {
+                                /** @description Quantidade de OS efetivamente atualizadas. */
+                                updatedCount?: number;
+                                /** @description IDs informados que não correspondem a nenhuma OS existente. */
+                                notFoundIds?: number[];
+                            };
+                        };
+                    };
+                };
+                /** @description Nenhum ID válido informado, nenhum campo de plano informado, ou janela inválida. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Nenhuma das OS informadas foi encontrada. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                /** @description Conflito de agenda (externo a outras OS, ou interno entre OS do próprio lote). */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example error */
+                            status?: string;
+                            /** @example Conflito de agenda detectado para o replanejamento em lote. */
+                            message?: string;
+                            externalConflicts?: {
+                                id?: number;
+                                conflicts?: {
+                                    id?: number;
+                                    traceCode?: string | null;
+                                    description?: string | null;
+                                    /** Format: date-time */
+                                    plannedStartDate?: string | null;
+                                    /** Format: date-time */
+                                    plannedEndDate?: string | null;
+                                    workCenter?: string | null;
+                                    status?: string;
+                                }[];
+                            }[];
+                            internalConflicts?: {
+                                leftId?: number;
+                                rightId?: number;
+                                workCenter?: string;
+                            }[];
+                        };
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        trace?: never;
+    };
+    "/v1/service-orders/{id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Replaneja (workCenter/janela/horas) uma ordem de serviço
+         * @description Requer permissão `os:gerenciar`. Verifica conflito de agenda no mesmo workCenter contra outras OS não concluídas/canceladas. Resposta sanitizada por FinancialService.sanitizeOrder (ver schema ServiceOrder), com os 10 traces mais recentes. Registra um ServiceOrderTrace (action PLAN_UPDATE).
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /**
+                     * @description ID da ordem de serviço.
+                     * @example 1
+                     */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ServiceOrderPlanInput"];
+                };
+            };
+            responses: {
+                /** @description Ordem de serviço replanejada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["ServiceOrder"];
+                        };
+                    };
+                };
+                /** @description ID inválido, janela de planejamento inválida, ou outro erro. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Ordem de serviço não encontrada. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                /** @description Conflito de agenda no centro de trabalho para o período informado. */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example error */
+                            status?: string;
+                            /** @example Conflito de agenda no centro de trabalho para o período informado. */
+                            message?: string;
+                            conflicts?: {
+                                id?: number;
+                                traceCode?: string | null;
+                                description?: string | null;
+                                /** Format: date-time */
+                                plannedStartDate?: string | null;
+                                /** Format: date-time */
+                                plannedEndDate?: string | null;
+                                workCenter?: string | null;
+                                status?: string;
+                            }[];
+                        };
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        trace?: never;
+    };
+    "/v1/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retorna as configurações do sistema
+         * @description Requer a permissão `configuracoes:gerenciar`. Comportamento singleton: se ainda não existir nenhum registro, cria automaticamente um com id=1 e companyName='ProMEC' antes de retornar (portanto nunca resulta em 404).
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Configurações do sistema. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Settings"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza as configurações do sistema
+         * @description Requer a permissão `configuracoes:gerenciar`. Mesmo handler de POST /v1/settings — faz upsert do registro singleton (id=1).
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SettingsInput"];
+                };
+            };
+            responses: {
+                /** @description Configurações atualizadas. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Settings"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza as configurações do sistema
+         * @description Requer a permissão `configuracoes:gerenciar`. Mesmo handler de PUT /v1/settings — faz upsert do registro singleton (id=1).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SettingsInput"];
+                };
+            };
+            responses: {
+                /** @description Configurações atualizadas. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Settings"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/settings/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Faz upload do logotipo do sistema
+         * @description Requer a permissão `configuracoes:gerenciar`. Upload multipart via campo `logo` (multer, limite de 2MB; aceita apenas image/jpeg, image/png, image/webp, image/gif ou image/svg+xml). Apenas grava o arquivo em disco e retorna a URL pública — não atualiza o registro de Settings (logoUrl precisa ser salvo à parte via POST/PUT /v1/settings).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        logo: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Logotipo enviado com sucesso. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: {
+                                /** @example /uploads/public/logo/3f1e9c2a-....png */
+                                logoUrl?: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Nenhum arquivo enviado no campo `logo`. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Erro interno inesperado. Também cobre rejeições do multer (arquivo acima de 2MB, ou tipo fora de image/jpeg, image/png, image/webp, image/gif, image/svg+xml): esses erros não são tratados no controller e caem no error handler genérico, retornando 500 em vez de 400. */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista o histórico de movimentações de estoque
+         * @description Requer a permissão `estoque:visualizar`. Retorna todos os registros de StockLog (entradas e saídas de todos os materiais), mais recentes primeiro.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista paginada de movimentações de estoque. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["StockLog"][];
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Registra uma movimentação de estoque (entrada ou saída)
+         * @description Requer a permissão `estoque:gerenciar`. Não cria um "item de estoque": cria um registro de movimentação (StockLog). Em type=IN, exige supplierPersonId válido e unitCost ou totalPaid; o preço padrão do material (Material.price) passa a refletir o custo unitário do lote recém-comprado. Em type=OUT, consome os lotes IN disponíveis em ordem FIFO (mais antigos primeiro) e falha se o saldo total disponível for insuficiente.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["StockLogInput"];
+                };
+            };
+            responses: {
+                /** @description Movimentação registrada. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["StockLog"];
+                        };
+                    };
+                };
+                /** @description Dados inválidos, custo de compra ausente/inválido, ou saldo insuficiente para saída. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"] | components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                /** @description Fornecedor informado (supplierPersonId) não encontrado na tabela de pessoas. */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stock/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista o histórico de compras de materiais
+         * @description Requer a permissão `estoque:visualizar`. Subconjunto de StockLog filtrado para type=IN com unitCost preenchido (movimentações de compra). Cada item inclui o campo calculado `supplierName`.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    materialId?: number;
+                    supplierPersonId?: number;
+                    /** @description Filtra por createdAt >= startDate (00:00:00). Ignorado se não for uma data válida. */
+                    startDate?: string;
+                    /** @description Filtra por createdAt <= endDate (23:59:59.999). Ignorado se não for uma data válida. */
+                    endDate?: string;
+                    page?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista paginada de compras. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: (components["schemas"]["StockLog"] & {
+                                /**
+                                 * @description naturalPerson.name ou legalPerson.corporateName do fornecedor; null se não determinável.
+                                 * @example João Fornecedor
+                                 */
+                                supplierName?: string | null;
+                            })[];
+                            meta?: components["schemas"]["PaginationMeta"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista todos os grupos de acesso
+         * @description Requer a permissão `usuarios:gerenciar`. Não é paginado.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de grupos, cada um com `permissions` e `permissionKeys` preenchidos. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Group"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria um novo grupo de acesso
+         * @description Requer a permissão `usuarios:gerenciar`. Se algum item de `permissionKeys` não corresponder a uma permissão existente, a operação falha com 500 (não há validação prévia de existência).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GroupInput"];
+                };
+            };
+            responses: {
+                /** @description Grupo criado. A resposta contém apenas id/name/description — não inclui `permissions` nem `permissionKeys` (a query de criação não recarrega a relação). */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Group"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/groups/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista todas as permissões disponíveis no sistema
+         * @description Requer a permissão `usuarios:gerenciar`. Não é paginado.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de permissões, ordenada por nome. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Permission"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/groups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca um grupo de acesso pelo ID
+         * @description Requer a permissão `usuarios:gerenciar`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Grupo encontrado, com `permissions` preenchido. Diferente da listagem, esta resposta não inclui `permissionKeys`. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Group"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza um grupo de acesso existente
+         * @description Requer a permissão `usuarios:gerenciar`. Substitui integralmente as permissões do grupo (remove todos os vínculos GroupPermission existentes e recria a partir de `permissionKeys`). Se algum item de `permissionKeys` não corresponder a uma permissão existente, a operação falha com 500.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GroupInput"];
+                };
+            };
+            responses: {
+                /** @description Grupo atualizado. A resposta contém apenas id/name/description — não inclui `permissions` nem `permissionKeys` (a query de atualização não recarrega a relação). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["Group"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove um grupo de acesso
+         * @description Requer a permissão `usuarios:gerenciar`. Falha com 400 se ainda houver usuários vinculados a este grupo; caso contrário, remove os vínculos GroupPermission e o grupo.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Grupo removido com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Existem usuários vinculados a este grupo. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lista todos os usuários
+         * @description Requer a permissão `usuarios:gerenciar`. Não é paginado.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de usuários. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["User"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /**
+         * Cria um novo usuário
+         * @description Requer a permissão `usuarios:gerenciar`. Como efeito colateral, enfileira o envio de um e-mail de boas-vindas (`addToQueue('user_created', ...)`).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UserInput"];
+                };
+            };
+            responses: {
+                /** @description Usuário criado. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["User"];
+                        };
+                    };
+                };
+                /** @description Erro de validação Joi, ou e-mail já cadastrado. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ValidationErrorResponse"] | components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Busca um usuário pelo ID
+         * @description Requer a permissão `usuarios:gerenciar`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Usuário encontrado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["User"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /**
+         * Atualiza um usuário existente
+         * @description Requer a permissão `usuarios:gerenciar`. Atualização parcial — apenas os campos enviados são alterados.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UserUpdateInput"];
+                };
+            };
+            responses: {
+                /** @description Usuário atualizado. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["User"];
+                        };
+                    };
+                };
+                400: components["responses"]["ValidationError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                /** @description Erro interno inesperado. Inclui o caso de `groupId: null` no payload (ver observação em UserUpdateInput.groupId). */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /**
+         * Remove um usuário
+         * @description Requer a permissão `usuarios:gerenciar`. Falha com 400 se o usuário estiver vinculado a um registro de funcionário, tiver gerado relatórios (ReportEmission) ou possuir registros de alteração em Ordens de Serviço (ServiceOrderTrace).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Usuário removido com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Existem registros vinculados a este usuário que impedem a exclusão (mensagem varia conforme o vínculo: funcionário, relatórios gerados ou alterações em Ordens de Serviço). */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work-areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista todas as áreas de trabalho */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Lista de áreas de trabalho. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["WorkArea"][];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        put?: never;
+        /** Cria uma nova área de trabalho */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WorkAreaInput"];
+                };
+            };
+            responses: {
+                /** @description Área de trabalho criada. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["WorkArea"];
+                        };
+                    };
+                };
+                /** @description Nome não informado ou inválido. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work-areas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Busca uma área de trabalho pelo ID */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Área de trabalho encontrada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["WorkArea"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        /** Atualiza uma área de trabalho existente */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WorkAreaInput"];
+                };
+            };
+            responses: {
+                /** @description Área de trabalho atualizada. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @example success */
+                            status?: string;
+                            data?: components["schemas"]["WorkArea"];
+                        };
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        post?: never;
+        /**
+         * Remove uma área de trabalho
+         * @description Falha com 400 se ainda houver funcionários vinculados à área.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @example 1 */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Área de trabalho removida com sucesso (sem conteúdo). */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Existem funcionários vinculados a esta área. */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorMessage"];
+                    };
+                };
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["ServerError"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
-    responses: never;
+    schemas: {
+        /** @description Formato padrão de erro. Respostas de erro (status >= 400) não passam pelo envelope de sucesso. */
+        ErrorMessage: {
+            /** @example Recurso não encontrado. */
+            error?: string;
+            /** @example Recurso não encontrado. */
+            message?: string;
+            /** @example Detalhe adicional do erro. */
+            details?: string;
+        };
+        /** @description Erro de validação de payload (middleware validateBody, baseado em Joi). */
+        ValidationErrorResponse: {
+            /** @example error */
+            status?: string;
+            /** @example Erro de validação */
+            message?: string;
+            /**
+             * @example [
+             *       "\"name\" is required"
+             *     ]
+             */
+            details?: string[];
+        };
+        PaginationMeta: {
+            /** @example 42 */
+            total?: number;
+            /** @example 1 */
+            page?: number;
+            /** @example 20 */
+            limit?: number;
+            /** @example 3 */
+            totalPages?: number;
+        };
+        AuditLog: {
+            /** @example 1 */
+            id: number;
+            /**
+             * @description Nome da entidade auditada (ex. 'Person', 'Material', 'User').
+             * @example Person
+             */
+            entity: string;
+            /** @example 42 */
+            entityId: number;
+            /**
+             * @example UPDATE
+             * @enum {string}
+             */
+            action: "CREATE" | "UPDATE" | "DELETE";
+            /**
+             * @description Usuário que executou a ação, quando disponível.
+             * @example 3
+             */
+            userId?: number | null;
+            /** @example usuario@promec.com */
+            userEmail?: string | null;
+            /** @description Estado da entidade antes da alteração (estrutura livre, definida por quem chamou AuditService.log). */
+            oldData?: {
+                [key: string]: unknown;
+            } | null;
+            /** @description Estado da entidade depois da alteração (estrutura livre, definida por quem chamou AuditService.log). */
+            newData?: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        LoginInput: {
+            /**
+             * Format: email
+             * @example usuario@promec.com
+             */
+            email: string;
+            /** @example senha-secreta */
+            password: string;
+        };
+        AuthGroup: {
+            /** @example 1 */
+            id?: number;
+            /** @example Administradores */
+            name?: string;
+            description?: string | null;
+            /**
+             * @example [
+             *       "usuarios:gerenciar",
+             *       "estoque:visualizar"
+             *     ]
+             */
+            permissions?: string[];
+        };
+        AuthUser: {
+            /** @example 1 */
+            id?: number;
+            /** @example Maria */
+            firstName?: string;
+            /** @example Silva */
+            lastName?: string;
+            /** @example user */
+            role?: string;
+            /** Format: email */
+            email?: string;
+            group?: components["schemas"]["AuthGroup"];
+        };
+        /** @description O JWT é entregue via cookie HttpOnly `token` (Set-Cookie), não no corpo da resposta. Esta resposta não passa pelo envelope padrão { status, data }. */
+        LoginResponse: {
+            user?: components["schemas"]["AuthUser"];
+        };
+        RegisterInput: {
+            /** @example Maria */
+            firstName: string;
+            /** @example Silva */
+            lastName: string;
+            /**
+             * Format: email
+             * @example usuario@promec.com
+             */
+            email: string;
+            /** @example senha-secreta */
+            password: string;
+        };
+        /** @description Indicadores agregados do dashboard gerencial (financeiro, operacional e distribuição de OS). */
+        DashboardStatsResponse: {
+            stats?: {
+                /** @description Receita total das OS concluídas no filtro (serviços + materiais + margem + impostos). */
+                totalRevenue?: number;
+                totalMaterials?: number;
+                totalServices?: number;
+                totalTaxes?: number;
+                totalProfit?: number;
+                /** @description Total de pessoas cadastradas (Person.count()) — não respeita nenhum filtro de query. */
+                people?: number;
+                /** @description Total de OS no filtro, exceto as com status "Concluída" e "Cancelada". */
+                activeOrders?: number;
+                /** @description Quantidade de materiais com estoque atual (soma de StockLog IN menos OUT) abaixo de 10 unidades — calculado sobre todos os materiais, sem respeitar nenhum filtro de query. */
+                lowStock?: number;
+                totalOrders?: number;
+            };
+            operationsKpi?: {
+                workedHours?: number;
+                downtimeMinutes?: number;
+                /** @description workedHours / (workedHours + downtimeMinutes / 60) * 100. */
+                efficiencyPercent?: number;
+                logsCount?: number;
+            };
+            /** @description Agregado de horas trabalhadas/parada por centro de trabalho (ServiceOrderOperationLog), respeitando os filtros de query. */
+            efficiencyByCenter?: {
+                /** @example Sem centro definido */
+                workCenter?: string;
+                workedHours?: number;
+                downtimeMinutes?: number;
+                logsCount?: number;
+                efficiencyPercent?: number;
+            }[];
+            /** @description Tendência diária de eficiência por centro de trabalho, nos últimos 7 dias corridos contados a partir de endDate (ou de hoje, se endDate não for informado). startDate não afeta esta janela; personId, quando informado, continua filtrando os logs considerados. */
+            efficiencyTrendByCenter?: {
+                workCenter?: string;
+                trend?: {
+                    /** @example 05/09 */
+                    day?: string;
+                    /** @example 2026-09-05 */
+                    date?: string;
+                    efficiencyPercent?: number;
+                    workedHours?: number;
+                    downtimeMinutes?: number;
+                }[];
+            }[];
+            /**
+             * @description Minutos de parada somados por categoria (downtimeCategory em maiúsculas, "OUTROS" quando ausente). Chaves dinâmicas.
+             * @example {
+             *       "OUTROS": 120,
+             *       "MANUTENCAO": 45
+             *     }
+             */
+            downtimeByCategory?: {
+                [key: string]: number;
+            };
+            /** @description Receita e custo dos últimos 6 meses corridos (mês a mês, apenas OS concluídas). Não respeita startDate/endDate (a janela de 6 meses é sempre a partir do mês atual); respeita personId quando informado. */
+            financialPerformance?: {
+                /** @example JAN */
+                name?: string;
+                revenue?: number;
+                costs?: number;
+            }[];
+            /** @description Distribuição de OS por status, respeitando os filtros de personId/período. */
+            distribution?: {
+                /** @example Concluída */
+                label?: string;
+                value?: number;
+            }[];
+            /** @description As 5 OS mais recentes (orderBy openingDate desc), respeitando os filtros de personId/período. */
+            activities?: {
+                id?: number;
+                /** @example OS #12 Concluída */
+                title?: string;
+                /** @example Cliente: João Souza */
+                description?: string;
+                /**
+                 * Format: date-time
+                 * @description Igual à openingDate da OS.
+                 */
+                time?: string;
+                /**
+                 * @description "success" quando o status da OS é "Concluída"; "info" nos demais casos.
+                 * @enum {string}
+                 */
+                type?: "success" | "info";
+            }[];
+        };
+        /** @description Entrada da trilha de auditoria (AuditLog), com o usuário responsável resolvido. */
+        DashboardAuditLogEntry: {
+            id?: number;
+            /** @example Material */
+            entity?: string;
+            entityId?: number;
+            /** @example UPDATE */
+            action?: string;
+            userId?: number | null;
+            userEmail?: string | null;
+            oldData?: {
+                [key: string]: unknown;
+            } | null;
+            newData?: {
+                [key: string]: unknown;
+            } | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** @description Usuário resolvido a partir de userId (subconjunto id/firstName/lastName/email); nulo quando userId é nulo ou o usuário não é encontrado. */
+            user?: {
+                id?: number;
+                firstName?: string;
+                lastName?: string;
+                /** Format: email */
+                email?: string;
+            } | null;
+        };
+        /** @description Funcionário. A relação `person` pertence ao módulo People (fora deste escopo) e é representada aqui de forma mínima. `user`, quando vinculado, é a linha completa do model User retornada pelo Prisma (`include: { user: true }`, sem `select`) — o campo `password` (hash bcrypt) nunca é incluído nesta documentação, ainda que outros campos não sensíveis do usuário estejam de fato presentes na resposta real. */
+        Employee: {
+            /** @example 1 */
+            id: number;
+            /** @example 10 */
+            personId: number;
+            /** @example 2 */
+            jobRoleId?: number | null;
+            /** @example 3 */
+            workAreaId?: number | null;
+            /** @example 5 */
+            userId?: number | null;
+            /** @example MAT-0001 */
+            matricula?: string | null;
+            /** @example Ativo */
+            status: string;
+            /** @description Pessoa vinculada (módulo People — formato completo fora deste escopo). */
+            person?: {
+                /** @example 10 */
+                id?: number;
+                /** @description Presente quando a pessoa vinculada é física. */
+                naturalPerson?: {
+                    /** @example 10 */
+                    id?: number;
+                    /** @example João da Silva */
+                    name?: string;
+                    /** @example 123.456.789-00 */
+                    cpf?: string;
+                } | null;
+            };
+            jobRole?: components["schemas"]["JobRole"] | null;
+            workArea?: components["schemas"]["WorkArea"] | null;
+            /** @description Conta de usuário vinculada (linha completa do model User, exceto o campo password, que esta documentação nunca expõe). */
+            user?: {
+                /** @example 5 */
+                id?: number;
+                /** @example Maria */
+                firstName?: string;
+                /** @example Silva */
+                lastName?: string;
+                /** Format: email */
+                email?: string;
+                /** @example user */
+                role?: string;
+                /** @example 2 */
+                groupId?: number | null;
+                /** Format: date-time */
+                createdAt?: string;
+                /** Format: date-time */
+                updatedAt?: string;
+            } | null;
+        };
+        /** @description Payload de criação (POST /v1/employees). */
+        EmployeeInput: {
+            /**
+             * @description Pessoa (módulo People) a ser vinculada como funcionário.
+             * @example 10
+             */
+            personId: number;
+            /** @example 2 */
+            jobRoleId: number;
+            /** @example 3 */
+            workAreaId: number;
+            /** @example MAT-0001 */
+            matricula: string;
+            /**
+             * @description Opcional segundo a validação Joi (default "Ativo"), mas o middleware validateBody não reaplica esse default sobre o corpo da requisição — na prática, omitir este campo faz o Prisma rejeitar a criação (status é obrigatório no banco), retornando 400. Recomenda-se sempre enviar o campo explicitamente.
+             * @default Ativo
+             * @enum {string}
+             */
+            status: "Ativo" | "Inativo" | "Afastado" | "Férias";
+            /**
+             * @description Conta de usuário (módulo Users) a ser vinculada a este funcionário.
+             * @example 5
+             */
+            userId?: number | null;
+        };
+        /** @description Payload de atualização (PUT /v1/employees/{id}). Todos os campos são opcionais, mas ao menos um deve ser enviado. `personId` não pode ser alterado após a criação. */
+        EmployeeUpdateInput: {
+            /** @example 2 */
+            jobRoleId?: number;
+            /** @example 3 */
+            workAreaId?: number;
+            /** @example MAT-0001 */
+            matricula?: string;
+            /** @enum {string} */
+            status?: "Ativo" | "Inativo" | "Afastado" | "Férias";
+            /** @example 5 */
+            userId?: number | null;
+        };
+        JobRole: {
+            /** @example 1 */
+            id: number;
+            /** @example Soldador */
+            name: string;
+        };
+        JobRoleInput: {
+            /** @example Soldador */
+            name: string;
+        };
+        /** @description Dados de uma empresa consultados na Receita Federal via BrasilAPI (GET https://brasilapi.com.br/api/cnpj/v1/{cnpj}), remapeados para o formato usado pelo frontend. */
+        ExternalCnpjLookupResponse: {
+            /**
+             * @description Razão social (razao_social).
+             * @example PROMEC SERVICOS INDUSTRIAIS LTDA
+             */
+            corporateName?: string;
+            /**
+             * @description Nome fantasia (nome_fantasia); cai para a razão social quando a BrasilAPI não retorna nome fantasia.
+             * @example PROMEC
+             */
+            tradeName?: string;
+            /** @example 12345678000199 */
+            cnpj?: string;
+            address?: {
+                /** @example 01310-100 */
+                zipCode?: string | null;
+                street?: string | null;
+                number?: string | null;
+                complement?: string | null;
+                neighborhood?: string | null;
+                city?: string | null;
+                /** @example SP */
+                state?: string | null;
+            };
+            contact?: {
+                email?: string | null;
+                /** @description ddd_telefone_1, com fallback para ddd_telefone_2 quando o primeiro não existe. */
+                phone?: string | null;
+            };
+        };
+        Transaction: {
+            /** @example 1 */
+            id: number;
+            /**
+             * @description Convencionalmente 'RECEIVABLE' (a receber) ou 'PAYABLE' (a pagar), conforme uso em FinanceController/FinancialService — o schema Joi não impõe um enum.
+             * @example RECEIVABLE
+             */
+            type: string;
+            /**
+             * Format: float
+             * @example 1500.5
+             */
+            amount: number;
+            /** @example Peças */
+            category: string;
+            /** Format: date-time */
+            date: string;
+            /** @example Compra de rolamentos */
+            description?: string | null;
+            /** @example 12 */
+            orderId?: number | null;
+            /** @description Ordem de serviço vinculada (orderId), incluída via Prisma include. Presente apenas em GET /v1/finance; ausente (não apenas null) na resposta de POST /v1/finance, que não usa include. Mostrados aqui só os campos mais relevantes — o schema completo de ordem de serviço é documentado na tag ServiceOrders. */
+            serviceOrder?: {
+                /** @example 12 */
+                id?: number;
+                /** @example OS-2024-0012 */
+                traceCode?: string | null;
+                /** @example Em andamento */
+                status?: string;
+                /** Format: date-time */
+                openingDate?: string;
+            } | null;
+        };
+        TransactionInput: {
+            /** @example RECEIVABLE */
+            type: string;
+            /**
+             * Format: float
+             * @example 1500.5
+             */
+            amount: number;
+            /** @example Peças */
+            category: string;
+            /** @example Compra de rolamentos */
+            description?: string;
+            /** @example 12 */
+            orderId?: number | null;
+        };
+        Material: {
+            /** @example 1 */
+            id: number;
+            /** @example Rolamento 6205 */
+            name: string;
+            /** @example Rolamento rígido de esferas */
+            description?: string | null;
+            /**
+             * Format: float
+             * @description Ausente (chave omitida, não null) em GET /v1/materials e GET /v1/materials/{id} quando o usuário autenticado não possui a permissão financeiro:visualizar, financeiro:gerenciar ou financeiro:*, e não é admin. Sempre presente nas respostas de POST e PUT, que não passam pela sanitização financeira.
+             * @example 45.9
+             */
+            price?: number;
+            /** @example UN */
+            unit: string;
+            /** @example true */
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description Payload de criação (POST). Para atualização parcial (PUT), ver o requestBody de PUT /v1/materials/{id}. */
+        MaterialInput: {
+            /** @example Rolamento 6205 */
+            name: string;
+            /** @example Rolamento rígido de esferas */
+            description?: string | null;
+            /**
+             * Format: float
+             * @description Obrigatoriamente positivo, com até 2 casas decimais.
+             * @example 45.9
+             */
+            price: number;
+            /**
+             * @description Unidade de medida (ex: UN, KG, M).
+             * @example UN
+             */
+            unit: string;
+            /** @default true */
+            active: boolean;
+        };
+        Notification: {
+            /** @example 1 */
+            id: number;
+            /** @example Nova ordem de serviço */
+            title: string;
+            /** @example A ordem de serviço */
+            message: string;
+            /**
+             * @example INFO
+             * @enum {string}
+             */
+            type: "INFO" | "WARNING" | "ERROR" | "SUCCESS";
+            /** @example false */
+            read: boolean;
+            /**
+             * @description Se null, é uma notificação global (broadcast), visível para todos os usuários.
+             * @example 5
+             */
+            userId?: number | null;
+            /**
+             * @description Link opcional para navegação no frontend.
+             * @example /service-orders/42
+             */
+            link?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @description Pessoa física ou jurídica (clientes, fornecedores, funcionários). O tipo determina qual relação (naturalPerson ou legalPerson) está preenchida. Endereços e contatos são sempre retornados como arrays (podendo ser vazios). */
+        Person: {
+            /** @example 1 */
+            id: number;
+            /**
+             * @description F = pessoa física, J = pessoa jurídica
+             * @example F
+             * @enum {string}
+             */
+            type: "F" | "J";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            naturalPerson?: components["schemas"]["NaturalPerson"] | null;
+            legalPerson?: components["schemas"]["LegalPerson"] | null;
+            addresses?: components["schemas"]["Address"][];
+            contacts?: components["schemas"]["Contact"][];
+        };
+        /** @description Dados de pessoa física vinculados a um Person (type=F). */
+        NaturalPerson: {
+            /** @example 1 */
+            id: number;
+            /** @example 12345678901 */
+            cpf: string;
+            /** @example Maria Silva */
+            name: string;
+            rg?: string | null;
+            orgEmissor?: string | null;
+            /** @example SP */
+            ufRg?: string | null;
+            /** Format: date-time */
+            birthDate?: string | null;
+            /** @example F */
+            gender?: string | null;
+            cnh?: string | null;
+            cnhCategory?: string | null;
+            /** Format: date-time */
+            cnhValidity?: string | null;
+            ctps?: string | null;
+            ctpsSeries?: string | null;
+            pis?: string | null;
+            /** @example 1 */
+            personId: number;
+        };
+        /** @description Dados de pessoa jurídica vinculados a um Person (type=J). */
+        LegalPerson: {
+            /** @example 1 */
+            id: number;
+            /** @example 12345678000199 */
+            cnpj: string;
+            /** @example Indústria Exemplo Ltda */
+            corporateName: string;
+            tradeName?: string | null;
+            stateRegistration?: string | null;
+            municipalRegistration?: string | null;
+            /** @example 1 */
+            personId: number;
+            representatives?: components["schemas"]["Representative"][];
+        };
+        /** @description Representante legal de uma pessoa jurídica. */
+        Representative: {
+            /** @example 1 */
+            id: number;
+            /** @example João Souza */
+            name: string;
+            /** @example 98765432100 */
+            cpf: string;
+            /** @example Sócio-administrador */
+            function: string;
+            /** @example 1 */
+            legalPersonId: number;
+        };
+        Address: {
+            /** @example 1 */
+            id: number;
+            /** @example 01310100 */
+            cep: string;
+            /** @example Av. Paulista */
+            logradouro: string;
+            /** @example 1000 */
+            numero: string;
+            complemento?: string | null;
+            /** @example Bela Vista */
+            bairro: string;
+            /** @example São Paulo */
+            cidade: string;
+            /** @example SP */
+            uf: string;
+            /** @enum {string} */
+            type: "RESIDENCIAL" | "COMERCIAL" | "ENTREGA" | "COBRANCA";
+            /** @example 1 */
+            personId: number;
+        };
+        Contact: {
+            /** @example 1 */
+            id: number;
+            /** @enum {string} */
+            type: "EMAIL" | "TELEFONE" | "WHATSAPP" | "OUTRO";
+            /** @example contato@exemplo.com */
+            value: string;
+            description?: string | null;
+            /** @example 1 */
+            personId: number;
+        };
+        /** @description Campos aceitos dentro de `naturalPerson`. Em POST /v1/people, com `type=F`, `cpf` e `name` são obrigatórios; em PUT /v1/people/{id} todos os campos são opcionais. */
+        NaturalPersonInput: {
+            /** @example 12345678901 */
+            cpf?: string;
+            /** @example Maria Silva */
+            name?: string;
+            rg?: string | null;
+            orgEmissor?: string | null;
+            /** @example SP */
+            ufRg?: string | null;
+            /** Format: date */
+            birthDate?: string | null;
+            /** @enum {string|null} */
+            gender?: "M" | "F" | "OTHER" | null;
+        };
+        /** @description Campos aceitos dentro de `legalPerson`. Em POST /v1/people, com `type=J`, `cnpj` e `corporateName` são obrigatórios; em PUT /v1/people/{id} todos os campos são opcionais. */
+        LegalPersonInput: {
+            /** @example 12345678000199 */
+            cnpj?: string;
+            /** @example Indústria Exemplo Ltda */
+            corporateName?: string;
+            tradeName?: string | null;
+            stateRegistration?: string | null;
+            municipalRegistration?: string | null;
+            /** @description Em POST, cada item exige `name`, `cpf` e `function`; em PUT esses campos são opcionais. Ao ser enviado, substitui integralmente os representantes existentes. */
+            representatives?: components["schemas"]["RepresentativeInput"][];
+        };
+        RepresentativeInput: {
+            /** @example João Souza */
+            name?: string;
+            cpf?: string;
+            /** @example Sócio-administrador */
+            function?: string;
+        };
+        AddressInput: {
+            /** @example 01310100 */
+            cep: string;
+            /** @example Av. Paulista */
+            logradouro: string;
+            /** @example 1000 */
+            numero: string;
+            complemento?: string | null;
+            /** @example Bela Vista */
+            bairro: string;
+            /** @example São Paulo */
+            cidade: string;
+            /**
+             * @description Convertido para maiúsculas pelo backend.
+             * @example SP
+             */
+            uf: string;
+            /** @enum {string} */
+            type: "RESIDENCIAL" | "COMERCIAL" | "ENTREGA" | "COBRANCA";
+        };
+        ContactInput: {
+            /** @enum {string} */
+            type: "EMAIL" | "TELEFONE" | "WHATSAPP" | "OUTRO";
+            /** @example contato@exemplo.com */
+            value: string;
+            description?: string | null;
+        };
+        /** @description `naturalPerson` é obrigatório (e `legalPerson` proibido) quando `type=F`; o inverso vale quando `type=J`. `addresses` e `contacts` são opcionais (default `[]`). */
+        PersonInput: {
+            /** @enum {string} */
+            type: "F" | "J";
+            naturalPerson?: components["schemas"]["NaturalPersonInput"];
+            legalPerson?: components["schemas"]["LegalPersonInput"];
+            /** @default [] */
+            addresses: components["schemas"]["AddressInput"][];
+            /** @default [] */
+            contacts: components["schemas"]["ContactInput"][];
+        };
+        /** @description Todos os campos de nível superior são opcionais, porém ao menos um deve ser informado. Quando enviados, `naturalPerson`/`legalPerson` são mesclados (update parcial via Prisma), enquanto `addresses` e `contacts`, se enviados, substituem integralmente as listas existentes (os registros atuais são removidos e recriados a partir do payload). */
+        PersonUpdateInput: {
+            /** @enum {string} */
+            type?: "F" | "J";
+            naturalPerson?: components["schemas"]["NaturalPersonInput"];
+            legalPerson?: components["schemas"]["LegalPersonInput"];
+            addresses?: components["schemas"]["AddressInput"][];
+            contacts?: components["schemas"]["ContactInput"][];
+        };
+        /** @description Registro de controle de qualidade na forma "crua", sem relações aninhadas — é o formato retornado pelos endpoints de criação e atualização (que não usam `include`). */
+        QualityControl: {
+            /** @example 1 */
+            id: number;
+            /** @example 10 */
+            serviceOrderId?: number | null;
+            /** @example 3 */
+            inspectorId?: number | null;
+            /**
+             * Format: date-time
+             * @description Definida pelo servidor no momento da criação (não é lida do payload).
+             */
+            inspectionDate: string;
+            /**
+             * @description Texto livre — não há enum no banco de dados. Valores usados atualmente pelo frontend: "Pendente", "Aprovado", "Reprovado", "Aprovado com Restrição".
+             * @example Aprovado
+             */
+            status: string;
+            finalVerdict?: string | null;
+        };
+        /** @description Não há schema Joi nem middleware `validateBody` nesta rota; os campos abaixo refletem exatamente o que o controller lê de `req.body`. `inspectionDate` não é aceita no payload — é sempre definida pelo servidor como o instante da requisição de criação. */
+        QualityControlInput: {
+            /** @example 10 */
+            serviceOrderId?: number | null;
+            /** @example 3 */
+            inspectorId?: number | null;
+            /** @example Aprovado */
+            status?: string;
+            finalVerdict?: string | null;
+        };
+        /** @description Não conformidade associada a um controle de qualidade. Somente leitura nestas rotas (retornada aninhada em GET /v1/quality-controls/{id}; não há endpoint de criação/atualização/remoção para esta entidade neste módulo). */
+        NonConformity: {
+            /** @example 1 */
+            id: number;
+            type: string;
+            problemDescription: string;
+            suggestedAction: string;
+            responsibleId: number;
+            /** Format: date-time */
+            deadline: string;
+            status: string;
+            qualityControlId?: number | null;
+        };
+        /** @description Medição associada a um controle de qualidade. Somente leitura nestas rotas (retornada aninhada em GET /v1/quality-controls/{id}; não há endpoint de criação/atualização/remoção para esta entidade neste módulo). */
+        Measurement: {
+            /** @example 1 */
+            id: number;
+            itemMeasured: string;
+            /** Format: float */
+            expectedValue: number;
+            /** Format: float */
+            toleranceMin?: number | null;
+            /** Format: float */
+            toleranceMax?: number | null;
+            /** Format: float */
+            measuredValue: number;
+            unit?: string | null;
+            result?: string | null;
+            qualityControlId?: number | null;
+        };
+        /** @description Formato retornado pela API (projeção feita pelo controller a partir da linha da tabela, não a linha crua). `storagePath` só aparece quando o arquivo está salvo em disco; `base64` só aparece quando o conteúdo foi salvo inline em base64 e não há `storagePath`. */
+        QualityPhoto: {
+            /** @example 1 */
+            id: number;
+            /** @example Foto do defeito na peça */
+            description: string;
+            fileName?: string | null;
+            /** @example image/jpeg */
+            fileType?: string | null;
+            /** Format: date-time */
+            uploadedAt?: string | null;
+            /**
+             * @description Presente apenas quando há arquivo em disco (storagePath).
+             * @example /v1/quality-controls/photos/1/file
+             */
+            downloadUrl: string | null;
+            /** @description Incluído apenas quando o arquivo está salvo em disco. */
+            storagePath?: string;
+            /** @description Incluído apenas quando o conteúdo foi salvo inline em base64 (sem storagePath). */
+            base64?: string;
+        };
+        /** @description Enviado como multipart/form-data. */
+        QualityPhotoInput: {
+            /**
+             * Format: binary
+             * @description Arquivo de imagem (campo `file`). Aceita JPEG, PNG, WEBP ou GIF, até 8MB.
+             */
+            file: string;
+            /** @example Foto do defeito na peça */
+            description?: string;
+        };
+        /** @description Registro de emissão/exportação de um relatório (auditoria de geração). */
+        ReportEmission: {
+            /** @example 1 */
+            id: number;
+            /**
+             * @description Identificador do relatório emitido (ex. "purchases").
+             * @example purchases
+             */
+            reportKey: string;
+            /** @example PDF */
+            exportFormat: string;
+            /** @example relatorio_compras.pdf */
+            fileName?: string | null;
+            /**
+             * @description SHA-256 do arquivo gerado, quando registrado pelo endpoint de PDF correspondente.
+             * @example 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a0
+             */
+            fileHash?: string | null;
+            /** @description Filtros usados para gerar o relatório (JSON livre, definido por quem registra a emissão). */
+            filters?: {
+                [key: string]: unknown;
+            } | null;
+            generatedByUserId?: number | null;
+            generatedByEmail?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description Usuário que gerou a emissão (subconjunto id/firstName/lastName/email). */
+            generatedBy?: {
+                id?: number;
+                firstName?: string;
+                lastName?: string;
+                /** Format: email */
+                email?: string;
+            } | null;
+            /**
+             * @description Nome completo calculado a partir de generatedBy, ou generatedByEmail quando não há usuário resolvido.
+             * @example Maria Silva
+             */
+            generatedByName?: string;
+        };
+        /** @description Corpo usado para registrar manualmente uma emissão de relatório no histórico. */
+        ReportEmissionInput: {
+            /** @example purchases */
+            reportKey: string;
+            /** @example PDF */
+            exportFormat: string;
+            fileName?: string | null;
+            fileHash?: string | null;
+            filters?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** @description Quantidade de ordens de serviço agrupadas por status (prisma groupBy). */
+        ReportServiceOrdersByStatusItem: {
+            /** @example Concluída */
+            status?: string;
+            _count?: {
+                /** @example 12 */
+                _all?: number;
+            };
+        };
+        /** @description Material (dump completo do model, sem filtragem de campos). */
+        ReportMaterialSummary: {
+            id?: number;
+            name?: string;
+            description?: string | null;
+            price?: number;
+            unit?: string;
+            active?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        /** @description Fornecedor (Person) vinculado a uma entrada de estoque. */
+        ReportSupplierPersonSummary: {
+            id?: number;
+            /** @example LEGAL */
+            type?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            naturalPerson?: {
+                name?: string;
+            } | null;
+            legalPerson?: {
+                corporateName?: string;
+            } | null;
+        };
+        ReportPurchaseRequestItem: {
+            id?: number;
+            purchaseRequestId?: number;
+            materialId?: number;
+            requestedQty?: number;
+            stockQty?: number;
+            shortageQty?: number;
+            unit?: string | null;
+            /** @example PENDING */
+            status?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** @description Subconjunto do material (id, name, unit, price). */
+            material?: {
+                id?: number;
+                name?: string;
+                unit?: string;
+                price?: number;
+            };
+        };
+        ReportPurchaseRequestSummary: {
+            id?: number;
+            code?: string;
+            serviceOrderId?: number | null;
+            /** @example OPEN */
+            status?: string;
+            notes?: string | null;
+            requestedByEmail?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            /** @description Subconjunto da ordem de serviço vinculada (id, traceCode, description). */
+            serviceOrder?: {
+                id?: number;
+                traceCode?: string | null;
+                description?: string | null;
+            } | null;
+            items?: components["schemas"]["ReportPurchaseRequestItem"][];
+        };
+        /** @description Entrada de estoque (StockLog do tipo IN, com custo unitário informado) usada como histórico de compras. supplierPerson e supplierName são nulos quando a entrada não tem fornecedor vinculado. */
+        ReportStockPurchaseHistoryItem: {
+            id?: number;
+            materialId?: number;
+            quantity?: number;
+            /** @example IN */
+            type?: string;
+            description?: string | null;
+            supplierPersonId?: number | null;
+            unitCost?: number | null;
+            totalPaid?: number | null;
+            remainingQty?: number | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            material?: components["schemas"]["ReportMaterialSummary"];
+            supplierPerson?: components["schemas"]["ReportSupplierPersonSummary"];
+            /** @example Fornecedor Exemplo LTDA */
+            supplierName?: string | null;
+        };
+        ReportPurchasesResponse: {
+            purchaseRequests?: components["schemas"]["ReportPurchaseRequestSummary"][];
+            purchaseHistory?: components["schemas"]["ReportStockPurchaseHistoryItem"][];
+        };
+        /** @description Movimentação de estoque (StockLog) com o material relacionado. */
+        ReportStockMovementLogItem: {
+            id?: number;
+            materialId?: number;
+            quantity?: number;
+            /** @example OUT */
+            type?: string;
+            description?: string | null;
+            supplierPersonId?: number | null;
+            unitCost?: number | null;
+            totalPaid?: number | null;
+            remainingQty?: number | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            material?: components["schemas"]["ReportMaterialSummary"];
+        };
+        ReportOperationalProductionEntry: {
+            id?: number;
+            employeeId?: number | null;
+            /** @example João Souza */
+            employeeName?: string;
+            /** @example Usinagem */
+            workAreaName?: string;
+            /** @example Técnico Mecânico */
+            jobRoleName?: string;
+            serviceName?: string;
+            serviceDescription?: string | null;
+            serviceOrderId?: number | null;
+            serviceOrderCode?: string | null;
+            serviceOrderDescription?: string | null;
+            serviceOrderStatus?: string | null;
+            /** Format: date-time */
+            openingDate?: string | null;
+            hoursWorked?: number;
+            unitPrice?: number;
+            totalPrice?: number;
+        };
+        ReportQualityControlEntry: {
+            id?: number;
+            /** Format: date-time */
+            inspectionDate?: string;
+            status?: string;
+            finalVerdict?: string | null;
+            serviceOrderId?: number | null;
+            serviceOrderCode?: string | null;
+            serviceOrderDescription?: string | null;
+            serviceOrderStatus?: string | null;
+            inspectorId?: number | null;
+            inspectorName?: string;
+            inspectorArea?: string;
+            measurementsCount?: number;
+            approvedMeasurements?: number;
+            nonConformitiesCount?: number;
+            openNonConformities?: number;
+            photosCount?: number;
+        };
+        ReportFinancialFlowSummary: {
+            /** @example 15000.5 */
+            totalIncome?: number;
+            /** @example 8000 */
+            totalExpense?: number;
+            /** @example 7000.5 */
+            balance?: number;
+        };
+        /** @description Lançamento financeiro (Transaction) bruto, sem cálculo agregado. */
+        ReportTransactionEntry: {
+            id?: number;
+            /** @example RECEIVABLE */
+            type?: string;
+            amount?: number;
+            category?: string;
+            /** Format: date-time */
+            date?: string;
+            description?: string | null;
+            orderId?: number | null;
+        };
+        ReportTeamPerformanceEntry: {
+            employeeId?: number;
+            employeeName?: string;
+            workAreaName?: string;
+            jobRoleName?: string;
+            servicesCount?: number;
+            totalHours?: number;
+            totalRevenue?: number;
+        };
+        ReportUsersSummary: {
+            total?: number;
+            admins?: number;
+            users?: number;
+        };
+        /** @description Rentabilidade de uma ordem de serviço com status "Concluída". */
+        ReportProfitabilityEntry: {
+            id?: number;
+            customer?: string;
+            subtotal?: number;
+            estimatedProfit?: number;
+            taxes?: number;
+            finalTotal?: number;
+            /** @description Percentual de lucro configurado na OS (profitPercent). */
+            margin?: number | null;
+        };
+        Service: {
+            /** @example 1 */
+            id: number;
+            /** @example Solda de precisão */
+            name: string;
+            /** @example Solda TIG em peças de precisão */
+            description?: string | null;
+            /**
+             * Format: float
+             * @description Ausente (chave omitida, não null) em GET /v1/services e GET /v1/services/{id} quando o usuário autenticado não possui a permissão financeiro:visualizar, financeiro:gerenciar ou financeiro:*, e não é admin. Sempre presente nas respostas de POST e PUT, que não passam pela sanitização financeira.
+             * @example 250
+             */
+            price?: number;
+            /** @example true */
+            active: boolean;
+        };
+        /** @description Payload usado tanto em POST quanto em PUT. Diferente de Material, a atualização (PUT) não é parcial: name e price são reenviados/sobrescritos a cada chamada com o mesmo schema de validação da criação. */
+        ServiceInput: {
+            /** @example Solda de precisão */
+            name: string;
+            /** @example Solda TIG em peças de precisão */
+            description?: string;
+            /**
+             * Format: float
+             * @example 250
+             */
+            price: number;
+            /** @description Se omitido: em POST assume true; em PUT mantém o valor atual (não é alterado). */
+            active?: boolean;
+        };
+        /** @description Os campos `profitPercent`, `taxPercent`, `financials` e o array `transactions` são omitidos (via FinancialService.sanitizeOrder) quando o usuário autenticado não possui a permissão `financeiro:visualizar`, `financeiro:gerenciar`, `financeiro:*` nem role `admin`. Nas mesmas condições, os itens de `materials` e `services` são retornados sem `unitPrice`/`totalPrice`. Essa sanitização é aplicada em GET /v1/service-orders, GET /v1/service-orders/{id} e PATCH /v1/service-orders/{id}/plan — mas NÃO em POST /v1/service-orders nem em PUT /v1/service-orders/{id}, que sempre retornam os campos financeiros completos (ver nota em cada operação). O campo `financials` é calculado em memória (FinancialService.enrichFinancials) a partir de materials/services/transactions e não existe como coluna na tabela. */
+        ServiceOrder: {
+            /** @example 1 */
+            id: number;
+            /**
+             * @description Gerado automaticamente (OS-AAAAMMDD-XXXXXX) se não informado na criação.
+             * @example OS-20260914-A1B2C3
+             */
+            traceCode?: string | null;
+            partCode?: string | null;
+            batchCode?: string | null;
+            /** @example Usinagem */
+            workCenter?: string | null;
+            /** Format: date-time */
+            plannedStartDate?: string | null;
+            /** Format: date-time */
+            plannedEndDate?: string | null;
+            plannedHours?: number | null;
+            description?: string | null;
+            personId?: number | null;
+            /** @example Aberta */
+            status: string;
+            /** Format: date-time */
+            openingDate: string;
+            /** Format: date-time */
+            closingDate?: string | null;
+            problemDescription: string;
+            technicalDiagnosis?: string | null;
+            /** @description Omitido sem permissão financeira (ver descrição do schema). */
+            profitPercent?: number | null;
+            /** @description Omitido sem permissão financeira (ver descrição do schema). */
+            taxPercent?: number | null;
+            /** @description Relação com o módulo People, embutida inline (não é um schema deste módulo). */
+            person?: {
+                id?: number;
+                /** @example FISICA */
+                type?: string;
+                naturalPerson?: {
+                    id?: number;
+                    name?: string;
+                    cpf?: string;
+                } | null;
+                legalPerson?: {
+                    id?: number;
+                    corporateName?: string;
+                    tradeName?: string | null;
+                    cnpj?: string;
+                } | null;
+            } | null;
+            services?: components["schemas"]["ServiceOrderService"][];
+            materials?: components["schemas"]["ServiceOrderMaterial"][];
+            /** @description Registros do módulo QualityControl, embutidos inline (apenas campos escalares). */
+            qualityControls?: {
+                id?: number;
+                serviceOrderId?: number | null;
+                inspectorId?: number | null;
+                /** Format: date-time */
+                inspectionDate?: string;
+                status?: string;
+                finalVerdict?: string | null;
+            }[];
+            /** @description Array inteiro omitido sem permissão financeira (ver descrição do schema). */
+            transactions?: {
+                id?: number;
+                /** @example RECEIVABLE */
+                type?: string;
+                amount?: number;
+                category?: string;
+                /** Format: date-time */
+                date?: string;
+                description?: string | null;
+                orderId?: number | null;
+            }[];
+            /** @description Histórico de alterações (ServiceOrderTrace). Em GET /v1/service-orders (listagem) traz apenas o último registro, com campos reduzidos {id, action, changedByEmail, createdAt}; em GET /v1/service-orders/{id} traz o histórico completo; em PUT /v1/service-orders/{id} traz os 20 mais recentes; em PATCH /v1/service-orders/{id}/plan traz os 10 mais recentes; e é omitido por completo em POST /v1/service-orders (create). */
+            traces?: components["schemas"]["ServiceOrderTrace"][];
+            /** @description Calculado em memória; ausente sem permissão financeira (ver descrição do schema). */
+            financials?: {
+                materialCost?: number;
+                laborCost?: number;
+                directCost?: number;
+                profitPercent?: number;
+                profitAmount?: number;
+                taxPercent?: number;
+                taxAmount?: number;
+                totalEstimated?: number;
+                receivables?: number;
+                payables?: number;
+                realizedMargin?: number;
+            } | null;
+        };
+        ServiceOrderInput: {
+            /** @description Se omitido, é gerado automaticamente (OS-AAAAMMDD-XXXXXX). */
+            traceCode?: string | null;
+            partCode?: string | null;
+            batchCode?: string | null;
+            workCenter?: string | null;
+            /** Format: date-time */
+            plannedStartDate?: string | null;
+            /**
+             * Format: date-time
+             * @description Deve ser maior ou igual a plannedStartDate.
+             */
+            plannedEndDate?: string | null;
+            plannedHours?: number | null;
+            description?: string | null;
+            personId: number;
+            status: string;
+            /**
+             * Format: date-time
+             * @description Default é a data/hora atual se omitido.
+             */
+            openingDate?: string;
+            /**
+             * Format: date-time
+             * @description Deve ser maior ou igual a openingDate.
+             */
+            closingDate?: string | null;
+            problemDescription?: string | null;
+            technicalDiagnosis?: string | null;
+            /** @default 0 */
+            taxPercent: number;
+            /** @default 0 */
+            profitPercent: number;
+            /** @default [] */
+            services: components["schemas"]["ServiceOrderServiceInput"][];
+            /** @default [] */
+            materials: components["schemas"]["ServiceOrderMaterialInput"][];
+        };
+        /** @description Todos os campos são opcionais, porém ao menos um campo deve ser informado no corpo (validação Joi `.min(1)`). Campos omitidos preservam o valor atual da OS. Se `services`/`materials` forem informados, substituem por completo os registros existentes (delete + recreate). */
+        ServiceOrderUpdateInput: {
+            traceCode?: string | null;
+            partCode?: string | null;
+            batchCode?: string | null;
+            workCenter?: string | null;
+            /** Format: date-time */
+            plannedStartDate?: string | null;
+            /**
+             * Format: date-time
+             * @description Deve ser maior ou igual a plannedStartDate.
+             */
+            plannedEndDate?: string | null;
+            plannedHours?: number | null;
+            description?: string | null;
+            personId?: number;
+            status?: string;
+            /** Format: date-time */
+            openingDate?: string;
+            /**
+             * Format: date-time
+             * @description Deve ser maior ou igual a openingDate.
+             */
+            closingDate?: string | null;
+            problemDescription?: string | null;
+            technicalDiagnosis?: string | null;
+            taxPercent?: number;
+            profitPercent?: number;
+            services?: components["schemas"]["ServiceOrderServiceInput"][];
+            materials?: components["schemas"]["ServiceOrderMaterialInput"][];
+        };
+        /** @description Todos os campos são opcionais; os omitidos preservam o valor atual da OS. */
+        ServiceOrderPlanInput: {
+            workCenter?: string | null;
+            /** Format: date-time */
+            plannedStartDate?: string | null;
+            /** Format: date-time */
+            plannedEndDate?: string | null;
+            plannedHours?: number | null;
+        };
+        /** @description Aplica os mesmos campos de planejamento a várias OS de uma vez. Campos de plano omitidos preservam o valor atual de cada OS; ao menos um campo de plano deve ser informado. */
+        ServiceOrderPlanBatchInput: {
+            /**
+             * @description IDs das ordens de serviço a replanejar.
+             * @example [
+             *       10,
+             *       11,
+             *       12
+             *     ]
+             */
+            ids: number[];
+            workCenter?: string | null;
+            /** Format: date-time */
+            plannedStartDate?: string | null;
+            /** Format: date-time */
+            plannedEndDate?: string | null;
+            plannedHours?: number | null;
+        };
+        /** @description Vínculo de um serviço do catálogo com a OS. `unitPrice`/`totalPrice` são omitidos sem permissão financeira (ver schema ServiceOrder). */
+        ServiceOrderService: {
+            id: number;
+            serviceOrderId: number;
+            serviceId: number;
+            employeeId?: number | null;
+            description?: string | null;
+            hoursWorked: number;
+            unitPrice: number;
+            totalPrice: number;
+            /** @description Relação com o módulo Services, embutida inline. */
+            service?: {
+                id?: number;
+                name?: string;
+                description?: string | null;
+                price?: number;
+                active?: boolean;
+            };
+            /** @description Relação com o módulo Employees, embutida inline (apenas campos escalares). */
+            employee?: {
+                id?: number;
+                personId?: number;
+                jobRoleId?: number | null;
+                workAreaId?: number | null;
+                userId?: number | null;
+                matricula?: string | null;
+                status?: string;
+            } | null;
+        };
+        ServiceOrderServiceInput: {
+            serviceId: number;
+            employeeId?: number | null;
+            description?: string | null;
+            /** @default 0 */
+            hoursWorked: number;
+            /** @default 0 */
+            unitPrice: number;
+            /** @default 0 */
+            totalPrice: number;
+        };
+        /** @description Vínculo de um material com a OS. `unitPrice`/`totalPrice` são omitidos sem permissão financeira (ver schema ServiceOrder). */
+        ServiceOrderMaterial: {
+            id: number;
+            serviceOrderId: number;
+            materialId: number;
+            quantity: number;
+            unitPrice: number;
+            totalPrice: number;
+            /** @description Relação com o módulo Materials, embutida inline. */
+            material?: {
+                id?: number;
+                name?: string;
+                description?: string | null;
+                price?: number;
+                unit?: string;
+                active?: boolean;
+            };
+        };
+        ServiceOrderMaterialInput: {
+            materialId: number;
+            quantity: number;
+            /** @default 0 */
+            unitPrice: number;
+            /** @default 0 */
+            totalPrice: number;
+        };
+        /** @description Apontamento operacional (mão de obra/parada) lançado sobre uma OS. */
+        ServiceOrderOperationLog: {
+            id: number;
+            serviceOrderId: number;
+            employeeId?: number | null;
+            /** @enum {string} */
+            operationType: "USINAGEM" | "CALDEIRARIA" | "MONTAGEM";
+            /** @enum {string|null} */
+            shift?: "MORNING" | "AFTERNOON" | "NIGHT" | null;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: date-time */
+            endAt?: string | null;
+            workedHours?: number | null;
+            downtimeMinutes: number;
+            /** @enum {string|null} */
+            downtimeCategory?: "MACHINE" | "MATERIAL" | "SETUP" | "RETRABALHO" | "QUALIDADE" | "OUTROS" | null;
+            downtimeReason?: string | null;
+            notes?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description Relação com o módulo Employees, embutida inline, incluindo a pessoa vinculada (módulo People, também embutida inline). */
+            employee?: {
+                id?: number;
+                personId?: number;
+                jobRoleId?: number | null;
+                workAreaId?: number | null;
+                userId?: number | null;
+                matricula?: string | null;
+                status?: string;
+                person?: {
+                    id?: number;
+                    type?: string;
+                    naturalPerson?: {
+                        id?: number;
+                        name?: string;
+                        cpf?: string;
+                    } | null;
+                    legalPerson?: {
+                        id?: number;
+                        corporateName?: string;
+                        cnpj?: string;
+                    } | null;
+                };
+            } | null;
+        };
+        /** @description Sem validação Joi — validado manualmente em ServiceOrderService.addOperation. workedHours, se omitido, é calculado a partir de (endAt - startAt - downtimeMinutes); se endAt for omitido, fica nulo. */
+        ServiceOrderOperationLogInput: {
+            /** @enum {string} */
+            operationType: "USINAGEM" | "CALDEIRARIA" | "MONTAGEM";
+            /** @enum {string|null} */
+            shift?: "MORNING" | "AFTERNOON" | "NIGHT" | null;
+            /** @enum {string|null} */
+            downtimeCategory?: "MACHINE" | "MATERIAL" | "SETUP" | "RETRABALHO" | "QUALIDADE" | "OUTROS" | null;
+            /** Format: date-time */
+            startAt: string;
+            /**
+             * Format: date-time
+             * @description Se informado, deve ser maior ou igual a startAt.
+             */
+            endAt?: string | null;
+            /** @default 0 */
+            downtimeMinutes: number;
+            /** @description Se informado, deve ser um Employee existente. */
+            employeeId?: number | null;
+            workedHours?: number | null;
+            downtimeReason?: string | null;
+            notes?: string | null;
+        };
+        /** @description Registro de auditoria/histórico de uma OS (ação, autor e payload da mudança). */
+        ServiceOrderTrace: {
+            id: number;
+            serviceOrderId?: number | null;
+            serviceOrderCode?: string | null;
+            /** @example CREATE */
+            action: string;
+            changedByUserId?: number | null;
+            changedByEmail?: string | null;
+            /** @description JSON livre com os dados relevantes da ação (formato varia por `action`). */
+            payload?: Record<string, never> | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @description O campo `serviceOrder` inclui `description` em GET /purchase-requests e no fulfill, mas apenas {id, traceCode} na criação (POST /purchase-requests). */
+        PurchaseRequest: {
+            id: number;
+            /** @example SC-20260914-1530-AB12 */
+            code: string;
+            serviceOrderId?: number | null;
+            /** @enum {string} */
+            status: "OPEN" | "PARTIAL" | "CLOSED";
+            notes?: string | null;
+            requestedByEmail?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            serviceOrder?: {
+                id?: number;
+                traceCode?: string | null;
+                description?: string | null;
+            } | null;
+            items?: components["schemas"]["PurchaseRequestItem"][];
+        };
+        /** @description O campo `material` vem completo (todos os campos de Material) quando embutido dentro da resposta de criação de solicitação de compra (POST /purchase-requests) e dentro de PurchaseQuotation.purchaseRequest.items; nas demais respostas (listagem/fulfill de purchase-requests) vem projetado como {id, name, unit, price}. */
+        PurchaseRequestItem: {
+            id: number;
+            purchaseRequestId: number;
+            materialId: number;
+            requestedQty: number;
+            stockQty: number;
+            shortageQty: number;
+            unit?: string | null;
+            /** @enum {string} */
+            status: "PENDING" | "PARTIAL" | "PURCHASED";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description Relação com o módulo Materials, embutida inline (projeção varia, ver acima). */
+            material?: {
+                id?: number;
+                name?: string;
+                unit?: string;
+                price?: number;
+            };
+        };
+        /** @description Sem validação Joi (validado manualmente no controller). Itens sem materialId válido (> 0) ou com shortageQty <= 0 são descartados silenciosamente; se nenhum item restar após o filtro, a operação retorna 400. */
+        PurchaseRequestInput: {
+            /** @description Se informado, a OS deve existir. */
+            serviceOrderId?: number | null;
+            notes?: string | null;
+            items: {
+                materialId: number;
+                requestedQty?: number;
+                stockQty?: number;
+                /** @description Itens com shortageQty <= 0 são descartados do payload. */
+                shortageQty: number;
+                unit?: string | null;
+            }[];
+        };
+        /** @description Sem validação Joi (validado manualmente no controller). Para cada item, ao menos um de unitCost/totalPaid deve resultar em um custo unitário positivo, senão a operação retorna 400 (ITEM_COST_REQUIRED). Itens cujo purchaseRequestItem já esteja com status PURCHASED são ignorados silenciosamente. */
+        PurchaseRequestFulfillInput: {
+            supplierPersonId: number;
+            /** @description Usado como descrição do lançamento de estoque quando o item não tiver notes. */
+            description?: string | null;
+            items: {
+                purchaseRequestItemId: number;
+                quantity: number;
+                unitCost?: number | null;
+                totalPaid?: number | null;
+                notes?: string | null;
+            }[];
+        };
+        /** @description purchaseRequest.items[].material vem completo (todos os campos de Material) nesta resposta, diferente da projeção reduzida {id, name, unit, price} usada em PurchaseRequestItem em outras respostas (ver schema PurchaseRequestItem). */
+        PurchaseQuotation: {
+            id: number;
+            /** @example COT-20260914-1530-CD34 */
+            code: string;
+            purchaseRequestId: number;
+            supplierPersonId: number;
+            /** @enum {string} */
+            status: "OPEN" | "APPROVED" | "REJECTED";
+            notes?: string | null;
+            /** Format: date-time */
+            validUntil?: string | null;
+            paymentTerms?: string | null;
+            freightMode?: string | null;
+            freightCost?: number | null;
+            deliveryLeadTimeDays?: number | null;
+            warrantyDays?: number | null;
+            createdByEmail?: string | null;
+            approvedByEmail?: string | null;
+            /** Format: date-time */
+            approvedAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description Relação com o módulo People, embutida inline. */
+            supplierPerson?: {
+                id?: number;
+                type?: string;
+                naturalPerson?: {
+                    id?: number;
+                    name?: string;
+                    cpf?: string;
+                } | null;
+                legalPerson?: {
+                    id?: number;
+                    corporateName?: string;
+                    cnpj?: string;
+                } | null;
+            };
+            purchaseRequest?: components["schemas"]["PurchaseRequest"];
+            items?: components["schemas"]["PurchaseQuotationItem"][];
+        };
+        PurchaseQuotationItem: {
+            id: number;
+            quotationId: number;
+            purchaseRequestItemId: number;
+            materialId: number;
+            quantity: number;
+            unitCost: number;
+            ipiValue?: number | null;
+            icmsValue?: number | null;
+            stValue?: number | null;
+            totalPaid: number;
+            notes?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description Relação com o módulo Materials, embutida inline (completa). */
+            material?: {
+                id?: number;
+                name?: string;
+                description?: string | null;
+                price?: number;
+                unit?: string;
+                active?: boolean;
+            };
+            purchaseRequestItem?: components["schemas"]["PurchaseRequestItem"];
+        };
+        /** @description Sem validação Joi — os campos abaixo refletem os campos obrigatórios (não-nulos) dos models Prisma PurchaseQuotation/PurchaseQuotationItem. A ausência de `items` causa erro 400 com uma mensagem de runtime (TypeError); a ausência de outros campos obrigatórios do Prisma (ex.: purchaseRequestId, supplierPersonId inexistentes) resulta em 400 com a mensagem de erro lançada pelo Prisma. */
+        PurchaseQuotationInput: {
+            purchaseRequestId: number;
+            supplierPersonId: number;
+            notes?: string | null;
+            /** Format: date-time */
+            validUntil?: string | null;
+            paymentTerms?: string | null;
+            freightMode?: string | null;
+            freightCost?: number | null;
+            deliveryLeadTimeDays?: number | null;
+            warrantyDays?: number | null;
+            items: {
+                purchaseRequestItemId: number;
+                materialId: number;
+                quantity: number;
+                unitCost: number;
+                ipiValue?: number | null;
+                icmsValue?: number | null;
+                stValue?: number | null;
+                totalPaid: number;
+                notes?: string | null;
+            }[];
+        };
+        /** @description Registro único (singleton, id fixo 1) de configurações do sistema. */
+        Settings: {
+            /** @example 1 */
+            id: number;
+            backgroundImageUrl?: string | null;
+            address?: string | null;
+            cnpj?: string | null;
+            /** @example ProMEC */
+            companyName?: string | null;
+            /** Format: email */
+            contactEmail?: string | null;
+            /** @example /uploads/public/logo/3f1e9c2a-....png */
+            logoUrl?: string | null;
+            phone?: string | null;
+            /** @example dark */
+            systemTheme?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        /** @description Payload validado pelo Joi (settingsSchema) — ao menos um campo deve ser informado. */
+        SettingsInput: {
+            backgroundImageUrl?: string | null;
+            address?: string | null;
+            cnpj?: string | null;
+            /** @example ProMEC */
+            companyName?: string | null;
+            /** Format: email */
+            contactEmail?: string | null;
+            logoUrl?: string | null;
+            phone?: string | null;
+            /** @example dark */
+            systemTheme?: string | null;
+        };
+        /** @description Registro individual de uma movimentação de estoque (entrada ou saída) de um material — não é um "estoque atual" mutável, e sim o log de cada IN/OUT, usado para custeio FIFO (ver ATENÇÃO ESPECÍFICA no módulo Stock). */
+        StockLog: {
+            /** @example 1 */
+            id: number;
+            /** @example 10 */
+            materialId: number;
+            /**
+             * Format: float
+             * @example 50
+             */
+            quantity: number;
+            /**
+             * @example IN
+             * @enum {string}
+             */
+            type: "IN" | "OUT";
+            /** @example Compra mensal */
+            description?: string | null;
+            /**
+             * @description Preenchido apenas em movimentações type=IN (fornecedor da compra); null em type=OUT.
+             * @example 5
+             */
+            supplierPersonId?: number | null;
+            /**
+             * Format: float
+             * @description Custo unitário do lote (type=IN) ou custo médio ponderado dos lotes consumidos via FIFO (type=OUT). O endpoint de criação sempre preenche este campo; é nullable no modelo por não ser garantido para dados legados.
+             * @example 12.5
+             */
+            unitCost?: number | null;
+            /**
+             * Format: float
+             * @example 625
+             */
+            totalPaid?: number | null;
+            /**
+             * Format: float
+             * @description Saldo do lote ainda não consumido por saídas FIFO. Sempre 0 em registros type=OUT.
+             * @example 30
+             */
+            remainingQty?: number | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            material: components["schemas"]["Material"];
+            /** @description Pessoa fornecedora (módulo People, incluída sem sanitização — price do material aninhado em `material` acima também não é sanitizado). Null quando a movimentação não tem fornecedor associado (ex.: type=OUT). */
+            supplierPerson?: {
+                /** @example 5 */
+                id?: number;
+                /** @description Tipo de pessoa (física/jurídica). */
+                type?: string;
+                /** Format: date-time */
+                createdAt?: string;
+                /** Format: date-time */
+                updatedAt?: string;
+                naturalPerson?: {
+                    /** @example João Fornecedor */
+                    name?: string;
+                } | null;
+                legalPerson?: {
+                    /** @example Fornecedora Industrial Ltda */
+                    corporateName?: string;
+                } | null;
+            } | null;
+        };
+        /** @description Registra uma movimentação de estoque. Em type=IN é obrigatório informar supplierPersonId e ao menos um de unitCost/totalPaid (o outro é derivado). Em type=OUT o custo é calculado automaticamente pelo consumo FIFO dos lotes de entrada disponíveis; supplierPersonId/unitCost/totalPaid enviados são ignorados. */
+        StockLogInput: {
+            /** @example 10 */
+            materialId: number;
+            /**
+             * Format: float
+             * @example 50
+             */
+            quantity: number;
+            /**
+             * @example IN
+             * @enum {string}
+             */
+            type: "IN" | "OUT";
+            /** @example Compra mensal */
+            description?: string;
+            /**
+             * @description Obrigatório quando type=IN.
+             * @example 5
+             */
+            supplierPersonId?: number;
+            /**
+             * Format: float
+             * @description Custo unitário da compra. Se omitido em type=IN, é derivado de totalPaid / quantity.
+             * @example 12.5
+             */
+            unitCost?: number;
+            /**
+             * Format: float
+             * @example 625
+             */
+            totalPaid?: number;
+        };
+        Permission: {
+            /** @example 3 */
+            id: number;
+            /** @example usuarios:gerenciar */
+            name: string;
+            /** @example Gerenciar usuários do sistema */
+            description?: string | null;
+        };
+        /** @description Grupo de acesso. As propriedades `permissions` e `permissionKeys` só existem em algumas respostas: GET /v1/groups (listagem) inclui as duas; GET /v1/groups/{id} inclui apenas `permissions`; as respostas de POST /v1/groups e PUT /v1/groups/{id} não incluem nenhuma das duas (a query Prisma de criação/atualização não recarrega essa relação) — ver descrições de cada operação. */
+        Group: {
+            /** @example 1 */
+            id: number;
+            /** @example Administradores */
+            name: string;
+            /** @example Acesso total ao sistema */
+            description?: string | null;
+            /** @description Vínculos grupo-permissão (tabela de junção GroupPermission), cada um com a permissão completa aninhada — não é um array plano de strings. */
+            permissions?: {
+                /** @example 1 */
+                id?: number;
+                /** @example 1 */
+                groupId?: number;
+                /** @example 3 */
+                permissionId?: number;
+                permission?: components["schemas"]["Permission"];
+            }[];
+            /**
+             * @description Nomes das permissões (`permissions[].permission.name`), presente apenas na listagem.
+             * @example [
+             *       "usuarios:gerenciar",
+             *       "estoque:visualizar"
+             *     ]
+             */
+            permissionKeys?: string[];
+        };
+        /** @description Usado tanto na criação (POST) quanto na atualização (PUT) — no PUT, o conjunto de permissões é substituído integralmente pelo `permissionKeys` enviado. */
+        GroupInput: {
+            /** @example Supervisores */
+            name: string;
+            /**
+             * @example [
+             *       "usuarios:gerenciar",
+             *       "estoque:visualizar"
+             *     ]
+             */
+            permissionKeys: string[];
+        };
+        /** @description Usuário do sistema. O campo `password` (hash bcrypt) nunca é retornado pela API — o controller usa `select` no Prisma para omiti-lo explicitamente em todas as respostas deste módulo. */
+        User: {
+            /** @example 1 */
+            id: number;
+            /** @example Maria */
+            firstName: string;
+            /** @example Silva */
+            lastName: string;
+            /**
+             * Format: email
+             * @example maria.silva@promec.com
+             */
+            email: string;
+            /** @example user */
+            role: string;
+            /** @example 2 */
+            groupId?: number | null;
+            /** @description Subconjunto de campos do grupo vinculado (id/name/description apenas — não inclui a lista de permissões; compare com o schema Group, usado em /v1/groups). */
+            group?: {
+                /** @example 2 */
+                id?: number;
+                /** @example Administradores */
+                name?: string;
+                description?: string | null;
+            } | null;
+        };
+        /** @description Payload de criação (POST /v1/users). */
+        UserInput: {
+            /** @example Maria */
+            firstName: string;
+            /** @example Silva */
+            lastName: string;
+            /**
+             * Format: email
+             * @example maria.silva@promec.com
+             */
+            email: string;
+            /** @example senha-secreta */
+            password: string;
+            /** @example 2 */
+            groupId: number;
+            /**
+             * @default user
+             * @enum {string}
+             */
+            role: "admin" | "user";
+        };
+        /** @description Payload de atualização (PUT /v1/users/{id}). Todos os campos são opcionais. */
+        UserUpdateInput: {
+            firstName?: string;
+            lastName?: string;
+            /** Format: email */
+            email?: string;
+            /** @description Mín. 6 caracteres quando enviado; vazio ('') ou omitido preserva a senha atual. */
+            password?: string | null;
+            /** @description Atenção: no código atual, enviar explicitamente `null` para desvincular o grupo não funciona — o controller tenta `connect` a um grupo de id 0 e a operação falha com 500, em vez de desvincular o usuário do grupo. */
+            groupId?: number | null;
+            /** @enum {string} */
+            role?: "admin" | "user";
+        };
+        WorkArea: {
+            /** @example 1 */
+            id: number;
+            /** @example Usinagem */
+            name: string;
+        };
+        WorkAreaInput: {
+            /** @example Usinagem */
+            name: string;
+        };
+    };
+    responses: {
+        /** @description Não autenticado — token ausente ou inválido. */
+        UnauthorizedError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorMessage"];
+            };
+        };
+        /** @description Autenticado, porém sem permissão para executar esta ação. */
+        ForbiddenError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorMessage"];
+            };
+        };
+        /** @description Recurso não encontrado. */
+        NotFoundError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorMessage"];
+            };
+        };
+        /** @description Payload inválido. */
+        ValidationError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ValidationErrorResponse"];
+            };
+        };
+        /** @description Erro interno inesperado. */
+        ServerError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorMessage"];
+            };
+        };
+    };
     parameters: never;
     requestBodies: never;
     headers: never;
