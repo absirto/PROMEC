@@ -61,8 +61,7 @@ const router = Router();
  *   get:
  *     summary: Lista os logs de auditoria de uma entidade específica
  *     description: >
- *       Requer apenas autenticação (sem permissão adicional — qualquer usuário autenticado
- *       pode consultar o histórico de auditoria de qualquer entidade). Retorna as 50
+ *       Requer autenticação e a permissão auditoria:visualizar. Retorna as 50
  *       alterações mais recentes, ordenadas por createdAt decrescente.
  *     tags: [Audit]
  *     parameters:
@@ -96,6 +95,8 @@ const router = Router();
  *                     $ref: '#/components/schemas/AuditLog'
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
  *       500:
  *         $ref: '#/components/responses/ServerError'
  */

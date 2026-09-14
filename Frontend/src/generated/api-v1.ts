@@ -13,7 +13,7 @@ export interface paths {
         };
         /**
          * Lista os logs de auditoria de uma entidade específica
-         * @description Requer apenas autenticação (sem permissão adicional — qualquer usuário autenticado pode consultar o histórico de auditoria de qualquer entidade). Retorna as 50 alterações mais recentes, ordenadas por createdAt decrescente.
+         * @description Requer autenticação e a permissão auditoria:visualizar. Retorna as 50 alterações mais recentes, ordenadas por createdAt decrescente.
          */
         get: {
             parameters: {
@@ -46,6 +46,7 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
                 500: components["responses"]["ServerError"];
             };
         };
