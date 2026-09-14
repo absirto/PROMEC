@@ -1,6 +1,7 @@
 import prisma from '../../../core/prisma';
 import { PCPService } from './PCPService';
 import { AuditService } from '../../Audit/services/AuditService';
+import { StockService } from '../../Stock/services/StockService';
 
 function generateTraceCode() {
   const d = new Date();
@@ -14,6 +15,52 @@ function generateTraceCode() {
 function toNumber(value: unknown) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function aggregateMaterialQuantities(materials: Array<{ materialId: unknown; quantity: unknown }>) {
+  const map = new Map<number, number>();
+  for (const m of materials) {
+    const materialId = Number(m.materialId);
+    if (!Number.isFinite(materialId) || materialId <= 0) continue;
+    const quantity = toNumber(m.quantity);
+    map.set(materialId, (map.get(materialId) || 0) + quantity);
+  }
+  return map;
+}
+
+// Mantém o StockLog (livro-razão de estoque) consistente com os materiais vinculados à OS:
+// para cada material, consome (OUT/FIFO) o aumento de quantidade e devolve (IN) a redução,
+// em vez de tratar toda recriação de linhas como consumo novo — o que dobraria a baixa
+// sempre que a OS fosse salva novamente com os mesmos materiais.
+async function applyMaterialsStockDiff(
+  tx: any,
+  oldMaterials: Array<{ materialId: unknown; quantity: unknown }>,
+  newMaterials: Array<{ materialId: unknown; quantity: unknown }>,
+  traceCode: string,
+) {
+  const oldMap = aggregateMaterialQuantities(oldMaterials);
+  const newMap = aggregateMaterialQuantities(newMaterials);
+  const materialIds = new Set<number>([...oldMap.keys(), ...newMap.keys()]);
+
+  for (const materialId of materialIds) {
+    const oldQty = oldMap.get(materialId) || 0;
+    const newQty = newMap.get(materialId) || 0;
+    const delta = newQty - oldQty;
+
+    if (delta > 0) {
+      await StockService.consumeFifo(tx, {
+        materialId,
+        quantity: delta,
+        description: `Consumo de material pela OS ${traceCode}`,
+      });
+    } else if (delta < 0) {
+      await StockService.returnToStock(tx, {
+        materialId,
+        quantity: -delta,
+        description: `Devolução de material da OS ${traceCode} (ajuste de quantidade)`,
+      });
+    }
+  }
 }
 
 export const ServiceOrderService = {
@@ -65,6 +112,8 @@ export const ServiceOrderService = {
           })) },
         }
       });
+
+      await applyMaterialsStockDiff(tx, [], data.materials || [], created.traceCode);
 
       await (tx.serviceOrderTrace as any).create({
         data: {
@@ -148,6 +197,13 @@ export const ServiceOrderService = {
       }
 
       if (data.materials) {
+        const existingMaterials = await tx.serviceOrderMaterial.findMany({
+          where: { serviceOrderId: id },
+          select: { materialId: true, quantity: true }
+        });
+
+        await applyMaterialsStockDiff(tx, existingMaterials, data.materials, updated.traceCode);
+
         await tx.serviceOrderMaterial.deleteMany({ where: { serviceOrderId: id } });
         await tx.serviceOrderMaterial.createMany({
           data: data.materials.map((m: any) => ({

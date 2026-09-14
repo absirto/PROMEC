@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../../../core/prisma';
 import { getPaginationParams, formatPaginatedResponse } from '../../../utils/pagination';
+import { StockService } from '../services/StockService';
 
 export const StockController = {
   async list(req: Request, res: Response) {
@@ -157,80 +158,11 @@ export const StockController = {
           return inLog;
         }
 
-        const inLots = await txAny.stockLog.findMany({
-          where: {
-            materialId: parsedMaterialId,
-            type: 'IN',
-            remainingQty: { gt: 0 }
-          },
-          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }]
+        return StockService.consumeFifo(tx, {
+          materialId: parsedMaterialId,
+          quantity: parsedQuantity,
+          description,
         });
-
-        const totalAvailable = inLots.reduce((acc: number, lot: any) => acc + Number(lot.remainingQty || 0), 0);
-        if (totalAvailable < parsedQuantity) {
-          throw new Error('INSUFFICIENT_STOCK');
-        }
-
-        let remainingToConsume = parsedQuantity;
-        let movementCost = 0;
-
-        for (const lot of inLots) {
-          if (remainingToConsume <= 0) break;
-          const lotRemaining = Number(lot.remainingQty || 0);
-          if (lotRemaining <= 0) continue;
-
-          const consumeQty = Math.min(lotRemaining, remainingToConsume);
-          const costPerUnit = Number(lot.unitCost || 0);
-          movementCost += consumeQty * costPerUnit;
-
-          await txAny.stockLog.update({
-            where: { id: lot.id },
-            data: { remainingQty: lotRemaining - consumeQty }
-          });
-
-          remainingToConsume -= consumeQty;
-        }
-
-        const movementUnitCost = movementCost / parsedQuantity;
-
-        const outLog = await txAny.stockLog.create({
-          data: {
-            materialId: parsedMaterialId,
-            quantity: parsedQuantity,
-            type: 'OUT',
-            description,
-            unitCost: movementUnitCost,
-            totalPaid: movementCost,
-            remainingQty: 0,
-          },
-          include: {
-            material: true,
-            supplierPerson: {
-              include: {
-                naturalPerson: { select: { name: true } },
-                legalPerson: { select: { corporateName: true } },
-              }
-            }
-          }
-        });
-
-        const nextLot = await txAny.stockLog.findFirst({
-          where: {
-            materialId: parsedMaterialId,
-            type: 'IN',
-            remainingQty: { gt: 0 }
-          },
-          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }]
-        });
-
-        if (nextLot?.unitCost && Number(nextLot.unitCost) > 0) {
-          await tx.material.update({
-            where: { id: parsedMaterialId },
-            data: { price: Number(nextLot.unitCost) }
-          });
-        }
-
-        return outLog;
       });
 
       res.status(201).json(createdLog);

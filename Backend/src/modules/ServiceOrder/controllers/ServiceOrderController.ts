@@ -148,6 +148,15 @@ export const ServiceOrderController = {
 
       return res.status(201).json(FinancialService.enrichFinancials(order));
     } catch (error: any) {
+      if (error.message === 'INSUFFICIENT_STOCK') {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Estoque insuficiente para dar baixa nos materiais da OS.',
+          materialId: error.materialId,
+          requestedQty: error.requestedQty,
+          availableQty: error.availableQty,
+        });
+      }
       return res.status(400).json({ status: 'error', message: 'Erro ao criar ordem de serviço.', details: error.message });
     }
   },
@@ -162,6 +171,15 @@ export const ServiceOrderController = {
     } catch (error: any) {
       if (error.message === 'NOT_FOUND') {
         return res.status(404).json({ status: 'error', message: 'Ordem de serviço não encontrada.' });
+      }
+      if (error.message === 'INSUFFICIENT_STOCK') {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Estoque insuficiente para dar baixa nos materiais da OS.',
+          materialId: error.materialId,
+          requestedQty: error.requestedQty,
+          availableQty: error.availableQty,
+        });
       }
       return res.status(400).json({ status: 'error', message: 'Erro ao atualizar ordem de serviço.', details: error.message });
     }
