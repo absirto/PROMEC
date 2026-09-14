@@ -76,6 +76,19 @@ describe('User API', () => {
     });
   });
 
+  it('should unlink group when groupId is null', async () => {
+    const res = await request(app)
+      .put(`${API_ROOT}/users/${userId}`)
+      .set(adminAuthHeader())
+      .send({ groupId: null });
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({
+      id: userId,
+      groupId: null,
+      group: null,
+    });
+  });
+
   it('should delete user', async () => {
     const res = await request(app).delete(`${API_ROOT}/users/${userId}`).set(adminAuthHeader());
     expect(res.status).toBe(204);

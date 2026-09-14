@@ -107,7 +107,9 @@ export const UserController = {
       if (lastName !== undefined) data.lastName = lastName;
       if (email !== undefined) data.email = email;
       if (role !== undefined) data.role = role;
-      if (groupId !== undefined) data.group = { connect: { id: Number(groupId) } };
+      if (groupId !== undefined) {
+        data.group = groupId === null ? { disconnect: true } : { connect: { id: Number(groupId) } };
+      }
       if (password && String(password).length > 0) {
         data.password = await bcrypt.hash(String(password), 10);
       }
