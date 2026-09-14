@@ -8,7 +8,7 @@ if (!generalQueue) {
 
 logger.info('Worker Bull iniciado. Processando jobs...');
 
-// O processamento já está definido em services/queue.ts
+// O processamento já está definido em core/queue.ts
 // Este arquivo serve para rodar o worker isoladamente
 
 process.on('SIGTERM', () => {

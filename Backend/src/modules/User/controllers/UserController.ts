@@ -84,7 +84,7 @@ export const UserController = {
         newData: user,
       });
 
-      await addToQueue('user_created', { userId: user.id, email: user.email });
+      await addToQueue('email', { to: user.email, firstName: user.firstName });
       res.status(201).json(user);
     } catch (error: any) {
       res.status(500).json({ message: 'Erro ao criar usuário', error: error.message });
