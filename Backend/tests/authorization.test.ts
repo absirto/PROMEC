@@ -81,4 +81,13 @@ describe('Authorization by permission key', () => {
     expect(res.status).toBe(403);
     expect(res.body.message).toBe('Permissão insuficiente');
   });
+
+  it('should return 403 for audit logs without permission', async () => {
+    const res = await request(app)
+      .get(`${API_ROOT}/audit/WorkArea/1`)
+      .set(noPermHeader());
+
+    expect(res.status).toBe(403);
+    expect(res.body.message).toBe('Permissão insuficiente');
+  });
 });

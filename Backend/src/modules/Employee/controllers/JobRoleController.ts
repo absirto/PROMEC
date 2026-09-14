@@ -1,5 +1,15 @@
 import { Request, Response } from 'express';
 import prisma from '../../../core/prisma';
+import { AuditService } from '../../Audit/services/AuditService';
+import { AuthRequest } from '../../../middleware/auth';
+
+function getActor(req: Request) {
+  const authReq = req as AuthRequest;
+  return {
+    id: authReq.user?.id ? Number(authReq.user.id) : undefined,
+    email: authReq.user?.email ? String(authReq.user.email) : undefined,
+  };
+}
 
 export const JobRoleController = {
   async list(req: Request, res: Response) {
@@ -24,9 +34,20 @@ export const JobRoleController = {
 
   async create(req: Request, res: Response) {
     try {
+      const actor = getActor(req);
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: 'Nome é obrigatório.' });
       const role = await prisma.jobRole.create({ data: { name } });
+
+      await AuditService.log({
+        entity: 'JobRole',
+        entityId: role.id,
+        action: 'CREATE',
+        userId: actor.id,
+        userEmail: actor.email,
+        newData: role,
+      });
+
       res.status(201).json(role);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao criar cargo.' });
@@ -36,6 +57,7 @@ export const JobRoleController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      const actor = getActor(req);
 
       const exists = await prisma.jobRole.findUnique({ where: { id } });
       if (!exists) {
@@ -47,6 +69,17 @@ export const JobRoleController = {
         where: { id },
         data: { name }
       });
+
+      await AuditService.log({
+        entity: 'JobRole',
+        entityId: role.id,
+        action: 'UPDATE',
+        userId: actor.id,
+        userEmail: actor.email,
+        oldData: exists,
+        newData: role,
+      });
+
       res.json(role);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao atualizar cargo.' });
@@ -56,6 +89,7 @@ export const JobRoleController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      const actor = getActor(req);
 
       const exists = await prisma.jobRole.findUnique({ where: { id } });
       if (!exists) {
@@ -68,12 +102,22 @@ export const JobRoleController = {
       });
 
       if (usageCount > 0) {
-        return res.status(400).json({ 
-          message: `Não é possível excluir: este cargo está vinculado a ${usageCount} funcionário(s).` 
+        return res.status(400).json({
+          message: `Não é possível excluir: este cargo está vinculado a ${usageCount} funcionário(s).`
         });
       }
 
       await prisma.jobRole.delete({ where: { id } });
+
+      await AuditService.log({
+        entity: 'JobRole',
+        entityId: id,
+        action: 'DELETE',
+        userId: actor.id,
+        userEmail: actor.email,
+        oldData: exists,
+      });
+
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: 'Erro ao deletar cargo.', details: error.message });

@@ -1,6 +1,15 @@
 import { Request, Response } from 'express';
 import { EmployeeService } from '../services/EmployeeService';
 import { getPaginationParams, formatPaginatedResponse } from '../../../utils/pagination';
+import { AuthRequest } from '../../../middleware/auth';
+
+function getActor(req: Request) {
+  const authReq = req as AuthRequest;
+  return {
+    id: authReq.user?.id ? Number(authReq.user.id) : undefined,
+    email: authReq.user?.email ? String(authReq.user.email) : undefined,
+  };
+}
 
 export const EmployeeController = {
   async list(req: Request, res: Response) {
@@ -26,7 +35,8 @@ export const EmployeeController = {
 
   async create(req: Request, res: Response) {
     try {
-      const employee = await EmployeeService.create(req.body);
+      const actor = getActor(req);
+      const employee = await EmployeeService.create(req.body, actor);
       res.status(201).json(employee);
     } catch (error) {
       res.status(400).json({ error: 'Erro ao criar funcionário.' });
@@ -36,7 +46,8 @@ export const EmployeeController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      const employee = await EmployeeService.update(id, req.body);
+      const actor = getActor(req);
+      const employee = await EmployeeService.update(id, req.body, actor);
       res.json(employee);
     } catch (error: any) {
       if (error.message === 'NOT_FOUND') {
@@ -49,7 +60,8 @@ export const EmployeeController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
-      await EmployeeService.delete(id);
+      const actor = getActor(req);
+      await EmployeeService.delete(id, actor);
       res.status(204).send();
     } catch (error: any) {
       if (error.message === 'NOT_FOUND') {

@@ -11,9 +11,10 @@ export function expandPermissions(permissionNames: string[]): string[] {
     // Atalhos de Perfil
     if (p === 'admin') {
       [
-        'usuarios', 'configuracoes', 'dashboard', 'relatorios', 
-        'financeiro', 'estoque', 'materiais', 'pessoas', 
-        'funcionarios', 'os', 'qualidade', 'auxiliares', 'orcamentos'
+        'usuarios', 'configuracoes', 'dashboard', 'relatorios',
+        'financeiro', 'estoque', 'materiais', 'pessoas',
+        'funcionarios', 'os', 'qualidade', 'auxiliares', 'orcamentos',
+        'auditoria'
       ].forEach(mod => {
         expanded.add(`${mod}:visualizar`);
         expanded.add(`${mod}:gerenciar`);

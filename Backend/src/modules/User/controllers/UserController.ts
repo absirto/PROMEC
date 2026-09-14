@@ -3,6 +3,16 @@ import type { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import prisma from '../../../core/prisma';
 import { addToQueue } from '../../../utils/queueHelper';
+import { AuditService } from '../../Audit/services/AuditService';
+import { AuthRequest } from '../../../middleware/auth';
+
+function getActor(req: Request) {
+  const authReq = req as AuthRequest;
+  return {
+    id: authReq.user?.id ? Number(authReq.user.id) : undefined,
+    email: authReq.user?.email ? String(authReq.user.email) : undefined,
+  };
+}
 
 const userSelect = {
   id: true,
@@ -48,6 +58,7 @@ export const UserController = {
 
   async create(req: Request, res: Response) {
     try {
+      const actor = getActor(req);
       const { firstName, lastName, email, password, role, groupId } = req.body;
       const exists = await prisma.user.findUnique({ where: { email } });
       if (exists) return res.status(400).json({ message: 'Email já cadastrado' });
@@ -63,6 +74,16 @@ export const UserController = {
         },
         select: userSelect,
       });
+
+      await AuditService.log({
+        entity: 'User',
+        entityId: user.id,
+        action: 'CREATE',
+        userId: actor.id,
+        userEmail: actor.email,
+        newData: user,
+      });
+
       await addToQueue('user_created', { userId: user.id, email: user.email });
       res.status(201).json(user);
     } catch (error: any) {
@@ -73,9 +94,10 @@ export const UserController = {
   async update(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      const actor = getActor(req);
 
-      const exists = await prisma.user.findUnique({ where: { id } });
-      if (!exists) {
+      const oldUser = await prisma.user.findUnique({ where: { id }, select: userSelect });
+      if (!oldUser) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
@@ -90,6 +112,17 @@ export const UserController = {
         data.password = await bcrypt.hash(String(password), 10);
       }
       const user = await prisma.user.update({ where: { id }, data, select: userSelect });
+
+      await AuditService.log({
+        entity: 'User',
+        entityId: user.id,
+        action: 'UPDATE',
+        userId: actor.id,
+        userEmail: actor.email,
+        oldData: oldUser,
+        newData: user,
+      });
+
       res.json(user);
     } catch (error: any) {
       res.status(500).json({ message: 'Erro ao atualizar usuário', error: error.message });
@@ -99,9 +132,10 @@ export const UserController = {
   async delete(req: Request, res: Response) {
     try {
       const id = Number(req.params.id);
+      const actor = getActor(req);
 
-      const exists = await prisma.user.findUnique({ where: { id } });
-      if (!exists) {
+      const oldUser = await prisma.user.findUnique({ where: { id }, select: userSelect });
+      if (!oldUser) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
@@ -136,6 +170,16 @@ export const UserController = {
       }
 
       await prisma.user.delete({ where: { id } });
+
+      await AuditService.log({
+        entity: 'User',
+        entityId: id,
+        action: 'DELETE',
+        userId: actor.id,
+        userEmail: actor.email,
+        oldData: oldUser,
+      });
+
       res.status(204).end();
     } catch (error: any) {
       res.status(500).json({ message: 'Erro ao excluir usuário', error: error.message });

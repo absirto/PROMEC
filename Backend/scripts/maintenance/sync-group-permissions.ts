@@ -8,6 +8,7 @@ const ALL_PERMISSION_NAMES = [
   'operacao',
   'auxiliares',
   'dashboard:visualizar',
+  'auditoria:visualizar',
   'pessoas:visualizar',
   'pessoas:gerenciar',
   'funcionarios:visualizar',

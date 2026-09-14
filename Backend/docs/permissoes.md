@@ -17,6 +17,7 @@ Base da API: /v1
 ## Chaves de permissao usadas
 
 - dashboard:visualizar
+- auditoria:visualizar
 - pessoas:visualizar
 - pessoas:gerenciar
 - funcionarios:visualizar
@@ -68,6 +69,17 @@ Observacoes:
 | Metodo | Endpoint | Permission key |
 |---|---|---|
 | GET | /v1/dashboard/stats | dashboard:visualizar |
+
+## Auditoria
+
+| Metodo | Endpoint | Permission key |
+|---|---|---|
+| GET | /v1/audit/:entity/:entityId | auditoria:visualizar |
+
+Observacoes:
+
+- Retorna oldData/newData (JSON) de qualquer entidade auditada (Person, Material, Service, ServiceOrder, Employee, JobRole, WorkArea, Settings, User, Group) — dados potencialmente sensiveis, por isso a chave e restrita e nao faz parte da lista padrao do grupo Usuario no seed.
+- `GET /v1/dashboard/audit-logs` (DashboardController) e um endpoint separado, ja existente, que reusa a chave dashboard:visualizar.
 
 ## Usuarios e grupos
 

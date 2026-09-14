@@ -1,15 +1,20 @@
 import prisma from '../../../core/prisma';
+import { AuditService } from '../../Audit/services/AuditService';
+
+type Actor = { id?: number; email?: string };
+
+const employeeInclude = {
+  person: { include: { naturalPerson: true } },
+  jobRole: true,
+  workArea: true,
+  user: true
+};
 
 export const EmployeeService = {
   async list(skip?: number, take?: number) {
     return Promise.all([
       prisma.employee.findMany({
-        include: {
-          person: { include: { naturalPerson: true } },
-          jobRole: true,
-          workArea: true,
-          user: true
-        },
+        include: employeeInclude,
         skip,
         take,
         orderBy: { person: { naturalPerson: { name: 'asc' } } }
@@ -20,16 +25,11 @@ export const EmployeeService = {
   async get(id: number) {
     return prisma.employee.findUnique({
       where: { id },
-      include: {
-        person: { include: { naturalPerson: true } },
-        jobRole: true,
-        workArea: true,
-        user: true
-      }
+      include: employeeInclude
     });
   },
-  async create(data: any) {
-    return prisma.employee.create({
+  async create(data: any, actor?: Actor) {
+    const employee = await prisma.employee.create({
       data: {
         personId: data.personId,
         jobRoleId: data.jobRoleId,
@@ -38,21 +38,27 @@ export const EmployeeService = {
         status: data.status,
         matricula: data.matricula
       },
-      include: {
-        person: { include: { naturalPerson: true } },
-        jobRole: true,
-        workArea: true,
-        user: true
-      }
+      include: employeeInclude
     });
+
+    await AuditService.log({
+      entity: 'Employee',
+      entityId: employee.id,
+      action: 'CREATE',
+      userId: actor?.id,
+      userEmail: actor?.email,
+      newData: employee,
+    });
+
+    return employee;
   },
-  async update(id: number, data: any) {
-    const exists = await prisma.employee.findUnique({ where: { id } });
-    if (!exists) {
+  async update(id: number, data: any, actor?: Actor) {
+    const oldEmployee = await prisma.employee.findUnique({ where: { id }, include: employeeInclude });
+    if (!oldEmployee) {
       throw new Error('NOT_FOUND');
     }
 
-    return prisma.employee.update({
+    const employee = await prisma.employee.update({
       where: { id },
       data: {
         jobRoleId: data.jobRoleId,
@@ -61,17 +67,24 @@ export const EmployeeService = {
         status: data.status,
         matricula: data.matricula
       },
-      include: {
-        person: { include: { naturalPerson: true } },
-        jobRole: true,
-        workArea: true,
-        user: true
-      }
+      include: employeeInclude
     });
+
+    await AuditService.log({
+      entity: 'Employee',
+      entityId: employee.id,
+      action: 'UPDATE',
+      userId: actor?.id,
+      userEmail: actor?.email,
+      oldData: oldEmployee,
+      newData: employee,
+    });
+
+    return employee;
   },
-  async delete(id: number) {
-    const exists = await prisma.employee.findUnique({ where: { id } });
-    if (!exists) {
+  async delete(id: number, actor?: Actor) {
+    const oldEmployee = await prisma.employee.findUnique({ where: { id }, include: employeeInclude });
+    if (!oldEmployee) {
       throw new Error('NOT_FOUND');
     }
 
@@ -99,6 +112,17 @@ export const EmployeeService = {
       throw new Error(`Não é possível excluir: funcionário vinculado a ${serviceCount} serviço(s) em Ordens de Serviço.`);
     }
 
-    return prisma.employee.delete({ where: { id } });
+    const deleted = await prisma.employee.delete({ where: { id } });
+
+    await AuditService.log({
+      entity: 'Employee',
+      entityId: id,
+      action: 'DELETE',
+      userId: actor?.id,
+      userEmail: actor?.email,
+      oldData: oldEmployee,
+    });
+
+    return deleted;
   },
 };

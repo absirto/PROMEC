@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 const permissions = [
   { name: 'dashboard:visualizar', description: 'Visualizar Dashboard' },
+  { name: 'auditoria:visualizar', description: 'Visualizar Logs de Auditoria' },
   { name: 'pessoas:visualizar', description: 'Visualizar Pessoas/Clientes' },
   { name: 'pessoas:gerenciar', description: 'Criar/Editar/Excluir Pessoas/Clientes' },
   { name: 'funcionarios:visualizar', description: 'Visualizar Funcionários' },
