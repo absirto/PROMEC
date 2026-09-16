@@ -60,7 +60,7 @@ async function main() {
   });
 
   console.log('Seed concluído.');
-  console.log('Login inicial: guidortas25@gmail.com — altere a palavra-passe após o primeiro acesso.');
+  console.log(`Login inicial: ${email} — altere a palavra-passe após o primeiro acesso.`);
 }
 
 main()
