@@ -1,9 +1,14 @@
 {
-  "name": "promec-monorepo",
-  "version": "1.2.0",
+  "name": "promec",
   "private": true,
-  "workspaces": [
-    "Backend",
-    "Frontend"
-  ]
+  "version": "0.1.0",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "dev:api": "npm run start:dev -w @promec/api",
+    "dev:web": "npm run dev -w @promec/web",
+    "db:up": "docker compose up -d db"
+  },
+  "engines": { "node": ">=22" }
 }

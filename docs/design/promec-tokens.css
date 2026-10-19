@@ -1,0 +1,143 @@
+/* ProMEC · Aço & Fagulha — tokens de design
+   Fonte: canvas de design (Fundamentos). Temas: claro (padrão), escuro, alto contraste. */
+
+:root,
+[data-theme="claro"] {
+  /* superfícies */
+  --pm-canvas: #F2EEE7;
+  --pm-base: #EAE4DA;
+  --pm-surface-1: #FFFFFF;
+  --pm-surface-2: #FBF8F3;
+  --pm-surface-3: #F1ECE4;
+  --pm-border: #E2DACD;
+  --pm-border-strong: #CFC4B3;
+  --pm-grid: rgba(60, 45, 25, .06);
+
+  /* texto */
+  --pm-text-1: #1E1B16;
+  --pm-text-2: #4E473D;
+  --pm-text-3: #6E6557;
+
+  /* marca */
+  --pm-primary: #E35D14;        /* laranja fagulha: ícones, linhas, destaques */
+  --pm-primary-fill: #B8460A;   /* botão primário (texto branco 5,4:1) */
+  --pm-primary-on: #FFFFFF;
+  --pm-primary-soft: #FDE8DA;
+  --pm-primary-text: #9A3A06;
+  --pm-steel: #1D4E7A;          /* azul-aço: estrutura, sidebar, faixas */
+  --pm-steel-2: #2A6AA3;
+  --pm-steel-3: #15395A;
+  --pm-steel-soft: #E3EDF7;
+  --pm-signal: #E0A100;         /* amarelo de sinalização */
+
+  /* semânticas (cor + ícone + texto, nunca só cor) */
+  --pm-ok: #0F7A55;   --pm-ok-soft: #DDF3E9;
+  --pm-warn: #8A5300; --pm-warn-soft: #FCEFC7;
+  --pm-bad: #C0352B;  --pm-bad-soft: #FBE2DF;
+  --pm-info: #1A64A8; --pm-info-soft: #E0EDFA;
+  --pm-run: #5B3FB5;  --pm-run-soft: #ECE6FB;
+  --pm-neutral: #6B6458; --pm-neutral-soft: #ECE7DF;
+
+  /* gráficos e composição de custo (ordem fixa) */
+  --pm-chart-material: #1D6FB8;
+  --pm-chart-hora: #0F9D76;
+  --pm-chart-setup: #E0A100;
+  --pm-chart-rateio: #7C5CC4;
+  --pm-chart-impostos: #8C8476;
+  --pm-chart-margem: #E35D14;
+  --pm-chart-orcado: #A3AEC0;   /* orçado sempre neutro */
+  --pm-chart-real: #1D4E7A;     /* real sempre azul-aço */
+
+  /* liquid glass */
+  --pm-glass-bg: rgba(255, 255, 255, .62);
+  --pm-glass-border: rgba(255, 255, 255, .85);
+  --pm-glass-blur: 24px;
+  --pm-glass-saturate: 1.8;
+  --pm-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -1px 0 rgba(255, 255, 255, .4);
+  --pm-glass-shadow: 0 14px 36px rgba(40, 30, 15, .14);
+  --pm-glass-dark-bg: rgba(255, 255, 255, .14);
+  --pm-glass-dark-border: rgba(255, 255, 255, .3);
+  --pm-sidebar: linear-gradient(180deg, rgba(35, 92, 143, .9), rgba(21, 57, 90, .94));
+  --pm-hero: linear-gradient(135deg, #2A6AA3 0%, #1D4E7A 45%, #15395A 100%);
+  --pm-hazard: repeating-linear-gradient(-45deg, #E0A100 0 10px, #1E1B16 10px 20px);
+
+  /* sombras */
+  --pm-shadow-1: 0 1px 2px rgba(40, 30, 15, .06), 0 4px 14px rgba(40, 30, 15, .06);
+  --pm-shadow-2: 0 2px 6px rgba(40, 30, 15, .06), 0 24px 48px rgba(40, 30, 15, .10);
+  --pm-shadow-3: 0 4px 12px rgba(40, 30, 15, .08), 0 40px 80px rgba(40, 30, 15, .14);
+
+  /* raios */
+  --pm-radius-control: 12px;
+  --pm-radius-field: 14px;
+  --pm-radius-card: 22px;
+  --pm-radius-panel: 30px;
+  --pm-radius-sheet: 28px;
+  --pm-radius-pill: 999px;
+
+  /* tipografia */
+  --pm-font-display: 'Barlow Semi Condensed', 'IBM Plex Sans', sans-serif;
+  --pm-font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --pm-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --pm-size-display: clamp(40px, 5vw, 62px);
+  --pm-size-title-1: 46px;
+  --pm-size-title-2: 26px;
+  --pm-size-headline: 17px;
+  --pm-size-body: 15px;
+  --pm-size-callout: 14px;
+  --pm-size-caption: 12.5px;
+  --pm-size-kpi: 52px;
+
+  /* movimento */
+  --pm-ease: cubic-bezier(.2, .8, .2, 1);
+  --pm-dur-micro: 200ms;
+  --pm-dur-theme: 300ms;
+  --pm-dur-panel: 450ms;
+
+  /* alvos de toque */
+  --pm-target: 44px;
+  --pm-target-operador: 56px;
+}
+
+[data-theme="escuro"] {
+  --pm-canvas: #13161B; --pm-base: #181C22;
+  --pm-surface-1: #1F242C; --pm-surface-2: #252B34; --pm-surface-3: #2D343F;
+  --pm-border: rgba(255, 255, 255, .08); --pm-border-strong: rgba(255, 255, 255, .16);
+  --pm-grid: rgba(255, 255, 255, .035);
+  --pm-text-1: #F4F1EC; --pm-text-2: #C3BCB0; --pm-text-3: #9A9387;
+  --pm-primary: #FF7A2E; --pm-primary-fill: #FF7A2E; --pm-primary-on: #1A0E05;
+  --pm-primary-soft: rgba(255, 122, 46, .16); --pm-primary-text: #FFB07F;
+  --pm-steel: #6FA8DC; --pm-steel-soft: rgba(111, 168, 220, .14); --pm-signal: #F5B83D;
+  --pm-ok: #3DD598; --pm-ok-soft: rgba(61, 213, 152, .14);
+  --pm-warn: #F5B83D; --pm-warn-soft: rgba(245, 184, 61, .14);
+  --pm-bad: #FF6B5E; --pm-bad-soft: rgba(255, 107, 94, .14);
+  --pm-info: #5AB0F0; --pm-info-soft: rgba(90, 176, 240, .14);
+  --pm-run: #A891FF; --pm-run-soft: rgba(168, 145, 255, .16);
+  --pm-neutral: #ABA396; --pm-neutral-soft: rgba(171, 163, 150, .14);
+  --pm-glass-bg: rgba(44, 50, 60, .55); --pm-glass-border: rgba(255, 255, 255, .14);
+  --pm-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, .2);
+  --pm-glass-shadow: 0 14px 36px rgba(0, 0, 0, .45);
+  --pm-sidebar: linear-gradient(180deg, rgba(28, 62, 96, .82), rgba(15, 34, 54, .9));
+  --pm-hero: linear-gradient(135deg, #21476E 0%, #173452 50%, #0F2236 100%);
+}
+
+[data-theme="alto-contraste"] {
+  --pm-canvas: #000; --pm-base: #000;
+  --pm-surface-1: #0A0A0A; --pm-surface-2: #141414; --pm-surface-3: #1F1F1F;
+  --pm-border: #9A9A9A; --pm-border-strong: #FFFFFF; --pm-grid: transparent;
+  --pm-text-1: #FFFFFF; --pm-text-2: #EDEDED; --pm-text-3: #D4D4D4;
+  --pm-primary: #FF9A4D; --pm-primary-fill: #FF9A4D; --pm-primary-on: #000;
+  --pm-ok: #5EEA9C; --pm-warn: #FFD400; --pm-bad: #FF9B9B; --pm-info: #8BDCFF; --pm-run: #C9CEFF; --pm-neutral: #E0E0E0;
+  --pm-glass-bg: #0A0A0A; --pm-glass-border: #FFFFFF; --pm-glass-blur: 0px;
+  --pm-glass-highlight: none; --pm-glass-shadow: none;
+}
+
+/* Modo Operador: aplicável sobre qualquer tema */
+[data-density="operador"] {
+  --pm-size-body: 17px;
+  --pm-size-callout: 16px;
+  --pm-target: 56px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --pm-dur-micro: 0ms; --pm-dur-theme: 0ms; --pm-dur-panel: 0ms; }
+}
