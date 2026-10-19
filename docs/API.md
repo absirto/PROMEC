@@ -137,3 +137,68 @@ Os demais tipos são iguais a `LinhaOrcamento` do motor (`material`, `materialCo
 ## Dados de exemplo (seed)
 
 Empresa **Usinagem Joinville**; login `marina@usinagemjoinville.com.br` (GESTOR) com a senha de desenvolvimento definida em `apps/api/.env.example`. Três centros iguais aos da planilha (Torno CNC de entrada, Fresa CNC 01, Centro de usinagem 02), três operadores (salário 5.000 + encargos 3.200), custo fixo de outubro/2026 de R$ 22.000 em categorias, Tabela de Custos 2026-10 v1 vigente (117,78/h), clientes plausíveis e o orçamento ORC-2026-00128 da bucha de latão H7 (lote 10, desconto 5%, R$ 793,27).
+
+## Ordens de serviço (fase 1b)
+
+Toda conta de custo real × orçado usa `calcularCustoReal` do `@promec/motor`, com o custo-hora da **versão da Tabela de Custos do orçamento de origem** (ou da vigente, para OS sem orçamento). A OS nunca altera o orçamento.
+
+### Estados
+
+`ABERTA` → `EM_FILA` → `EM_EXECUCAO` ⇄ `PAUSADA` → `CONTROLE_QUALIDADE` → `CONCLUIDA` → `ENTREGUE`; `CANCELADA` a partir de qualquer estado antes de `ENTREGUE`. Reprovar no controle de qualidade volta para `EM_EXECUCAO` criando uma operação de retrabalho (`retrabalho: true`, custo da não-qualidade).
+
+| Ação | De → para | Regras |
+| --- | --- | --- |
+| `POST /orcamentos/:id/converter` | orçamento `APROVADO` → `CONVERTIDO`; cria OS `EM_FILA` | copia linhas: operações viram o roteiro (sequência na ordem das linhas; `maoDeObra` também vira operação, com tempo padrão × fator no setup orçado e ciclo 0), material/ferramental/terceiro/frete viram custos orçados. Corpo opcional `{ prazo }`. Responde a OS criada |
+| `POST /ordens-servico` | cria `ABERTA` (serviço rápido, sem orçamento) | `{ clienteId, titulo, segmento, lote, prazo, objeto?, operacoes, custos }`; preço informado em `precoFinalLote`; acima de `parametros.limiteServicoRapido` (padrão R$ 1.500) → 422 `EXIGE_ORCAMENTO` |
+| `POST /ordens-servico/:id/liberar` | `ABERTA` → `EM_FILA` | |
+| `POST /ordens-servico/:id/operacoes/:opId/iniciar` | `{ colaboradorId, tipo: 'SETUP' \| 'PRODUCAO' }` abre apontamento; OS vai para `EM_EXECUCAO` | 409 `APONTAMENTO_ABERTO` se o colaborador já tem apontamento aberto em outra operação; colaborador precisa estar alocado no centro da operação (422 `NAO_HABILITADO`) |
+| `POST /ordens-servico/:id/operacoes/:opId/parar` | fecha o apontamento aberto | `{ quantidadeBoa?, refugo?, observacao? }`; `encerrarSetup?: boolean`; `encerrarOperacao?: boolean`. Quando todas as operações estão encerradas a OS vai para `CONTROLE_QUALIDADE` |
+| `POST /ordens-servico/:id/pausar` | `EM_EXECUCAO` → `PAUSADA` | `{ motivo: 'FALTA_PECA' \| 'AGUARDANDO_CLIENTE' \| 'QUEBRA' \| 'FALTA_OPERADOR' \| 'OUTRO', observacao? }` fecha apontamentos abertos e registra ocorrência |
+| `POST /ordens-servico/:id/retomar` | `PAUSADA` → `EM_EXECUCAO` | fecha a ocorrência de pausa (duração) |
+| `POST /ordens-servico/:id/inspecao` | `CONTROLE_QUALIDADE` → `CONCLUIDA` ou → `EM_EXECUCAO` | `{ aprovada, itens: [{ descricao, esperado?, medido?, conforme }], observacao? }`; reprovada exige `observacao` e cria a operação de retrabalho no centro informado em `centroRetrabalhoId` |
+| `POST /ordens-servico/:id/entregar` | `CONCLUIDA` → `ENTREGUE` | `{ recebidoPor, documento?, observacao? }`; grava o custo real final e o desvio |
+| `POST /ordens-servico/:id/cancelar` | qualquer (exceto `ENTREGUE`) → `CANCELADA` | `GESTOR`/`ADMIN`; `{ motivo }`; custo já apontado fica como perda |
+
+### Leitura e edição
+
+| Método | Rota | Resposta |
+| --- | --- | --- |
+| GET | `/ordens-servico?status=&q=&atrasadas=true` | `{ itens: [{ id, numero, titulo, segmento, cliente: { id, nome }, status, prazo, atrasada, progresso, centroAtual, operadorAtual, custoOrcado, custoProjetado, margemOrcada, margemProjetada, situacao, orcamento: { id, numero } \| null }], total, contagem: { ABERTA: n, …, ATRASADAS: n } }` |
+| GET | `/ordens-servico/:id` | cabeçalho + `objeto` + `operacoes` + `custos` + `apontamentos` + `ocorrencias` + `inspecoes` + `historico` + `tabelaCustos: { id, competencia, versao }` + `resultado: ResultadoCustoReal` + `alertas` |
+| PATCH | `/ordens-servico/:id` | `{ titulo?, prazo?, prioridade?, objeto?, observacoes? }` (não em `ENTREGUE`/`CANCELADA`) |
+| POST / PATCH / DELETE | `/ordens-servico/:id/operacoes[/:opId]` | `{ descricao, centroId, colaboradorId?, setupOrcadoHoras, cicloOrcadoHorasPorPeca, sequencia }`; só antes de iniciar a operação; incluir operação não orçada depois da execução exige `justificativa` |
+| POST / PATCH / DELETE | `/ordens-servico/:id/custos[/:custoId]` | lançamento real `{ real }` em custo existente ou custo novo `{ descricao, categoria, orcado: "0", real, justificativa }`; real acima do orçado × (1 + 20%) exige `justificativa` (422 `JUSTIFICATIVA_OBRIGATORIA`) |
+| GET | `/apontamentos/abertos?colaboradorId=` | apontamentos em aberto (para o Modo Operador) |
+| GET | `/operador/fila?colaboradorId=` | operações de OS `EM_FILA`/`EM_EXECUCAO`/`PAUSADA` dos centros em que o colaborador está alocado, ordenadas por prioridade e prazo, com `apontamentoAberto` |
+
+Formatos:
+
+```json
+{ "objeto": { "desenho": "BUC-H7-020", "revisao": "C", "material": "Latão C360 Ø25", "placa": null, "veiculo": null, "kmEntrada": null, "projeto": null },
+  "operacao": { "id": "…", "sequencia": 10, "descricao": "Torneamento", "centroId": "…", "centroNome": "Torno CNC de entrada", "colaboradorId": "…", "colaboradorNome": "Ricardo Lima",
+    "custoHora": "117.7777777778", "setupOrcadoHoras": "3", "cicloOrcadoHorasPorPeca": "0.1", "setupRealHoras": "3.4", "producaoRealHoras": "0.38",
+    "quantidadeBoa": 4, "refugo": 0, "setupConcluido": true, "status": "EM_ANDAMENTO", "retrabalho": false },
+  "apontamento": { "id": "…", "operacaoId": "…", "colaboradorId": "…", "colaboradorNome": "…", "tipo": "PRODUCAO", "inicio": "…", "fim": null, "horas": null, "quantidadeBoa": 0, "refugo": 0, "observacao": null },
+  "ocorrencia": { "id": "…", "tipo": "PAUSA", "motivo": "FALTA_PECA", "inicio": "…", "fim": null, "horas": null, "observacao": "Chapa 3/16 em falta" } }
+```
+
+`status` da operação: `PENDENTE` · `EM_ANDAMENTO` · `PAUSADA` · `CONCLUIDA`. `segmento` e `objeto` seguem o perfil: oficina usa `placa`, `veiculo`, `kmEntrada`, `kmSaida`; usinagem usa `desenho`, `revisao`, `material`; caldeiraria usa `projeto`. Horas de apontamento = `fim − inicio` em horas decimais; o real da operação soma os apontamentos por tipo.
+
+`alertas`: estouro de horas por operação (real > orçado × 1,2), OS pausada há mais de 4 h, prazo vencido, margem projetada abaixo da mínima.
+
+`numero`: `OS-AAAA-NNNNN`, sequencial por tenant. `prioridade`: `BAIXA` · `NORMAL` · `ALTA` · `URGENTE`.
+
+### Painel
+
+`GET /painel` ganha `ordens: { emExecucao, pausadas, atrasadas, emQualidade, margemProjetadaMedia }`.
+
+### Seed
+
+A partir do ORC-2026-00124 (aprovado) e de um novo orçamento aprovado da bucha, criar:
+- **OS-2026-00041**, da bucha: em execução, setup encerrado em 3,40 h, produção com 0,38 h e 4 peças boas. O resultado deve dar 4,35 h projetadas e margem projetada ≈ 11,3%.
+- Uma OS pausada por `FALTA_PECA`.
+- Uma OS em fila e atrasada.
+- Uma OS em controle de qualidade.
+- Uma OS entregue.
+
+Os operadores ficam alocados nos centros.

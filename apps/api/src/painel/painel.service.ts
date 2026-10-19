@@ -4,6 +4,7 @@ import { dec, precoDaHora, reais, soma, txt } from '@promec/motor';
 import { tt } from '../comum/decimal';
 import { Sessao } from '../comum/sessao';
 import { ABERTOS, expirarVencidos } from '../orcamentos/orcamentos.service';
+import { OrdensService } from '../ordens/ordens.service';
 import { ParametrosService } from '../parametros/parametros.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, resultadoDe } from '../tabelas-custos/entrada';
@@ -24,13 +25,15 @@ const inicioDoMes = () => {
 export class PainelService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly parametros: ParametrosService
+    private readonly parametros: ParametrosService,
+    private readonly ordens: OrdensService
   ) {}
 
   async painel(s: Sessao) {
     const tenantId = s.tenantId;
     await expirarVencidos(this.prisma, tenantId);
-    const [vigente, p, abertos, aprovadosMes, decididos, abaixo, defasados, rascunhos] = await Promise.all([
+    const [ordens, vigente, p, abertos, aprovadosMes, decididos, abaixo, defasados, rascunhos] = await Promise.all([
+      this.ordens.resumoPainel(tenantId),
       buscarVigente(this.prisma, tenantId),
       this.parametros.carregar(tenantId),
       this.prisma.orcamento.aggregate({ where: { tenantId, status: { in: ABERTOS } }, _count: { _all: true }, _sum: { precoFinalLote: true } }),
@@ -76,6 +79,13 @@ export class PainelService {
         link: '/orcamentos?status=RASCUNHO'
       });
     }
+    if (ordens.atrasadas) {
+      alertas.push({
+        tipo: 'perigo',
+        mensagem: `${ordens.atrasadas === 1 ? '1 OS está' : `${ordens.atrasadas} OS estão`} com o prazo vencido. Combine nova data com o cliente ou priorize na fila.`,
+        link: '/ordens-servico?atrasadas=true'
+      });
+    }
     if (defasados) {
       alertas.push({
         tipo: 'info',
@@ -104,6 +114,7 @@ export class PainelService {
         taxaConversao: totalDecididos ? reais(txt(dec(ganhos).div(totalDecididos))) : '0.00',
         abaixoDoMinimo: abaixo
       },
+      ordens,
       centros: (resultado?.centros ?? []).map((c) => ({
         id: c.id,
         nome: c.nome,

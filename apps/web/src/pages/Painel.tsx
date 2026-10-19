@@ -58,6 +58,27 @@ export default function Painel() {
 
       {p && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))] gap-[18px]">
+          {p.ordens && (
+            <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-ordens">
+              <CardHeader id="h-ordens" titulo="Chão de fábrica agora" acao={<Link to="/ordens-servico" className="text-[13px] font-semibold">Ordens de Serviço</Link>} />
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  ['Em execução', p.ordens.emExecucao, 'bg-run-soft text-run', 'EM_EXECUCAO'],
+                  ['Pausadas', p.ordens.pausadas, 'bg-warn-soft text-warn', 'PAUSADA'],
+                  ['Atrasadas', p.ordens.atrasadas, p.ordens.atrasadas ? 'bg-bad-soft text-bad' : 'bg-surface-2 text-ink-2', 'ATRASADAS'],
+                  ['Na qualidade', p.ordens.emQualidade, 'bg-info-soft text-info', 'CONTROLE_QUALIDADE']
+                ].map(([l, n, cor]) => (
+                  <Link key={l as string} to="/ordens-servico" className={`no-underline rounded-[16px] p-3 flex flex-col ${cor}`}>
+                    <span className="mono text-[28px] font-bold leading-none">{n as number}</span>
+                    <span className="text-[13px] font-medium">{l as string}</span>
+                  </Link>
+                ))}
+              </div>
+              {p.ordens.margemProjetadaMedia != null && (
+                <span className="text-[13.5px] text-ink-2">Margem projetada média das OS abertas: <strong className="mono text-ink-1">{pct(p.ordens.margemProjetadaMedia)}</strong></span>
+              )}
+            </Card>
+          )}
           <Card className="p-5 flex flex-col gap-2.5 anim-subir" aria-labelledby="h-alertas">
             <CardHeader id="h-alertas" titulo="Precisa de você" sub={p.alertas.length ? `${p.alertas.length} ${p.alertas.length === 1 ? 'item' : 'itens'}` : undefined} />
             {p.alertas.length === 0 ? (

@@ -59,6 +59,7 @@ describe('API ProMEC (e2e)', () => {
 
   afterAll(async () => {
     const ids = [base?.tenantId, outra?.tenantId].filter(Boolean);
+    await db.ordemServico.deleteMany({ where: { tenantId: { in: ids } } });
     await db.orcamento.deleteMany({ where: { tenantId: { in: ids } } });
     await db.empresa.deleteMany({ where: { id: { in: ids } } });
     await db.$disconnect();
@@ -207,14 +208,14 @@ describe('API ProMEC (e2e)', () => {
 
     it('colaborador traz custo mensal e custo-hora calculados', async () => {
       const r = await api(token).get('/colaboradores').expect(200);
-      const paulo = r.body.itens.find((c: { nome: string }) => c.nome === 'Paulo Henrique Souza');
-      expect(paulo).toMatchObject({ custoMensal: '8200', custoHora: '37.2727272727', alocacoes: [{ alocacao: '1', centroNome: 'Torno CNC de entrada' }] });
+      const ricardo = r.body.itens.find((c: { nome: string }) => c.nome === 'Ricardo Lima');
+      expect(ricardo).toMatchObject({ custoMensal: '8200', custoHora: '37.2727272727', alocacoes: [{ alocacao: '1', centroNome: 'Torno CNC de entrada' }] });
     });
 
     it('rejeita alocação acima de 100%', async () => {
       const colaboradores = await api(token).get('/colaboradores').expect(200);
-      const paulo = colaboradores.body.itens.find((c: { nome: string }) => c.nome === 'Paulo Henrique Souza');
-      const r = await api(token).patch(`/centros-trabalho/${base.centros.fresa}`, { operadores: [{ colaboradorId: paulo.id, alocacao: '0.5' }] }).expect(422);
+      const ricardo = colaboradores.body.itens.find((c: { nome: string }) => c.nome === 'Ricardo Lima');
+      const r = await api(token).patch(`/centros-trabalho/${base.centros.fresa}`, { operadores: [{ colaboradorId: ricardo.id, alocacao: '0.5' }] }).expect(422);
       expect(r.body.codigo).toBe('ALOCACAO_EXCEDIDA');
     });
 
@@ -230,10 +231,170 @@ describe('API ProMEC (e2e)', () => {
     });
   });
 
+  describe('ordens de serviço', () => {
+    const del = (t: string, url: string) => http().delete(`/api/v1${url}`).set('Authorization', `Bearer ${t}`);
+
+    it('OS-2026-00041 da bucha projeta 4,35 h e margem perto de 11,3%', async () => {
+      const r = await api(token).get(`/ordens-servico/${base.ordens[41]}`).expect(200);
+      expect(r.body).toMatchObject({ numero: 'OS-2026-00041', status: 'EM_EXECUCAO', orcamento: { numero: 'ORC-2026-00121' } });
+      expect(reais(r.body.resultado.horasProjetadas)).toBe('4.35');
+      expect(Number(r.body.resultado.margemProjetada)).toBeCloseTo(0.113, 3);
+      expect(r.body.operacoes[0]).toMatchObject({ colaboradorNome: 'Ricardo Lima', setupRealHoras: '3.4', producaoRealHoras: '0.38', quantidadeBoa: 4, setupConcluido: true });
+      const lista = await api(token).get('/ordens-servico').expect(200);
+      expect(lista.body.contagem).toMatchObject({ EM_EXECUCAO: 1, PAUSADA: 1, EM_FILA: 1, CONTROLE_QUALIDADE: 1, ENTREGUE: 1, ATRASADAS: 1 });
+      const item = lista.body.itens.find((o: { id: string }) => o.id === base.ordens[41]);
+      expect(item).toMatchObject({ centroAtual: 'Torno CNC de entrada', operadorAtual: 'Ricardo Lima', margemProjetada: r.body.resultado.margemProjetada });
+    });
+
+    it('fila do operador e apontamentos abertos', async () => {
+      const fila = await api(token).get(`/operador/fila?colaboradorId=${base.colaboradores.ricardo}`).expect(200);
+      expect(fila.body.itens[0].os.prioridade).toBe('URGENTE');
+      const op41 = fila.body.itens.find((o: { os: { id: string } }) => o.os.id === base.ordens[41]);
+      expect(op41.apontamentoAberto).toMatchObject({ tipo: 'PRODUCAO', fim: null });
+      const abertos = await api(token).get(`/apontamentos/abertos?colaboradorId=${base.colaboradores.ricardo}`).expect(200);
+      expect(abertos.body.total).toBe(1);
+    });
+
+    it('converte, executa com pausa, reprova com retrabalho, aprova e entrega', async () => {
+      const orc = await api(token).post('/orcamentos', bucha()).expect(201);
+      await api(token).post(`/orcamentos/${orc.body.id}/converter`).expect(409);
+      await api(token).post(`/orcamentos/${orc.body.id}/enviar`).expect(200);
+      await api(token).post(`/orcamentos/${orc.body.id}/aprovar`).expect(200);
+      const os = await api(token).post(`/orcamentos/${orc.body.id}/converter`, { prazo: '2030-01-15' }).expect(201);
+      expect(os.body).toMatchObject({ numero: 'OS-2026-00042', status: 'EM_FILA', prazo: '2030-01-15' });
+      expect(os.body.operacoes[0]).toMatchObject({ sequencia: 10, custoHora: '117.7777777778', setupOrcadoHoras: '3', cicloOrcadoHorasPorPeca: '0.1' });
+      expect(os.body.custos[0]).toMatchObject({ categoria: 'material', orcado: '80', real: null });
+      await api(token).get(`/orcamentos/${orc.body.id}`).expect((r) => expect(r.body.status).toBe('CONVERTIDO'));
+
+      const id = os.body.id;
+      const opId = os.body.operacoes[0].id;
+      const ab = await api(token).post(`/ordens-servico/${id}/operacoes/${opId}/iniciar`, { colaboradorId: base.colaboradores.ricardo, tipo: 'SETUP' }).expect(409);
+      expect(ab.body.codigo).toBe('APONTAMENTO_ABERTO');
+      const nh = await api(token).post(`/ordens-servico/${id}/operacoes/${opId}/iniciar`, { colaboradorId: base.colaboradores.diego, tipo: 'SETUP' }).expect(422);
+      expect(nh.body.codigo).toBe('NAO_HABILITADO');
+
+      const marcos = await api(token)
+        .post('/colaboradores', { nome: 'Marcos Teixeira', salario: '4200', encargos: '2700', alocacoes: [{ centroId: base.centros.torno, alocacao: '1' }] })
+        .expect(201);
+      const quem = { colaboradorId: marcos.body.id };
+      const url = (acao: string) => `/ordens-servico/${id}/operacoes/${opId}/${acao}`;
+
+      let r = await api(token).post(url('iniciar'), { ...quem, tipo: 'SETUP' }).expect(200);
+      expect(r.body.status).toBe('EM_EXECUCAO');
+      r = await api(token).post(url('parar'), { encerrarSetup: true }).expect(200);
+      expect(r.body.operacoes[0]).toMatchObject({ setupConcluido: true, status: 'EM_ANDAMENTO' });
+      expect(r.body.apontamentos[0].fim).not.toBeNull();
+
+      await api(token).post(url('iniciar'), { ...quem, tipo: 'PRODUCAO' }).expect(200);
+      r = await api(token).post(`/ordens-servico/${id}/pausar`, { motivo: 'FALTA_PECA', observacao: 'Barra em falta' }).expect(200);
+      expect(r.body).toMatchObject({ status: 'PAUSADA', ocorrencias: [{ tipo: 'PAUSA', motivo: 'FALTA_PECA', fim: null }] });
+      expect(r.body.apontamentos.every((a: { fim: string | null }) => a.fim)).toBe(true);
+      await api(token).post(url('iniciar'), { ...quem, tipo: 'PRODUCAO' }).expect(409);
+      r = await api(token).post(`/ordens-servico/${id}/retomar`).expect(200);
+      expect(r.body.status).toBe('EM_EXECUCAO');
+      expect(r.body.ocorrencias[0].horas).not.toBeNull();
+
+      await api(token).post(url('iniciar'), { ...quem, tipo: 'PRODUCAO' }).expect(200);
+      r = await api(token).post(url('parar'), { quantidadeBoa: 10, encerrarOperacao: true }).expect(200);
+      expect(r.body).toMatchObject({ status: 'CONTROLE_QUALIDADE', operacoes: [{ status: 'CONCLUIDA', quantidadeBoa: 10 }] });
+
+      const semObs = await api(token).post(`/ordens-servico/${id}/inspecao`, { aprovada: false, itens: [] }).expect(422);
+      expect(semObs.body.codigo).toBe('OBSERVACAO_OBRIGATORIA');
+      r = await api(token)
+        .post(`/ordens-servico/${id}/inspecao`, {
+          aprovada: false,
+          observacao: 'Furo H7 acima da tolerância em 2 peças',
+          centroRetrabalhoId: base.centros.torno,
+          itens: [{ descricao: 'Furo Ø20 H7', esperado: '20,000–20,021', medido: '20,030', conforme: false }]
+        })
+        .expect(200);
+      expect(r.body.status).toBe('EM_EXECUCAO');
+      const retrabalho = r.body.operacoes.find((o: { retrabalho: boolean }) => o.retrabalho);
+      expect(retrabalho).toMatchObject({ sequencia: 20, status: 'PENDENTE', centroId: base.centros.torno });
+
+      const urlR = (acao: string) => `/ordens-servico/${id}/operacoes/${retrabalho.id}/${acao}`;
+      await api(token).post(urlR('iniciar'), { ...quem, tipo: 'PRODUCAO' }).expect(200);
+      r = await api(token).post(urlR('parar'), { quantidadeBoa: 2, encerrarOperacao: true }).expect(200);
+      expect(r.body.status).toBe('CONTROLE_QUALIDADE');
+      r = await api(token).post(`/ordens-servico/${id}/inspecao`, { aprovada: true, itens: [{ descricao: 'Furo Ø20 H7', conforme: true }] }).expect(200);
+      expect(r.body.status).toBe('CONCLUIDA');
+      r = await api(token).post(`/ordens-servico/${id}/entregar`, { recebidoPor: 'Carlos, compras da Metalúrgica Vale' }).expect(200);
+      expect(r.body).toMatchObject({ status: 'ENTREGUE', recebidoPor: 'Carlos, compras da Metalúrgica Vale' });
+      expect(r.body.custoRealFinal).toBe(r.body.resultado.custoReal);
+      expect(r.body.desvioFinal).toBe(r.body.resultado.desvioCusto);
+      expect(r.body.historico.map((h: { evento: string }) => h.evento)).toEqual([
+        'criada', 'execucao_iniciada', 'pausada', 'retomada', 'operacoes_encerradas', 'inspecao_reprovada', 'operacoes_encerradas', 'inspecao_aprovada', 'entregue'
+      ]);
+      await api(token).patch(`/ordens-servico/${id}`, { titulo: 'Outro' }).expect(409);
+    });
+
+    it('serviço rápido acima do limite exige orçamento; abaixo nasce ABERTA', async () => {
+      const corpo = {
+        clienteId: base.clientes.metalvale,
+        titulo: 'Recuperação de rosca do eixo',
+        segmento: 'USINAGEM',
+        lote: 1,
+        prazo: '2030-02-01',
+        objeto: { desenho: 'AVULSO', placa: 'ignorada?' },
+        operacoes: [{ descricao: 'Recuperar rosca', centroId: base.centros.torno, setupOrcadoHoras: '0.5', cicloOrcadoHorasPorPeca: '1' }],
+        custos: [{ descricao: 'Inserto', categoria: 'ferramental', orcado: '40' }]
+      };
+      const caro = await api(token).post('/ordens-servico', { ...corpo, precoFinalLote: '1500.01' }).expect(422);
+      expect(caro.body.codigo).toBe('EXIGE_ORCAMENTO');
+      const os = await api(token).post('/ordens-servico', { ...corpo, precoFinalLote: '420' }).expect(201);
+      expect(os.body).toMatchObject({ status: 'ABERTA', orcamento: null, numero: 'OS-2026-00043' });
+      expect(os.body.objeto).toMatchObject({ desenho: 'AVULSO', revisao: null });
+      const ini = await api(token).post(`/ordens-servico/${os.body.id}/operacoes/${os.body.operacoes[0].id}/iniciar`, { colaboradorId: base.colaboradores.ricardo, tipo: 'SETUP' }).expect(409);
+      expect(ini.body.codigo).toBe('STATUS_INVALIDO');
+      await api(token).post(`/ordens-servico/${os.body.id}/liberar`).expect(200).expect((r) => expect(r.body.status).toBe('EM_FILA'));
+
+      const patch = await api(token).patch(`/ordens-servico/${os.body.id}/operacoes/${os.body.operacoes[0].id}`, { setupOrcadoHoras: '0.75' }).expect(200);
+      expect(patch.body.operacoes[0].setupOrcadoHoras).toBe('0.75');
+      await api(tokenOrcamentista).post(`/ordens-servico/${os.body.id}/cancelar`, { motivo: 'Cliente desistiu' }).expect(403);
+      const c = await api(token).post(`/ordens-servico/${os.body.id}/cancelar`, { motivo: 'Cliente desistiu' }).expect(200);
+      expect(c.body).toMatchObject({ status: 'CANCELADA', motivoCancelamento: 'Cliente desistiu' });
+    });
+
+    it('exige justificativa para operação fora do orçado e custo acima de 20%', async () => {
+      const id = base.ordens[41];
+      const op = { descricao: 'Rebarbação manual', centroId: base.centros.torno, setupOrcadoHoras: '0', cicloOrcadoHorasPorPeca: '0.05' };
+      const semJust = await api(token).post(`/ordens-servico/${id}/operacoes`, op).expect(422);
+      expect(semJust.body.codigo).toBe('JUSTIFICATIVA_OBRIGATORIA');
+      const comJust = await api(token).post(`/ordens-servico/${id}/operacoes`, { ...op, justificativa: 'Rebarba no furo cruzado' }).expect(201);
+      const nova = comJust.body.operacoes.find((o: { descricao: string }) => o.descricao === 'Rebarbação manual');
+      expect(nova).toMatchObject({ orcada: false, sequencia: 20 });
+      await del(token, `/ordens-servico/${id}/operacoes/${nova.id}`).expect(200);
+
+      const material = comJust.body.custos[0];
+      const alto = await api(token).patch(`/ordens-servico/${id}/custos/${material.id}`, { real: '120' }).expect(422);
+      expect(alto.body.codigo).toBe('JUSTIFICATIVA_OBRIGATORIA');
+      await api(token).patch(`/ordens-servico/${id}/custos/${material.id}`, { real: '95' }).expect(200);
+      await api(token).patch(`/ordens-servico/${id}/custos/${material.id}`, { real: '120', justificativa: 'Latão subiu 40% no fornecedor' }).expect(200);
+      await api(token).post(`/ordens-servico/${id}/custos`, { descricao: 'Broca Ø19,8', categoria: 'ferramental', orcado: '0', real: '65' }).expect(422);
+      const novo = await api(token).post(`/ordens-servico/${id}/custos`, { descricao: 'Broca Ø19,8', categoria: 'ferramental', orcado: '0', real: '65', justificativa: 'Broca quebrou' }).expect(201);
+      const broca = novo.body.custos.find((c: { descricao: string }) => c.descricao === 'Broca Ø19,8');
+      await del(token, `/ordens-servico/${id}/custos/${material.id}`).expect(409);
+      await del(token, `/ordens-servico/${id}/custos/${broca.id}`).expect(200);
+    });
+
+    it('isola as OS entre empresas', async () => {
+      await api(tokenOutra).get(`/ordens-servico/${base.ordens[41]}`).expect(404);
+      await api(tokenOutra).post(`/ordens-servico/${base.ordens[41]}/pausar`, { motivo: 'OUTRO' }).expect(404);
+      const lista = await api(tokenOutra).get('/ordens-servico').expect(200);
+      expect(lista.body.itens.some((o: { id: string }) => o.id.startsWith('e2e-a-'))).toBe(false);
+      const fila = await api(tokenOutra).get(`/operador/fila?colaboradorId=${base.colaboradores.ricardo}`).expect(404);
+      expect(fila.body.codigo).toBe('NAO_ENCONTRADO');
+      const abertos = await api(tokenOutra).get('/apontamentos/abertos').expect(200);
+      expect(abertos.body.itens.some((a: { os: { id: string } }) => a.os.id.startsWith('e2e-a-'))).toBe(false);
+    });
+  });
+
   it('painel resume a operação', async () => {
     const r = await api(token).get('/painel').expect(200);
     expect(r.body.usuario).toBe('Marina');
     expect(r.body.tabelaVigente.cheioMedio).toBe('117.78');
     expect(r.body.centros[0]).toMatchObject({ cheioHora: '117.78', precoHora: '178.45' });
+    expect(r.body.ordens).toMatchObject({ emExecucao: 1, pausadas: 1, atrasadas: 1, emQualidade: 1 });
+    expect(r.body.ordens.margemProjetadaMedia).toEqual(expect.any(String));
   });
 });

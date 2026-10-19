@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Ordens de Serviço</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.b-lok{color:#0F7A55;box-shadow:inset 0 0 0 1.5px #0F7A55}.b-sok{color:#fff;background:#0F7A55}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff}
+.btn-p:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.mv{all:unset;box-sizing:border-box;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--t2);background:var(--s3);cursor:pointer}
+.tab{all:unset;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tab.on{background:#1E1B16;color:#fff}
+.fc{all:unset;box-sizing:border-box;cursor:pointer;height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:13.5px;font-weight:500}
+.fc.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.btn:focus-visible,.ib:focus-visible,.tab:focus-visible,.fc:focus-visible,.mv:focus-visible,.kl:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.rt{width:100%;border-collapse:collapse;font-size:14.5px}
+.rt th{font-size:12.5px;font-weight:600;color:var(--t3);text-align:left;padding:12px;background:var(--s2);border-bottom:1px solid var(--bd);white-space:nowrap}
+.rt td{padding:12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.rt tbody tr:hover td{background:var(--s2)}
+.kc{transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+.kc:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(40,30,15,.12)}
+.blk{position:absolute;top:8px;bottom:8px;border-radius:12px;padding:6px 10px;font-size:12.5px;line-height:1.25;overflow:hidden;color:#fff;display:flex;flex-direction:column;justify-content:center}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fade{animation:fade .25s ease both}
+@media (prefers-reduced-motion:reduce){.rv,.fade{animation:none}.kc{transition:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">Operação</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600;" aria-current="page">Ordens de Serviço</span></nav>
+<a href="Recepcao.dc.html" class="btn btn-sm">Receber veículo</a>
+<a href="Orcamentos-Lista.dc.html" class="btn btn-sm btn-p"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Nova OS</a>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 18px; width: 100%;">
+
+<div class="rv" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 14px;">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h1 class="disp" style="margin: 0; font-size: 48px; font-weight: 700; line-height: 1;">Ordens de Serviço</h1><span style="font-size: 15.5px; color: var(--t2);">{{lead}}</span></div>
+<div role="tablist" aria-label="Visão" style="display: flex; gap: 6px; padding: 4px; border-radius: 999px; background: var(--s3);"><sc-for list="{{views}}" as="v" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{v.sel}}" class="tab {{v.cls}}" onClick="{{v.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{v.icon}}"/></svg>{{v.l}}</button></sc-for></div>
+</div>
+
+<div class="rv" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;"><span style="font-size: 13.5px; color: var(--t2);">Tipo</span><sc-for list="{{segF}}" as="f" hint-placeholder-count="4"><button type="button" class="fc {{f.cls}}" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}">{{f.l}}</button></sc-for><span style="width: 1px; height: 24px; background: var(--bd2); margin: 0 6px;"></span><button type="button" class="fc">Só atrasadas</button><button type="button" class="fc">Centro: todos</button></div>
+
+<sc-if value="{{vKan}}" hint-placeholder-val="{{true}}">
+<section class="fade" aria-label="OS por situação" style="display: grid; grid-template-columns: repeat(7, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px;">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="7">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 22px; background: var(--s3); min-height: 520px;">
+<div style="display: flex; align-items: center; gap: 8px; padding: 2px 4px;"><span class="bdg {{c.cls}}" style="height: 24px;">{{c.t}}</span><span style="flex: 1;"></span><span class="mono" style="font-size: 13px; font-weight: 700; color: var(--t2);">{{c.n}}</span></div>
+<sc-for list="{{c.cards}}" as="k" hint-placeholder-count="2">
+<article class="kc" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: 16px; background: #fff; border: 1px solid var(--bd); border-left: 5px solid {{k.sc}};">
+<span style="display: flex; justify-content: space-between; align-items: center; gap: 6px;"><a href="{{k.href}}" class="mono kl" style="font-size: 12.5px; font-weight: 700; color: #1E1B16; text-decoration: none;">{{k.c}}</a><span style="width: 26px; height: 26px; border-radius: 8px; background: {{k.sc}}; color: #fff; display: grid; place-items: center;" title="{{k.seg}}"><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="{{k.si}}"/></svg></span></span>
+<span style="font-weight: 600; font-size: 14px; line-height: 1.3;">{{k.t}}</span>
+<span style="font-size: 12.5px; color: var(--t2);">{{k.cli}}</span>
+<sc-if value="{{k.hasProg}}" hint-placeholder-val="{{true}}"><span style="height: 6px; border-radius: 99px; background: var(--s3); overflow: hidden;"><span style="display: block; height: 100%; width: {{k.prog}}; background: {{k.pc}}; border-radius: 99px;"></span></span></sc-if>
+<span style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;"><span class="mono" style="color: {{k.hc}};">{{k.hrs}}</span><span style="color: {{k.dc}}; font-weight: {{k.dw}};">{{k.due}}</span></span>
+<span style="display: flex; justify-content: space-between; align-items: center; gap: 6px;"><span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--t3);"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{k.oc}}; color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center;">{{k.op}}</span>{{k.ct}}</span><span style="display: flex; gap: 4px;"><button type="button" class="mv" onClick="{{k.left}}" aria-label="Voltar {{k.c}} uma etapa" disabled="{{k.first}}" style="opacity: {{k.lo}};"><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><button type="button" class="mv" onClick="{{k.right}}" aria-label="Avançar {{k.c}} uma etapa" disabled="{{k.last}}" style="opacity: {{k.ro}};"><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></span></span>
+</article>
+</sc-for>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{vTab}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="overflow: hidden;" aria-label="Lista de OS">
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 1100px;">
+<thead><tr><th scope="col">OS</th><th scope="col">O quê · cliente</th><th scope="col">Tipo</th><th scope="col">Centro · quem</th><th scope="col">Horas orçado → real</th><th scope="col">Prazo prometido</th><th scope="col">Situação</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+<tr>
+<td><a href="{{r.href}}" class="mono" style="font-weight: 700; text-decoration: none; color: #1E1B16;">{{r.c}}</a></td>
+<td><span style="display: flex; flex-direction: column;"><span style="font-weight: 600;">{{r.t}}</span><span style="font-size: 13px; color: var(--t2);">{{r.cli}}</span></span></td>
+<td><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{r.sc}};"></span>{{r.seg}}</span></td>
+<td style="font-size: 13.5px;">{{r.ct}} · {{r.opn}}</td>
+<td class="mono" style="font-size: 13.5px; color: {{r.hc}};">{{r.hrs}}</td>
+<td class="mono" style="font-size: 13.5px; color: {{r.dc}}; font-weight: {{r.dw}};">{{r.due}}</td>
+<td><span class="bdg {{r.cls}}">{{r.st}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vAg}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;" aria-label="Agenda por centro">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;"><span style="font-weight: 600; font-size: 17px;">Hoje, quarta 14/10 · por centro de trabalho</span><a href="Planejamento.dc.html" style="font-size: 13.5px; font-weight: 600;">Abrir o planejamento da semana</a></div>
+<div style="overflow-x: auto;">
+<div style="min-width: 960px; display: grid; grid-template-columns: 200px minmax(0, 1fr); row-gap: 8px;">
+<span></span>
+<div style="display: grid; grid-template-columns: repeat(10, minmax(0, 1fr));"><sc-for list="{{hours}}" as="h" hint-placeholder-count="10"><span class="mono" style="font-size: 11.5px; color: var(--t3); border-left: 1px solid var(--bd); padding-left: 4px;">{{h}}</span></sc-for></div>
+<sc-for list="{{agenda}}" as="a" hint-placeholder-count="6">
+<span style="display: flex; flex-direction: column; justify-content: center;"><span style="font-weight: 600; font-size: 14px;">{{a.n}}</span><span style="font-size: 12px; color: var(--t3);">{{a.op}}</span></span>
+<div style="position: relative; height: 60px; border-radius: 14px; background: var(--s2); border: 1px solid var(--bd); background-image: linear-gradient(90deg, var(--bd) 1px, transparent 1px); background-size: 10% 100%;">
+<sc-for list="{{a.b}}" as="b" hint-placeholder-count="2"><a href="{{b.href}}" class="blk" style="left: {{b.l}}; width: {{b.w}}; background: {{b.c}}; text-decoration: none;"><span class="mono" style="font-weight: 700;">{{b.code}}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.t}}</span></a></sc-for>
+<span style="position: absolute; top: -4px; bottom: -4px; left: 25%; width: 3px; border-radius: 2px; background: #E35D14;" aria-hidden="true"></span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { view: 'kan', seg: 'Todos', moved: {} };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const ORDER = ['ab', 'fila', 'exe', 'pau', 'cq', 'conc', 'ent'];
+    const SN = { ab: ['Aberta', 'b-neu'], fila: ['Em fila', 'b-inf'], exe: ['Em execução', 'b-run'], pau: ['Pausada', 'b-wa'], cq: ['Qualidade', 'b-inf'], conc: ['Concluída', 'b-lok'], ent: ['Entregue', 'b-sok'] };
+    const SEG = { Usinagem: ['#1D6FB8', 'M4 4h16v16H4zM9 9h6v6H9z'], Oficina: ['#E35D14', 'M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M9 17h6M3 17V9l3-4h8l4 4h2a1 1 0 0 1 1 1v7h-2'], Caldeiraria: ['#7C5CC4', 'M13 2 3 14h9l-1 8 10-12h-9l1-8Z'] };
+    const OS = [
+      ['OS-2026-00053', 'Troca de óleo e filtros', 'Fernanda Duarte · XRE 300', 'Oficina', 'Box 1', 'JB', 'Jonas', 'ab', 0, '1,00 h', '', 'hoje 18:00', false],
+      ['OS-2026-00047', 'Flange SAE 4" · 20 peças', 'Hidráulica Norte', 'Usinagem', 'Torno CNC', 'RA', 'Ricardo', 'fila', 0, '12,00 h', '', '23/10', false],
+      ['OS-2026-00044', 'Eixo de transmissão Ø45', 'Agro Pampa', 'Usinagem', 'Torno CNC', 'RA', 'Ricardo', 'fila', 0, '9,50 h', '', '16/10', false],
+      ['OS-2026-00050', 'Bucha Ø30 em bronze', 'Metalúrgica Vale', 'Usinagem', 'Torno CNC', 'RA', 'Ricardo', 'fila', 0, '5,00 h', '', 'atrasa 1 dia', true],
+      ['OS-2026-00041', 'Bucha de latão H7 · lote piloto', 'Metalúrgica Vale', 'Usinagem', 'Torno CNC', 'RA', 'Ricardo', 'exe', 60, '4,00 h', '3,97 h', '20/10', false],
+      ['OS-2026-00052', 'Revisão + kit relação', 'Carlos Eduardo · CG 160', 'Oficina', 'Box 3', 'DS', 'Diego', 'exe', 90, '2,00 h', '1,85 h', 'hoje 17:00', false],
+      ['OS-2026-00043', 'Placa de fixação', 'Agro Pampa', 'Usinagem', 'Fresa CNC 01', 'LP', 'Luana', 'exe', 40, '6,50 h', '2,90 h', '17/10', false],
+      ['OS-2026-00046', 'Estrutura de esteira', 'Estruturas Sul', 'Caldeiraria', 'Solda MIG 01', 'MP', 'Marcos', 'pau', 35, '18,00 h', '7,10 h', 'atrasa 2 dias', true],
+      ['OS-2026-00040', 'Suporte soldado chapa 3/16', 'Estruturas Sul', 'Caldeiraria', 'Solda MIG 01', 'MP', 'Marcos', 'cq', 100, '6,00 h', '6,40 h', '15/10', false],
+      ['OS-2026-00039', 'Base fresada', 'Hidráulica Norte', 'Usinagem', 'Fresa CNC 01', 'LP', 'Luana', 'conc', 100, '5,00 h', '4,60 h', '14/10', false],
+      ['OS-2026-00038', 'Pino guia Ø12 · lote 30', 'Estruturas Sul', 'Usinagem', 'Torno CNC', 'RA', 'Ricardo', 'ent', 100, '4,50 h', '4,70 h', 'entregue 13/10', false]
+    ];
+    const OC = { RA: '#1D4E7A', DS: '#E35D14', JB: '#7C5CC4', LP: '#0F9D76', MP: '#C0352B' };
+    const list = OS.filter((o) => st.seg === 'Todos' || o[3] === st.seg).map((o) => { const s = st.moved[o[0]] || o[7]; return { o, s }; });
+    const parseH = (s) => parseFloat(String(s).replace(',', '.')) || 0;
+    const mk = ({ o, s }) => {
+      const over = o[10] && parseH(o[10]) > parseH(o[9]) * 1.05;
+      const idx = ORDER.indexOf(s);
+      const mv = (d) => () => this.setState({ moved: Object.assign({}, st.moved, { [o[0]]: ORDER[Math.max(0, Math.min(ORDER.length - 1, idx + d))] }) });
+      return {
+        c: o[0], t: o[1], cli: o[2], seg: o[3], sc: SEG[o[3]][0], si: SEG[o[3]][1], ct: o[4], op: o[5], opn: o[6], oc: OC[o[5]],
+        hasProg: o[8] > 0, prog: o[8] + '%', pc: o[8] >= 100 ? '#0F7A55' : '#5B3FB5',
+        hrs: o[10] ? o[9] + ' → ' + o[10] : o[9] + ' orçadas', hc: over ? '#C0352B' : '#4E473D',
+        due: o[11], dc: o[12] ? '#C0352B' : '#4E473D', dw: o[12] ? 700 : 400,
+        href: o[0] === 'OS-2026-00041' || o[0] === 'OS-2026-00052' ? 'OS-Detalhe.dc.html' : '#',
+        st: SN[s][0], cls: SN[s][1],
+        left: mv(-1), right: mv(1), first: idx === 0, last: idx === ORDER.length - 1, lo: idx === 0 ? '.35' : '1', ro: idx === ORDER.length - 1 ? '.35' : '1'
+      };
+    };
+    const cols = ORDER.map((k) => { const cards = list.filter((x) => x.s === k).map(mk); return { t: SN[k][0], cls: SN[k][1], n: cards.length, cards }; });
+    const rows = list.map(mk);
+    const late = list.filter((x) => x.o[12]).length;
+    const views = [['kan', 'Kanban', 'M3 3h5v18H3zM10 3h5v12h-5zM17 3h4v8h-4z'], ['tab', 'Tabela', 'M3 3h18v18H3zM3 9h18M3 15h18'], ['ag', 'Agenda por centro', 'M3 4h18v18H3zM3 10h18M8 2v4M16 2v4']].map((v) => ({ l: v[1], icon: v[2], cls: st.view === v[0] ? 'on' : '', sel: st.view === v[0] ? 'true' : 'false', pick: () => this.setState({ view: v[0] }) }));
+    const segF = ['Todos', 'Usinagem', 'Oficina', 'Caldeiraria'].map((l) => ({ l, cls: st.seg === l ? 'on' : '', pressed: st.seg === l ? 'true' : 'false', pick: () => this.setState({ seg: l }) }));
+    const B = (l, w, code, t, c, href) => ({ l: l + '%', w: w + '%', code, t, c, href: href || '#' });
+    const agenda = [
+      { n: 'Torno CNC de entrada', op: 'Ricardo', b: [B(0, 34, '00041', 'Bucha H7 · produção', '#5B3FB5', 'OS-Detalhe.dc.html'), B(36, 62, '00044', 'Eixo Ø45 · setup e início', '#1A64A8')] },
+      { n: 'Fresa CNC 01', op: 'Luana', b: [B(0, 70, '00043', 'Placa de fixação', '#5B3FB5'), B(72, 26, '00049', 'Pino guia · setup', '#1A64A8')] },
+      { n: 'Célula de solda MIG 01', op: 'Marcos', b: [B(0, 20, '00040', 'Retoque pós-inspeção', '#0F9D76'), B(22, 76, '00046', 'Esteira · pausada, falta chapa', '#E0A100')] },
+      { n: 'Box 1', op: 'Jonas', b: [B(0, 20, '00051', 'Toro · revisão', '#5B3FB5'), B(25, 15, '00054', 'Fazer 250 · pastilhas', '#1A64A8'), B(90, 10, '00053', 'XRE · óleo', '#8C8476')] },
+      { n: 'Box 3', op: 'Diego', b: [B(60, 20, '00052', 'CG 160 · revisão', '#5B3FB5', 'OS-Detalhe.dc.html')] },
+      { n: 'Bancada de inspeção', op: 'Carla', b: [B(48, 22, '00041', 'Medição bucha H7', '#0F9D76'), B(72, 12, '00040', 'Laudo do suporte', '#0F9D76')] }
+    ];
+    const hours = ['08h', '09h', '10h', '11h', '12h', '13h', '14h', '15h', '16h', '17h'];
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', true], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['BI', 'M3 3v18h18M18 17V9M13 17V5M8 17v-3'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      views, segF, cols, rows, agenda, hours, rail, vKan: st.view === 'kan', vTab: st.view === 'tab', vAg: st.view === 'ag',
+      lead: list.length + ' OS abertas no momento · ' + late + ' com prazo em risco. Use as setas do cartão para mudar de etapa.',
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -28,4 +28,7 @@ export class ParametrosDto {
 
   @IsOptional() @IsInt() @Min(1) @Max(365)
   validadeOrcamentoDias?: number;
+
+  @Dec({ naoNegativo: true, opcional: true })
+  limiteServicoRapido?: string;
 }

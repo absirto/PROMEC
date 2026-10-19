@@ -12,7 +12,7 @@ export function gearPath(cx: number, cy: number, R: number, n: number, h: number
   return `${d}Z`;
 }
 
-export type Ilustracao = 'torno' | 'engrenagens' | 'paquimetro' | 'solda' | 'prancheta' | 'equipe' | 'cofre';
+export type Ilustracao = 'torno' | 'engrenagens' | 'paquimetro' | 'solda' | 'prancheta' | 'equipe' | 'cofre' | 'elevador';
 
 const traco = { fill: 'none', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 const FAGULHA = '#FF8A3D';
@@ -121,7 +121,26 @@ function Cofre() {
   );
 }
 
+function Elevador() {
+  return (
+    <>
+      <path d="M60 230h520M110 230V40M530 230V40M100 40h20M520 40h20" />
+      <path d="M110 150h420M110 162h420" />
+      <path d="M150 150l20-24M490 150l-20-24" />
+      <circle cx="240" cy="110" r="30" />
+      <circle cx="400" cy="110" r="30" />
+      <circle cx="240" cy="110" r="6" />
+      <circle cx="400" cy="110" r="6" />
+      <path d="M240 110l50-40h50l30 20M290 70l-10-20h-20M340 70l20 40M360 110h40M300 90h40" />
+      <path d="M352 52h22l8 8" />
+      <path d="M420 200l14-10M428 210l18-4" stroke={FAGULHA} className="anim-pulsar" />
+      <path className="anim-girar" d={gearPath(600, 60, 36, 10, 7)} />
+    </>
+  );
+}
+
 const MAPA: Record<Ilustracao, () => JSX.Element> = {
+  elevador: Elevador,
   torno: Torno,
   engrenagens: Engrenagens,
   paquimetro: Paquimetro,

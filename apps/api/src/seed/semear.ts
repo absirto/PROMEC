@@ -6,6 +6,7 @@ import { completarCnpj } from '../comum/documento';
 import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada } from '../orcamentos/calculo';
 import { formatarNumero } from '../orcamentos/numeracao';
 import { json, montarEntrada, resultadoDe } from '../tabelas-custos/entrada';
+import { semearOrdens } from './ordens';
 
 export interface OpcoesSemente {
   /** Prefixo dos ids, para semear mais de uma empresa no mesmo banco (testes). */
@@ -79,7 +80,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     { chave: 'cu', codigo: 'CU-02', nome: 'Centro de usinagem 02' }
   ];
   const operadores = [
-    { chave: 'paulo', nome: 'Paulo Henrique Souza', funcao: 'Operador de torno CNC', centro: 'torno' },
+    { chave: 'ricardo', nome: 'Ricardo Lima', funcao: 'Operador de torno CNC', centro: 'torno' },
     { chave: 'diego', nome: 'Diego Ramos Ferreira', funcao: 'Operador de fresa CNC', centro: 'fresa' },
     { chave: 'anderson', nome: 'Anderson Luiz Vieira', funcao: 'Operador de centro de usinagem', centro: 'cu' }
   ];
@@ -109,6 +110,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
       update: dados
     });
   }
+  await db.colaborador.deleteMany({ where: { id: id('colab-paulo'), apontamentos: { none: {} }, operacoes: { none: {} } } });
   for (const op of operadores) {
     const dados = {
       nome: op.nome,
@@ -205,7 +207,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
       lote: 20,
       desconto: '0',
       tabela: 'outubro',
-      status: 'APROVADO',
+      status: 'CONVERTIDO',
       validadeEm: 3,
       linhas: [
         { tipo: 'materialCorte', descricao: 'Barra redonda SAE 1045 Ø50', comprimentoMm: '320', sobraMm: '5', pesoPorMetroKg: '15.41', precoKg: '9.80' },
@@ -214,7 +216,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
         { tipo: 'operacao', descricao: 'Fresamento do rasgo de chaveta', centroId: centro('fresa'), cicloHorasPorPeca: '0.1', setupHorasPorLote: '1.5' },
         { tipo: 'terceiro', descricao: 'Retífica cilíndrica externa', base: 'peca', custo: '18', markup: '0.1' }
       ],
-      eventos: [['criado', 'RASCUNHO', 1, 12], ['enviado', 'ENVIADO', 1, 11], ['aprovado', 'APROVADO', 1, 4]]
+      eventos: [['criado', 'RASCUNHO', 1, 12], ['enviado', 'ENVIADO', 1, 11], ['aprovado', 'APROVADO', 1, 4], ['convertido', 'CONVERTIDO', 1, 4, 'OS-2026-00038']]
     },
     {
       n: 125,
@@ -281,6 +283,70 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
         { tipo: 'operacao', descricao: 'Torneamento CNC', centroId: centro('torno'), cicloHorasPorPeca: '0.1', setupHorasPorLote: '3' }
       ],
       eventos: [['criado', 'RASCUNHO', 1, 3], ['enviado', 'ENVIADO', 1, 2]]
+    },
+    {
+      n: 115,
+      cliente: 'metalvale',
+      titulo: 'Engrenagem de dentes retos módulo 2 — lote de 12',
+      lote: 12,
+      desconto: '0',
+      tabela: 'setembro',
+      status: 'CONVERTIDO',
+      validadeEm: -15,
+      linhas: [
+        { tipo: 'material', descricao: 'Tarugo SAE 4140 Ø80', base: 'peca', quantidade: '1', custoUnitario: '46.00' },
+        { tipo: 'operacao', descricao: 'Torneamento do blank', centroId: centro('torno'), cicloHorasPorPeca: '0.2', setupHorasPorLote: '1' },
+        { tipo: 'operacao', descricao: 'Geração dos dentes', centroId: centro('cu'), cicloHorasPorPeca: '0.45', setupHorasPorLote: '2' },
+        { tipo: 'terceiro', descricao: 'Têmpera por indução', base: 'lote', custo: '260', markup: '0.1' }
+      ],
+      eventos: [['criado', 'RASCUNHO', 1, 30], ['enviado', 'ENVIADO', 1, 29], ['aprovado', 'APROVADO', 1, 25], ['convertido', 'CONVERTIDO', 1, 25, 'OS-2026-00037']]
+    },
+    {
+      n: 116,
+      cliente: 'babitonga',
+      titulo: 'Eixo da bomba de porão em inox 420 — 6 peças',
+      lote: 6,
+      desconto: '0',
+      tabela: 'outubro',
+      status: 'CONVERTIDO',
+      validadeEm: 9,
+      linhas: [
+        { tipo: 'materialCorte', descricao: 'Barra inox 420 Ø40', comprimentoMm: '620', sobraMm: '10', pesoPorMetroKg: '9.86', precoKg: '36' },
+        { tipo: 'operacao', descricao: 'Torneamento', centroId: centro('torno'), cicloHorasPorPeca: '0.6', setupHorasPorLote: '1.5' },
+        { tipo: 'operacao', descricao: 'Fresamento dos rasgos', centroId: centro('fresa'), cicloHorasPorPeca: '0.25', setupHorasPorLote: '1' }
+      ],
+      eventos: [['criado', 'RASCUNHO', 1, 9], ['enviado', 'ENVIADO', 1, 8], ['aprovado', 'APROVADO', 1, 6], ['convertido', 'CONVERTIDO', 1, 6, 'OS-2026-00039']]
+    },
+    {
+      n: 117,
+      cliente: 'pirabeiraba',
+      titulo: 'Bucha-guia temperada para molde de injeção — 8 peças',
+      lote: 8,
+      desconto: '0',
+      tabela: 'outubro',
+      status: 'CONVERTIDO',
+      validadeEm: 1,
+      linhas: [
+        { tipo: 'material', descricao: 'Barra SAE 52100 Ø35', base: 'peca', quantidade: '1', custoUnitario: '14.50' },
+        { tipo: 'operacao', descricao: 'Torneamento', centroId: centro('torno'), cicloHorasPorPeca: '0.3', setupHorasPorLote: '1.5' },
+        { tipo: 'terceiro', descricao: 'Têmpera e retífica', base: 'lote', custo: '380', markup: '0.1' }
+      ],
+      eventos: [['criado', 'RASCUNHO', 1, 14], ['enviado', 'ENVIADO', 1, 13], ['aprovado', 'APROVADO', 1, 10], ['convertido', 'CONVERTIDO', 1, 10, 'OS-2026-00040']]
+    },
+    {
+      n: 121,
+      cliente: 'metalvale',
+      titulo: 'Bucha de latão com tolerância H7 — lote de 10 peças',
+      lote: 10,
+      desconto: '0.05',
+      tabela: 'outubro',
+      status: 'CONVERTIDO',
+      validadeEm: 14,
+      linhas: [
+        { tipo: 'material', descricao: 'Barra de latão C360 Ø25', base: 'peca', quantidade: '1', custoUnitario: '8.00' },
+        { tipo: 'operacao', descricao: 'Torneamento CNC', centroId: centro('torno'), cicloHorasPorPeca: '0.1', setupHorasPorLote: '3' }
+      ],
+      eventos: [['criado', 'RASCUNHO', 1, 2], ['enviado', 'ENVIADO', 1, 2], ['aprovado', 'APROVADO', 1, 1], ['convertido', 'CONVERTIDO', 1, 1, 'OS-2026-00041']]
     }
   ];
 
@@ -328,7 +394,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
         versao,
         detalhe,
         precoFinalLote: pd(resultado.precoFinalLote),
-        usuarioId: id(evento === 'aprovado' || evento === 'recusado' ? 'usuario-marina' : 'usuario-paulo'),
+        usuarioId: id(['aprovado', 'recusado', 'convertido'].includes(evento) ? 'usuario-marina' : 'usuario-paulo'),
         data: haDias(diasAtras)
       }))
     });
@@ -341,6 +407,8 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     await db.sequencia.upsert({ where: { tenantId_chave: { tenantId, chave } }, create: { tenantId, chave, valor: 128 }, update: { valor: 128 } });
   }
 
+  const ordens = await semearOrdens(db, tenantId, id);
+
   return {
     tenantId,
     emails: { gestor: `marina@${o.dominio}`, orcamentista: `paulo@${o.dominio}` },
@@ -348,6 +416,8 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     centros: { torno: centro('torno'), fresa: centro('fresa'), cu: centro('cu') },
     clientes: Object.fromEntries(clientes.map((c) => [c.chave, id(`cliente-${c.chave}`)])) as Record<string, string>,
     orcamentoBuchaId: id('orcamento-128'),
+    colaboradores: { ricardo: id('colab-ricardo'), diego: id('colab-diego'), anderson: id('colab-anderson') },
+    ordens,
     precos: resultados
   };
 }

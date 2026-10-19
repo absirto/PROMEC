@@ -179,6 +179,11 @@ export default function OrcamentoEditor() {
   const aprovar = acao('aprovar', 'Aprovado! Agora é com a produção.');
   const recusar = useAcao((motivo: string) => api<Orcamento>(`/orcamentos/${id}/recusar`, { method: 'POST', body: { motivo } }), { invalida: inval, sucesso: 'Recusa registrada. O motivo ajuda a acertar os próximos.', onSuccess: (r2) => { aposGravar(r2); setModal(null); } });
   const liberar = useAcao((justificativa: string) => api<Orcamento>(`/orcamentos/${id}/liberar-margem`, { method: 'POST', body: { justificativa } }), { invalida: inval, sucesso: 'Margem liberada. O orçamento já pode ser enviado.', onSuccess: (r2) => { aposGravar(r2); setModal(null); } });
+  const converter = useAcao(() => api<{ id: string; numero: string }>(`/orcamentos/${id}/converter`, { method: 'POST' }), {
+    invalida: [...inval, ['ordens-servico']],
+    sucesso: (r2) => `${r2?.numero ?? 'OS'} criada e na fila. O roteiro veio do orçamento.`,
+    onSuccess: (r2) => r2?.id && navigate(`/ordens-servico/${r2.id}`)
+  });
   const atualizar = acao('atualizar-custos', 'Custos atualizados para a tabela vigente. Uma versão nova foi gerada.');
 
   if (!novo && q.isLoading) return <Card><Carregando /></Card>;
@@ -258,9 +263,14 @@ export default function OrcamentoEditor() {
           <Button tamanho="sm" variante="perigo" icone={ThumbsDown} onClick={() => { setTexto(''); setModal('recusar'); }} className="flex-1">Recusar</Button>
         </div>
       ];
+    if (status === 'APROVADO')
+      return [
+        <Button key="c" variante="primario" tamanho="lg" icone={Wrench} carregando={converter.isPending} onClick={() => converter.mutate(undefined)} className="w-full">Converter em OS</Button>,
+        <p key="ro" className="m-0 text-[13.5px] text-ink-2">Aprovado: o orçamento fica como foi combinado. A OS copia o roteiro e os materiais.</p>
+      ];
     return [
       <p key="ro" className="m-0 text-[13.5px] text-ink-2 p-3 rounded-field bg-surface-1">
-        {status === 'APROVADO' ? 'Orçamento aprovado: ele fica como foi combinado, sem edição.' : status === 'RECUSADO' ? `Recusado${o?.motivoRecusa ? `: “${o.motivoRecusa}”` : '.'}` : `${rotuloOrcamento(status)}: só para consulta.`}
+        {status === 'RECUSADO' ? `Recusado${o?.motivoRecusa ? `: “${o.motivoRecusa}”` : '.'}` : status === 'CONVERTIDO' ? 'Convertido em OS: acompanhe a execução em Ordens de Serviço.' : `${rotuloOrcamento(status)}: só para consulta.`}
       </p>
     ];
   })();

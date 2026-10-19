@@ -6,6 +6,7 @@ import { ClientesModule } from './clientes/clientes.module';
 import { ColaboradoresModule } from './colaboradores/colaboradores.module';
 import { CustoFixoModule } from './custo-fixo/custo-fixo.module';
 import { OrcamentosModule } from './orcamentos/orcamentos.module';
+import { OrdensModule } from './ordens/ordens.module';
 import { PainelModule } from './painel/painel.module';
 import { ParametrosModule } from './parametros/parametros.module';
 import { PrismaModule } from './prisma/prisma.service';
@@ -23,6 +24,7 @@ import { TabelasModule } from './tabelas-custos/tabelas.module';
     TabelasModule,
     ClientesModule,
     OrcamentosModule,
+    OrdensModule,
     PainelModule
   ]
 })

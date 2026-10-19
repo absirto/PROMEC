@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · OS no celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.45;color:#1E1B16;-webkit-font-smoothing:antialiased;--t2:#4E473D;--t3:#6E6557;--bd:#E2DACD}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.66);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.88);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 -6px 26px rgba(40,30,15,.12)}
+.lg::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%);mix-blend-mode:soft-light}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.tb{all:unset;box-sizing:border-box;flex:1;height:56px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11.5px;font-weight:500;color:#4E473D;cursor:pointer;text-decoration:none}
+.tb.on{color:#9A3A06;font-weight:700}
+.chip{all:unset;box-sizing:border-box;cursor:pointer;height:38px;padding:0 14px;border-radius:999px;border:1.5px solid #CFC4B3;background:#fff;font-size:13.5px;font-weight:500;white-space:nowrap}
+.chip.on{border-color:#E35D14;background:#FDE8DA;color:#9A3A06;font-weight:600}
+.oc{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;width:100%;padding:14px;border-radius:20px;background:#fff;border:1px solid var(--bd);box-shadow:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.srch{display:flex;align-items:center;gap:10px;height:48px;padding:0 16px;border-radius:999px;background:#fff;border:1.5px solid #CFC4B3}
+.srch input{all:unset;flex:1;min-width:0;font-size:15px}
+.btn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:999px;font-weight:600;font-size:15px}
+.tb:focus-visible,.chip:focus-visible,.oc:focus-visible,.srch:focus-within,.btn:focus-visible{outline:3px solid #E35D14;outline-offset:2px}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+.sheet{animation:up .35s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="width: 390px; min-height: 1500px; position: relative; display: flex; flex-direction: column;">
+
+<header class="lg" style="position: sticky; top: 0; z-index: 3; border-radius: 0 0 26px 26px; padding: 16px 14px 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 -1px 0 rgba(255,255,255,.8), 0 8px 24px rgba(40,30,15,.08);">
+<h1 class="disp" style="margin: 0; font-size: 34px; font-weight: 700; line-height: 1;">Ordens de Serviço</h1>
+<label class="srch"><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Buscar OS</span><input value="{{q}}" onChange="{{onQ}}" placeholder="Número, cliente ou placa"></label>
+<div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;" role="group" aria-label="Filtro"><sc-for list="{{filters}}" as="f" hint-placeholder-count="5"><button type="button" class="chip {{f.cls}}" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}">{{f.l}} <span class="mono" style="font-size: 12px; opacity: .8;">{{f.n}}</span></button></sc-for></div>
+</header>
+
+<main style="padding: 14px 14px 120px; display: flex; flex-direction: column; gap: 10px;">
+<sc-for list="{{list}}" as="o" hint-placeholder-count="6">
+<button type="button" class="oc" onClick="{{o.open}}" style="border-left: 5px solid {{o.sc}};">
+<span style="display: flex; justify-content: space-between; align-items: center;"><span class="mono" style="font-size: 13px; font-weight: 700;">{{o.c}}</span><span class="bdg {{o.cls}}">{{o.st}}</span></span>
+<span style="font-weight: 600; font-size: 16px; text-align: left;">{{o.t}}</span>
+<span style="font-size: 13.5px; color: var(--t2); text-align: left;">{{o.cli}}</span>
+<span style="height: 6px; border-radius: 99px; background: #F1ECE4; overflow: hidden;"><span style="display: block; height: 100%; width: {{o.prog}}; background: {{o.pc}}; border-radius: 99px;"></span></span>
+<span style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--t2);">{{o.ct}}</span><span style="color: {{o.dc}}; font-weight: {{o.dw}};">{{o.due}}</span></span>
+</button>
+</sc-for>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div style="padding: 30px 10px; text-align: center; color: var(--t2);">Nenhuma OS com “{{q}}”. Tente o número ou a placa.</div></sc-if>
+</main>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; inset: 0; background: rgba(20,16,10,.42); display: flex; align-items: flex-end; z-index: 6;">
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t" style="width: 100%; border-radius: 28px 28px 0 0; background: #fff; padding: 12px 18px 28px; display: flex; flex-direction: column; gap: 14px;">
+<span style="width: 40px; height: 5px; border-radius: 3px; background: #CFC4B3; align-self: center;" aria-hidden="true"></span>
+<span style="display: flex; justify-content: space-between; align-items: center;"><span class="mono" style="font-weight: 700;">{{sel.c}}</span><span class="bdg {{sel.cls}}">{{sel.st}}</span></span>
+<h2 id="sh-t" class="disp" style="margin: 0; font-size: 28px; font-weight: 700; line-height: 1.05;">{{sel.t}}</h2>
+<span style="color: var(--t2);">{{sel.cli}} · prazo {{sel.due}}</span>
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{sel.pairs}}" as="p" hint-placeholder-count="3"><div style="display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: #FBF8F3;"><span style="font-weight: 600; font-size: 14px;">{{p.k}}</span><span class="mono" style="font-size: 13px;"><span style="color: var(--t3);">{{p.o}}</span> → <strong>{{p.r}}</strong></span><span class="bdg {{p.cls}}">{{p.d}}</span></div></sc-for>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><button type="button" class="btn" style="border: 1px solid #CFC4B3;" onClick="{{close}}">Fechar</button><a href="OS-Detalhe.dc.html" class="btn" style="background: #B8460A; color: #fff; text-decoration: none;">Abrir a OS</a></div>
+</div>
+</div>
+</sc-if>
+
+<nav class="lg" aria-label="Navegação" style="position: sticky; bottom: 0; margin-top: auto; border-radius: 28px 28px 0 0; padding: 8px 10px 20px; display: flex; gap: 4px; z-index: 5;">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="5"><a href="{{t.href}}" class="tb {{t.cls}}" aria-current="{{t.cur}}"><svg class="i" viewBox="0 0 24 24" style="width: 24px; height: 24px;" aria-hidden="true"><path d="{{t.icon}}"/></svg>{{t.l}}</a></sc-for>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { q: '', f: 'all', sel: -1 };
+  }
+  renderVals() {
+    const st = this.state;
+    const SEGC = { Usinagem: '#1D6FB8', Oficina: '#E35D14', Caldeiraria: '#7C5CC4' };
+    const OS = [
+      ['OS-2026-00041', 'Bucha de latão H7', 'Metalúrgica Vale', 'Usinagem', 'Torno CNC · Ricardo', 'Em execução', 'b-run', 60, '20/10', false, [['Horas', '4,00 h', '4,35 h', '+8,8%', 'b-wa'], ['Material', 'R$ 80,00', 'R$ 76,40', '−4,5%', 'b-ok'], ['Margem', '16,5%', '11,8%', 'abaixo', 'b-bad']], 'exe'],
+      ['OS-2026-00052', 'Revisão + kit relação · ABC1D23', 'Carlos Eduardo · CG 160', 'Oficina', 'Box 3 · Diego', 'Em execução', 'b-run', 90, 'hoje 17:00', false, [['Horas', '2,00 h', '1,85 h', '−7,5%', 'b-ok'], ['Peças', 'R$ 171,10', 'R$ 171,10', 'igual', 'b-ok'], ['Margem', '21,2%', '23,6%', 'no alvo', 'b-ok']], 'exe'],
+      ['OS-2026-00046', 'Estrutura de esteira', 'Estruturas Sul', 'Caldeiraria', 'Solda MIG · Marcos', 'Pausada', 'b-wa', 35, 'atrasa 2 dias', true, [['Horas', '18,00 h', '7,10 h', 'em curso', 'b-neu'], ['Material', 'R$ 2.840,00', 'falta chapa', 'parada', 'b-wa'], ['Margem', '19,0%', '—', '—', 'b-neu']], 'late'],
+      ['OS-2026-00050', 'Bucha Ø30 em bronze', 'Metalúrgica Vale', 'Usinagem', 'Torno CNC · na fila', 'Em fila', 'b-inf', 0, 'atrasa 1 dia', true, [['Horas', '5,00 h', '—', 'na fila', 'b-neu']], 'late'],
+      ['OS-2026-00044', 'Eixo de transmissão Ø45', 'Agro Pampa', 'Usinagem', 'Torno CNC · na fila', 'Em fila', 'b-inf', 0, '16/10', false, [['Horas', '9,50 h', '—', 'na fila', 'b-neu']], 'fila'],
+      ['OS-2026-00040', 'Suporte soldado 3/16', 'Estruturas Sul', 'Caldeiraria', 'Bancada · Carla', 'Qualidade', 'b-inf', 100, '15/10', false, [['Horas', '6,00 h', '6,40 h', '+6,7%', 'b-wa']], 'cq']
+    ];
+    const q = st.q.trim().toLowerCase();
+    const match = (o) => (st.f === 'all' || o[11] === st.f) && (!q || (o[0] + ' ' + o[1] + ' ' + o[2]).toLowerCase().indexOf(q) >= 0);
+    const list = OS.map((o, i) => ({ o, i })).filter((x) => match(x.o)).map(({ o, i }) => ({ c: o[0], t: o[1], cli: o[2], sc: SEGC[o[3]], ct: o[4], st: o[5], cls: o[6], prog: o[7] + '%', pc: o[7] >= 100 ? '#0F7A55' : '#5B3FB5', due: o[8], dc: o[9] ? '#C0352B' : '#4E473D', dw: o[9] ? 700 : 400, open: () => this.setState({ sel: i }) }));
+    const F = [['all', 'Todas'], ['exe', 'Em execução'], ['late', 'Atrasadas'], ['fila', 'Na fila'], ['cq', 'Qualidade']];
+    const filters = F.map((f) => ({ l: f[1], n: f[0] === 'all' ? OS.length : OS.filter((o) => o[11] === f[0]).length, cls: st.f === f[0] ? 'on' : '', pressed: st.f === f[0] ? 'true' : 'false', pick: () => this.setState({ f: f[0] }) }));
+    const s = st.sel >= 0 ? OS[st.sel] : OS[0];
+    const sel = { c: s[0], t: s[1], cli: s[2], st: s[5], cls: s[6], due: s[8], pairs: s[10].map((p) => ({ k: p[0], o: p[1], r: p[2], d: p[3], cls: p[4] })) };
+    const T = [['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z', 'Mobile-Painel.dc.html'], ['OS', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', 'Mobile-OS.dc.html', true], ['Aprovar', 'M20 6 9 17l-5-5', 'Mobile-Aprovacao.dc.html'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5', 'Tabela-Custos.dc.html'], ['Mais', 'M4 6h16M4 12h16M4 18h16', 'Mobile-Painel.dc.html']];
+    const tabs = T.map((t) => ({ l: t[0], icon: t[1], href: t[2], cls: t[3] ? 'on' : '', cur: t[3] ? 'page' : 'false' }));
+    return { q: st.q, onQ: (e) => this.setState({ q: e.target.value }), filters, list, empty: list.length === 0, hasSel: st.sel >= 0, sel, close: () => this.setState({ sel: -1 }), tabs };
+  }
+}
+</script>
+</body>
+</html>

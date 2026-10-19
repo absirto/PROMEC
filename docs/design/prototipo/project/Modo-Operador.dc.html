@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Modo Operador</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:17px;line-height:1.4;color:var(--t1);-webkit-font-smoothing:antialiased}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.t-claro{--canvas:#F2EEE7;--s1:#FFFFFF;--s2:#FBF8F3;--s3:#EDE6DA;--bd:#E2DACD;--bd2:#CFC4B3;--t1:#1E1B16;--t2:#4E473D;--t3:#6E6557;--set:#E0A100;--setT:#1E1B16;--prod:#5B3FB5;--prodT:#fff;--pau:#C0352B;--pauT:#fff;--end:#1D4E7A;--endT:#fff;--ok:#0F7A55;--oks:#DDF3E9;--wa:#8A5300;--was:#FCEFC7;--bw:1.5px}
+.t-hc{--canvas:#000;--s1:#0A0A0A;--s2:#141414;--s3:#222;--bd:#fff;--bd2:#fff;--t1:#fff;--t2:#F0F0F0;--t3:#DADADA;--set:#FFD400;--setT:#000;--prod:#C9B8FF;--prodT:#000;--pau:#FF8A80;--pauT:#000;--end:#8CC4FF;--endT:#000;--ok:#5EEA9C;--oks:#000;--wa:#FFD400;--was:#000;--bw:3px}
+.big{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:22px;font:700 22px/1 'Barlow Semi Condensed',sans-serif;letter-spacing:.02em;text-transform:uppercase;transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+.big:active{transform:scale(.96)}
+.big .i{width:30px;height:30px}
+.big:focus-visible,.cnt:focus-visible,.pill:focus-visible,.rsn:focus-visible,.job:focus-visible{outline:4px solid #E35D14;outline-offset:3px}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.cnt{all:unset;box-sizing:border-box;cursor:pointer;width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:var(--s3);color:var(--t1);border:var(--bw) solid var(--bd2)}
+.cnt:active{transform:scale(.94)}
+.pill{all:unset;box-sizing:border-box;cursor:pointer;display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 16px;border-radius:999px;font-size:15px;font-weight:600}
+.rsn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:14px;min-height:76px;padding:0 20px;border-radius:20px;background:var(--s2);border:var(--bw) solid var(--bd2);font-size:19px;font-weight:600;color:var(--t1)}
+.rsn:active{transform:scale(.97)}
+.job{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:14px;border-radius:18px;border:var(--bw) solid var(--bd);background:var(--s1)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(91,63,181,.45)}100%{box-shadow:0 0 0 16px rgba(91,63,181,0)}}
+.pulse{animation:pulse 1.6s ease-out infinite}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet{animation:up .3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes spinr{to{transform:rotate(360deg)}}
+.sync{animation:spinr 1s linear infinite}
+@media (prefers-reduced-motion:reduce){.pulse,.sheet,.sync{animation:none}}
+</style>
+</helmet>
+<div class="pm {{themeClass}}" style="width: 1024px; height: 768px; position: relative; overflow: hidden; background: var(--canvas); display: flex; flex-direction: column;">
+
+<header style="height: 76px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 18px; background: linear-gradient(135deg, #2A6AA3, #15395A); color: #fff;">
+<span style="width: 50px; height: 50px; border-radius: 50%; background: #fff; color: #15395A; display: grid; place-items: center; font-weight: 700; font-size: 18px;">RA</span>
+<span style="display: flex; flex-direction: column; line-height: 1.2; flex: 1;"><span style="font-weight: 700; font-size: 19px;">Bom dia, Ricardo</span><span style="font-size: 14px; color: #C9D7E6;">Torno CNC de entrada · turno da manhã</span></span>
+<button type="button" class="pill" onClick="{{toggleNet}}" style="background: {{netBg}}; color: {{netFg}};" aria-label="{{netAria}}">
+<sc-if value="{{syncing}}" hint-placeholder-val="{{false}}"><svg class="i sync" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg></sc-if>
+<sc-if value="{{notSyncing}}" hint-placeholder-val="{{true}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{netIcon}}"/></svg></sc-if>
+{{netTxt}}</button>
+<button type="button" class="pill" style="background: rgba(255,255,255,.16); color: #fff;" aria-label="Ler o QR code da OS"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V4a1 1 0 0 1 1-1h3M17 3h3a1 1 0 0 1 1 1v3M21 17v3a1 1 0 0 1-1 1h-3M7 21H4a1 1 0 0 1-1-1v-3M7 8h3v3H7zM14 8h3v3h-3zM7 14h3v3H7zM14 14h3v3h-3z"/></svg>Ler OS</button>
+<button type="button" class="pill" onClick="{{toggleHc}}" style="background: rgba(255,255,255,.16); color: #fff; width: 48px; padding: 0; justify-content: center;" aria-label="{{hcAria}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>
+</header>
+
+<div style="flex: 1; display: flex; gap: 14px; padding: 14px; min-height: 0;">
+
+<aside aria-label="Sua fila hoje" style="width: 250px; flex: none; display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 15px; font-weight: 700; color: var(--t2);">Sua fila hoje</span>
+<sc-for list="{{jobs}}" as="j" hint-placeholder-count="3">
+<button type="button" class="job" style="border-color: {{j.bc}}; background: {{j.bg}};" aria-current="{{j.cur}}">
+<span class="mono" style="font-size: 13px; color: var(--t3);">{{j.code}}</span>
+<span style="font-size: 16px; font-weight: 700; line-height: 1.2;">{{j.name}}</span>
+<span style="font-size: 14px; color: var(--t2);">{{j.meta}}</span>
+</button>
+</sc-for>
+</aside>
+
+<main style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<section style="flex: 1; border-radius: 26px; background: var(--s1); border: var(--bw) solid var(--bd); padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden;" aria-label="Operação em andamento">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+<span style="display: flex; flex-direction: column;"><span class="mono" style="font-size: 14px; color: var(--t3);">OS-2026-00041 · Op 10</span><span class="disp" style="font-size: 30px; font-weight: 700; line-height: 1.05;">Bucha de latão H7</span><span style="font-size: 16px; color: var(--t2);">Tornear completo + furo H7 · meta 0,10 h por peça (6 min)</span></span>
+<span class="{{modePulse}}" style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px; background: {{modeBg}}; color: {{modeFg}}; font-weight: 700; font-size: 16px; white-space: nowrap;">{{modeLabel}}</span>
+</div>
+<div style="display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;" aria-live="off">
+<span class="mono" style="font-size: 92px; font-weight: 700; letter-spacing: -.04em; line-height: 1;">{{clock}}</span>
+<span class="mono" style="font-size: 22px; color: var(--t2);">{{dec}}</span>
+</div>
+<span style="font-size: 15px; color: var(--t2);">{{modeHint}}</span>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto;">
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 20px; background: var(--oks); border: var(--bw) solid var(--bd);">
+<button type="button" class="cnt" onClick="{{goodDown}}" aria-label="Menos uma peça boa"><svg class="i" viewBox="0 0 24 24" style="width: 28px; height: 28px;" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+<span style="flex: 1; display: flex; flex-direction: column; align-items: center;" aria-live="polite"><span class="mono" style="font-size: 44px; font-weight: 700; line-height: 1; color: var(--ok);">{{good}}</span><span style="font-size: 14px; font-weight: 600; color: var(--t2);">peças boas de 10</span></span>
+<button type="button" class="cnt" onClick="{{goodUp}}" aria-label="Mais uma peça boa" style="background: var(--ok); color: #fff; border-color: transparent;"><svg class="i" viewBox="0 0 24 24" style="width: 28px; height: 28px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 20px; background: var(--s2); border: var(--bw) solid var(--bd);">
+<button type="button" class="cnt" onClick="{{scrapDown}}" aria-label="Menos uma peça refugada"><svg class="i" viewBox="0 0 24 24" style="width: 28px; height: 28px;" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+<span style="flex: 1; display: flex; flex-direction: column; align-items: center;" aria-live="polite"><span class="mono" style="font-size: 44px; font-weight: 700; line-height: 1; color: {{scrapColor}};">{{scrap}}</span><span style="font-size: 14px; font-weight: 600; color: var(--t2);">refugo</span></span>
+<button type="button" class="cnt" onClick="{{scrapUp}}" aria-label="Mais uma peça refugada"><svg class="i" viewBox="0 0 24 24" style="width: 28px; height: 28px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+</div>
+</div>
+</section>
+
+<nav aria-label="Ações" style="height: 120px; flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
+<sc-for list="{{acts}}" as="a" hint-placeholder-count="4">
+<button type="button" class="big" onClick="{{a.pick}}" aria-pressed="{{a.pressed}}" style="background: {{a.bg}}; color: {{a.fg}}; border: {{a.border}}; box-shadow: {{a.sh}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{a.icon}}"/></svg>{{a.label}}</button>
+</sc-for>
+</nav>
+</main>
+</div>
+
+<sc-if value="{{sheetPause}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; inset: 0; background: rgba(20,16,10,.45); display: flex; align-items: flex-end;">
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ps-t" style="width: 100%; border-radius: 30px 30px 0 0; background: var(--s1); padding: 22px 24px 26px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; justify-content: space-between; align-items: center;"><h2 id="ps-t" class="disp" style="margin: 0; font-size: 32px; font-weight: 700;">Por que parou?</h2><button type="button" class="pill" onClick="{{closeSheet}}" style="background: var(--s3); color: var(--t1);">Voltar ao trabalho</button></div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+<sc-for list="{{reasons}}" as="r" hint-placeholder-count="6"><button type="button" class="rsn" onClick="{{r.pick}}"><span style="width: 44px; height: 44px; border-radius: 14px; background: {{r.c}}; color: #fff; display: grid; place-items: center; flex: none;"><svg class="i" viewBox="0 0 24 24" style="width: 24px; height: 24px;" aria-hidden="true"><path d="{{r.icon}}"/></svg></span>{{r.label}}</button></sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{sheetEnd}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; inset: 0; background: rgba(20,16,10,.45); display: flex; align-items: flex-end;">
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="es-t" style="width: 100%; border-radius: 30px 30px 0 0; background: var(--s1); padding: 22px 24px 26px; display: flex; flex-direction: column; gap: 16px;">
+<h2 id="es-t" class="disp" style="margin: 0; font-size: 32px; font-weight: 700;">Encerrar a operação 10?</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+<div style="padding: 16px; border-radius: 20px; background: var(--oks);"><span style="display: block; font-size: 15px; color: var(--t2);">Peças boas</span><span class="mono" style="font-size: 40px; font-weight: 700; color: var(--ok);">{{good}}</span></div>
+<div style="padding: 16px; border-radius: 20px; background: var(--s2);"><span style="display: block; font-size: 15px; color: var(--t2);">Refugo</span><span class="mono" style="font-size: 40px; font-weight: 700;">{{scrap}}</span></div>
+<div style="padding: 16px; border-radius: 20px; background: var(--s2);"><span style="display: block; font-size: 15px; color: var(--t2);">Horas de produção</span><span class="mono" style="font-size: 40px; font-weight: 700;">{{prodDec}}</span></div>
+</div>
+<sc-if value="{{missing}}" hint-placeholder-val="{{true}}"><div style="padding: 14px 18px; border-radius: 18px; background: var(--was); color: var(--t1); font-size: 17px;">Faltam {{missingN}} peças para fechar o lote de 10. Se encerrar agora, a OS fica aguardando a próxima pessoa.</div></sc-if>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+<button type="button" class="big" onClick="{{closeSheet}}" style="height: 84px; background: var(--s3); color: var(--t1);">Continuar produzindo</button>
+<button type="button" class="big" onClick="{{confirmEnd}}" style="height: 84px; background: var(--end); color: var(--endT);">Sim, encerrar</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+<div role="status" class="sheet" style="position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%); padding: 14px 22px; border-radius: 999px; background: #1E1B16; color: #fff; font-size: 16px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.3); white-space: nowrap;">{{toast}}</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1024,"height":768}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { mode: 'prod', sec: 2052, prodSec: 2052, good: 6, scrap: 0, sheet: null, online: true, queue: 0, syncing: false, hc: false, toast: '' };
+  }
+  componentDidMount() {
+    this.iv = setInterval(() => {
+      if (this.state.mode === 'setup' || this.state.mode === 'prod' || this.state.mode === 'pause') {
+        this.setState((s) => ({ sec: s.sec + 1, prodSec: s.mode === 'prod' ? s.prodSec + 1 : s.prodSec }));
+      }
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.iv); clearTimeout(this.tt); clearTimeout(this.ts); }
+  note(msg) {
+    clearTimeout(this.tt);
+    this.setState((s) => ({ toast: msg, queue: s.online ? s.queue : s.queue + 1 }));
+    this.tt = setTimeout(() => this.setState({ toast: '' }), 2200);
+  }
+  renderVals() {
+    const s = this.state;
+    const pad = (n) => String(n).padStart(2, '0');
+    const hms = (t) => pad(Math.floor(t / 3600)) + ':' + pad(Math.floor(t / 60) % 60) + ':' + pad(t % 60);
+    const dec = (t) => (t / 3600).toFixed(2).replace('.', ',') + ' h';
+    const M = {
+      setup: ['Setup', 'var(--set)', 'var(--setT)', 'Preparando a máquina. O tempo de setup é cobrado uma vez no lote.'],
+      prod: ['Produzindo', 'var(--prod)', 'var(--prodT)', 'Ritmo bom: 0,095 h por peça, um pouco abaixo da meta.'],
+      pause: ['Pausado', 'var(--pau)', 'var(--pauT)', 'Motivo: ' + (s.reason || '—') + '. Toque em Produção para voltar.'],
+      done: ['Encerrado', 'var(--end)', 'var(--endT)', 'Operação encerrada. A inspeção da Carla já foi avisada.']
+    }[s.mode];
+    const I = {
+      setup: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+      prod: 'm7 4 12 8-12 8Z', pause: 'M9 5v14M15 5v14', end: 'M5 5h14v14H5z'
+    };
+    const go = (mode, msg) => () => { if (s.mode === mode) return; this.setState({ mode, sec: 0, sheet: null }); this.note(msg); };
+    const acts = [
+      { label: 'Setup', icon: I.setup, k: 'setup', bg: 'var(--set)', fg: 'var(--setT)', pick: go('setup', 'Setup iniciado') },
+      { label: 'Produção', icon: I.prod, k: 'prod', bg: 'var(--prod)', fg: 'var(--prodT)', pick: go('prod', 'Produção iniciada') },
+      { label: 'Pausar', icon: I.pause, k: 'pause', bg: 'var(--pau)', fg: 'var(--pauT)', pick: () => this.setState({ sheet: 'pause' }) },
+      { label: 'Encerrar', icon: I.end, k: 'done', bg: 'var(--end)', fg: 'var(--endT)', pick: () => this.setState({ sheet: 'end' }) }
+    ].map((a) => {
+      const on = s.mode === a.k;
+      return Object.assign(a, { pressed: String(on), border: on ? '4px solid var(--t1)' : '4px solid transparent', sh: on ? '0 10px 24px rgba(0,0,0,.25)' : 'none', bg: on || s.mode === 'done' ? a.bg : a.bg });
+    });
+    const R = [
+      ['Ajuste de ferramenta', '#E0A100', I.setup], ['Falta de material', '#1D6FB8', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'],
+      ['Máquina com problema', '#C0352B', 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z'],
+      ['Almoço ou café', '#6B6458', 'M17 8h1a4 4 0 1 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4ZM6 2v2M10 2v2M14 2v2'],
+      ['Esperando inspeção', '#0F7A55', 'M3 7h18v6H3zM7 13v4M11 13v2M15 13v4'],
+      ['Outro motivo', '#5B3FB5', 'M12 12h.01M19 12h.01M5 12h.01']
+    ];
+    const reasons = R.map((r) => ({ label: r[0], c: r[1], icon: r[2], pick: () => { this.setState({ mode: 'pause', sec: 0, sheet: null, reason: r[0].toLowerCase() }); this.note('Pausa registrada: ' + r[0].toLowerCase()); } }));
+    const jobs = [
+      ['OS-2026-00041', 'Bucha de latão H7', 'Agora · 6 de 10 peças', true],
+      ['OS-2026-00044', 'Eixo de transmissão Ø45', 'Próxima · setup 2,50 h', false],
+      ['OS-2026-00047', 'Flange SAE 4"', 'Depois · 20 peças', false]
+    ].map((j) => ({ code: j[0], name: j[1], meta: j[2], cur: j[3] ? 'true' : 'false', bc: j[3] ? 'var(--prod)' : 'var(--bd)', bg: j[3] ? 'var(--s2)' : 'var(--s1)' }));
+    const on = s.online;
+    return {
+      themeClass: s.hc ? 't-hc' : 't-claro', acts, reasons, jobs,
+      clock: hms(s.sec), dec: dec(s.sec), prodDec: dec(s.prodSec + 0),
+      modeLabel: M[0], modeBg: M[1], modeFg: M[2], modeHint: M[3], modePulse: s.mode === 'prod' ? 'pulse' : '',
+      good: s.good, scrap: s.scrap, scrapColor: s.scrap > 0 ? 'var(--pau)' : 'var(--t1)',
+      goodUp: () => { if (s.good + s.scrap >= 10) return; this.setState({ good: s.good + 1 }); this.note('Peça ' + (s.good + 1) + ' de 10 registrada'); },
+      goodDown: () => this.setState({ good: Math.max(0, s.good - 1) }),
+      scrapUp: () => { this.setState({ scrap: s.scrap + 1 }); this.note('Refugo registrado'); },
+      scrapDown: () => this.setState({ scrap: Math.max(0, s.scrap - 1) }),
+      sheetPause: s.sheet === 'pause', sheetEnd: s.sheet === 'end', closeSheet: () => this.setState({ sheet: null }),
+      missing: s.good + s.scrap < 10, missingN: 10 - s.good - s.scrap,
+      confirmEnd: () => { this.setState({ mode: 'done', sheet: null }); this.note('Operação encerrada. Bom trabalho!'); },
+      toast: s.toast,
+      syncing: s.syncing, notSyncing: !s.syncing,
+      netBg: s.syncing ? '#E3EDF7' : on ? '#DDF3E9' : '#FCEFC7', netFg: s.syncing ? '#15395A' : on ? '#0F7A55' : '#8A5300',
+      netIcon: on ? 'M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01' : 'M2 2l20 20M8.5 16.4a5 5 0 0 1 7 0M5 12.6a10 10 0 0 1 5.2-2.5M19 12.6a10 10 0 0 0-2.1-1.5M12 20h.01',
+      netTxt: s.syncing ? 'Enviando ' + s.queue + '…' : on ? 'Online' : 'Sem internet · ' + s.queue + ' na fila',
+      netAria: on ? 'Conectado. Toque para simular queda de internet' : 'Sem internet, ' + s.queue + ' apontamentos guardados no tablet. Toque para reconectar',
+      toggleNet: () => {
+        if (on) { this.setState({ online: false }); return; }
+        this.setState({ online: true, syncing: s.queue > 0 });
+        clearTimeout(this.ts);
+        this.ts = setTimeout(() => { this.setState({ syncing: false, queue: 0 }); this.note('Tudo sincronizado'); }, 1600);
+      },
+      toggleHc: () => this.setState({ hc: !s.hc }), hcAria: s.hc ? 'Voltar ao tema claro' : 'Alto contraste para sol forte'
+    };
+  }
+}
+</script>
+</body>
+</html>

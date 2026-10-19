@@ -59,17 +59,24 @@ model Empresa {
   nome     String
   criadaEm DateTime @default(now())
 
-  usuarios       Usuario[]
-  parametros     Parametros?
-  colaboradores  Colaborador[]
-  centros        CentroTrabalho[]
-  operadores     CentroOperador[]
-  custosFixos    LancamentoCustoFixo[]
-  tabelas        TabelaCustos[]
-  clientes       Cliente[]
-  orcamentos     Orcamento[]
-  historicos     OrcamentoHistorico[]
-  sequencias     Sequencia[]
+  usuarios      Usuario[]
+  parametros    Parametros?
+  colaboradores Colaborador[]
+  centros       CentroTrabalho[]
+  operadores    CentroOperador[]
+  custosFixos   LancamentoCustoFixo[]
+  tabelas       TabelaCustos[]
+  clientes      Cliente[]
+  orcamentos    Orcamento[]
+  historicos    OrcamentoHistorico[]
+  sequencias    Sequencia[]
+  ordens        OrdemServico[]
+  osOperacoes   OsOperacao[]
+  osCustos      OsCusto[]
+  apontamentos  Apontamento[]
+  ocorrencias   Ocorrencia[]
+  inspecoes     Inspecao[]
+  osHistoricos  OsHistorico[]
 }
 
 model Usuario {
@@ -96,6 +103,7 @@ model Parametros {
   margemAlvo            Decimal @default(0.2) @db.Decimal(9, 6)
   margemMinima          Decimal @default(0.15) @db.Decimal(9, 6)
   validadeOrcamentoDias Int     @default(15)
+  limiteServicoRapido   Decimal @default(1500) @db.Decimal(14, 2)
 
   empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
@@ -114,8 +122,10 @@ model Colaborador {
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
-  empresa   Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  alocacoes CentroOperador[]
+  empresa      Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  alocacoes    CentroOperador[]
+  operacoes    OsOperacao[]
+  apontamentos Apontamento[]
 
   @@index([tenantId])
 }
@@ -143,8 +153,9 @@ model CentroTrabalho {
   criadoEm        DateTime @default(now())
   atualizadoEm    DateTime @updatedAt
 
-  empresa    Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  operadores CentroOperador[]
+  empresa     Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  operadores  CentroOperador[]
+  osOperacoes OsOperacao[]
 
   @@unique([tenantId, codigo])
 }
@@ -193,8 +204,9 @@ model TabelaCustos {
   criadaEm      DateTime     @default(now())
   atualizadaEm  DateTime     @updatedAt
 
-  empresa    Empresa     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  empresa    Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   orcamentos Orcamento[]
+  ordens     OrdemServico[]
 
   @@unique([tenantId, competencia, versao])
   @@index([tenantId, status])
@@ -216,8 +228,9 @@ model Cliente {
   criadoEm     DateTime      @default(now())
   atualizadoEm DateTime      @updatedAt
 
-  empresa    Empresa     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  empresa    Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   orcamentos Orcamento[]
+  ordens     OrdemServico[]
 
   @@unique([tenantId, documento])
 }
@@ -261,6 +274,7 @@ model Orcamento {
   cliente      Cliente              @relation(fields: [clienteId], references: [id])
   tabelaCustos TabelaCustos         @relation(fields: [tabelaCustosId], references: [id])
   historico    OrcamentoHistorico[]
+  ordem        OrdemServico?
 
   @@unique([tenantId, numero])
   @@index([tenantId, status])
@@ -294,4 +308,198 @@ model Sequencia {
   empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@id([tenantId, chave])
+}
+
+enum StatusOs {
+  ABERTA
+  EM_FILA
+  EM_EXECUCAO
+  PAUSADA
+  CONTROLE_QUALIDADE
+  CONCLUIDA
+  ENTREGUE
+  CANCELADA
+}
+
+enum Prioridade {
+  BAIXA
+  NORMAL
+  ALTA
+  URGENTE
+}
+
+enum StatusOperacao {
+  PENDENTE
+  EM_ANDAMENTO
+  PAUSADA
+  CONCLUIDA
+}
+
+enum TipoApontamento {
+  SETUP
+  PRODUCAO
+}
+
+model OrdemServico {
+  id                 String     @id @default(cuid())
+  tenantId           String
+  numero             String
+  orcamentoId        String?    @unique
+  clienteId          String
+  tabelaCustosId     String
+  titulo             String
+  segmento           Segmento
+  lote               Int
+  prazo              DateTime   @db.Date
+  prioridade         Prioridade @default(NORMAL)
+  objeto             Json
+  observacoes        String     @default("")
+  status             StatusOs   @default(ABERTA)
+  precoFinalLote     Decimal    @db.Decimal(18, 10)
+  impostos           Decimal    @db.Decimal(9, 6)
+  comissao           Decimal    @db.Decimal(9, 6)
+  margemMinima       Decimal    @db.Decimal(9, 6)
+  custoRealFinal     Decimal?   @db.Decimal(18, 10)
+  desvioFinal        Decimal?   @db.Decimal(18, 10)
+  recebidoPor        String?
+  documentoEntrega   String?
+  observacaoEntrega  String?
+  entregueEm         DateTime?
+  motivoCancelamento String?
+  canceladaEm        DateTime?
+  criadoEm           DateTime   @default(now())
+  atualizadoEm       DateTime   @updatedAt
+
+  empresa      Empresa       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orcamento    Orcamento?    @relation(fields: [orcamentoId], references: [id])
+  cliente      Cliente       @relation(fields: [clienteId], references: [id])
+  tabelaCustos TabelaCustos  @relation(fields: [tabelaCustosId], references: [id])
+  operacoes    OsOperacao[]
+  custos       OsCusto[]
+  apontamentos Apontamento[]
+  ocorrencias  Ocorrencia[]
+  inspecoes    Inspecao[]
+  historico    OsHistorico[]
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, status])
+}
+
+model OsOperacao {
+  id                      String         @id @default(cuid())
+  tenantId                String
+  osId                    String
+  sequencia               Int
+  descricao               String
+  centroId                String
+  colaboradorId           String?
+  custoHora               Decimal        @db.Decimal(18, 10)
+  setupOrcadoHoras        Decimal        @db.Decimal(12, 4)
+  cicloOrcadoHorasPorPeca Decimal        @db.Decimal(12, 6)
+  setupConcluido          Boolean        @default(false)
+  status                  StatusOperacao @default(PENDENTE)
+  retrabalho              Boolean        @default(false)
+  orcada                  Boolean        @default(true)
+  justificativa           String?
+  criadoEm                DateTime       @default(now())
+
+  empresa      Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  os           OrdemServico   @relation(fields: [osId], references: [id], onDelete: Cascade)
+  centro       CentroTrabalho @relation(fields: [centroId], references: [id])
+  colaborador  Colaborador?   @relation(fields: [colaboradorId], references: [id])
+  apontamentos Apontamento[]
+
+  @@index([osId])
+  @@index([tenantId, centroId])
+}
+
+model OsCusto {
+  id            String   @id @default(cuid())
+  tenantId      String
+  osId          String
+  descricao     String
+  categoria     String
+  orcado        Decimal  @db.Decimal(18, 10)
+  real          Decimal? @db.Decimal(18, 10)
+  doOrcamento   Boolean  @default(false)
+  justificativa String?
+  criadoEm      DateTime @default(now())
+
+  empresa Empresa      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  os      OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  @@index([osId])
+}
+
+model Apontamento {
+  id            String          @id @default(cuid())
+  tenantId      String
+  osId          String
+  operacaoId    String
+  colaboradorId String
+  tipo          TipoApontamento
+  inicio        DateTime
+  fim           DateTime?
+  horas         Decimal?        @db.Decimal(12, 6)
+  quantidadeBoa Int             @default(0)
+  refugo        Int             @default(0)
+  observacao    String?
+
+  empresa     Empresa      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  os          OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+  operacao    OsOperacao   @relation(fields: [operacaoId], references: [id], onDelete: Cascade)
+  colaborador Colaborador  @relation(fields: [colaboradorId], references: [id])
+
+  @@index([osId])
+  @@index([tenantId, colaboradorId, fim])
+}
+
+model Ocorrencia {
+  id         String    @id @default(cuid())
+  tenantId   String
+  osId       String
+  tipo       String
+  motivo     String?
+  inicio     DateTime  @default(now())
+  fim        DateTime?
+  horas      Decimal?  @db.Decimal(12, 6)
+  observacao String?
+
+  empresa Empresa      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  os      OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  @@index([osId])
+}
+
+model Inspecao {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  osId               String
+  aprovada           Boolean
+  itens              Json
+  observacao         String?
+  centroRetrabalhoId String?
+  usuarioId          String?
+  data               DateTime @default(now())
+
+  empresa Empresa      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  os      OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  @@index([osId])
+}
+
+model OsHistorico {
+  id        String   @id @default(cuid())
+  tenantId  String
+  osId      String
+  status    StatusOs
+  evento    String
+  detalhe   String?
+  usuarioId String?
+  data      DateTime @default(now())
+
+  empresa Empresa      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  os      OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
+
+  @@index([osId])
 }

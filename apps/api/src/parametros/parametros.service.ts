@@ -40,7 +40,8 @@ export class ParametrosService {
           comissaoPadrao: pdOpc(dto.comissaoPadrao),
           margemAlvo: alvo,
           margemMinima: minima,
-          validadeOrcamentoDias: dto.validadeOrcamentoDias
+          validadeOrcamentoDias: dto.validadeOrcamentoDias,
+          limiteServicoRapido: pdOpc(dto.limiteServicoRapido)
         }
       });
       const empresa = dto.nomeEmpresa
@@ -61,7 +62,8 @@ export class ParametrosService {
       comissaoPadrao: tt(p.comissaoPadrao),
       margemAlvo: tt(p.margemAlvo),
       margemMinima: tt(p.margemMinima),
-      validadeOrcamentoDias: p.validadeOrcamentoDias
+      validadeOrcamentoDias: p.validadeOrcamentoDias,
+      limiteServicoRapido: tt(p.limiteServicoRapido)
     };
   }
 }

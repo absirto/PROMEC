@@ -23,9 +23,9 @@ const GRUPOS: Grupo[] = [
   {
     titulo: 'Operação',
     itens: [
-      { rotulo: 'Ordens de Serviço', icone: Wrench },
+      { rotulo: 'Ordens de Serviço', icone: Wrench, to: '/ordens-servico' },
+      { rotulo: 'Modo Operador', icone: Timer, to: '/operador' },
       { rotulo: 'Planejamento e Agenda', icone: CalendarRange },
-      { rotulo: 'Apontamento', icone: Timer },
       { rotulo: 'Qualidade', icone: Ruler }
     ]
   },
