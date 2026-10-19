@@ -23,6 +23,13 @@ npm run dev:api                                 # compila o motor; API em http:/
 npm run dev:web                                 # em outro terminal: http://localhost:5273
 ```
 
+Para só usar o sistema, sem recompilar a cada alteração (bem mais leve na CPU):
+
+```bash
+npm run api                                     # compila motor e API e sobe sem watch
+npm run web                                     # em outro terminal: build e servidor estático em http://localhost:5273
+```
+
 Login de desenvolvimento: `marina@usinagemjoinville.com.br` (gestora) ou `paulo@usinagemjoinville.com.br` (orçamentista), senha `SEED_SENHA` do `.env`.
 
 ## Testes
