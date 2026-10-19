@@ -2,13 +2,18 @@
   "name": "promec",
   "private": true,
   "version": "0.1.0",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
-    "dev:api": "npm run start:dev -w @promec/api",
+    "build": "npm run build -w @promec/motor && npm run build -w @promec/api && npm run build -w @promec/web",
+    "dev:api": "npm run build -w @promec/motor && npm run start:dev -w @promec/api",
     "dev:web": "npm run dev -w @promec/web",
     "db:up": "docker compose up -d db"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }

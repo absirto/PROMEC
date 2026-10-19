@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Entrar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFC08F}a:hover{color:#fff}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.glass{position:relative;background:rgba(255,255,255,.68);backdrop-filter:blur(28px) saturate(1.9);-webkit-backdrop-filter:blur(28px) saturate(1.9);border:1px solid rgba(255,255,255,.9);box-shadow:inset 0 1px 0 rgba(255,255,255,1),inset 0 -1px 0 rgba(255,255,255,.4),0 30px 80px rgba(5,15,30,.45)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(120% 60% at 20% 0%,rgba(255,255,255,.7),rgba(255,255,255,0) 50%),linear-gradient(160deg,rgba(255,255,255,0) 60%,rgba(255,255,255,.25));mix-blend-mode:soft-light}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.fld{display:flex;align-items:center;gap:10px;height:52px;padding:0 16px;border-radius:16px;background:rgba(255,255,255,.85);border:1.5px solid #CFC4B3;transition:border-color .2s,box-shadow .2s}
+.fld:focus-within{border-color:#E35D14;box-shadow:0 0 0 4px rgba(227,93,20,.18)}
+.fld.err{border-color:#C0352B;background:#FFF6F5}
+.fld input{all:unset;flex:1;min-width:0;font:500 16px/1 'IBM Plex Sans',sans-serif;color:#1E1B16}
+.btn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;height:54px;border-radius:999px;font:600 16px/1 'IBM Plex Sans',sans-serif;background:#B8460A;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 10px 24px rgba(184,70,10,.4);transition:transform .15s cubic-bezier(.2,.8,.2,1)}
+.btn:active{transform:scale(.97)}
+.btn[aria-disabled="true"]{background:#8C8476;box-shadow:none;cursor:not-allowed}
+.eye{all:unset;cursor:pointer;color:#6E6557;display:grid;place-items:center;width:32px;height:32px;border-radius:8px}
+.sg{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.14);gap:2px}
+.sg button{all:unset;box-sizing:border-box;height:30px;padding:0 12px;border-radius:999px;font-size:12.5px;font-weight:500;color:#D3E0EE;cursor:pointer}
+.sg button.on{background:#fff;color:#15395A}
+.btn:focus-visible,.eye:focus-visible,.sg button:focus-visible,a:focus-visible{outline:3px solid #FFC08F;outline-offset:3px}
+@keyframes floatA{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-14px) rotate(4deg)}}
+@keyframes floatB{0%,100%{transform:translateY(0)}50%{transform:translateY(12px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fa{animation:floatA 9s ease-in-out infinite}
+.fb{animation:floatB 11s ease-in-out infinite}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 60s linear infinite}
+.spin-r{transform-box:fill-box;transform-origin:center;animation:spin 42s linear infinite reverse}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.shake{animation:shake .4s ease}
+@keyframes rise{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:none}}
+.rv{animation:rise .7s cubic-bezier(.2,.8,.2,1) both .15s}
+@media (prefers-reduced-motion:reduce){.fa,.fb,.spin,.spin-r,.shake,.rv{animation:none}}
+</style>
+</helmet>
+<div class="pm" style="position: relative; min-height: 100vh; overflow: hidden; background: radial-gradient(1200px 700px at 75% 20%, #2A6AA3 0%, #15395A 45%, #0B1D2E 100%); display: flex; flex-direction: column;">
+
+<svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+<defs><pattern id="lg-grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0v40" fill="none" stroke="rgba(255,255,255,.05)"/></pattern></defs>
+<rect width="1440" height="900" fill="url(#lg-grid)"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path class="spin" d="{{g1}}" stroke="rgba(255,255,255,.22)" stroke-width="2"/><circle cx="1180" cy="240" r="60" stroke="rgba(255,255,255,.22)" stroke-width="2"/><circle cx="1180" cy="240" r="22" stroke="rgba(255,192,143,.5)" stroke-width="2"/>
+<path class="spin-r" d="{{g2}}" stroke="rgba(255,255,255,.18)" stroke-width="2"/><circle cx="1335" cy="360" r="30" stroke="rgba(255,255,255,.18)" stroke-width="2"/>
+<path class="spin" d="{{g3}}" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+<g class="fa" stroke="rgba(255,255,255,.26)" stroke-width="2"><path d="M140 640h210l4 4v117l-4 4H140l-4-4V644zM136 652.5h218M136 752.5h218"/><path d="M110 702.5h270" stroke="rgba(255,192,143,.55)" stroke-dasharray="14 4 3 4"/><path d="M144 652.5l12-12M168 652.5l12-12M192 652.5l12-12M216 652.5l12-12M240 652.5l12-12M264 652.5l12-12M288 652.5l12-12M312 652.5l12-12M144 765l12-12M168 765l12-12M192 765l12-12M216 765l12-12M240 765l12-12M264 765l12-12M288 765l12-12M312 765l12-12" stroke="rgba(255,255,255,.14)"/><text x="245" y="800" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" fill="rgba(255,192,143,.7)" stroke="none">Ø20 H7 · 42</text></g>
+<g class="fb" transform="translate(860 560)" stroke="rgba(255,255,255,.22)" stroke-width="2"><rect x="0" y="110" width="480" height="20" rx="3"/><rect x="0" y="20" width="110" height="90" rx="8"/><rect x="110" y="36" width="24" height="64" rx="4"/><path d="M144 52h80v28h-80M224 58h50v16h-50M290 64l14-7v14z"/><rect x="310" y="44" width="62" height="66" rx="5"/><rect x="200" y="94" width="104" height="16" rx="3"/><path d="M252 78l-8-8h8z" fill="#FF8A3D" stroke="#FF8A3D"/></g>
+<g stroke="rgba(255,255,255,.2)" stroke-width="2" transform="translate(120 120)"><rect x="0" y="40" width="300" height="16" rx="2"/><path d="{{ticks}}" stroke-width="1.2"/><path d="M4 56v52l14-8V56M4 40V24h10v16"/><rect x="110" y="34" width="56" height="28" rx="4"/><path d="M116 62v46l12-8V62"/></g>
+</g>
+</svg>
+
+<header style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 24px clamp(16px, 4vw, 48px); color: #fff; flex-wrap: wrap; gap: 12px;">
+<span style="display: flex; align-items: center; gap: 12px;"><span style="width: 44px; height: 44px; border-radius: 14px; background: #E35D14; display: grid; place-items: center; box-shadow: 0 8px 20px rgba(227,93,20,.5);"><svg class="i" viewBox="0 0 24 24" style="width: 24px; height: 24px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></span><span class="disp" style="font-size: 26px; font-weight: 700;">ProMEC</span></span>
+<span style="display: flex; align-items: center; gap: 10px;"><span style="font-size: 12.5px; color: #B8C9DA;">Protótipo · ver estado</span><span class="sg" role="radiogroup" aria-label="Estado da tela"><sc-for list="{{states}}" as="s" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{s.checked}}" class="{{s.cls}}" onClick="{{s.pick}}">{{s.l}}</button></sc-for></span></span>
+</header>
+
+<main style="position: relative; flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: clamp(24px, 6vw, 96px); padding: 20px clamp(16px, 4vw, 48px) 60px;">
+<div style="flex: 1 1 380px; max-width: 520px; color: #fff; display: flex; flex-direction: column; gap: 14px;">
+<h1 class="disp" style="margin: 0; font-size: clamp(44px, 5.4vw, 72px); font-weight: 700; line-height: .95;">Cada hora da sua máquina tem um preço justo.</h1>
+<p style="margin: 0; font-size: 18px; color: #D3E0EE;">Orçamento, ordem de serviço e custo real no mesmo lugar, para oficina, usinagem e caldeiraria.</p>
+</div>
+
+<section class="glass rv {{shakeCls}}" aria-labelledby="h-login" style="flex: 0 1 440px; width: 100%; border-radius: 32px; padding: clamp(24px, 3vw, 36px); display: flex; flex-direction: column; gap: 16px;">
+
+<sc-if value="{{isLogin}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h2 id="h-login" class="disp" style="margin: 0; font-size: 34px; font-weight: 700; line-height: 1;">Bom dia! Vamos entrar?</h2><span style="font-size: 14.5px; color: #4E473D;">Use o e-mail da empresa.</span></div>
+<sc-if value="{{hasErr}}" hint-placeholder-val="{{false}}"><div role="alert" style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: #FBE2DF; color: #8E2219; font-size: 14px;"><svg class="i" viewBox="0 0 24 24" style="margin-top: 1px;" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg><span>E-mail ou senha não conferem. Confira o Caps Lock e tente de novo. Ainda restam <strong>{{left}}</strong> tentativas antes de um bloqueio de 15 minutos.</span></div></sc-if>
+<label><span style="display: block; font-size: 13.5px; font-weight: 500; color: #4E473D; margin-bottom: 6px;">E-mail</span><span class="fld {{errCls}}"><svg class="i" viewBox="0 0 24 24" style="color: #6E6557;" aria-hidden="true"><path d="M4 4h16v16H4zM4 6l8 7 8-7"/></svg><input type="email" autocomplete="username" value="{{email}}" onChange="{{onEmail}}" aria-invalid="{{ariaInv}}"></span></label>
+<label><span style="display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 500; color: #4E473D; margin-bottom: 6px;">Senha<a href="#" style="color: #9A3A06; font-weight: 600;">Esqueci a senha</a></span><span class="fld {{errCls}}"><svg class="i" viewBox="0 0 24 24" style="color: #6E6557;" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><input type="{{pwType}}" autocomplete="current-password" value="{{pw}}" onChange="{{onPw}}" aria-invalid="{{ariaInv}}"><button type="button" class="eye" onClick="{{toggleEye}}" aria-label="{{eyeLbl}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg></button></span></label>
+<button type="button" class="btn" onClick="{{submit}}">Entrar<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+<span style="font-size: 12.5px; color: #6E6557; text-align: center;">É cliente e recebeu um orçamento? <a href="Portal-Orcamento.dc.html" style="color: #9A3A06; font-weight: 600;">Abra pelo link do e-mail</a>, sem senha.</span>
+</sc-if>
+
+<sc-if value="{{isLocked}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 10px 0;">
+<span style="width: 72px; height: 72px; border-radius: 22px; background: #FCEFC7; color: #8A5300; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" style="width: 34px; height: 34px;" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+<h2 id="h-login" class="disp" style="margin: 0; font-size: 30px; font-weight: 700; line-height: 1.05;">Muitas tentativas. Vamos dar uma pausa.</h2>
+<span role="status" style="font-size: 15px; color: #4E473D;">Por segurança, o acesso de <strong>{{email}}</strong> fica travado por <strong class="mono">14:52</strong>. Se não foi você, avise a Marina.</span>
+<a href="#" class="btn" style="width: 100%; text-decoration: none;">Receber um link para entrar</a>
+</div>
+</sc-if>
+
+<sc-if value="{{isFirst}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h2 id="h-login" class="disp" style="margin: 0; font-size: 32px; font-weight: 700; line-height: 1;">Primeiro acesso, Paulo!</h2><span style="font-size: 14.5px; color: #4E473D;">Crie a sua senha. Ninguém além de você vai saber.</span></div>
+<label><span style="display: block; font-size: 13.5px; font-weight: 500; color: #4E473D; margin-bottom: 6px;">Nova senha</span><span class="fld"><input type="password" autocomplete="new-password" value="{{npw}}" onChange="{{onNpw}}"></span></label>
+<div style="display: flex; gap: 6px;" role="img" aria-label="Força da senha: {{strTxt}}"><sc-for list="{{bars}}" as="b" hint-placeholder-count="4"><span style="flex: 1; height: 6px; border-radius: 99px; background: {{b.c}}; transition: background-color .3s;"></span></sc-for></div>
+<span aria-live="polite" style="font-size: 13.5px; color: {{strC}}; font-weight: 600;">{{strTxt}}</span>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px;"><sc-for list="{{rules}}" as="r" hint-placeholder-count="3"><li style="display: flex; gap: 8px; align-items: center; color: {{r.c}};"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{r.icon}}"/></svg>{{r.t}}</li></sc-for></ul>
+<button type="button" class="btn" aria-disabled="{{weak}}">Salvar e entrar</button>
+</sc-if>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { mode: 'login', fails: 0, email: 'marina@usinagemjoinville.com.br', pw: '', eye: false, shake: 0, npw: '' };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  componentWillUnmount() { clearTimeout(this.t); }
+  renderVals() {
+    const st = this.state;
+    const states = [['login', 'Normal'], ['erro', 'Erro'], ['bloq', 'Bloqueado'], ['first', 'Primeiro acesso']].map((s) => {
+      const cur = s[0] === 'erro' ? st.mode === 'login' && st.fails > 0 : st.mode === s[0] && !(s[0] === 'login' && st.fails > 0);
+      return { l: s[1], cls: cur ? 'on' : '', checked: cur ? 'true' : 'false', pick: () => this.setState(s[0] === 'erro' ? { mode: 'login', fails: 1 } : { mode: s[0], fails: 0 }) };
+    });
+    const p = st.npw;
+    const checks = [p.length >= 10, /[0-9]/.test(p), /[A-Z]/.test(p) && /[a-z]/.test(p)];
+    const score = (p.length ? 1 : 0) + checks.filter(Boolean).length;
+    const sc = ['#E2DACD', '#C0352B', '#E0A100', '#E0A100', '#0F7A55'][score];
+    let ticks = '';
+    for (let x = 20, k = 0; x <= 290; x += 6, k++) ticks += 'M' + x + ' 40v' + (k % 5 === 0 ? 10 : 5);
+    return {
+      states, isLogin: st.mode === 'login', isLocked: st.mode === 'bloq', isFirst: st.mode === 'first',
+      email: st.email, pw: st.pw, pwType: st.eye ? 'text' : 'password', eyeLbl: st.eye ? 'Esconder senha' : 'Mostrar senha',
+      onEmail: (e) => this.setState({ email: e.target.value }), onPw: (e) => this.setState({ pw: e.target.value }), toggleEye: () => this.setState({ eye: !st.eye }),
+      hasErr: st.fails > 0, left: Math.max(0, 5 - st.fails), errCls: st.fails > 0 ? 'err' : '', ariaInv: st.fails > 0 ? 'true' : 'false',
+      shakeCls: st.shake % 2 ? 'shake' : '',
+      submit: () => { const f = st.fails + 1; if (f >= 5) { this.setState({ mode: 'bloq', fails: 0 }); return; } this.setState({ fails: f, shake: st.shake + 1, pw: '' }); },
+      npw: st.npw, onNpw: (e) => this.setState({ npw: e.target.value }),
+      bars: [1, 2, 3, 4].map((i) => ({ c: score >= i ? sc : '#E2DACD' })),
+      strTxt: ['Digite a nova senha', 'Fraca', 'Pode melhorar', 'Quase lá', 'Forte. Boa!'][score], strC: score >= 4 ? '#0F7A55' : score >= 2 ? '#8A5300' : '#6E6557',
+      rules: [['Pelo menos 10 caracteres', checks[0]], ['Um número', checks[1]], ['Letras maiúsculas e minúsculas', checks[2]]].map((r) => ({ t: r[0], c: r[1] ? '#0F7A55' : '#6E6557', icon: r[1] ? 'M20 6 9 17l-5-5' : 'M12 12h.01' })),
+      weak: score < 4 ? 'true' : 'false',
+      g1: this.gear(1180, 240, 130, 18, 18), g2: this.gear(1335, 360, 70, 12, 12), g3: this.gear(220, 120, 90, 14, 14), ticks,
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

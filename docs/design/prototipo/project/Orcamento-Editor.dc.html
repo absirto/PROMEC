@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Editor de orçamento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B8460A}a:hover{color:#8A3305}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--t1);-webkit-font-smoothing:antialiased;transition:background-color .3s,color .3s}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.t-claro{--canvas:#F2EEE7;--base:#EAE4DA;--s1:#FFFFFF;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t1:#1E1B16;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--pft:#FFFFFF;--ps:#FDE8DA;--pt:#9A3A06;--steel:#1D4E7A;--steels:#E3EDF7;--ok:#0F7A55;--oks:#DDF3E9;--wa:#8A5300;--wai:#E0A100;--was:#FCEFC7;--bad:#C0352B;--bads:#FBE2DF;--inf:#1A64A8;--infs:#E0EDFA;--run:#5B3FB5;--runs:#ECE6FB;--neu:#6B6458;--neus:#ECE7DF;--grid:rgba(60,45,25,.06);--hero:linear-gradient(135deg,#2A6AA3 0%,#1D4E7A 45%,#15395A 100%);--side:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));--lg-bg:rgba(255,255,255,.6);--lg-bd:rgba(255,255,255,.85);--lg-hl:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.4);--lg-sh:0 14px 36px rgba(40,30,15,.16),0 1px 2px rgba(40,30,15,.08);--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06);--bw:1px;--plan:#D5CBBB;--row:#FBF8F3}
+.t-escuro{--canvas:#13161B;--base:#181C22;--s1:#1F242C;--s2:#252B34;--s3:#2D343F;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.16);--t1:#F4F1EC;--t2:#C3BCB0;--t3:#9A9387;--p:#FF7A2E;--pf:#FF7A2E;--pft:#1A0E05;--ps:rgba(255,122,46,.16);--pt:#FFB07F;--steel:#6FA8DC;--steels:rgba(111,168,220,.14);--ok:#3DD598;--oks:rgba(61,213,152,.14);--wa:#F5B83D;--wai:#F5B83D;--was:rgba(245,184,61,.14);--bad:#FF6B5E;--bads:rgba(255,107,94,.14);--inf:#5AB0F0;--infs:rgba(90,176,240,.14);--run:#A891FF;--runs:rgba(168,145,255,.16);--neu:#ABA396;--neus:rgba(171,163,150,.14);--grid:rgba(255,255,255,.035);--hero:linear-gradient(135deg,#21476E 0%,#173452 50%,#0F2236 100%);--side:linear-gradient(180deg,rgba(28,62,96,.82),rgba(15,34,54,.9));--lg-bg:rgba(44,50,60,.55);--lg-bd:rgba(255,255,255,.14);--lg-hl:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(255,255,255,.05);--lg-sh:0 14px 36px rgba(0,0,0,.45);--sh1:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);--bw:1px;--plan:#4A5260;--row:#232931}
+.t-contraste{--canvas:#000;--base:#000;--s1:#0A0A0A;--s2:#141414;--s3:#1F1F1F;--bd:#9A9A9A;--bd2:#FFFFFF;--t1:#FFFFFF;--t2:#EDEDED;--t3:#D4D4D4;--p:#FF9A4D;--pf:#FF9A4D;--pft:#000000;--ps:transparent;--pt:#FFB98A;--steel:#8CC4FF;--steels:transparent;--ok:#5EEA9C;--oks:transparent;--wa:#FFD400;--wai:#FFD400;--was:transparent;--bad:#FF9B9B;--bads:transparent;--inf:#8BDCFF;--infs:transparent;--run:#C9CEFF;--runs:transparent;--neu:#E0E0E0;--neus:transparent;--grid:transparent;--hero:#000;--side:#000;--lg-bg:#0A0A0A;--lg-bd:#FFFFFF;--lg-hl:none;--lg-sh:none;--sh1:none;--bw:2px;--plan:#777;--row:#0A0A0A}
+.t-contraste .lg,.t-contraste .side{backdrop-filter:none;-webkit-backdrop-filter:none;border:2px solid #fff}
+.t-contraste .lg::before,.t-contraste .side::before{display:none}
+.t-contraste .bdg{border:2px solid currentColor}
+.stage{background-color:var(--canvas);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:var(--lg-bg);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid var(--lg-bd);box-shadow:var(--lg-hl),var(--lg-sh)}
+.side{position:relative;background:var(--side);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28);color:#E7EEF6}
+.lg::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14) 100%);mix-blend-mode:soft-light}
+.card{background:var(--s1);border:var(--bw) solid var(--bd);border-radius:20px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.bdg .i{width:14px;height:14px}
+.b-ok{color:var(--ok);background:var(--oks)}.b-wa{color:var(--wa);background:var(--was)}.b-bad{color:var(--bad);background:var(--bads)}.b-inf{color:var(--inf);background:var(--infs)}.b-run{color:var(--run);background:var(--runs)}.b-neu{color:var(--neu);background:var(--neus)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:var(--bw) solid var(--bd2);background:var(--s1);color:var(--t1);cursor:pointer;white-space:nowrap;transition:transform .15s cubic-bezier(.2,.8,.2,1),background-color .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh1)}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--pf);border-color:transparent;color:var(--pft);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-t{background:transparent;border-color:transparent;color:var(--pt)}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.btn-lg{height:52px;font-size:16px;width:100%}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer;position:relative;transition:background-color .2s}
+.ib:hover{background:rgba(255,255,255,.12);color:#fff}
+.ib2{all:unset;box-sizing:border-box;width:40px;height:40px;border-radius:999px;display:grid;place-items:center;color:var(--t2);cursor:pointer;position:relative}
+.btn:focus-visible,.ib:focus-visible,.ib2:focus-visible,.seg button:focus-visible,.cell:focus-within,.rng:focus-visible,.step:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.seg{display:inline-flex;padding:4px;border-radius:999px;gap:2px}
+.seg button{height:32px;width:36px;border-radius:999px;border:0;background:transparent;color:var(--t2);cursor:pointer;display:grid;place-items:center;transition:background-color .3s cubic-bezier(.2,.8,.2,1),color .3s}
+.seg button.on{background:var(--pf);color:var(--pft);box-shadow:0 2px 8px rgba(184,70,10,.3)}
+.lbl{font-size:12.5px;color:var(--t3);font-weight:500}
+.fv{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border-radius:14px;background:var(--s2);border:var(--bw) solid var(--bd);font-size:14.5px}
+.cell{display:flex;align-items:center;justify-content:flex-end;gap:4px;height:36px;padding:0 10px;border-radius:10px;border:var(--bw) solid transparent;transition:border-color .2s,background-color .2s}
+.cell:hover{border-color:var(--bd2);background:var(--s1)}
+.cell.ed{border:2px solid var(--p);background:var(--s1);box-shadow:0 0 0 4px var(--ps)}
+.th{font-size:12px;font-weight:600;color:var(--t3);padding:10px 8px;text-align:right}
+.step{all:unset;box-sizing:border-box;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;color:var(--t1);background:var(--s3);cursor:pointer}
+.chip{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}
+.blk{display:flex;align-items:center;gap:12px;padding:14px 20px;border-top:var(--bw) solid var(--bd)}
+.rng{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;cursor:pointer}
+.rng::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--p),var(--wai))}
+.rng::-moz-range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--p),var(--wai))}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 6px rgba(0,0,0,.25),inset 0 -1px 0 rgba(0,0,0,.08)}
+.rng::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.eff{transition:color .45s cubic-bezier(.2,.8,.2,1)}
+.colb{transition:height .45s cubic-bezier(.2,.8,.2,1),background-color .3s}
+.seglen{transition:width .45s cubic-bezier(.2,.8,.2,1)}
+kbd{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 6px;border-radius:6px;border:var(--bw) solid var(--bd2);color:var(--t2);background:var(--s1)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rv{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 50s linear infinite}
+@media (prefers-reduced-motion:reduce){.rv,.spin{animation:none}.eff,.colb,.seglen{transition:none}}
+</style>
+</helmet>
+<div class="pm stage {{themeClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 6px 16px rgba(227,93,20,.45);"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="10">
+<a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a>
+</sc-for>
+<span style="margin-top: auto; width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #F5B63D, #E35D14); color: #1E1B16; font-size: 13px; font-weight: 700; display: grid; place-items: center;" role="img" aria-label="Paulo Henrique, orçamentista">PH</span>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px; min-width: 0;">
+<a href="#" style="color: var(--t3); text-decoration: none;">Comercial</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+<a href="#" style="color: var(--t3); text-decoration: none;">Orçamentos</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+<span class="mono" style="color: var(--t1); font-weight: 600;" aria-current="page">ORC-2026-00128</span>
+</nav>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--t2);"><svg class="i" viewBox="0 0 24 24" style="width: 15px; height: 15px; color: var(--ok);" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Tudo salvo</span>
+<div class="seg" role="radiogroup" aria-label="Tema" style="background: var(--s3);">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{t.checked}}" aria-label="{{t.label}}" class="{{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg></button></sc-for>
+</div>
+<button type="button" class="ib2" aria-label="Notificações, 3 novas"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="mono" style="position: absolute; top: 4px; right: 4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #E35D14; color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center;">3</span></button>
+</header>
+
+<div style="padding: 20px clamp(12px, 2vw, 20px) 64px; display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;">
+
+<main style="flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 20px;">
+
+<section class="rv" style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch;" aria-label="Peça e cliente">
+<div style="flex: 1 1 340px; display: flex; flex-direction: column; gap: 12px; justify-content: center;">
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<span class="bdg b-neu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Rascunho · v2</span>
+<span class="bdg b-run"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>Usinagem</span>
+<span class="bdg b-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Custos 2026-10</span>
+</div>
+<h1 class="disp" style="margin: 0; font-size: clamp(34px, 3.6vw, 46px); font-weight: 700; line-height: 1;">Bucha de latão H7, lote piloto</h1>
+<p style="margin: 0; font-size: 15.5px; color: var(--t2);">Para a <strong style="color: var(--t1);">Metalúrgica Vale do Itajaí</strong>. Quem pediu foi a Juliana, da engenharia, que precisa das peças para testar o novo redutor.</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 6px; border-radius: 999px; background: var(--oks); color: var(--ok); font-size: 13px; font-weight: 600;"><span style="width: 24px; height: 24px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Peça e cliente</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 6px; border-radius: 999px; background: var(--oks); color: var(--ok); font-size: 13px; font-weight: 600;"><span style="width: 24px; height: 24px; border-radius: 50%; background: var(--ok); color: #fff; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>Roteiro</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 6px; border-radius: 999px; background: var(--ps); color: var(--pt); font-size: 13px; font-weight: 600;"><span class="mono" style="width: 24px; height: 24px; border-radius: 50%; background: var(--p); color: #fff; display: grid; place-items: center; font-size: 12px;">3</span>Revisar margem</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 6px; border-radius: 999px; background: var(--s3); color: var(--t2); font-size: 13px; font-weight: 500;"><span class="mono" style="width: 24px; height: 24px; border-radius: 50%; background: var(--s1); display: grid; place-items: center; font-size: 12px;">4</span>Enviar</span>
+</div>
+</div>
+<figure style="flex: 1 1 380px; margin: 0; position: relative; overflow: hidden; border-radius: 24px; background: var(--hero); padding: 14px 16px 10px; color: #fff; display: flex; flex-direction: column; gap: 4px;">
+<svg viewBox="0 0 420 240" role="img" aria-label="Desenho técnico em corte da bucha: comprimento 42 mm, diâmetro externo 25 mm, furo 20 mm H7" style="width: 100%; height: auto;" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<defs><pattern id="bp" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M14 0H0v14" stroke="rgba(255,255,255,.08)"/></pattern></defs>
+<rect width="420" height="240" fill="url(#bp)"/>
+<g stroke="rgba(255,255,255,.92)" stroke-width="2">
+<path d="M84 55h202l4 4v117l-4 4H84l-4-4V59z"/>
+<path d="M80 67.5h210M80 167.5h210"/>
+</g>
+<path d="{{hatch}}" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+<path d="M60 117.5h250" stroke="#FFC08F" stroke-width="1.2" stroke-dasharray="14 4 3 4"/>
+<g stroke="rgba(255,255,255,.7)" stroke-width="1.2">
+<path d="M80 184v28M290 184v28M80 205h210M80 205l8-3v6zM290 205l-8-3v6z"/>
+<path d="M294 55h38M294 180h38M326 55v125M326 55l-3 8h6zM326 180l-3-8h6z"/>
+</g>
+<g stroke="#FF9A4D" stroke-width="1.6"><path d="M80 67.5H44M80 167.5H44M50 67.5v100M50 67.5l-3 8h6zM50 167.5l-3-8h6z"/></g>
+<g font-family="IBM Plex Mono" font-size="12" stroke="none">
+<text x="185" y="200" fill="#fff" text-anchor="middle">42</text>
+<text x="344" y="122" fill="#fff">Ø25</text>
+<text x="10" y="58" fill="#FFB98A" font-weight="600">Ø20 H7</text>
+<text x="10" y="72" fill="#FFB98A" font-size="10">+0,021/0</text>
+</g>
+<path class="spin" d="{{gear}}" stroke="rgba(255,255,255,.18)" stroke-width="1.5" transform="translate(0 0)"/>
+</svg>
+<figcaption class="mono" style="display: flex; justify-content: space-between; font-size: 11.5px; color: #C9D7E6; border-top: 1px solid rgba(255,255,255,.2); padding-top: 6px;"><span>BUC-H7-020 · rev. C</span><span>Latão C360 · esc. 2:1</span></figcaption>
+</figure>
+</section>
+
+<section class="card rv d1" style="padding: 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px 14px;" aria-label="Condições">
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="lbl">Quantas peças?</span>
+<div class="fv" style="padding: 0 5px; justify-content: space-between; border: 2px solid var(--p); background: var(--s1);">
+<button type="button" class="step" onClick="{{qDown}}" aria-label="Menos peças"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+<span class="mono" style="font-weight: 700; font-size: 16px;" aria-live="polite">{{q}} pç</span>
+<button type="button" class="step" onClick="{{qUp}}" aria-label="Mais peças"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+</div></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="lbl">Válido até</span><div class="fv"><span class="mono">26/10/2026</span><span style="color: var(--t3); font-size: 13px;">14 dias</span></div></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="lbl">Pagamento</span><div class="fv">28/42 dias · boleto</div></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="lbl">Entrega</span><div class="fv">5 dias úteis<span style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--ok);" role="img" aria-label="agenda livre"></span></div></div>
+</section>
+
+<section class="card rv d2" style="overflow: hidden;" aria-label="Linhas do orçamento">
+<div style="overflow-x: auto;">
+<div style="min-width: 760px;">
+
+<div class="blk" style="border-top: 0; background: var(--row);">
+<span class="chip" style="background: #1D6FB8; color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12"/></svg></span>
+<h2 style="margin: 0; flex: 1; font-size: 16px; font-weight: 600;">Material</h2>
+<span class="mono" style="font-size: 15px; font-weight: 700;">{{matTot}}</span>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 2.4fr) 100px 110px 120px 44px; padding: 0 12px;">
+<span class="th" style="text-align: left;">Item</span><span class="th">Qtd</span><span class="th">R$ unit.</span><span class="th">Total</span><span></span>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 2.4fr) 100px 110px 120px 44px; padding: 2px 12px 14px; align-items: center;">
+<div style="display: flex; flex-direction: column; padding: 0 8px;"><span style="font-size: 14.5px; font-weight: 500;">Barra de latão C360 Ø25 mm</span><span style="font-size: 12.5px; color: var(--t3);">45 mm por peça (42 + 3 de sobra) · último preço da Aços Sul em 02/10</span></div>
+<div class="cell mono" style="font-size: 14px;">{{q}}<span style="color: var(--t3); font-size: 12px;"> pç</span></div>
+<div class="cell mono" style="font-size: 14px;">8,00</div>
+<div class="mono" style="text-align: right; padding: 0 8px; font-size: 14.5px; font-weight: 600;">{{matTot}}</div>
+<button type="button" class="ib2" style="width: 34px; height: 34px;" aria-label="Ações da linha"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M12 12h.01M19 12h.01M5 12h.01"/></svg></button>
+</div>
+
+<div class="blk" style="background: var(--row);">
+<span class="chip" style="background: #E35D14; color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg></span>
+<h2 style="margin: 0; flex: 1; font-size: 16px; font-weight: 600;">Operações na máquina <span style="font-weight: 400; color: var(--t3); font-size: 13px;">· setup uma vez por lote, ciclo por peça</span></h2>
+<span class="mono" style="font-size: 15px; font-weight: 700;">{{opTot}}</span>
+</div>
+<div style="display: grid; grid-template-columns: 40px minmax(0, 1.6fr) 104px 104px 86px 96px 112px; padding: 0 12px;">
+<span class="th" style="text-align: left;">Seq</span><span class="th" style="text-align: left;">Operação · máquina</span><span class="th">Ciclo/pç</span><span class="th">Setup</span><span class="th">Horas</span><span class="th">R$/h</span><span class="th">Total</span>
+</div>
+<div style="display: grid; grid-template-columns: 40px minmax(0, 1.6fr) 104px 104px 86px 96px 112px; padding: 2px 12px 8px; align-items: center;">
+<span class="mono" style="font-size: 13px; color: var(--t3); padding: 0 8px;">10</span>
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px; min-width: 0;">
+<svg viewBox="0 0 640 250" aria-hidden="true" style="width: 54px; height: auto; flex: none; color: var(--steel);" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"><rect x="40" y="168" width="560" height="24" rx="3"/><rect x="40" y="58" width="132" height="110" rx="8"/><path d="M212 100h96v34h-96M308 106h60v22h-60"/><rect x="420" y="94" width="76" height="74" rx="6"/><path d="M78 192v40M562 192v40"/></svg>
+<div style="display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 14.5px; font-weight: 500;">Tornear completo + furo H7</span><span style="font-size: 12.5px; color: var(--t3);">Torno CNC de entrada · Ricardo</span></div>
+</div>
+<div class="cell ed" style="flex-direction: column; align-items: flex-end; justify-content: center; height: 46px; gap: 0;"><span class="mono" style="font-size: 14px; line-height: 1.2;">0,10 h</span><span class="mono" style="font-size: 11px; color: var(--t3); line-height: 1.2;">00:06</span></div>
+<div class="cell" style="flex-direction: column; align-items: flex-end; justify-content: center; height: 46px; gap: 0;"><span class="mono" style="font-size: 14px; line-height: 1.2;">3,00 h</span><span class="mono" style="font-size: 11px; color: var(--t3); line-height: 1.2;">03:00</span></div>
+<span class="mono" style="text-align: right; padding: 0 8px; font-size: 14px;">{{hrsTxt}}</span>
+<a href="#composicao" class="mono" style="text-align: right; padding: 0 8px; font-size: 14px; font-weight: 600; color: var(--pt); text-decoration: underline dotted; text-underline-offset: 3px;" title="De onde vem esse custo-hora?">117,78</a>
+<span class="mono" style="text-align: right; padding: 0 8px; font-size: 14.5px; font-weight: 600;">{{opTot}}</span>
+</div>
+<div style="padding: 0 20px 16px 116px; display: flex; flex-wrap: wrap; gap: 8px;">
+<span class="bdg b-inf" style="font-weight: 500;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5M12 7v5l4 2"/></svg>O ciclo vem de 7 OS parecidas (variação de 12%)</span>
+<span class="bdg b-neu" style="font-weight: 500;">Setup: tempo padrão do catálogo</span>
+</div>
+
+<div class="blk" style="background: var(--row);">
+<span class="chip" style="background: #E0A100; color: #1E1B16;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 12-8.5 8.5a2.12 2.12 0 1 1-3-3L12 9M17.64 15 22 10.64M20.91 11.7l-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg></span>
+<div style="flex: 1; display: flex; flex-direction: column;"><h2 style="margin: 0; font-size: 16px; font-weight: 600;">Ferramental específico</h2><span style="font-size: 13px; color: var(--t3);">Nada por aqui ainda. Se a peça pede um alargador especial, é só adicionar.</span></div>
+<button type="button" class="btn btn-t btn-sm"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Adicionar</button>
+</div>
+<div class="blk" style="background: var(--row);">
+<span class="chip" style="background: #7C5CC4; color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg></span>
+<div style="flex: 1; display: flex; flex-direction: column;"><h2 style="margin: 0; font-size: 16px; font-weight: 600;">Mão de obra avulsa</h2><span style="font-size: 13px; color: var(--t3);">O Ricardo já está incluído na hora do torno. Use aqui só para trabalho fora da máquina.</span></div>
+<button type="button" class="btn btn-t btn-sm"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Adicionar</button>
+</div>
+<div class="blk" style="background: var(--row);">
+<span class="chip" style="background: #0F9D76; color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18ZM10 6h4M10 10h4M10 14h4M10 18h4"/></svg></span>
+<div style="flex: 1; display: flex; flex-direction: column;"><h2 style="margin: 0; font-size: 16px; font-weight: 600;">Terceiros e frete</h2><span style="font-size: 13px; color: var(--t3);">Tratamento térmico, galvanização, retífica… A Juliana vai retirar as peças.</span></div>
+<button type="button" class="btn btn-t btn-sm"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Adicionar</button>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-top: 2px solid var(--t1); background: var(--s1);">
+<span style="display: flex; gap: 14px; font-size: 12.5px; color: var(--t3); flex-wrap: wrap;"><span><kbd>Alt</kbd> + <kbd>↓</kbd> nova linha</span><span><kbd>Tab</kbd> próxima célula</span><span><kbd>⌘K</kbd> atalhos</span></span>
+<span style="display: flex; gap: 14px; align-items: baseline;"><span style="font-size: 14px; color: var(--t2);">Custo do lote</span><span class="mono" style="font-size: 20px; font-weight: 700;">{{costLot}}</span></span>
+</div>
+
+</div>
+</div>
+</section>
+
+<section class="card rv d3" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="sens">
+<div style="display: flex; flex-direction: column;"><h2 id="sens" style="margin: 0; font-size: 16px; font-weight: 600;">E se algo sair diferente?</h2><span style="font-size: 13px; color: var(--t3);">Quanto o preço por peça subiria em cada cenário</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+<sc-for list="{{sens}}" as="s" hint-placeholder-count="3">
+<div style="padding: 14px 16px; border-radius: 16px; background: var(--was); display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13.5px; color: var(--t1);">{{s.k}}</span>
+<span style="display: flex; align-items: baseline; gap: 8px;"><span class="mono" style="font-size: 18px; font-weight: 700;">{{s.v}}</span><span class="mono" style="font-size: 12.5px; font-weight: 600; color: var(--wa);">{{s.d}}</span></span>
+</div>
+</sc-for>
+</div>
+</section>
+
+</main>
+
+<aside id="composicao" class="rv d1" aria-label="Como chegamos nesse preço" style="flex: 1 1 360px; max-width: 430px; position: sticky; top: 84px; border-radius: 30px; padding: 10px; background: linear-gradient(150deg, #F08A3E 0%, #E35D14 35%, #1D4E7A 100%); overflow: hidden;">
+<svg viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+<path class="spin" d="{{gearBig}}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="3"/>
+<path d="{{gearSm}}" fill="rgba(255,255,255,.1)" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+<g stroke="#FFD08A" stroke-width="2" stroke-linecap="round" opacity=".8"><path d="M330 600l30-24M326 612l40-2M334 590l14-34M318 620l-10 30"/></g>
+</svg>
+<div class="lg" style="border-radius: 22px; padding: 22px; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<h2 class="disp" style="margin: 0; font-size: 24px; font-weight: 700;">Como chegamos nesse preço</h2>
+<span class="bdg b-neu mono">{{q}} pç</span>
+</div>
+<div style="display: flex; height: 16px; border-radius: 8px; overflow: hidden; gap: 2px;" role="img" aria-label="{{compAria}}">
+<sc-for list="{{comp}}" as="c" hint-placeholder-count="6"><span class="seglen" style="width: {{c.w}}; background: {{c.hex}};"></span></sc-for>
+</div>
+<div style="display: flex; flex-direction: column;">
+<sc-for list="{{comp}}" as="c" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 12px minmax(0, 1fr) auto 50px; gap: 10px; align-items: center; padding: 5px 0; font-size: 13.5px;">
+<span style="width: 12px; height: 12px; border-radius: 4px; background: {{c.hex}};"></span>
+<span style="color: var(--t2);">{{c.name}}</span>
+<span class="mono" style="color: var(--t1); font-weight: 500;">{{c.val}}</span>
+<span class="mono" style="text-align: right; color: var(--t3); font-size: 12px;">{{c.pct}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+<div style="padding: 10px 12px; border-radius: 14px; background: var(--s1); display: flex; flex-direction: column;"><span class="lbl">Impostos</span><span class="mono" style="font-size: 15px; font-weight: 600;">14,0%</span></div>
+<div style="padding: 10px 12px; border-radius: 14px; background: var(--s1); display: flex; flex-direction: column;"><span class="lbl">Comissão</span><span class="mono" style="font-size: 15px; font-weight: 600;">0,0%</span></div>
+<div style="padding: 10px 12px; border-radius: 14px; background: var(--s1); display: flex; flex-direction: column;"><span class="lbl">Margem alvo</span><span class="mono" style="font-size: 15px; font-weight: 600;">20,0%</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><label for="rng-desc" style="font-size: 14px; color: var(--t1); font-weight: 500;">Desconto</label><span class="mono" style="font-size: 13.5px;"><span style="font-weight: 700;">{{descTxt}}</span> <span style="color: var(--t3);">· − {{descVal}}</span></span></div>
+<input id="rng-desc" class="rng" type="range" min="0" max="20" step="0.5" value="{{desc}}" onChange="{{onDesc}}" onInput="{{onDesc}}">
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; background: {{mBg}}; transition: background-color .45s cubic-bezier(.2,.8,.2,1);">
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<span style="font-size: 14px; font-weight: 500;">Margem que sobra</span>
+<span class="mono eff" aria-live="polite" style="font-size: 26px; font-weight: 700; color: {{mColor}};">{{mTxt}}</span>
+</div>
+<div style="position: relative; height: 10px; border-radius: 99px; background: linear-gradient(90deg, var(--bad) 0 37.5%, var(--wai) 37.5% 50%, var(--ok) 50% 100%);" role="img" aria-label="Margem efetiva em relação ao mínimo de 15% e ao alvo de 20%">
+<span style="position: absolute; top: -6px; left: {{mPos}}; width: 6px; height: 22px; margin-left: -3px; border-radius: 3px; background: var(--t1); box-shadow: 0 0 0 3px var(--s1); transition: left .35s cubic-bezier(.2,.8,.2,1);"></span>
+</div>
+<span style="font-size: 13.5px; color: var(--t1);">{{mMsg}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 0;">
+<span style="font-size: 14px; color: var(--t2);">Preço do lote</span>
+<span class="mono" aria-live="polite" style="font-size: 52px; font-weight: 700; letter-spacing: -.04em; line-height: 1.05;">{{priceLot}}</span>
+<span class="mono" style="font-size: 14px; color: var(--t2);"><strong style="color: var(--t1);">{{priceUnit}}</strong> por peça <span style="color: var(--t3);">· sem desconto {{priceFull}}</span></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 13px; color: var(--t2);">Mais peças, menos por peça: o setup se dilui</span>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; align-items: end; height: 96px;" role="img" aria-label="{{curveAria}}">
+<sc-for list="{{curve}}" as="c" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end;">
+<span class="mono" style="font-size: 11.5px; color: {{c.txt}}; font-weight: 600;">{{c.price}}</span>
+<div class="colb" style="width: 100%; height: {{c.h}}; border-radius: 8px 8px 3px 3px; background: {{c.bg}};"></div>
+<span class="mono" style="font-size: 11.5px; color: var(--t3);">{{c.q}} pç</span>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{belowMin}}" hint-placeholder-val="{{false}}">
+<button type="button" class="btn btn-p btn-lg"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Pedir um ok à Marina</button>
+</sc-if>
+<sc-if value="{{canSend}}" hint-placeholder-val="{{true}}">
+<button type="button" class="btn btn-p btn-lg"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/></svg>Enviar para a Juliana</button>
+</sc-if>
+<div style="display: flex; gap: 8px;"><button type="button" class="btn btn-sm" style="flex: 1;">Guardar como v3</button><button type="button" class="btn btn-sm" style="flex: 1;">Comparar v1 × v2</button></div>
+</div>
+</aside>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Escuro","Alto contraste"],"default":"Claro"},"$preview":{"width":1440,"height":1800}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { q: 10, desc: 5 };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const f = (n, d) => n.toLocaleString('pt-BR', { minimumFractionDigits: d == null ? 2 : d, maximumFractionDigits: d == null ? 2 : d });
+    const brl = (n) => 'R$ ' + f(n);
+    const map = { 'Claro': 't-claro', 'Escuro': 't-escuro', 'Alto contraste': 't-contraste' };
+    const icons = { 'Claro': 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41', 'Escuro': 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z', 'Alto contraste': 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 18a6 6 0 0 0 0-12Z' };
+    const cur = this.state.tema || this.props.tema || 'Claro';
+    const themes = Object.keys(map).map((label) => ({ label, icon: icons[label], cls: label === cur ? 'on' : '', checked: label === cur ? 'true' : 'false', pick: () => this.setState({ tema: label }) }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+      ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8', true],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'],
+      ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'],
+      ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+      ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['BI', 'M3 3v18h18M18 17V9M13 17V5M8 17v-3'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+
+    const ESP = 12100 / 165, RAT = 22000 / 495, CH = ESP + RAT;
+    const i = 0.14, c = 0, m = 0.20, mMin = 0.15;
+    const steps = [1, 5, 10, 25, 50, 100];
+    const q = this.state.q, d = this.state.desc / 100;
+    const k = steps.indexOf(q);
+    const hrs = 0.10 * q + 3;
+    const mat = q * 8, op = hrs * CH, Cl = mat + op;
+    const P0 = Cl / (1 - i - c - m), P = P0 * (1 - d);
+    const mEf = 1 - i - c - Cl / P;
+    const tone = mEf >= m - 1e-9 ? 'ok' : mEf >= mMin ? 'wa' : 'bad';
+    const parts = [['Material', mat, '#1D6FB8'], ['Hora do torno (ciclo)', 0.10 * q * ESP, '#0F9D76'], ['Setup do torno', 3 * ESP, '#E0A100'], ['Rateio do custo fixo', hrs * RAT, '#7C5CC4'], ['Impostos 14,0%', P * i, '#8C8476'], ['Margem', P * mEf, '#E35D14']];
+    const comp = parts.map((x) => ({ name: x[0], hex: x[2], w: (x[1] / P * 100).toFixed(2) + '%', pct: f(x[1] / P * 100, 1) + '%', val: brl(x[1]) }));
+    const unitAt = (n) => (n * 8 + (0.10 * n + 3) * CH) / n / (1 - i - c - m) * (1 - d);
+    const top = unitAt(1);
+    const curve = [1, 10, 50, 100].map((n) => ({ q: n, price: f(unitAt(n)), h: Math.max(5, unitAt(n) / top * 62).toFixed(0) + 'px', bg: n === q ? 'linear-gradient(180deg,#F08A3E,#E35D14)' : 'var(--plan)', txt: n === q ? 'var(--pt)' : 'var(--t3)' }));
+    const varCost = mat + hrs * ESP;
+    const sensUnit = (cost) => cost / q / (1 - i - c - m) * (1 - d);
+    const base = P / q;
+    const sens = [
+      ['A máquina render só 65%', sensUnit(mat + 0.10 * q * ESP * 75 / 65 + 3 * ESP + hrs * RAT * 75 / 65)],
+      ['O setup levar o dobro (6 h)', sensUnit(mat + (0.10 * q + 6) * CH)],
+      ['O latão subir 15%', sensUnit(mat * 1.15 + op)]
+    ].map((s) => ({ k: s[0], v: brl(s[1]), d: '+' + f((s[1] / base - 1) * 100, 1) + '%' }));
+    const msg = {
+      ok: 'Boa, Paulo! A margem está no alvo. Pode enviar tranquilo.',
+      wa: 'Dá para enviar, mas a margem ficou abaixo do alvo de 20,0%. Que tal um desconto menor?',
+      bad: 'Com esse desconto a margem fica abaixo do mínimo de 15,0%. Peça um ok à Marina antes de enviar.'
+    }[tone];
+    const hatch = (() => {
+      let s = '';
+      for (let x = 72; x < 300; x += 9) {
+        [[55, 67.5], [167.5, 180]].forEach((w) => {
+          const x0 = Math.max(80, x), x1 = Math.min(290, x + 12.5);
+          if (x1 > x0) s += 'M' + x0.toFixed(1) + ' ' + (w[1] - (x0 - x)).toFixed(1) + 'L' + x1.toFixed(1) + ' ' + (w[1] - (x1 - x)).toFixed(1);
+        });
+      }
+      return s;
+    })();
+    return {
+      themeClass: map[cur], themes, rail, q, desc: this.state.desc,
+      qDown: () => this.setState({ q: steps[Math.max(0, k - 1)] }),
+      qUp: () => this.setState({ q: steps[Math.min(steps.length - 1, k + 1)] }),
+      onDesc: (e) => this.setState({ desc: parseFloat(e.target.value) }),
+      matTot: brl(mat), opTot: brl(op), hrsTxt: f(hrs) + ' h', costLot: brl(Cl),
+      comp, compAria: 'Composição do preço: ' + comp.map((x) => x.name + ' ' + x.pct).join(', '),
+      descTxt: f(this.state.desc, 1) + '%', descVal: brl(P0 - P),
+      mTxt: f(mEf * 100, 1) + '%', mColor: 'var(--' + tone + ')', mBg: 'var(--' + tone + 's)', mMsg: msg,
+      mPos: Math.max(0, Math.min(100, mEf / 0.40 * 100)).toFixed(1) + '%',
+      priceLot: brl(P), priceUnit: brl(P / q), priceFull: brl(P0),
+      curve, curveAria: 'Preço por peça: ' + curve.map((x) => x.q + ' peças R$ ' + x.price).join(', '),
+      belowMin: tone === 'bad', canSend: tone !== 'bad', sens, hatch,
+      logoGear: this.gear(12, 12, 10, 8, 2.5), gear: this.gear(380, 30, 46, 12, 9),
+      gearBig: this.gear(360, 90, 150, 20, 20), gearSm: this.gear(60, 640, 80, 12, 14)
+    };
+  }
+}
+</script>
+</body>
+</html>

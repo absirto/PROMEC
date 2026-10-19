@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Tabela de Custos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B8460A}a:hover{color:#8A3305}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--t1);-webkit-font-smoothing:antialiased;transition:background-color .3s,color .3s}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.t-claro{--canvas:#F2EEE7;--base:#EAE4DA;--s1:#FFFFFF;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t1:#1E1B16;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--pft:#FFFFFF;--ps:#FDE8DA;--pt:#9A3A06;--steel:#1D4E7A;--steels:#E3EDF7;--ok:#0F7A55;--oks:#DDF3E9;--wa:#8A5300;--wai:#E0A100;--was:#FCEFC7;--bad:#C0352B;--bads:#FBE2DF;--inf:#1A64A8;--infs:#E0EDFA;--run:#5B3FB5;--runs:#ECE6FB;--neu:#6B6458;--neus:#ECE7DF;--grid:rgba(60,45,25,.06);--hero:linear-gradient(135deg,#2A6AA3 0%,#1D4E7A 45%,#15395A 100%);--side:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));--lg-bg:rgba(255,255,255,.6);--lg-bd:rgba(255,255,255,.85);--lg-hl:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.4);--lg-sh:0 14px 36px rgba(40,30,15,.16),0 1px 2px rgba(40,30,15,.08);--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06);--bw:1px;--plan:#D5CBBB;--row:#FBF8F3}
+.t-escuro{--canvas:#13161B;--base:#181C22;--s1:#1F242C;--s2:#252B34;--s3:#2D343F;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.16);--t1:#F4F1EC;--t2:#C3BCB0;--t3:#9A9387;--p:#FF7A2E;--pf:#FF7A2E;--pft:#1A0E05;--ps:rgba(255,122,46,.16);--pt:#FFB07F;--steel:#6FA8DC;--steels:rgba(111,168,220,.14);--ok:#3DD598;--oks:rgba(61,213,152,.14);--wa:#F5B83D;--wai:#F5B83D;--was:rgba(245,184,61,.14);--bad:#FF6B5E;--bads:rgba(255,107,94,.14);--inf:#5AB0F0;--infs:rgba(90,176,240,.14);--run:#A891FF;--runs:rgba(168,145,255,.16);--neu:#ABA396;--neus:rgba(171,163,150,.14);--grid:rgba(255,255,255,.035);--hero:linear-gradient(135deg,#21476E 0%,#173452 50%,#0F2236 100%);--side:linear-gradient(180deg,rgba(28,62,96,.82),rgba(15,34,54,.9));--lg-bg:rgba(44,50,60,.55);--lg-bd:rgba(255,255,255,.14);--lg-hl:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(255,255,255,.05);--lg-sh:0 14px 36px rgba(0,0,0,.45);--sh1:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);--bw:1px;--plan:#4A5260;--row:#232931}
+.t-contraste{--canvas:#000;--base:#000;--s1:#0A0A0A;--s2:#141414;--s3:#1F1F1F;--bd:#9A9A9A;--bd2:#FFFFFF;--t1:#FFFFFF;--t2:#EDEDED;--t3:#D4D4D4;--p:#FF9A4D;--pf:#FF9A4D;--pft:#000000;--ps:transparent;--pt:#FFB98A;--steel:#8CC4FF;--steels:transparent;--ok:#5EEA9C;--oks:transparent;--wa:#FFD400;--wai:#FFD400;--was:transparent;--bad:#FF9B9B;--bads:transparent;--inf:#8BDCFF;--infs:transparent;--run:#C9CEFF;--runs:transparent;--neu:#E0E0E0;--neus:transparent;--grid:transparent;--hero:#000;--side:#000;--lg-bg:#0A0A0A;--lg-bd:#FFFFFF;--lg-hl:none;--lg-sh:none;--sh1:none;--bw:2px;--plan:#777;--row:#0A0A0A}
+.t-contraste .lg,.t-contraste .lgd,.t-contraste .side{backdrop-filter:none;-webkit-backdrop-filter:none;border:2px solid #fff}
+.t-contraste .lg::before,.t-contraste .lgd::before,.t-contraste .side::before{display:none}
+.t-contraste .bdg{border:2px solid currentColor}
+.stage{background-color:var(--canvas);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:var(--lg-bg);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid var(--lg-bd);box-shadow:var(--lg-hl),var(--lg-sh)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 12px 30px rgba(5,15,30,.2);color:#fff}
+.side{position:relative;background:var(--side);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28);color:#E7EEF6}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14) 100%);mix-blend-mode:soft-light}
+.card{background:var(--s1);border:var(--bw) solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.bdg .i{width:14px;height:14px}
+.b-ok{color:var(--ok);background:var(--oks)}.b-wa{color:var(--wa);background:var(--was)}.b-bad{color:var(--bad);background:var(--bads)}.b-inf{color:var(--inf);background:var(--infs)}.b-run{color:var(--run);background:var(--runs)}.b-neu{color:var(--neu);background:var(--neus)}
+.b-glass{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:var(--bw) solid var(--bd2);background:var(--s1);color:var(--t1);cursor:pointer;white-space:nowrap;text-decoration:none;transition:transform .15s cubic-bezier(.2,.8,.2,1),background-color .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh1)}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--pf);border-color:transparent;color:var(--pft);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-gl{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.34);color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.btn-lg{height:52px;font-size:16px;width:100%}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer;transition:background-color .2s}
+.ib:hover{background:rgba(255,255,255,.12);color:#fff}
+.btn:focus-visible,.ib:focus-visible,.seg button:focus-visible,.tab:focus-visible,.rng:focus-visible,.tgl:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.seg{display:inline-flex;padding:4px;border-radius:999px;gap:2px}
+.seg button{height:32px;width:36px;border-radius:999px;border:0;background:transparent;color:var(--t2);cursor:pointer;display:grid;place-items:center;transition:background-color .3s cubic-bezier(.2,.8,.2,1),color .3s}
+.seg button.on{background:var(--pf);color:var(--pft);box-shadow:0 2px 8px rgba(184,70,10,.3)}
+.tab{all:unset;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;transition:background-color .3s,color .3s}
+.tab.on{background:var(--t1);color:var(--canvas)}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:26px;line-height:1.1;font-weight:700}
+.sub{font-size:13.5px;color:var(--t3)}
+.th{font-size:12.5px;font-weight:600;color:var(--t3);padding:10px 12px;text-align:right}
+.chip{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}
+.rng{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;cursor:pointer}
+.rng::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--steel),var(--p))}
+.rng::-moz-range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--steel),var(--p))}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.rng::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.tgl{all:unset;box-sizing:border-box;width:52px;height:30px;border-radius:999px;position:relative;cursor:pointer;transition:background-color .3s;flex:none}
+.tgl span{position:absolute;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:left .35s cubic-bezier(.2,.8,.2,1)}
+.bar{transition:width .45s cubic-bezier(.2,.8,.2,1)}
+.haz{background:repeating-linear-gradient(-45deg,var(--wai) 0 10px,#1E1B16 10px 20px)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rv{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.pop{animation:pop .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fade{animation:fade .3s ease both}
+@media (prefers-reduced-motion:reduce){.rv,.pop,.fade{animation:none}.bar,.tgl span{transition:none}}
+</style>
+</helmet>
+<div class="pm stage {{themeClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start; position: relative;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 6px 16px rgba(227,93,20,.45);"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="10">
+<a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a>
+</sc-for>
+<span style="margin-top: auto; width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #F5B63D, #E35D14); color: #1E1B16; font-size: 13px; font-weight: 700; display: grid; place-items: center;" role="img" aria-label="Marina Costa, gestora">MC</span>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px; min-width: 0;">
+<a href="#" style="color: var(--t3); text-decoration: none;">Custos</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+<span style="color: var(--t1); font-weight: 600;" aria-current="page">Tabela de Custos e versões</span>
+</nav>
+<span class="bdg b-neu" style="height: 34px; padding: 0 12px;">Matriz · Joinville</span>
+<div class="seg" role="radiogroup" aria-label="Tema" style="background: var(--s3);">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{t.checked}}" aria-label="{{t.label}}" class="{{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg></button></sc-for>
+</div>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 22px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: var(--hero); color: #fff; padding: clamp(22px, 3vw, 34px);" aria-label="Resumo das versões">
+<svg viewBox="0 0 360 220" aria-hidden="true" style="position: absolute; right: 24px; top: 8px; width: min(420px, 42%); height: auto;" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<g stroke="rgba(255,255,255,.32)">
+<path d="M30 206V24h300v182M18 206h324"/>
+<rect x="80" y="24" width="22" height="52" rx="3"/><rect x="258" y="24" width="22" height="52" rx="3"/>
+<rect x="60" y="76" width="240" height="30" rx="3"/><path d="M168 106l12 24 12-24"/>
+<rect x="60" y="152" width="240" height="22" rx="3"/><path d="M166 152l14 16 14-16"/>
+<path d="M60 174v32M300 174v32"/>
+<circle cx="316" cy="48" r="8"/><path d="M308 64h16v20h-16z"/>
+</g>
+<path d="M70 146h96l14 16 14-16h96" stroke="#FF9A4D" stroke-width="3"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 640px;">
+<span style="font-size: 14px; color: #FFC08F; font-weight: 600;">Motor de Custos</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.4vw, 56px); font-weight: 700; line-height: 1;">Tabela de Custos</h1>
+<p style="margin: 0; font-size: 16px; color: #D3E0EE;">Marina, o rascunho de <strong style="color: #fff;">novembro</strong> já está pronto. O sistema fechou outubro sozinho no dia 1º. Confira o que mudou e publique quando estiver tranquila: nada muda nos orçamentos até lá.</p>
+</div>
+<div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px;" role="list" aria-label="Versões">
+<sc-for list="{{versions}}" as="v" hint-placeholder-count="5">
+<div role="listitem" class="{{v.cls}}" style="flex: 0 0 180px; border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; {{v.style}}">
+<span class="mono" style="font-size: 18px; font-weight: 600;">{{v.comp}}</span>
+<span class="bdg" style="align-self: flex-start; {{v.bstyle}}">{{v.status}}</span>
+<span style="font-size: 12.5px; opacity: .85;">{{v.meta}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<sc-if value="{{published}}" hint-placeholder-val="{{false}}">
+<div class="card pop" role="status" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--oks); border-color: transparent;">
+<span class="chip" style="background: var(--ok); color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+<span style="flex: 1; font-size: 14.5px;"><strong>Pronto! A tabela 2026-11 agora é a vigente.</strong> A de outubro foi encerrada e segue guardada para os 12 orçamentos e OS que a usam. Avisamos o Paulo sobre os 4 orçamentos para recalcular.</span>
+<button type="button" class="btn btn-sm" onClick="{{undo}}">Desfazer (60 s)</button>
+</div>
+</sc-if>
+
+<div class="rv d1" role="tablist" aria-label="Seções" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; border-radius: 999px; align-self: flex-start; max-width: 100%; background: var(--s3);">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg>{{t.label}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{tabCmp}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;">
+<section class="card rv d2" style="flex: 999 1 560px; min-width: 0; overflow: hidden;" aria-labelledby="t-cmp">
+<div style="padding: 22px 24px 8px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="t-cmp" class="h2">Outubro × novembro, máquina por máquina</h2><span class="sub">Alertamos quando um centro varia mais de 10,0%</span></div>
+<div style="display: flex; gap: 8px; align-items: center;"><span class="bdg b-ok">2026-10 vigente</span><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="bdg b-neu">2026-11 rascunho</span></div>
+</div>
+<div style="overflow-x: auto;">
+<table style="width: 100%; min-width: 720px; border-collapse: collapse; font-size: 14.5px;">
+<thead><tr><th scope="col" class="th" style="text-align: left; padding-left: 24px;">Centro</th><th scope="col" class="th">Out.</th><th scope="col" class="th">Nov.</th><th scope="col" class="th" style="width: 180px;"></th><th scope="col" class="th">Variação</th><th scope="col" class="th" style="text-align: left; padding-right: 24px;">Por quê</th></tr></thead>
+<tbody>
+<sc-for list="{{cmp}}" as="r" hint-placeholder-count="4">
+<tr style="border-top: var(--bw) solid var(--bd); opacity: {{r.op}};">
+<td style="padding: 14px 12px 14px 24px;"><span style="display: flex; align-items: center; gap: 10px;"><span class="chip" style="width: 32px; height: 32px; background: {{r.bg}}; color: #fff;"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{r.icon}}"/></svg></span><span style="font-weight: 600;">{{r.n}}</span></span></td>
+<td class="mono" style="padding: 14px 12px; text-align: right; color: var(--t2);">{{r.a}}</td>
+<td class="mono" style="padding: 14px 12px; text-align: right; font-weight: 700;">{{r.b}}</td>
+<td style="padding: 14px 12px;"><span style="display: flex; flex-direction: column; gap: 3px;"><span style="height: 6px; border-radius: 99px; background: var(--plan); width: {{r.wa}};"></span><span style="height: 6px; border-radius: 99px; background: {{r.bg}}; width: {{r.wb}};"></span></span></td>
+<td style="padding: 14px 12px; text-align: right;"><span class="bdg {{r.cls}}">{{r.p}}</span></td>
+<td style="padding: 14px 24px 14px 12px; font-size: 13.5px; color: var(--t2);">{{r.why}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="margin: 8px 24px 22px; padding: 14px 16px; border-radius: 16px; background: var(--steels); display: flex; gap: 12px; align-items: flex-start;">
+<span class="chip" style="background: var(--steel); color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+<span style="font-size: 14px;">O <strong>Centro de usinagem 02</strong> está parado para trocar o spindle e saiu do rateio. Com isso, a fatia do custo fixo dos outros três subiu um pouco. Ele volta para a conta quando for liberado.</span>
+</div>
+</section>
+
+<aside class="rv d3" aria-label="Publicar versão" style="flex: 1 1 340px; max-width: 420px; position: sticky; top: 84px; border-radius: 30px; padding: 10px; background: linear-gradient(150deg, #F08A3E 0%, #E35D14 35%, #1D4E7A 100%);">
+<div class="lg" style="border-radius: 22px; padding: 22px; display: flex; flex-direction: column; gap: 14px;">
+<h2 class="disp" style="margin: 0; font-size: 24px; font-weight: 700;">Antes de publicar novembro</h2>
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{checks}}" as="c" hint-placeholder-count="5">
+<div style="display: flex; gap: 10px; align-items: flex-start; font-size: 14px;">
+<span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.bg}}; color: {{c.fg}}; display: grid; place-items: center; flex: none; margin-top: 1px;"><svg class="i" viewBox="0 0 24 24" style="width: 13px; height: 13px; stroke-width: 2.5;" aria-hidden="true"><path d="{{c.icon}}"/></svg></span>
+<span><span style="font-weight: 600;">{{c.k}}</span><span style="display: block; font-size: 12.5px; color: var(--t2);">{{c.s}}</span></span>
+</div>
+</sc-for>
+</div>
+<div style="padding: 14px; border-radius: 16px; background: var(--s1); display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 13.5px; font-weight: 600;">O que muda ao publicar</span>
+<div style="display: flex; justify-content: space-between; font-size: 13.5px;"><span style="color: var(--t2);">Custo-hora médio</span><span class="mono" style="font-weight: 700;">+2,7%</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 13.5px;"><span style="color: var(--t2);">Orçamentos abertos afetados</span><span class="mono" style="font-weight: 700;">4</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 13.5px;"><span style="color: var(--t2);">OS em andamento</span><span style="font-weight: 600; color: var(--ok);">não mudam</span></div>
+</div>
+<button type="button" class="btn btn-p btn-lg" onClick="{{openPub}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Publicar 2026-11</button>
+<span style="font-size: 12.5px; color: var(--t2); text-align: center;">Só gestores com a permissão “publicar Tabela de Custos”</span>
+</div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{tabFix}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;">
+<section class="card" style="flex: 999 1 560px; min-width: 0; padding: 22px 24px;" aria-labelledby="t-fix">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 10px;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="t-fix" class="h2">Custo fixo de novembro</h2><span class="sub">Tudo o que a fábrica gasta, produzindo ou não. Vem do Contas a pagar ou é lançado à mão.</span></div>
+<button type="button" class="btn btn-sm"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>Lançar despesa</button>
+</div>
+<sc-for list="{{fixed}}" as="f" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 120px 128px; gap: 14px; align-items: center; padding: 10px 0; border-top: var(--bw) solid var(--bd);">
+<span style="font-size: 14.5px; font-weight: 500;">{{f.k}}</span>
+<span style="height: 8px; border-radius: 99px; background: var(--s3); overflow: hidden;"><span class="bar" style="display: block; height: 100%; width: {{f.w}}; background: {{f.c}}; border-radius: 99px;"></span></span>
+<span class="mono" style="text-align: right; font-weight: 600;">{{f.v}}</span>
+<span class="bdg {{f.cls}}" style="justify-self: end;">{{f.o}}</span>
+</div>
+</sc-for>
+<div style="display: flex; justify-content: space-between; padding: 14px 0 0; border-top: 2px solid var(--t1); font-weight: 700;"><span>Total do mês</span><span class="mono" style="font-size: 18px;">R$ 22.000,00</span></div>
+</section>
+<aside class="card" style="flex: 1 1 320px; padding: 22px; display: flex; flex-direction: column; gap: 12px; background-image: linear-gradient(160deg, var(--ps), transparent 60%);">
+<h2 class="h2" style="font-size: 22px;">Suavizar picos?</h2>
+<p style="margin: 0; font-size: 14px; color: var(--t2);">IPTU, 13º e férias pesam em um mês só. Com a média móvel, o custo-hora fica estável e o orçamento não salta de um mês para o outro.</p>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 14px; background: var(--s1);"><span style="font-size: 14px; font-weight: 500;">Média móvel de 6 meses</span><button type="button" class="tgl" role="switch" aria-checked="true" aria-label="Média móvel de 6 meses" style="background: var(--ok);"><span style="left: 25px;"></span></button></div>
+<span style="font-size: 13px; color: var(--t3);">Sem média, novembro seria R$ 24.180,00, por causa da 1ª parcela do 13º.</span>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{tabCap}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="display: flex; flex-direction: column; gap: 22px;">
+<section class="card" style="overflow: hidden;" aria-labelledby="t-cap">
+<div style="padding: 22px 24px 8px; display: flex; flex-direction: column; gap: 2px;"><h2 id="t-cap" class="h2">Capacidade: quantas horas cada máquina produz de verdade</h2><span class="sub">Dias úteis × turnos × horas por turno, menos paradas programadas, vezes a eficiência</span></div>
+<div style="overflow-x: auto;">
+<table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14.5px;">
+<thead><tr><th scope="col" class="th" style="text-align: left; padding-left: 24px;">Centro</th><th scope="col" class="th">Dias</th><th scope="col" class="th">Turnos</th><th scope="col" class="th">h/turno</th><th scope="col" class="th">Expediente</th><th scope="col" class="th">Paradas</th><th scope="col" class="th">Eficiência</th><th scope="col" class="th" style="padding-right: 24px;">Horas reais</th></tr></thead>
+<tbody>
+<sc-for list="{{cap}}" as="r" hint-placeholder-count="4">
+<tr style="border-top: var(--bw) solid var(--bd);">
+<td style="padding: 14px 12px 14px 24px; font-weight: 600;">{{r.n}}</td>
+<td class="mono" style="padding: 14px 12px; text-align: right;">22</td>
+<td class="mono" style="padding: 14px 12px; text-align: right;">1</td>
+<td class="mono" style="padding: 14px 12px; text-align: right;">10</td>
+<td class="mono" style="padding: 14px 12px; text-align: right;">220 h</td>
+<td class="mono" style="padding: 14px 12px; text-align: right; color: {{r.pc}};">{{r.par}}</td>
+<td class="mono" style="padding: 14px 12px; text-align: right;">{{r.ef}}</td>
+<td class="mono" style="padding: 14px 24px 14px 12px; text-align: right; font-weight: 700;">{{r.h}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+<section class="card" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="t-rat">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="t-rat" class="h2">Rateio: quem carrega quanto do custo fixo</h2><span class="sub">Critério: horas reais (igual à planilha). Os pesos sempre fecham 100%.</span></div>
+<span class="bdg b-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Soma 100,0%</span>
+</div>
+<div style="display: flex; height: 44px; border-radius: 14px; overflow: hidden; gap: 3px;" role="img" aria-label="Torno CNC 33,3%, Fresa CNC 33,3%, Solda MIG 33,4%">
+<span style="width: 33.3%; background: #1D6FB8; color: #fff; display: flex; align-items: center; padding: 0 14px; font-size: 13.5px; font-weight: 600;">Torno CNC · 33,3%</span>
+<span style="width: 33.3%; background: #0F9D76; color: #fff; display: flex; align-items: center; padding: 0 14px; font-size: 13.5px; font-weight: 600;">Fresa CNC 01 · 33,3%</span>
+<span style="width: 33.4%; background: #E35D14; color: #fff; display: flex; align-items: center; padding: 0 14px; font-size: 13.5px; font-weight: 600;">Solda MIG 01 · 33,4%</span>
+</div>
+<span style="font-size: 13.5px; color: var(--t2);">R$ 22.000,00 ÷ 495 h reais = <strong class="mono" style="color: var(--t1);">R$ 44,44 por hora</strong> em cada centro. Outros critérios: valor do ativo, área ocupada, faturamento ou percentual manual.</span>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{tabWhat}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;">
+<section class="card" style="flex: 1 1 360px; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="t-wi">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="t-wi" class="h2">E se…?</h2><span class="sub">Brinque à vontade: nada aqui é publicado.</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px;"><div style="display: flex; justify-content: space-between;"><label for="w-ef" style="font-size: 14px; font-weight: 500;">Eficiência das máquinas</label><span class="mono" style="font-weight: 700;">{{wEf}}</span></div><input id="w-ef" class="rng" type="range" min="60" max="90" step="1" value="{{ef}}" onChange="{{onEf}}" onInput="{{onEf}}"></div>
+<div style="display: flex; flex-direction: column; gap: 2px;"><div style="display: flex; justify-content: space-between;"><label for="w-cf" style="font-size: 14px; font-weight: 500;">Custo fixo do mês</label><span class="mono" style="font-weight: 700;">{{wCf}}</span></div><input id="w-cf" class="rng" type="range" min="18000" max="30000" step="500" value="{{cf}}" onChange="{{onCf}}" onInput="{{onCf}}"></div>
+<div style="display: flex; flex-direction: column; gap: 2px;"><div style="display: flex; justify-content: space-between;"><label for="w-sal" style="font-size: 14px; font-weight: 500;">Salário do operador do torno</label><span class="mono" style="font-weight: 700;">{{wSal}}</span></div><input id="w-sal" class="rng" type="range" min="4000" max="7000" step="100" value="{{sal}}" onChange="{{onSal}}" onInput="{{onSal}}"></div>
+<div style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 16px; background: var(--steels);">
+<svg viewBox="0 0 640 250" aria-hidden="true" style="width: 72px; height: auto; flex: none; color: var(--steel);" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"><rect x="40" y="168" width="560" height="24" rx="3"/><rect x="40" y="58" width="132" height="110" rx="8"/><path d="M212 100h96v34h-96M308 106h60v22h-60"/><rect x="420" y="94" width="76" height="74" rx="6"/></svg>
+<span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 14px; font-weight: 600;">Comprar um Torno CNC 2</span><span style="font-size: 12.5px; color: var(--t2);">R$ 220.000 · mais um operador · entra no rateio</span></span>
+<button type="button" class="tgl" role="switch" aria-checked="{{newAria}}" aria-label="Comprar um Torno CNC 2" onClick="{{toggleNew}}" style="background: {{newBg}};"><span style="left: {{newLeft}};"></span></button>
+</div>
+<button type="button" class="btn btn-sm" onClick="{{resetWi}}" style="align-self: flex-start;">Voltar ao que está valendo</button>
+</section>
+<section class="card" style="flex: 999 1 520px; min-width: 0; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="t-wr" aria-live="polite">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="t-wr" class="h2">Como fica o custo-hora</h2><span class="sub">Barra cinza: hoje. Barra colorida: no cenário.</span></div>
+<sc-for list="{{wi}}" as="r" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 84px 88px; gap: 14px; align-items: center; padding: 10px 0; border-top: var(--bw) solid var(--bd);">
+<span style="font-weight: 600; font-size: 14.5px;">{{r.n}}</span>
+<span style="display: flex; flex-direction: column; gap: 3px;"><span class="bar" style="height: 7px; border-radius: 99px; background: var(--plan); width: {{r.wa}};"></span><span class="bar" style="height: 7px; border-radius: 99px; background: {{r.c}}; width: {{r.wb}};"></span></span>
+<span class="mono" style="text-align: right; font-weight: 700;">{{r.b}}</span>
+<span class="bdg {{r.cls}}" style="justify-self: end;">{{r.p}}</span>
+</div>
+</sc-for>
+<div style="padding: 16px; border-radius: 18px; background: var(--ps); display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13.5px; color: var(--pt); font-weight: 600;">Na prática</span>
+<span style="font-size: 15px;">A bucha H7 (lote de 10) sairia a <strong class="mono">{{wBucha}}</strong> por peça. Hoje sai a R$ 83,50.</span>
+</div>
+</section>
+</div>
+</sc-if>
+
+</main>
+</div>
+
+<sc-if value="{{pubOpen}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="position: fixed; inset: 0; z-index: 20; background: rgba(20,16,10,.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px;">
+<div class="lg pop" role="dialog" aria-modal="true" aria-labelledby="m-t" style="width: min(520px, 100%); border-radius: 28px; overflow: hidden; background: var(--s1);">
+<div class="haz" style="height: 8px;"></div>
+<div style="padding: 24px; display: flex; flex-direction: column; gap: 14px;">
+<h2 id="m-t" class="disp" style="margin: 0; font-size: 30px; font-weight: 700; line-height: 1.05;">Publicar a tabela de novembro?</h2>
+<p style="margin: 0; font-size: 14.5px; color: var(--t2);">A partir de agora, todo orçamento novo usa estes valores. Orçamentos aprovados e OS em andamento continuam com outubro.</p>
+<div style="display: flex; flex-direction: column; border-radius: 16px; background: var(--s2); border: var(--bw) solid var(--bd);">
+<sc-for list="{{impact}}" as="o" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 14px; border-top: var(--bw) solid var(--bd);">
+<span style="display: flex; flex-direction: column;"><span class="mono" style="font-size: 12.5px; color: var(--t3);">{{o.c}}</span><span style="font-size: 14px; font-weight: 500;">{{o.n}}</span></span>
+<span class="bdg {{o.cls}}">{{o.s}}</span>
+<span class="mono" style="font-weight: 700; color: var(--wa);">{{o.d}}</span>
+</div>
+</sc-for>
+</div>
+<label style="display: flex; gap: 10px; align-items: center; font-size: 14px; cursor: pointer;"><input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #B8460A;">Avisar o Paulo para recalcular esses 4 orçamentos</label>
+<div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+<button type="button" class="btn" onClick="{{closePub}}">Ainda não</button>
+<button type="button" class="btn btn-p" onClick="{{doPub}}">Sim, publicar 2026-11</button>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Escuro","Alto contraste"],"default":"Claro"},"$preview":{"width":1440,"height":2100}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { tab: 'cmp', pubOpen: false, published: false, ef: 75, cf: 22000, sal: 5000, novo: false };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const f = (n, d) => n.toLocaleString('pt-BR', { minimumFractionDigits: d == null ? 2 : d, maximumFractionDigits: d == null ? 2 : d });
+    const brl = (n) => 'R$ ' + f(n);
+    const map = { 'Claro': 't-claro', 'Escuro': 't-escuro', 'Alto contraste': 't-contraste' };
+    const icons = { 'Claro': 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41', 'Escuro': 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z', 'Alto contraste': 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 18a6 6 0 0 0 0-12Z' };
+    const cur = this.state.tema || this.props.tema || 'Claro';
+    const themes = Object.keys(map).map((label) => ({ label, icon: icons[label], cls: label === cur ? 'on' : '', checked: label === cur ? 'true' : 'false', pick: () => this.setState({ tema: label }) }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+      ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'],
+      ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5', true],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'],
+      ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+      ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['BI', 'M3 3v18h18M18 17V9M13 17V5M8 17v-3'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+
+    const pub = this.state.published;
+    const glassS = 'background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.24); color: #fff;';
+    const curS = 'background: rgba(255,255,255,.92); color: #1E1B16; box-shadow: 0 10px 24px rgba(0,0,0,.18);';
+    const versions = [
+      { comp: '2026-07', status: 'Encerrada', meta: 'Torno 112,40 R$/h', style: glassS, bstyle: 'background: rgba(255,255,255,.16); color: #fff;' },
+      { comp: '2026-08', status: 'Encerrada', meta: 'Torno 114,05 R$/h', style: glassS, bstyle: 'background: rgba(255,255,255,.16); color: #fff;' },
+      { comp: '2026-09', status: 'Encerrada', meta: 'Torno 115,90 R$/h', style: glassS, bstyle: 'background: rgba(255,255,255,.16); color: #fff;' },
+      { comp: '2026-10', status: pub ? 'Encerrada' : 'Vigente · desatualizada', meta: 'Publicada por Marina em 01/10', style: pub ? glassS : curS, bstyle: pub ? 'background: rgba(255,255,255,.16); color: #fff;' : 'background: #FCEFC7; color: #8A5300;' },
+      { comp: '2026-11', status: pub ? 'Vigente' : 'Rascunho', meta: pub ? 'Publicada agora por você' : 'Gerada no fechamento de 01/11', style: pub ? curS : 'background: rgba(227,93,20,.85); border: 1px solid rgba(255,255,255,.3); color: #fff;', bstyle: pub ? 'background: #DDF3E9; color: #0F7A55;' : 'background: #fff; color: #9A3A06;' }
+    ];
+    const T = [['cmp', 'Comparar e publicar', 'M3 3v18h18M18 17V9M13 17V5M8 17v-3'], ['fix', 'Custo fixo', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'], ['cap', 'Capacidade e rateio', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 6v6l4 2'], ['what', 'E se…? (what-if)', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']];
+    const tabs = T.map((t) => ({ label: t[1], icon: t[2], cls: this.state.tab === t[0] ? 'on' : '', sel: this.state.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) }));
+    const I = { cnc: 'M4 4h16v16H4zM9 9h6v6H9z', solda: 'M13 2 3 14h9l-1 8 10-12h-9l1-8Z' };
+    const cmp = [
+      ['Torno CNC de entrada', 117.78, 121.44, '#1D6FB8', I.cnc, 'Salário do Ricardo (+R$ 300) e manutenção real (R$ 812)'],
+      ['Fresa CNC 01', 131.05, 133.90, '#0F9D76', I.cnc, 'Insumos médios recalibrados pelo realizado'],
+      ['Célula de solda MIG 01', 94.12, 96.80, '#E35D14', I.solda, 'Arame e gás subiram 6% nas últimas compras'],
+      ['Centro de usinagem 02', 179.62, null, '#7C5CC4', I.cnc, 'Parado para trocar o spindle · fora do rateio']
+    ].map((r) => {
+      const p = r[2] == null ? null : (r[2] / r[1] - 1) * 100;
+      return { n: r[0], a: f(r[1]), b: r[2] == null ? '—' : f(r[2]), bg: r[3], icon: r[4], why: r[5], wa: (r[1] / 200 * 100).toFixed(1) + '%', wb: r[2] == null ? '0%' : (r[2] / 200 * 100).toFixed(1) + '%', p: p == null ? 'parado' : '+' + f(p, 1) + '%', cls: p == null ? 'b-neu' : p > 10 ? 'b-bad' : p > 5 ? 'b-wa' : 'b-ok', op: r[2] == null ? '.7' : '1' };
+    });
+    const ck = 'M20 6 9 17l-5-5', wn = 'M12 8v5M12 17h.01';
+    const checks = [
+      ['Custo fixo fechado', 'R$ 22.000,00 · 11 contas vindas do Contas a pagar', ck, 'var(--ok)', '#fff'],
+      ['Capacidade revisada', '495 h reais em 3 centros', ck, 'var(--ok)', '#fff'],
+      ['Pesos do rateio somam 100%', 'Critério: horas reais', ck, 'var(--ok)', '#fff'],
+      ['Eficiência e vida útil preenchidas', 'Nenhum bloqueio', ck, 'var(--ok)', '#fff'],
+      ['Energia do Torno ainda zerada', 'Não bloqueia, mas o custo-hora fica um pouco baixo', wn, 'var(--wai)', '#1E1B16']
+    ].map((c) => ({ k: c[0], s: c[1], icon: c[2], bg: c[3], fg: c[4] }));
+    const fx = [['Aluguel do galpão', 6500, 'Contas a pagar'], ['Pró-labore', 5000, 'Manual'], ['Pessoal administrativo', 3200, 'Contas a pagar'], ['Pessoal comercial', 2400, 'Contas a pagar'], ['Contabilidade', 1100, 'Contas a pagar'], ['Energia (área comum)', 980, 'Contas a pagar'], ['Sistemas', 690, 'Contas a pagar'], ['Seguros', 520, 'Contas a pagar'], ['Telefone e internet', 320, 'Contas a pagar'], ['Treinamentos', 300, 'Manual'], ['Outros', 300, 'Manual'], ['Água', 210, 'Contas a pagar'], ['Alarme e monitoramento', 180, 'Contas a pagar'], ['Taxas e licenças', 160, 'Manual'], ['Tarifas bancárias', 140, 'Contas a pagar']];
+    const fixed = fx.map((x) => ({ k: x[0], v: brl(x[1]), w: (x[1] / 6500 * 100).toFixed(1) + '%', c: x[2] === 'Manual' ? '#7C5CC4' : '#1D6FB8', o: x[2], cls: x[2] === 'Manual' ? 'b-run' : 'b-inf' }));
+    const cap = [
+      { n: 'Torno CNC de entrada', par: '—', pc: 'var(--t3)', ef: '75,0%', h: '165 h' },
+      { n: 'Fresa CNC 01', par: '—', pc: 'var(--t3)', ef: '75,0%', h: '165 h' },
+      { n: 'Célula de solda MIG 01', par: '—', pc: 'var(--t3)', ef: '75,0%', h: '165 h' },
+      { n: 'Centro de usinagem 02', par: '220 h', pc: 'var(--bad)', ef: '68,0%', h: '0 h' }
+    ];
+    const ef = this.state.ef, cf = this.state.cf, sal = this.state.sal, novo = this.state.novo;
+    const H = 220 * ef / 100, N = novo ? 4 : 3, rat = cf / (N * H);
+    const base = { t: 117.7778, f: 131.05, s: 94.12 };
+    const wiRows = [
+      ['Torno CNC de entrada', base.t, (sal * 1.64 + 3900) / H + rat, '#1D6FB8'],
+      ['Fresa CNC 01', base.f, 14290 / H + rat, '#0F9D76'],
+      ['Célula de solda MIG 01', base.s, 8197 / H + rat, '#E35D14']
+    ];
+    if (novo) wiRows.push(['Torno CNC 2 (novo)', null, 13467 / H + rat, '#7C5CC4']);
+    const wi = wiRows.map((r) => {
+      const p = r[1] == null ? null : (r[2] / r[1] - 1) * 100;
+      return { n: r[0], c: r[3], wa: r[1] == null ? '0%' : Math.min(100, r[1] / 220 * 100).toFixed(1) + '%', wb: Math.min(100, r[2] / 220 * 100).toFixed(1) + '%', b: f(r[2]), p: p == null ? 'novo' : (p >= 0 ? '+' : '−') + f(Math.abs(p), 1) + '%', cls: p == null ? 'b-run' : p > 10 ? 'b-bad' : p > 0.05 ? 'b-wa' : 'b-ok' };
+    });
+    const chT = (sal * 1.64 + 3900) / H + rat;
+    const wBucha = brl((80 + 4 * chT) / 10 / 0.66 * 0.95);
+    const impact = [
+      { c: 'ORC-2026-00128', n: 'Bucha de latão H7 · Metalúrgica Vale', s: 'Rascunho', cls: 'b-neu', d: '+2,7%' },
+      { c: 'ORC-2026-00131', n: 'Eixo de transmissão Ø45 · Agro Pampa', s: 'Enviado', cls: 'b-inf', d: '+2,4%' },
+      { c: 'ORC-2026-00133', n: 'Suporte soldado chapa 3/16 · Estruturas Sul', s: 'Em negociação', cls: 'b-wa', d: '+2,6%' },
+      { c: 'ORC-2026-00135', n: 'Flange SAE 4" · Hidráulica Norte', s: 'Rascunho', cls: 'b-neu', d: '+2,0%' }
+    ];
+    const tab = this.state.tab;
+    return {
+      themeClass: map[cur], themes, rail, versions, tabs, cmp, checks, fixed, cap, wi, impact,
+      tabCmp: tab === 'cmp', tabFix: tab === 'fix', tabCap: tab === 'cap', tabWhat: tab === 'what',
+      pubOpen: this.state.pubOpen, published: pub,
+      openPub: () => this.setState({ pubOpen: true }), closePub: () => this.setState({ pubOpen: false }),
+      doPub: () => this.setState({ pubOpen: false, published: true }), undo: () => this.setState({ published: false }),
+      ef, cf, sal, wEf: f(ef, 1) + '%', wCf: brl(cf), wSal: brl(sal), wBucha,
+      onEf: (e) => this.setState({ ef: parseFloat(e.target.value) }),
+      onCf: (e) => this.setState({ cf: parseFloat(e.target.value) }),
+      onSal: (e) => this.setState({ sal: parseFloat(e.target.value) }),
+      toggleNew: () => this.setState({ novo: !novo }), newAria: String(novo), newBg: novo ? 'var(--ok)' : 'var(--plan)', newLeft: novo ? '25px' : '3px',
+      resetWi: () => this.setState({ ef: 75, cf: 22000, sal: 5000, novo: false }),
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

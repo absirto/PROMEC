@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Fundamentos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B8460A}a:hover{color:#8A3305}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--t1);-webkit-font-smoothing:antialiased;transition:background-color .3s,color .3s}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.t-claro{--canvas:#F2EEE7;--base:#EAE4DA;--s1:#FFFFFF;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t1:#1E1B16;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--pft:#FFFFFF;--ps:#FDE8DA;--pt:#9A3A06;--steel:#1D4E7A;--steels:#E3EDF7;--ok:#0F7A55;--oks:#DDF3E9;--wa:#8A5300;--wai:#E0A100;--was:#FCEFC7;--bad:#C0352B;--bads:#FBE2DF;--inf:#1A64A8;--infs:#E0EDFA;--run:#5B3FB5;--runs:#ECE6FB;--neu:#6B6458;--neus:#ECE7DF;--grid:rgba(60,45,25,.06);--hero:linear-gradient(135deg,#235C8F 0%,#1D4E7A 45%,#15395A 100%);--herot:#FFFFFF;--herot2:#D3E0EE;--heroill:rgba(255,255,255,.34);--lg-bg:rgba(255,255,255,.55);--lg-bd:rgba(255,255,255,.8);--lg-hl:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.4);--lg-sh:0 12px 32px rgba(40,30,15,.12),0 1px 2px rgba(40,30,15,.08);--lgd-bg:rgba(255,255,255,.14);--lgd-bd:rgba(255,255,255,.34);--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06);--bw:1px}
+.t-escuro{--canvas:#13161B;--base:#181C22;--s1:#1F242C;--s2:#252B34;--s3:#2D343F;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.16);--t1:#F4F1EC;--t2:#C3BCB0;--t3:#9A9387;--p:#FF7A2E;--pf:#FF7A2E;--pft:#1A0E05;--ps:rgba(255,122,46,.16);--pt:#FFB07F;--steel:#6FA8DC;--steels:rgba(111,168,220,.14);--ok:#3DD598;--oks:rgba(61,213,152,.14);--wa:#F5B83D;--wai:#F5B83D;--was:rgba(245,184,61,.14);--bad:#FF6B5E;--bads:rgba(255,107,94,.14);--inf:#5AB0F0;--infs:rgba(90,176,240,.14);--run:#A891FF;--runs:rgba(168,145,255,.16);--neu:#ABA396;--neus:rgba(171,163,150,.14);--grid:rgba(255,255,255,.035);--hero:linear-gradient(135deg,#21476E 0%,#173452 50%,#0F2236 100%);--herot:#FFFFFF;--herot2:#BFD0E2;--heroill:rgba(255,255,255,.26);--lg-bg:rgba(44,50,60,.5);--lg-bd:rgba(255,255,255,.14);--lg-hl:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(255,255,255,.05);--lg-sh:0 12px 32px rgba(0,0,0,.4);--lgd-bg:rgba(255,255,255,.1);--lgd-bd:rgba(255,255,255,.22);--sh1:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);--bw:1px}
+.t-contraste{--canvas:#000;--base:#000;--s1:#0A0A0A;--s2:#141414;--s3:#1F1F1F;--bd:#9A9A9A;--bd2:#FFFFFF;--t1:#FFFFFF;--t2:#EDEDED;--t3:#D4D4D4;--p:#FF9A4D;--pf:#FF9A4D;--pft:#000000;--ps:transparent;--pt:#FFB98A;--steel:#8CC4FF;--steels:transparent;--ok:#5EEA9C;--oks:transparent;--wa:#FFD400;--wai:#FFD400;--was:transparent;--bad:#FF9B9B;--bads:transparent;--inf:#8BDCFF;--infs:transparent;--run:#C9CEFF;--runs:transparent;--neu:#E0E0E0;--neus:transparent;--grid:transparent;--hero:#000;--herot:#FFFFFF;--herot2:#EDEDED;--heroill:rgba(255,255,255,.5);--lg-bg:#0A0A0A;--lg-bd:#FFFFFF;--lg-hl:none;--lg-sh:none;--lgd-bg:#000;--lgd-bd:#FFFFFF;--sh1:none;--bw:2px}
+.t-contraste .lg,.t-contraste .lgd{backdrop-filter:none;-webkit-backdrop-filter:none;border-width:2px}
+.t-contraste .lg::before,.t-contraste .lgd::before{display:none}
+.t-contraste .bdg{border:2px solid currentColor}
+.stage{background-color:var(--canvas);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:var(--lg-bg);backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);border:1px solid var(--lg-bd);box-shadow:var(--lg-hl),var(--lg-sh)}
+.lgd{position:relative;background:var(--lgd-bg);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid var(--lgd-bd);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 12px 30px rgba(5,15,30,.25);color:#fff}
+.lg::before,.lgd::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.5) 0%,rgba(255,255,255,0) 32%,rgba(255,255,255,0) 72%,rgba(255,255,255,.16) 100%);mix-blend-mode:soft-light}
+.card{background:var(--s1);border:var(--bw) solid var(--bd);border-radius:18px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.bdg .i{width:14px;height:14px}
+.b-ok{color:var(--ok);background:var(--oks)}.b-wa{color:var(--wa);background:var(--was)}.b-bad{color:var(--bad);background:var(--bads)}.b-inf{color:var(--inf);background:var(--infs)}.b-run{color:var(--run);background:var(--runs)}.b-neu{color:var(--neu);background:var(--neus)}
+.b-solid-ok{color:#fff;background:var(--ok)}
+.t-escuro .b-solid-ok{color:#06130D}
+.b-line-ok{color:var(--ok);background:transparent;box-shadow:inset 0 0 0 1.5px var(--ok)}
+.b-strike{text-decoration:line-through}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:var(--bw) solid var(--bd2);background:var(--s1);color:var(--t1);cursor:pointer;text-decoration:none;transition:transform .15s cubic-bezier(.2,.8,.2,1),background-color .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh1)}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--pf);border-color:transparent;color:var(--pft);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.25)}
+.btn-t{background:transparent;border-color:transparent;color:var(--pt)}
+.btn-d{background:var(--bads);border-color:transparent;color:var(--bad)}
+.btn-op{height:64px;min-width:170px;font-size:18px;border-radius:20px}
+.btn:focus-visible,.seg button:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.seg{display:inline-flex;padding:4px;border-radius:999px;gap:2px}
+.seg button{height:34px;padding:0 16px;border-radius:999px;border:0;background:transparent;color:inherit;font:500 13px/1 'IBM Plex Sans',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;opacity:.85;transition:background-color .3s cubic-bezier(.2,.8,.2,1),color .3s,opacity .3s}
+.seg button.on{background:#fff;color:#1E1B16;opacity:1;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.fld{display:flex;align-items:center;gap:8px;height:46px;padding:0 14px;border-radius:14px;background:var(--s2);border:var(--bw) solid var(--bd2);color:var(--t1)}
+.fld input{all:unset;flex:1;min-width:0;font:500 15px/1 'IBM Plex Mono',monospace;color:var(--t1)}
+.fld .u{font-size:13px;color:var(--t3);font-weight:500}
+.lbl{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:6px}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:34px;line-height:1.05;font-weight:700;letter-spacing:-.01em}
+.kick{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--pt)}
+.kick::before{content:"";width:18px;height:3px;border-radius:2px;background:var(--p)}
+.sec{display:flex;flex-direction:column;gap:22px;padding-top:80px}
+.lead{margin:0;color:var(--t2);max-width:680px;font-size:16px}
+.haz{height:8px;background:repeating-linear-gradient(-45deg,var(--wai) 0 12px,#1E1B16 12px 24px)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rv{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.grow{transform-origin:left;animation:grow .8s cubic-bezier(.2,.8,.2,1) both .2s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 40s linear infinite}
+.spin-r{transform-box:fill-box;transform-origin:center;animation:spin 28s linear infinite reverse}
+@keyframes flick{0%,100%{opacity:1}50%{opacity:.35}}
+.spark{animation:flick 1.2s ease-in-out infinite}
+.spark2{animation:flick .9s ease-in-out infinite .3s}
+@media (prefers-reduced-motion:reduce){.rv,.grow,.spin,.spin-r,.spark,.spark2{animation:none}}
+</style>
+</helmet>
+<div class="pm stage {{themeClass}}" style="min-height: 100vh;">
+
+<header style="position: relative; overflow: hidden; background: var(--hero); color: var(--herot);">
+<svg viewBox="0 0 1440 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+<defs><pattern id="mg" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0v32" fill="none" stroke="rgba(255,255,255,.07)"/></pattern></defs>
+<rect width="1440" height="520" fill="url(#mg)"/>
+<g style="color: var(--heroill);" transform="translate(760 150) scale(1.05)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<rect x="40" y="168" width="560" height="24" rx="3"/><path d="M40 180h560"/>
+<path d="M78 192v40h84v-40M478 192v40h84v-40M66 232h108M466 232h108"/>
+<rect x="40" y="58" width="132" height="110" rx="8"/><rect x="56" y="74" width="62" height="34" rx="4"/><path d="M64 84h30M64 94h44"/>
+<circle cx="72" cy="138" r="9"/><circle cx="104" cy="138" r="9"/><circle cx="142" cy="90" r="13"/>
+<rect x="172" y="78" width="28" height="78" rx="5"/><path d="M200 90h12v54h-12"/>
+<path d="M212 100h96v34h-96M308 106h60v22h-60M368 110h34v14h-34"/>
+<path d="M402 117l18-9v18z"/><rect x="420" y="94" width="76" height="74" rx="6"/><path d="M496 117h34"/><circle cx="544" cy="117" r="14"/><path d="M544 103v-10M544 131v10"/>
+<rect x="286" y="148" width="128" height="20" rx="3"/><rect x="322" y="128" width="44" height="20" rx="3"/>
+</g>
+<g transform="translate(760 150) scale(1.05)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M344 128l-10-10h10z" fill="#FF7A2E" stroke="#FF7A2E" stroke-width="2"/>
+<path class="spark" d="M330 124c-12-6-6-20 6-16s4 16-8 12c-9-3-7-14 1-13" stroke="#FFB15C" stroke-width="2"/>
+</g>
+<g style="color: var(--heroill);">
+<path class="spin" d="{{gearA}}" fill="none" stroke="currentColor" stroke-width="2"/>
+<circle cx="1330" cy="70" r="22" fill="none" stroke="currentColor" stroke-width="2"/>
+<path class="spin-r" d="{{gearB}}" fill="none" stroke="currentColor" stroke-width="2"/>
+<circle cx="1222" cy="112" r="13" fill="none" stroke="currentColor" stroke-width="2"/>
+</g>
+<g transform="translate(560 300)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+<g style="color: var(--heroill);" stroke="currentColor">
+<path d="M20 186L40 170H340L320 186ZM20 186h300v14H20zM320 186l20-16v14l-20 16"/>
+<path d="M176 166l14-26 14 8-14 26zM197 144l36-58 22 13-36 58zM244 92l22 13 30-44-22-13zM296 48c24-18 40 6 56-6"/>
+<path d="M60 178a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0"/>
+</g>
+<path d="M144 178a6 5 0 0 1 12 0a6 5 0 0 1 12 0" stroke="#FF7A2E"/>
+<circle cx="176" cy="172" r="18" fill="#FFC857" opacity=".28" stroke="none"/>
+<circle cx="176" cy="172" r="6" fill="#FFF3C4" stroke="#FFC857"/>
+<g class="spark" stroke="#FFB15C"><path d="M162 160l-24-20M156 170l-32-5M166 152l-12-28M190 180l28 10M168 184l-14 20M188 160l22-8"/></g>
+<g class="spark2" fill="#FFC857" stroke="none"><circle cx="128" cy="136" r="2.5"/><circle cx="116" cy="160" r="2"/><circle cx="222" cy="194" r="2.5"/><circle cx="150" cy="210" r="2"/><circle cx="214" cy="148" r="2"/></g>
+</g>
+</svg>
+<div style="position: relative; max-width: 1240px; margin: 0 auto; padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px) clamp(40px, 6vw, 72px); display: flex; flex-direction: column; gap: 40px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<div style="width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #E35D14; color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 6px 18px rgba(227,93,20,.45);"><svg class="i" viewBox="0 0 24 24" style="width: 24px; height: 24px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<span class="disp" style="font-weight: 700; font-size: 24px; letter-spacing: .01em;">ProMEC</span>
+<span style="font-size: 13px; color: var(--herot2);">Design System 0.2</span>
+</div>
+<div class="seg lgd" role="radiogroup" aria-label="Tema">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="3">
+<button type="button" role="radio" aria-checked="{{t.checked}}" class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}</button>
+</sc-for>
+</div>
+</div>
+<div class="lgd rv" style="max-width: 600px; border-radius: 28px; padding: clamp(24px, 3vw, 36px); display: flex; flex-direction: column; gap: 14px;">
+<span style="font-size: 14px; font-weight: 600; color: #FFC08F;">Aço &amp; Fagulha</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(44px, 5.4vw, 68px); line-height: .98; font-weight: 700; letter-spacing: -.01em;">Feito para quem orça, produz e entrega.</h1>
+<p style="margin: 0; font-size: 17px; color: var(--herot2);">Azul de máquina, laranja de fagulha e o amarelo da faixa de segurança. O ProMEC fala a língua da oficina: torno, solda, setup e refugo. E mostra de onde vem cada centavo.</p>
+</div>
+</div>
+<div class="haz"></div>
+</header>
+
+<div style="max-width: 1240px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px) 120px;">
+
+<section class="sec rv" aria-labelledby="s-cor">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="kick">01 · Cor</span>
+<h2 id="s-cor" class="h2">Cores da oficina, não de aplicativo genérico</h2>
+<p class="lead">Laranja é ação e calor (fagulha, ferramenta cortando). Azul-aço é estrutura e máquina. O amarelo de sinalização fica reservado para atenção. Fundo claro e quente, como papel de desenho técnico.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+<sc-for list="{{brand}}" as="c" hint-placeholder-count="6">
+<div class="card" style="overflow: hidden;">
+<div style="height: 110px; background: {{c.hex}}; position: relative;"><span class="disp" style="position: absolute; left: 14px; bottom: 10px; font-size: 22px; font-weight: 700; color: {{c.on}};">{{c.role}}</span></div>
+<div style="padding: 12px 14px; display: flex; flex-direction: column;"><span style="font-weight: 600; font-size: 14px;">{{c.name}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">{{c.hex}}</span></div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px;">
+<sc-for list="{{surfaces}}" as="s" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 16px; background: var(--s1); border: var(--bw) solid var(--bd);">
+<span style="width: 44px; height: 44px; border-radius: 12px; background: {{s.v}}; border: var(--bw) solid var(--bd2); flex: none;"></span>
+<span style="display: flex; flex-direction: column;"><span style="font-weight: 600; font-size: 13px;">{{s.name}}</span><span class="mono" style="font-size: 11px; color: var(--t3);">{{s.hex}}</span></span>
+</div>
+</sc-for>
+</div>
+<span class="mono" style="font-size: 12px; color: var(--t3);">{{contrastNote}}</span>
+</section>
+
+<section class="sec rv" aria-labelledby="s-glass">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="kick">02 · Liquid Glass</span>
+<h2 id="s-glass" class="h2">Vidro só no que flutua</h2>
+<p class="lead">Sidebar, topbar, o painel de preço e os controles em cápsula. Desfoque forte, saturação alta e uma borda de luz no topo. Grades, formulários e texto corrido ficam em superfície sólida para leitura sem esforço.</p>
+</div>
+<div style="position: relative; overflow: hidden; border-radius: 28px; padding: clamp(24px, 4vw, 48px); background: linear-gradient(120deg, #E35D14 0%, #F08A3E 30%, #1D4E7A 70%, #2A6AA3 100%); display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+<svg viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+<path d="{{gearC}}" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3"/>
+<path d="{{gearD}}" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.4)" stroke-width="2"/>
+<g fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"><rect x="300" y="200" width="380" height="20" rx="2"/><path d="{{calTicks}}"/><path d="M304 220v60l16-8v-52M420 196v-0M420 194h70v34h-70zM426 228v54l14-8v-46"/></g>
+</svg>
+<div class="lg" style="border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 13px; color: var(--t2);">Custo-hora cheio</span>
+<span class="mono" style="font-size: 40px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1;">R$ 117,78</span>
+<span style="font-size: 13px; color: var(--t2);">Painel em vidro claro sobre conteúdo colorido</span>
+</div>
+<div class="lgd" style="border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 13px; color: rgba(255,255,255,.85);">Ocupação do mês</span>
+<span class="mono" style="font-size: 40px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1;">78%</span>
+<span style="font-size: 13px; color: rgba(255,255,255,.85);">Vidro escuro sobre a faixa azul-aço</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+<div class="lg" style="border-radius: 999px; padding: 6px; display: flex; gap: 4px; align-self: flex-start;">
+<span style="height: 36px; padding: 0 16px; border-radius: 999px; background: #fff; color: #1E1B16; display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,.12);">Por hora</span>
+<span style="height: 36px; padding: 0 16px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 13px; color: var(--t2);">Por mês</span>
+</div>
+<div class="lg" style="border-radius: 999px; height: 48px; padding: 0 18px; display: flex; align-items: center; gap: 10px; color: var(--t2); font-size: 14px;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Buscar OS, cliente, máquina…</div>
+</div>
+</div>
+</section>
+
+<section class="sec rv" aria-labelledby="s-ill">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="kick">03 · Ilustração</span>
+<h2 id="s-ill" class="h2">Desenhos de processo, em traço de prancheta</h2>
+<p class="lead">Traço de 2 px, como desenho técnico, com o laranja só onde há calor ou corte: a fagulha, a ponta da ferramenta, o cavaco. Aparecem no fundo dos cabeçalhos, nos estados vazios e na tela de login.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px;">
+
+<figure class="card" style="margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 10px; color: var(--steel);">
+<svg viewBox="0 0 640 250" role="img" aria-label="Torno mecânico em traço técnico" style="width: 100%; height: auto;" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<rect x="40" y="168" width="560" height="24" rx="3"/><path d="M40 180h560"/>
+<path d="M78 192v40h84v-40M478 192v40h84v-40M66 232h108M466 232h108"/>
+<rect x="40" y="58" width="132" height="110" rx="8"/><rect x="56" y="74" width="62" height="34" rx="4"/><path d="M64 84h30M64 94h44"/>
+<circle cx="72" cy="138" r="9"/><circle cx="104" cy="138" r="9"/><circle cx="142" cy="90" r="13"/>
+<rect x="172" y="78" width="28" height="78" rx="5"/><path d="M200 90h12v54h-12"/>
+<path d="M212 100h96v34h-96M308 106h60v22h-60M368 110h34v14h-34"/>
+<path d="M402 117l18-9v18z"/><rect x="420" y="94" width="76" height="74" rx="6"/><path d="M496 117h34"/><circle cx="544" cy="117" r="14"/><path d="M544 103v-10M544 131v10"/>
+<rect x="286" y="148" width="128" height="20" rx="3"/><rect x="322" y="128" width="44" height="20" rx="3"/>
+<path d="M344 128l-10-10h10z" fill="var(--p)" stroke="var(--p)"/>
+<path d="M330 124c-12-6-6-20 6-16s4 16-8 12c-9-3-7-14 1-13" stroke="var(--p)"/>
+</svg>
+<figcaption style="display: flex; justify-content: space-between; font-size: 13px; color: var(--t2);"><span style="font-weight: 600; color: var(--t1);">Torno</span><span>Usinagem · centros CNC e convencionais</span></figcaption>
+</figure>
+
+<figure class="card" style="margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 10px; color: var(--steel);">
+<svg viewBox="0 0 360 240" role="img" aria-label="Tocha de solda MIG com fagulhas sobre chapas" style="width: 100%; height: auto; max-height: 250px;" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 186L40 170H340L320 186ZM20 186h300v14H20zM320 186l20-16v14l-20 16"/>
+<path d="M176 166l14-26 14 8-14 26zM197 144l36-58 22 13-36 58zM244 92l22 13 30-44-22-13zM296 48c24-18 40 6 56-6"/>
+<path d="M60 178a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0a6 5 0 0 1 12 0"/>
+<path d="M144 178a6 5 0 0 1 12 0a6 5 0 0 1 12 0" stroke="var(--p)"/>
+<circle cx="176" cy="172" r="18" fill="var(--wai)" opacity=".25" stroke="none"/>
+<circle cx="176" cy="172" r="6" fill="#FFF3C4" stroke="var(--wai)"/>
+<g class="spark" stroke="var(--p)"><path d="M162 160l-24-20M156 170l-32-5M166 152l-12-28M190 180l28 10M168 184l-14 20M188 160l22-8"/></g>
+<g class="spark2" fill="var(--wai)" stroke="none"><circle cx="128" cy="136" r="2.5"/><circle cx="116" cy="160" r="2"/><circle cx="222" cy="194" r="2.5"/><circle cx="150" cy="210" r="2"/><circle cx="214" cy="148" r="2"/></g>
+</svg>
+<figcaption style="display: flex; justify-content: space-between; font-size: 13px; color: var(--t2);"><span style="font-weight: 600; color: var(--t1);">Solda MIG</span><span>Caldeiraria · células de solda</span></figcaption>
+</figure>
+
+<figure class="card" style="margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 10px; color: var(--steel);">
+<svg viewBox="0 0 420 200" role="img" aria-label="Paquímetro e engrenagens" style="width: 100%; height: auto;" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<rect x="20" y="40" width="380" height="20" rx="2"/>
+<path d="{{calTicksS}}" stroke-width="1.5"/>
+<path d="M24 60v66l16-8V60M24 40V22h12v18"/>
+<rect x="140" y="34" width="72" height="34" rx="5"/><path d="M146 68v58l14-8V68M146 34V20h10v14"/><circle cx="198" cy="76" r="6"/>
+<path d="M40 100h106" stroke="var(--p)" stroke-dasharray="4 4"/>
+<text x="93" y="94" fill="var(--p)" stroke="none" font-family="IBM Plex Mono" font-size="13" text-anchor="middle">Ø25,00</text>
+<path class="spin" d="{{gearE}}"/><circle cx="330" cy="140" r="10"/>
+</svg>
+<figcaption style="display: flex; justify-content: space-between; font-size: 13px; color: var(--t2);"><span style="font-weight: 600; color: var(--t1);">Medição</span><span>Qualidade · inspeção dimensional</span></figcaption>
+</figure>
+
+<figure class="card" style="margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 10px; color: var(--steel);">
+<svg viewBox="0 0 420 200" role="img" aria-label="Elevador automotivo com moto e chave" style="width: 100%; height: auto;" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M40 186h340M60 186V60M360 186V60M52 60h16M352 60h16"/>
+<path d="M60 132h300" stroke-width="4"/>
+<circle cx="140" cy="106" r="24"/><circle cx="140" cy="106" r="6"/><circle cx="280" cy="106" r="24"/><circle cx="280" cy="106" r="6"/>
+<path d="M140 106l40-36h50l16 14h-30l-10 22h-40M230 70l20-20h14M246 84l34 22M196 70l-8-14h-20"/>
+<path d="M300 40l26-26a8 8 0 0 1 12 12l-26 26M296 52l-8 8a6 6 0 0 0 8 8l8-8" stroke="var(--p)"/>
+</svg>
+<figcaption style="display: flex; justify-content: space-between; font-size: 13px; color: var(--t2);"><span style="font-weight: 600; color: var(--t1);">Box e elevador</span><span>Oficina · motos e carros</span></figcaption>
+</figure>
+
+</div>
+</section>
+
+<section class="sec rv" aria-labelledby="s-voz">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="kick">04 · Voz</span>
+<h2 id="s-voz" class="h2">Fala como gente da oficina</h2>
+<p class="lead">Tratamos pelo nome, explicamos o porquê e dizemos o próximo passo. Nada de “Erro 422” ou “Operação concluída com sucesso”.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 14px;">
+<sc-for list="{{voice}}" as="v" hint-placeholder-count="4">
+<div class="card" style="padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="bdg b-neu" style="align-self: flex-start;">Evitar</span><span style="font-size: 14px; color: var(--t3); text-decoration: line-through;">{{v.a}}</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="bdg b-ok" style="align-self: flex-start;">Preferir</span><span style="font-size: 15px; color: var(--t1);">{{v.b}}</span></div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<section class="sec rv" aria-labelledby="s-sem">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="kick">05 · Status</span>
+<h2 id="s-sem" class="h2">Sinalização com cor, ícone e palavra</h2>
+<p class="lead">Nenhum status depende só da cor. Cada um também tem uma forma própria: sólido, contorno, riscado ou tracejado.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px;">
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+<span style="font-weight: 600;">Ordem de Serviço</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<span class="bdg b-neu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke-dasharray="3 3"/></svg>Aberta</span>
+<span class="bdg b-inf"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h12"/></svg>Em fila</span>
+<span class="bdg b-run"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4Z"/></svg>Em execução</span>
+<span class="bdg b-wa"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M10 15V9M14 15V9"/></svg>Pausada</span>
+<span class="bdg b-inf"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v6H3zM7 13v4M11 13v2M15 13v4"/></svg>Controle de qualidade</span>
+<span class="bdg b-line-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Concluída</span>
+<span class="bdg b-solid-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Entregue</span>
+<span class="bdg b-bad b-strike"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>Cancelada</span>
+</div>
+</div>
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+<span style="font-weight: 600;">Orçamento</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<span class="bdg b-neu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Rascunho</span>
+<span class="bdg b-inf"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/></svg>Enviado</span>
+<span class="bdg b-wa"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Em negociação</span>
+<span class="bdg b-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Aprovado</span>
+<span class="bdg b-bad"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>Recusado</span>
+<span class="bdg b-neu b-strike"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Expirado</span>
+<span class="bdg b-run"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Convertido em OS</span>
+</div>
+</div>
+<div class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+<span style="font-weight: 600;">Tabela de Custos e margem</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<span class="bdg b-ok"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>Vigente</span>
+<span class="bdg b-wa"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/></svg>Desatualizada</span>
+<span class="bdg b-neu"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Encerrada</span>
+<span class="bdg b-ok">Margem no alvo</span>
+<span class="bdg b-wa">Margem apertada</span>
+<span class="bdg b-bad">Abaixo do mínimo</span>
+</div>
+</div>
+</div>
+</section>
+
+<section class="sec rv" aria-labelledby="s-type">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="kick">06 · Tipografia</span>
+<h2 id="s-type" class="h2">Placa de sinalização, prancheta e relógio de ponto</h2>
+<p class="lead">Barlow Semi Condensed nos títulos, com o desenho das placas de fábrica. IBM Plex Sans para ler o dia inteiro. IBM Plex Mono para números que precisam alinhar.</p>
+</div>
+<div class="card" style="padding: 6px 0;">
+<div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 18px 24px; border-bottom: var(--bw) solid var(--bd); align-items: baseline;"><span class="mono" style="font-size: 12px; color: var(--t3);">Preço · Plex Mono 56</span><span class="mono" style="font-size: clamp(40px, 5vw, 56px); font-weight: 600; letter-spacing: -.03em; line-height: 1;">R$ 793,27</span></div>
+<div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 18px 24px; border-bottom: var(--bw) solid var(--bd); align-items: baseline;"><span class="mono" style="font-size: 12px; color: var(--t3);">Display · Barlow 56</span><span class="disp" style="font-size: clamp(40px, 5vw, 56px); font-weight: 700; line-height: 1;">Bom dia, Marina.</span></div>
+<div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 18px 24px; border-bottom: var(--bw) solid var(--bd); align-items: baseline;"><span class="mono" style="font-size: 12px; color: var(--t3);">Título · Barlow 34</span><span class="disp" style="font-size: 34px; font-weight: 700;">Torno CNC de entrada</span></div>
+<div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 18px 24px; border-bottom: var(--bw) solid var(--bd); align-items: baseline;"><span class="mono" style="font-size: 12px; color: var(--t3);">Seção · Plex 17/600</span><span style="font-size: 17px; font-weight: 600;">Como chegamos nesse preço</span></div>
+<div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 18px 24px; border-bottom: var(--bw) solid var(--bd); align-items: baseline;"><span class="mono" style="font-size: 12px; color: var(--t3);">Texto · Plex 15</span><span style="color: var(--t2);">O setup é cobrado uma vez por lote e o ciclo, por peça. Mude a quantidade e veja o preço de cada peça cair.</span></div>
+<div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 18px 24px; align-items: baseline;"><span class="mono" style="font-size: 12px; color: var(--t3);">Códigos · Plex Mono</span><span class="mono">OS-2026-00041 · ORC-2026-00128 · 0,10 h · 00:06 · Ø20 H7</span></div>
+</div>
+</section>
+
+<section class="sec rv" aria-labelledby="s-ctl">
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="kick">07 · Controles</span>
+<h2 id="s-ctl" class="h2">Botões em cápsula, campos com unidade</h2>
+<p class="lead">Uma ação laranja por tela, no máximo. Campos de hora mostram decimal e hh:mm lado a lado. Os erros explicam o que aconteceu e sugerem o valor certo.</p>
+</div>
+<div class="card" style="padding: 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+<button type="button" class="btn btn-p"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/></svg>Enviar para o cliente</button>
+<button type="button" class="btn">Salvar rascunho</button>
+<button type="button" class="btn btn-t">Ver de onde vem o preço</button>
+<button type="button" class="btn btn-d"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>Cancelar OS</button>
+<button type="button" class="btn btn-p btn-op"><svg class="i" viewBox="0 0 24 24" style="width: 26px; height: 26px;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4Z"/></svg>Produção</button>
+</div>
+<div class="card" style="padding: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+<div><label class="lbl" for="f1">Custo da barra por peça</label><div class="fld"><span class="u">R$</span><input id="f1" value="8,00"></div></div>
+<div><label class="lbl" for="f3">Setup por lote</label><div class="fld"><input id="f3" value="3,00"><span class="u">h</span><span class="mono" style="font-size: 13px; color: var(--t3); padding-left: 10px; border-left: var(--bw) solid var(--bd2);">03:00</span></div></div>
+<div><label class="lbl" for="f5">Placa</label><div class="fld"><span style="font-size: 10px; font-weight: 700; padding: 3px 6px; border-radius: 4px; background: #1D4E7A; color: #fff;">BR</span><input id="f5" value="ABC1D23" style="letter-spacing: .08em;"></div></div>
+<div><label class="lbl" for="f6">Eficiência do centro</label><div class="fld" style="border-color: var(--bad); border-width: 2px;"><input id="f6" value="100,0"><span class="u">%</span></div><span style="display: block; font-size: 13px; color: var(--bad); margin-top: 6px;">Nenhuma máquina roda 100% do tempo. Que tal 75,0%, a média do seu apontamento?</span></div>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Escuro","Alto contraste"],"default":"Claro"},"$preview":{"width":1440,"height":4200}}'>
+class Component extends DCLogic {
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  ticks(x0, x1, y, step, big) {
+    let d = '';
+    for (let x = x0, k = 0; x <= x1; x += step, k++) d += 'M' + x + ' ' + y + 'v' + (k % 5 === 0 ? big : big / 2);
+    return d;
+  }
+  renderVals() {
+    const map = { 'Claro': 't-claro', 'Escuro': 't-escuro', 'Alto contraste': 't-contraste' };
+    const cur = (this.state && this.state.tema) || this.props.tema || 'Claro';
+    const themes = Object.keys(map).map((label) => ({ label, cls: label === cur ? 'on' : '', checked: label === cur ? 'true' : 'false', pick: () => this.setState({ tema: label }) }));
+    const brand = [
+      ['Laranja fagulha', '#E35D14', 'Ação', '#fff'],
+      ['Azul-aço', '#1D4E7A', 'Máquina', '#fff'],
+      ['Amarelo sinalização', '#E0A100', 'Atenção', '#1E1B16'],
+      ['Verde liberado', '#0F7A55', 'Conforme', '#fff'],
+      ['Violeta em curso', '#5B3FB5', 'Executando', '#fff'],
+      ['Vermelho parada', '#C0352B', 'Parou', '#fff']
+    ].map((c) => ({ name: c[0], hex: c[1], role: c[2], on: c[3] }));
+    const hex = {
+      'Claro': ['#F2EEE7', '#EAE4DA', '#FFFFFF', '#FBF8F3', '#1E1B16'],
+      'Escuro': ['#13161B', '#181C22', '#1F242C', '#252B34', '#F4F1EC'],
+      'Alto contraste': ['#000000', '#000000', '#0A0A0A', '#141414', '#FFFFFF']
+    }[cur];
+    const surfaces = [['Fundo · papel', 'var(--canvas)'], ['Base', 'var(--base)'], ['Cartão', 'var(--s1)'], ['Cartão 2', 'var(--s2)'], ['Texto', 'var(--t1)']].map((s, k) => ({ name: s[0], v: s[1], hex: hex[k] }));
+    const contrastNote = { 'Claro': 'Texto 14,8:1 · secundário 7,9:1 · legenda 5,0:1 sobre o papel · botão laranja com texto branco 5,4:1', 'Escuro': 'Texto 16,1:1 · legenda 5,1:1 · botão laranja com texto escuro 7,3:1', 'Alto contraste': 'AAA: todo texto acima de 7:1, bordas de 2 px e vidro trocado por superfície opaca' }[cur];
+    const voice = [
+      { a: 'Erro: valor inválido no campo eficiência.', b: 'Nenhuma máquina roda 100% do tempo. Que tal 75,0%, a média do seu apontamento?' },
+      { a: 'Operação concluída com sucesso.', b: 'Pronto! O orçamento foi para a Metalúrgica Vale. Quando eles abrirem, você fica sabendo.' },
+      { a: 'Nenhum registro encontrado.', b: 'Nenhum ferramental por aqui ainda. Se a peça pede um alargador especial, é só adicionar.' },
+      { a: 'Margem abaixo do limite parametrizado.', b: 'A margem ficou apertada: 12,0%. Peça um ok à Marina antes de enviar.' }
+    ];
+    return {
+      themeClass: map[cur], themes, brand, surfaces, contrastNote, voice,
+      gearA: this.gear(1330, 70, 64, 14, 12), gearB: this.gear(1222, 112, 40, 10, 9),
+      gearC: this.gear(130, 90, 110, 18, 16), gearD: this.gear(700, 70, 70, 12, 12),
+      gearE: this.gear(330, 140, 44, 12, 9), logoGear: this.gear(12, 12, 10, 8, 2.5),
+      calTicks: this.ticks(330, 670, 200, 8, -10), calTicksS: this.ticks(60, 390, 40, 6, 10)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "rootDir": ".",
+  "testRegex": ".e2e-spec.ts$",
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "transform": { "^.+\\.ts$": ["ts-jest", { "isolatedModules": true }] },
+  "moduleNameMapper": {
+    "^@promec/motor$": "<rootDir>/../../../packages/motor/src/index.ts",
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  "setupFiles": ["<rootDir>/setup-env.ts"],
+  "testEnvironment": "node",
+  "testTimeout": 30000
+}

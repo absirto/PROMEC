@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Centro de trabalho</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B8460A}a:hover{color:#8A3305}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--t1);-webkit-font-smoothing:antialiased;transition:background-color .3s,color .3s}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.t-claro{--canvas:#F2EEE7;--base:#EAE4DA;--s1:#FFFFFF;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t1:#1E1B16;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--pft:#FFFFFF;--ps:#FDE8DA;--pt:#9A3A06;--steel:#1D4E7A;--steels:#E3EDF7;--ok:#0F7A55;--oks:#DDF3E9;--wa:#8A5300;--wai:#E0A100;--was:#FCEFC7;--bad:#C0352B;--bads:#FBE2DF;--inf:#1A64A8;--infs:#E0EDFA;--run:#5B3FB5;--runs:#ECE6FB;--neu:#6B6458;--neus:#ECE7DF;--grid:rgba(60,45,25,.06);--hero:linear-gradient(135deg,#2A6AA3 0%,#1D4E7A 45%,#15395A 100%);--heroill:rgba(255,255,255,.32);--side:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));--lg-bg:rgba(255,255,255,.58);--lg-bd:rgba(255,255,255,.85);--lg-hl:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.4);--lg-sh:0 12px 32px rgba(40,30,15,.12),0 1px 2px rgba(40,30,15,.08);--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06);--bw:1px;--track:#EFE8DE}
+.t-escuro{--canvas:#13161B;--base:#181C22;--s1:#1F242C;--s2:#252B34;--s3:#2D343F;--bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.16);--t1:#F4F1EC;--t2:#C3BCB0;--t3:#9A9387;--p:#FF7A2E;--pf:#FF7A2E;--pft:#1A0E05;--ps:rgba(255,122,46,.16);--pt:#FFB07F;--steel:#6FA8DC;--steels:rgba(111,168,220,.14);--ok:#3DD598;--oks:rgba(61,213,152,.14);--wa:#F5B83D;--wai:#F5B83D;--was:rgba(245,184,61,.14);--bad:#FF6B5E;--bads:rgba(255,107,94,.14);--inf:#5AB0F0;--infs:rgba(90,176,240,.14);--run:#A891FF;--runs:rgba(168,145,255,.16);--neu:#ABA396;--neus:rgba(171,163,150,.14);--grid:rgba(255,255,255,.035);--hero:linear-gradient(135deg,#21476E 0%,#173452 50%,#0F2236 100%);--heroill:rgba(255,255,255,.24);--side:linear-gradient(180deg,rgba(28,62,96,.82),rgba(15,34,54,.9));--lg-bg:rgba(44,50,60,.55);--lg-bd:rgba(255,255,255,.14);--lg-hl:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(255,255,255,.05);--lg-sh:0 12px 32px rgba(0,0,0,.4);--sh1:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25);--bw:1px;--track:#2D343F}
+.t-contraste{--canvas:#000;--base:#000;--s1:#0A0A0A;--s2:#141414;--s3:#1F1F1F;--bd:#9A9A9A;--bd2:#FFFFFF;--t1:#FFFFFF;--t2:#EDEDED;--t3:#D4D4D4;--p:#FF9A4D;--pf:#FF9A4D;--pft:#000000;--ps:transparent;--pt:#FFB98A;--steel:#8CC4FF;--steels:transparent;--ok:#5EEA9C;--oks:transparent;--wa:#FFD400;--wai:#FFD400;--was:transparent;--bad:#FF9B9B;--bads:transparent;--inf:#8BDCFF;--infs:transparent;--run:#C9CEFF;--runs:transparent;--neu:#E0E0E0;--neus:transparent;--grid:transparent;--hero:#000;--heroill:rgba(255,255,255,.5);--side:#000;--lg-bg:#0A0A0A;--lg-bd:#FFFFFF;--lg-hl:none;--lg-sh:none;--sh1:none;--bw:2px;--track:#1F1F1F}
+.t-contraste .lg,.t-contraste .lgd,.t-contraste .side{backdrop-filter:none;-webkit-backdrop-filter:none;border:2px solid #fff}
+.t-contraste .lg::before,.t-contraste .lgd::before,.t-contraste .side::before{display:none}
+.t-contraste .bdg{border:2px solid currentColor}
+.stage{background-color:var(--canvas);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:var(--lg-bg);backdrop-filter:blur(22px) saturate(1.8);-webkit-backdrop-filter:blur(22px) saturate(1.8);border:1px solid var(--lg-bd);box-shadow:var(--lg-hl),var(--lg-sh)}
+.lgd{position:relative;background:rgba(255,255,255,.13);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 12px 30px rgba(5,15,30,.25);color:#fff}
+.side{position:relative;background:var(--side);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28);color:#E7EEF6}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14) 100%);mix-blend-mode:soft-light}
+.card{background:var(--s1);border:var(--bw) solid var(--bd);border-radius:20px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.bdg .i{width:14px;height:14px}
+.b-ok{color:var(--ok);background:var(--oks)}.b-wa{color:var(--wa);background:var(--was)}.b-bad{color:var(--bad);background:var(--bads)}.b-inf{color:var(--inf);background:var(--infs)}.b-run{color:var(--run);background:var(--runs)}.b-neu{color:var(--neu);background:var(--neus)}
+.b-glass{color:#fff;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:var(--bw) solid var(--bd2);background:var(--s1);color:var(--t1);cursor:pointer;text-decoration:none;white-space:nowrap;transition:transform .15s cubic-bezier(.2,.8,.2,1),background-color .2s,box-shadow .2s}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--sh1)}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--pf);border-color:transparent;color:var(--pft);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-gl{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.34);color:#fff;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:40px;height:40px;border-radius:999px;display:grid;place-items:center;color:var(--t2);cursor:pointer;position:relative;transition:background-color .2s}
+.ib:hover{background:rgba(0,0,0,.05);color:var(--t1)}
+.btn:focus-visible,.ib:focus-visible,.nav-i:focus-visible,.nav-g:focus-visible,.seg button:focus-visible,.tab:focus-visible,.srch:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.seg{display:inline-flex;padding:4px;border-radius:999px;gap:2px}
+.seg button{height:32px;width:36px;border-radius:999px;border:0;background:transparent;color:var(--t2);cursor:pointer;display:grid;place-items:center;transition:background-color .3s cubic-bezier(.2,.8,.2,1),color .3s}
+.seg button.on{background:var(--pf);color:var(--pft);box-shadow:0 2px 8px rgba(184,70,10,.3)}
+.nav-g{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;height:40px;padding:0 12px;border-radius:14px;color:#E7EEF6;font-size:14px;font-weight:500;cursor:pointer;transition:background-color .2s}
+.nav-g:hover{background:rgba(255,255,255,.1)}
+.nav-i{display:flex;align-items:center;height:34px;padding:0 12px 0 42px;border-radius:12px;color:#C7D5E4;font-size:13.5px;text-decoration:none;transition:background-color .2s}
+.nav-i:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-i.on{background:#fff;color:#15395A;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.tab{all:unset;box-sizing:border-box;height:38px;padding:0 16px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--t1);color:var(--canvas)}
+.h3{margin:0;font-size:17px;font-weight:600}
+.kv{display:flex;flex-direction:column;gap:2px;padding:12px 0;border-top:var(--bw) solid var(--bd)}
+.kv span:first-child{font-size:12.5px;color:var(--t3)}
+.srch{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;height:40px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.5);color:var(--t3);font-size:14px;cursor:text;min-width:0;box-shadow:inset 0 0 0 1px var(--bd)}
+.t-escuro .srch{background:rgba(255,255,255,.06)}
+kbd{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:2px 6px;border-radius:6px;border:var(--bw) solid var(--bd2);color:var(--t2)}
+.haz{background:repeating-linear-gradient(-45deg,var(--wai) 0 10px,#1E1B16 10px 20px)}
+.chip{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rv{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}.d4{animation-delay:.24s}.d5{animation-delay:.3s}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.grow{transform-origin:left;animation:grow .8s cubic-bezier(.2,.8,.2,1) both .25s}
+@keyframes draw{from{stroke-dashoffset:900}to{stroke-dashoffset:0}}
+.draw{stroke-dasharray:900;animation:draw 1.4s cubic-bezier(.2,.8,.2,1) both .3s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 40s linear infinite}
+@keyframes flick{0%,100%{opacity:1}50%{opacity:.35}}
+.spark{animation:flick 1.1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.rv,.grow,.draw,.spin,.spark{animation:none}}
+</style>
+</helmet>
+<div class="pm stage {{themeClass}}" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0;">
+
+<div style="flex: 1 1 {{sideW}}; max-width: {{sideMax}}; padding: 12px 0 12px 12px; transition: max-width .45s cubic-bezier(.2,.8,.2,1);">
+<nav class="side" aria-label="Navegação principal" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 16px 10px; display: flex; flex-direction: column; gap: 3px; overflow: hidden;">
+<svg viewBox="0 0 240 240" aria-hidden="true" style="position: absolute; left: -60px; bottom: -70px; width: 260px; height: 260px; opacity: .18;"><path class="spin" d="{{sideGear}}" fill="none" stroke="#fff" stroke-width="2"/><circle cx="120" cy="120" r="34" fill="none" stroke="#fff" stroke-width="2"/></svg>
+<div style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 4px 18px;">
+<div style="display: flex; align-items: center; gap: 10px;">
+<div style="width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.3), 0 6px 16px rgba(227,93,20,.45);"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-if value="{{expanded}}" hint-placeholder-val="{{true}}"><span class="disp" style="font-weight: 700; font-size: 21px; color: #fff;">ProMEC</span></sc-if>
+</div>
+<button type="button" class="ib" onClick="{{toggleSide}}" aria-label="{{sideLabel}}" style="width: 32px; height: 32px; color: #C7D5E4;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="4"/><path d="M9 3v18"/></svg></button>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="10">
+<div style="position: relative; display: flex; flex-direction: column; gap: 2px;">
+<button type="button" class="nav-g" aria-expanded="{{g.aria}}" onClick="{{g.toggle}}" title="{{g.label}}">
+<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{g.icon}}"/></svg>
+<sc-if value="{{expanded}}" hint-placeholder-val="{{true}}"><span style="flex: 1;">{{g.label}}</span><sc-if value="{{g.hasKids}}" hint-placeholder-val="{{true}}"><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px; transform: rotate({{g.rot}}); transition: transform .3s cubic-bezier(.2,.8,.2,1); opacity: .7;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></sc-if></sc-if>
+</button>
+<sc-if value="{{g.show}}" hint-placeholder-val="{{false}}">
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="3">
+<a href="#" class="nav-i {{it.cls}}" aria-current="{{it.cur}}">{{it.label}}</a>
+</sc-for>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{expanded}}" hint-placeholder-val="{{true}}">
+<div style="position: relative; margin-top: auto; padding: 14px 12px 4px; display: flex; align-items: center; gap: 10px;">
+<span style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #F5B63D, #E35D14); color: #1E1B16; font-size: 13px; font-weight: 700; display: grid; place-items: center;">MC</span>
+<span style="display: flex; flex-direction: column; line-height: 1.3;"><span style="font-size: 14px; font-weight: 600; color: #fff;">Marina Costa</span><span style="font-size: 12px; color: #B8C9DA;">Gestora · Matriz Joinville</span></span>
+</div>
+</sc-if>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px; min-width: 0;">
+<a href="#" style="color: var(--t3); text-decoration: none;">Ativos e Pessoas</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+<a href="#" style="color: var(--t3); text-decoration: none;">Centros de trabalho</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+<span style="color: var(--t1); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" aria-current="page">Torno CNC de entrada</span>
+</nav>
+<button type="button" class="srch" style="flex: 0 1 280px;" aria-label="Buscar ou executar comando"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span style="flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">Buscar OS, cliente, máquina…</span><kbd>⌘K</kbd></button>
+<span class="bdg b-ok" style="height: 34px; padding: 0 12px;" title="Tabela vigente, mas um cadastro mudou"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Custos 2026-10<span style="width: 8px; height: 8px; border-radius: 50%; background: var(--wai); box-shadow: 0 0 0 2px var(--s1);" aria-label="desatualizada" role="img"></span></span>
+<div class="seg" role="radiogroup" aria-label="Tema" style="background: var(--s3);">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{t.checked}}" aria-label="{{t.label}}" class="{{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg></button></sc-for>
+</div>
+<button type="button" class="ib" aria-label="Notificações, 3 novas"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="mono" style="position: absolute; top: 4px; right: 4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #E35D14; color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center;">3</span></button>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 64px; display: flex; flex-direction: column; gap: 22px; max-width: 1260px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: var(--hero); color: #fff; padding: clamp(22px, 3vw, 34px);" aria-label="Resumo do centro de trabalho">
+<svg viewBox="0 0 640 250" aria-hidden="true" style="position: absolute; right: -30px; top: 10px; width: min(720px, 75%); height: auto;" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<g style="color: var(--heroill);" stroke="currentColor">
+<rect x="40" y="168" width="560" height="24" rx="3"/><path d="M40 180h560"/>
+<path d="M78 192v40h84v-40M478 192v40h84v-40M66 232h108M466 232h108"/>
+<rect x="40" y="58" width="132" height="110" rx="8"/><rect x="56" y="74" width="62" height="34" rx="4"/><path d="M64 84h30M64 94h44"/>
+<circle cx="72" cy="138" r="9"/><circle cx="104" cy="138" r="9"/><circle cx="142" cy="90" r="13"/>
+<rect x="172" y="78" width="28" height="78" rx="5"/><path d="M200 90h12v54h-12"/>
+<path d="M212 100h96v34h-96M308 106h60v22h-60M368 110h34v14h-34"/>
+<path d="M402 117l18-9v18z"/><rect x="420" y="94" width="76" height="74" rx="6"/><path d="M496 117h34"/><circle cx="544" cy="117" r="14"/><path d="M544 103v-10M544 131v10"/>
+<rect x="286" y="148" width="128" height="20" rx="3"/><rect x="322" y="128" width="44" height="20" rx="3"/>
+</g>
+<path d="M344 128l-10-10h10z" fill="#FF8A3D" stroke="#FF8A3D"/>
+<path class="spark" d="M330 124c-12-6-6-20 6-16s4 16-8 12c-9-3-7-14 1-13" stroke="#FFB15C"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 22px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: flex-start;">
+<div style="display: flex; flex-direction: column; gap: 10px; max-width: 620px;">
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<span class="bdg b-glass"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/></svg>Máquina CNC</span>
+<span class="bdg" style="background: #3DD598; color: #06281A;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Rodando agora · OS-2026-00041</span>
+<span class="bdg b-glass mono">CT-003</span>
+</div>
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.4vw, 56px); font-weight: 700; line-height: 1; letter-spacing: -.005em;">Torno CNC de entrada</h1>
+<p style="margin: 0; font-size: 16px; color: #D3E0EE;">Romi GL 240 no Galpão A. Em outubro ele já rodou <strong style="color: #fff;">128,7 h</strong>, 78% do que pode. Tem 6 OS esperando na fila.</p>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<button type="button" class="btn btn-gl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>E se…? Simular</button>
+<button type="button" class="btn btn-p"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar centro</button>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px;">
+<div class="lg" style="border-radius: 22px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; color: var(--t1);">
+<span style="font-size: 13.5px; color: var(--t2); display: flex; align-items: center; gap: 6px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--p);"></span>Custo-hora cheio</span>
+<span class="mono" style="font-size: 42px; font-weight: 600; letter-spacing: -.03em; line-height: 1.1;">117,78<span style="font-size: 14px; color: var(--t3); font-weight: 500;"> R$/h</span></span>
+<a href="#arvore" style="font-size: 13px; font-weight: 600; text-decoration: none; color: var(--pt);">É isso que entra no preço. Ver de onde vem →</a>
+</div>
+<div class="lgd" style="border-radius: 22px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13.5px; color: #D3E0EE;">Custo específico</span>
+<span class="mono" style="font-size: 30px; font-weight: 600; line-height: 1.2;">73,33<span style="font-size: 13px; color: #B8C9DA;"> R$/h</span></span>
+<span style="font-size: 12.5px; color: #C9D7E6;">Gastos da própria máquina</span>
+</div>
+<div class="lgd" style="border-radius: 22px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13.5px; color: #D3E0EE;">Rateio do custo fixo</span>
+<span class="mono" style="font-size: 30px; font-weight: 600; line-height: 1.2;">44,44<span style="font-size: 13px; color: #B8C9DA;"> R$/h</span></span>
+<span style="font-size: 12.5px; color: #C9D7E6;">Fatia do aluguel, luz, escritório…</span>
+</div>
+<div class="lgd" style="border-radius: 22px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 13.5px; color: #D3E0EE;">Custo-hora marginal</span>
+<span class="mono" style="font-size: 30px; font-weight: 600; line-height: 1.2;">73,33<span style="font-size: 13px; color: #B8C9DA;"> R$/h</span></span>
+<span style="font-size: 12.5px; color: #C9D7E6;">Piso para preencher hora parada</span>
+</div>
+</div>
+</div>
+</section>
+
+<div class="card rv d1" role="status" style="overflow: hidden; display: flex; flex-direction: column; background: var(--was); border-color: transparent;">
+<div class="haz" style="height: 6px;"></div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 14px 18px;">
+<span class="chip" style="background: var(--wai); color: #1E1B16;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01"/></svg></span>
+<span style="flex: 1 1 380px; font-size: 14.5px; color: var(--t1);"><strong>O salário do Ricardo mudou em 08/10</strong> (R$ 5.000 → R$ 5.300). Fica tranquila: os orçamentos seguem com R$ 117,78/h até você publicar a tabela nova.</span>
+<button type="button" class="btn btn-sm">Ver rascunho 2026-11 · R$ 121,44/h</button>
+</div>
+</div>
+
+<div class="rv d2" role="tablist" aria-label="Seções do centro" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; border-radius: 999px; align-self: flex-start; max-width: 100%; background: var(--s3);">
+<button type="button" role="tab" aria-selected="true" class="tab on">Composição</button>
+<button type="button" role="tab" aria-selected="false" class="tab">Equipamento</button>
+<button type="button" role="tab" aria-selected="false" class="tab">Operadores</button>
+<button type="button" role="tab" aria-selected="false" class="tab">Capacidade</button>
+<button type="button" role="tab" aria-selected="false" class="tab">Manutenção</button>
+<button type="button" role="tab" aria-selected="false" class="tab">Histórico</button>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;">
+
+<div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 22px;">
+<section id="arvore" class="card rv d3" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;" aria-labelledby="t-arv">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+<div style="display: flex; flex-direction: column;"><h2 id="t-arv" class="disp" style="margin: 0; font-size: 26px; font-weight: 700;">Como chegamos em R$ 117,78 por hora</h2><span style="font-size: 13.5px; color: var(--t3);">Tudo o que essa máquina custa no mês, dividido pelas 165 h em que ela produz de verdade.</span></div>
+</div>
+<div style="display: flex; height: 20px; border-radius: 10px; overflow: hidden; gap: 3px;" role="img" aria-label="Mão de obra 42,2%, manutenção 3,6%, insumos 3,6%, depreciação 12,9%, rateio 37,7%">
+<span class="grow" style="width: 42.2%; background: #1D6FB8;"></span><span class="grow" style="width: 3.6%; background: #0F9D76;"></span><span class="grow" style="width: 3.6%; background: #E0A100;"></span><span class="grow" style="width: 12.9%; background: #7C5CC4;"></span><span class="grow" style="width: 37.7%; background: #E35D14;"></span>
+</div>
+<div style="display: flex; flex-direction: column;">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: 34px minmax(0, 1fr) 110px 76px 56px; gap: 14px; align-items: center; padding: 10px 0 10px {{r.pad}}; border-top: var(--bw) solid var(--bd);">
+<span class="chip" style="background: {{r.bg}}; color: {{r.c}}; width: {{r.cw}}; height: {{r.cw}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></span>
+<span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-size: 14.5px; font-weight: {{r.fw}};">{{r.k}}</span><span style="font-size: 12.5px; color: {{r.sc}};">{{r.s}}</span></span>
+<span class="mono" style="text-align: right; font-size: 13px; color: var(--t2);">{{r.m}}</span>
+<span class="mono" style="text-align: right; font-size: 15px; font-weight: 600;">{{r.h}}</span>
+<span class="mono" style="text-align: right; font-size: 12px; color: var(--t3);">{{r.p}}</span>
+</div>
+</sc-for>
+<div style="display: grid; grid-template-columns: 34px minmax(0, 1fr) 110px 76px 56px; gap: 14px; align-items: center; padding: 14px 0 0; border-top: 2px solid var(--t1);">
+<span></span><span style="font-weight: 700;">Custo-hora cheio</span><span class="mono" style="text-align: right; font-size: 13px; color: var(--t2);">R$ 19.433,33</span><span class="mono" style="text-align: right; font-size: 19px; font-weight: 700; color: var(--pt);">117,78</span><span class="mono" style="text-align: right; font-size: 12px; color: var(--t3);">100%</span>
+</div>
+</div>
+</section>
+
+<section class="card rv d4" style="padding: 24px;" aria-labelledby="t-dados">
+<h2 id="t-dados" class="h3" style="margin-bottom: 6px;">Dados que alimentam o custo</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); column-gap: 24px;">
+<div class="kv"><span>Valor de aquisição</span><span class="mono">R$ 150.000,00</span></div>
+<div class="kv"><span>Comprado em</span><span class="mono">14/03/2024</span></div>
+<div class="kv"><span>Vida útil · residual</span><span class="mono">60 meses · R$ 0,00</span></div>
+<div class="kv"><span>Manutenção média</span><span class="mono">R$ 700,00/mês</span></div>
+<div class="kv"><span>Insumos médios</span><span class="mono">R$ 700,00/mês</span></div>
+<div class="kv"><span>Potência · fator de carga</span><a href="#" style="font-size: 14px; font-weight: 600;">Informar para somar energia</a></div>
+<div class="kv"><span>Expediente</span><span class="mono">220 h/mês · 1 turno</span></div>
+<div class="kv"><span>Eficiência</span><span class="mono">75,0% → 165 h reais</span></div>
+<div class="kv"><span>Peso no rateio</span><span class="mono">33,3% · horas reais</span></div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 14px; border-radius: 16px; background: var(--steels);">
+<span style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #2A6AA3, #15395A); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 700;">RA</span>
+<div style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 15px; font-weight: 600;">Ricardo Alves opera este torno</span><span style="font-size: 13px; color: var(--t2);">Operador CNC II · CLT · habilitado até 30/06/2027</span></div>
+<span class="mono" style="font-size: 15px; font-weight: 600;">100%</span>
+</div>
+</section>
+</div>
+
+<aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 22px;" aria-label="Histórico e recalibração">
+<section class="card rv d3" style="padding: 22px; display: flex; flex-direction: column; gap: 14px; align-items: stretch;" aria-labelledby="t-oc">
+<h2 id="t-oc" class="h3">Ocupação em outubro</h2>
+<div style="display: flex; align-items: center; gap: 18px;">
+<svg viewBox="0 0 120 120" role="img" aria-label="Ocupação de 78%" style="width: 116px; height: 116px; flex: none;">
+<circle cx="60" cy="60" r="48" fill="none" stroke="var(--track)" stroke-width="14"/>
+<circle cx="60" cy="60" r="48" fill="none" stroke="#E35D14" stroke-width="14" stroke-linecap="round" stroke-dasharray="235 302" transform="rotate(-90 60 60)"/>
+<text x="60" y="66" text-anchor="middle" font-family="IBM Plex Mono" font-size="22" font-weight="600" fill="var(--t1)">78%</text>
+</svg>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px;">
+<span><span class="mono" style="font-weight: 600;">128,7 h</span> <span style="color: var(--t3);">apontadas</span></span>
+<span><span class="mono" style="font-weight: 600;">165 h</span> <span style="color: var(--t3);">disponíveis</span></span>
+<span style="color: var(--ok); font-weight: 600;">Bom ritmo para o mês!</span>
+</div>
+</div>
+</section>
+
+<section class="card rv d4" style="padding: 22px; display: flex; flex-direction: column; gap: 10px;" aria-labelledby="t-hist">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 id="t-hist" class="h3">Custo-hora por versão</h2><span class="mono" style="font-size: 13px; color: var(--t2);">+8,2% em 6 meses</span></div>
+<svg viewBox="0 0 360 170" role="img" aria-label="{{histAria}}" style="width: 100%; height: auto; overflow: visible;">
+<line x1="0" x2="360" y1="150" y2="150" stroke="var(--bd2)"/><line x1="0" x2="360" y1="90" y2="90" stroke="var(--bd)"/><line x1="0" x2="360" y1="30" y2="30" stroke="var(--bd)"/>
+<text x="0" y="24" fill="var(--t3)" font-size="10" font-family="IBM Plex Mono">125</text><text x="0" y="84" fill="var(--t3)" font-size="10" font-family="IBM Plex Mono">115</text><text x="0" y="144" fill="var(--t3)" font-size="10" font-family="IBM Plex Mono">105</text>
+<polygon points="{{histArea}}" fill="#E35D14" opacity=".12"/>
+<polyline class="draw" points="{{histLine}}" fill="none" stroke="#E35D14" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="{{lastX}}" y1="{{lastY}}" x2="{{nextX}}" y2="{{nextY}}" stroke="var(--wai)" stroke-width="2.5" stroke-dasharray="4 4"/>
+<sc-for list="{{hist}}" as="h" hint-placeholder-count="6">
+<circle cx="{{h.x}}" cy="{{h.y}}" r="4.5" fill="var(--s1)" stroke="#E35D14" stroke-width="2.5"/>
+<text x="{{h.x}}" y="166" fill="var(--t3)" font-size="10" text-anchor="middle" font-family="IBM Plex Mono">{{h.l}}</text>
+</sc-for>
+<circle cx="{{nextX}}" cy="{{nextY}}" r="4.5" fill="var(--s1)" stroke="var(--wai)" stroke-width="2.5"/>
+<text x="{{nextX}}" y="166" fill="var(--wa)" font-size="10" text-anchor="middle" font-family="IBM Plex Mono">nov?</text>
+</svg>
+<div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--t2);"><span>Hoje <span class="mono" style="color: var(--t1); font-weight: 600;">117,78</span></span><span>Rascunho de nov. <span class="mono" style="color: var(--wa); font-weight: 600;">121,44</span></span></div>
+</section>
+
+<section class="card rv d5" style="padding: 22px; display: flex; flex-direction: column; gap: 14px; background-image: linear-gradient(160deg, var(--ps), transparent 55%);" aria-labelledby="t-rec">
+<div style="display: flex; align-items: center; gap: 12px;">
+<span class="chip" style="background: #E35D14; color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M8 16H3v5"/></svg></span>
+<div style="display: flex; flex-direction: column;"><h2 id="t-rec" class="h3">O chão de fábrica ensinou algo</h2><span style="font-size: 13px; color: var(--t2);">41 OS apontadas nos últimos 6 meses sugerem ajustes</span></div>
+</div>
+<div style="display: flex; flex-direction: column;">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 11px 0; border-top: var(--bw) solid var(--bd);">
+<span style="font-size: 14px;">Eficiência real</span><span class="mono" style="color: var(--t3); font-size: 13px; text-decoration: line-through;">75,0%</span><span class="mono" style="font-weight: 700; color: var(--pt);">71,2%</span>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 11px 0; border-top: var(--bw) solid var(--bd);">
+<span style="font-size: 14px;">Manutenção média</span><span class="mono" style="color: var(--t3); font-size: 13px; text-decoration: line-through;">R$ 700</span><span class="mono" style="font-weight: 700; color: var(--pt);">R$ 812</span>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 11px 0; border-top: var(--bw) solid var(--bd);">
+<span style="font-size: 14px;">Custo-hora efetivo</span><span class="mono" style="color: var(--t3); font-size: 13px; text-decoration: line-through;">117,78</span><span class="mono" style="font-weight: 700; color: var(--pt);">124,06</span>
+</div>
+</div>
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<button type="button" class="btn btn-sm btn-p">Levar para o rascunho de nov.</button>
+<button type="button" class="btn btn-sm">Manter como está</button>
+</div>
+</section>
+</aside>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["Claro","Escuro","Alto contraste"],"default":"Claro"},"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { collapsed: false, open: { com: false, ope: false, cus: false, sup: false, fin: false, atv: true, cad: false, bi: false, cfg: false } };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const map = { 'Claro': 't-claro', 'Escuro': 't-escuro', 'Alto contraste': 't-contraste' };
+    const icons = { 'Claro': 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41', 'Escuro': 'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z', 'Alto contraste': 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 18a6 6 0 0 0 0-12Z' };
+    const cur = this.state.tema || this.props.tema || 'Claro';
+    const themes = Object.keys(map).map((label) => ({ label, icon: icons[label], cls: label === cur ? 'on' : '', checked: label === cur ? 'true' : 'false', pick: () => this.setState({ tema: label }) }));
+    const expanded = !this.state.collapsed;
+    const open = this.state.open;
+    const G = [
+      ['pai', 'Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z', []],
+      ['com', 'Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8', ['Orçamentos', 'Simulador rápido', 'Oportunidades', 'Clientes']],
+      ['ope', 'Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', ['Ordens de Serviço', 'Planejamento e Agenda', 'Apontamento', 'Qualidade']],
+      ['cus', 'Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5', ['Custo fixo', 'Capacidade', 'Rateio', 'Tabela de Custos e versões', 'Simulador what-if']],
+      ['sup', 'Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12', ['Estoque', 'Requisições', 'Cotações', 'Pedidos', 'Recebimento']],
+      ['fin', 'Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4', ['Contas a receber', 'Contas a pagar', 'Fluxo de caixa', 'Comissões', 'DRE gerencial']],
+      ['atv', 'Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', ['Centros de trabalho', 'Manutenção', 'Funcionários']],
+      ['cad', 'Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0', ['Fornecedores', 'Veículos e Ativos', 'Itens', 'Catálogo de operações', 'Centros de custo', 'Tabelas auxiliares']],
+      ['bi', 'BI', 'M3 3v18h18M18 17V9M13 17V5M8 17v-3', ['Gestão', 'Orçamentos', 'Produção', 'Comercial', 'Custos']],
+      ['cfg', 'Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', ['Empresa e Filiais', 'Perfil de segmento', 'Usuários e perfis', 'Parâmetros', 'Importador', 'Integrações', 'Auditoria']]
+    ];
+    const groups = G.map((g) => ({
+      label: g[1], icon: g[2], hasKids: g[3].length > 0,
+      show: expanded && !!open[g[0]] && g[3].length > 0,
+      aria: g[3].length ? String(!!open[g[0]]) : 'false',
+      rot: open[g[0]] ? '90deg' : '0deg',
+      toggle: () => { if (!expanded) { this.setState({ collapsed: false }); return; } this.setState({ open: Object.assign({}, open, { [g[0]]: !open[g[0]] }) }); },
+      items: g[3].map((label) => { const on = label === 'Centros de trabalho'; return { label, cls: on ? 'on' : '', cur: on ? 'page' : 'false' }; })
+    }));
+    const I = {
+      mo: 'M20 21a8 8 0 0 0-16 0M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z',
+      man: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+      ins: 'M12 2.7c2.6 3.4 6 7 6 11a6 6 0 0 1-12 0c0-4 3.4-7.6 6-11Z',
+      dep: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+      ene: 'M13 2 3 14h9l-1 8 10-12h-9l1-8Z',
+      rat: 'M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6'
+    };
+    const rows = [
+      { k: 'Mão de obra', s: 'Ricardo Alves · salário + encargos', m: 'R$ 8.200,00', h: '49,70', p: '42,2%', icon: I.mo, c: '#fff', bg: '#1D6FB8' },
+      { k: 'Salário bruto', s: 'CLT · 100% neste torno', m: 'R$ 5.000,00', h: '30,30', p: '25,7%', icon: '', c: 'transparent', bg: 'transparent', pad: '48px', fw: 400, cw: '0px' },
+      { k: 'Encargos e benefícios', s: '64,0% sobre o salário', m: 'R$ 3.200,00', h: '19,39', p: '16,5%', icon: '', c: 'transparent', bg: 'transparent', pad: '48px', fw: 400, cw: '0px' },
+      { k: 'Manutenção', s: 'Média tabelada · o real tem dado R$ 812,00', m: 'R$ 700,00', h: '4,24', p: '3,6%', icon: I.man, c: '#fff', bg: '#0F9D76' },
+      { k: 'Insumos e ferramentas de uso geral', s: 'Óleo solúvel, pastilhas, brocas', m: 'R$ 700,00', h: '4,24', p: '3,6%', icon: I.ins, c: '#1E1B16', bg: '#E0A100' },
+      { k: 'Depreciação', s: 'R$ 150.000,00 em 60 meses', m: 'R$ 2.500,00', h: '15,15', p: '12,9%', icon: I.dep, c: '#fff', bg: '#7C5CC4' },
+      { k: 'Energia elétrica', s: 'Ainda zerada: informe a potência do motor', m: 'R$ 0,00', h: '0,00', p: '0,0%', icon: I.ene, c: 'var(--wa)', bg: 'var(--was)', warn: true },
+      { k: 'Rateio do custo fixo', s: 'R$ 22.000,00 × 33,3% ÷ 165 h', m: 'R$ 7.333,33', h: '44,44', p: '37,7%', icon: I.rat, c: '#fff', bg: '#E35D14' }
+    ].map((r) => Object.assign({ pad: '0px', fw: 600, cw: '34px', sc: r.warn ? 'var(--wa)' : 'var(--t3)' }, r));
+    const vals = [108.90, 110.20, 112.40, 114.05, 115.90, 117.78];
+    const labs = ['mai', 'jun', 'jul', 'ago', 'set', 'out'];
+    const X = (k) => 36 + k * 52;
+    const Y = (v) => 150 - (v - 105) / 20 * 120;
+    const hist = vals.map((v, k) => ({ x: X(k), y: Y(v).toFixed(1), l: labs[k] }));
+    const histLine = hist.map((h) => h.x + ',' + h.y).join(' ');
+    return {
+      themeClass: map[cur], themes, groups, expanded, rows, hist, histLine,
+      histArea: X(0) + ',150 ' + histLine + ' ' + X(5) + ',150',
+      lastX: X(5), lastY: Y(117.78).toFixed(1), nextX: X(6), nextY: Y(121.44).toFixed(1),
+      histAria: 'Custo-hora cheio por mês de 2026: ' + vals.map((v, k) => labs[k] + ' R$ ' + v.toFixed(2).replace('.', ',')).join(', ') + '; rascunho de novembro R$ 121,44',
+      sideW: expanded ? '268px' : '84px', sideMax: expanded ? '268px' : '84px',
+      sideLabel: expanded ? 'Recolher menu' : 'Expandir menu',
+      toggleSide: () => this.setState({ collapsed: !this.state.collapsed }),
+      sideGear: this.gear(120, 120, 110, 16, 16), logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

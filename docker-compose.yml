@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: promec-db
+    environment:
+      POSTGRES_USER: promec
+      POSTGRES_PASSWORD: promec
+      POSTGRES_DB: promec
+    ports:
+      - "5442:5432"
+    volumes:
+      - promec-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U promec"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  promec-db:

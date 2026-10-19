@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Cliente</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.lbl{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:6px}
+.fld{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;border-radius:14px;background:var(--s2);border:1.5px solid var(--bd2);transition:border-color .2s,box-shadow .2s}
+.fld:focus-within{border-color:var(--p);box-shadow:0 0 0 4px var(--ps);background:#fff}
+.fld.err{border-color:#C0352B;background:#FFF8F7}
+.fld.ok{border-color:#0F7A55}
+.fld input,.fld textarea{all:unset;flex:1;min-width:0;font:500 15px/1.4 'IBM Plex Sans',sans-serif;color:#1E1B16}
+.fld input.mono{font-family:'IBM Plex Mono',monospace}
+.u{font-size:13px;color:var(--t3);font-weight:500}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;min-height:42px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.opt.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.tgl{all:unset;box-sizing:border-box;width:52px;height:30px;border-radius:999px;position:relative;cursor:pointer;flex:none;transition:background-color .3s}
+.tgl span{position:absolute;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);transition:left .35s cubic-bezier(.2,.8,.2,1)}
+.nv{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:12px;color:var(--t2);text-decoration:none;font-size:14px;font-weight:500}
+.nv:hover{background:#fff;color:#1E1B16}
+.btn:focus-visible,.ib:focus-visible,.opt:focus-visible,.tgl:focus-visible,.nv:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pop{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+.toast{animation:pop .35s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.rv,.toast{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start; position: relative;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px; min-width: 0;"><a href="#" style="color: var(--t3); text-decoration: none;">{{E.group}}</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><a href="{{E.list}}" style="color: var(--t3); text-decoration: none;">{{E.plural}}</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" aria-current="page">{{title}}</span></nav>
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--t2);"><svg class="i" viewBox="0 0 24 24" style="width: 15px; height: 15px; color: #0F7A55;" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{saveState}}</span>
+<a href="{{E.list}}" class="btn btn-sm">Cancelar</a>
+<button type="button" class="btn btn-p btn-sm" onClick="{{save}}">Salvar</button>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 80px; display: flex; flex-direction: column; gap: 18px; max-width: 1280px; width: 100%;">
+
+<section class="card rv" style="padding: 20px 22px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; background-image: linear-gradient(120deg, rgba(227,93,20,.07), transparent 40%);">
+<span class="disp" style="width: 68px; height: 68px; border-radius: 20px; background: linear-gradient(135deg, {{E.c1}}, {{E.c2}}); color: #fff; display: grid; place-items: center; font-size: 26px; font-weight: 700; flex: none;">{{ini}}</span>
+<span style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 4px;">
+<span style="display: flex; gap: 8px; flex-wrap: wrap;"><sc-for list="{{E.badges}}" as="b" hint-placeholder-count="2"><span class="bdg {{b.c}}">{{b.l}}</span></sc-for></span>
+<h1 class="disp" style="margin: 0; font-size: 40px; font-weight: 700; line-height: 1;">{{title}}</h1>
+<span style="font-size: 14.5px; color: var(--t2);">{{E.lead}}</span>
+</span>
+<a href="Cadastros-Chat.dc.html" class="btn"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Prefere conversar?</a>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+
+<nav aria-label="Seções do cadastro" class="rv" style="flex: 0 0 200px; position: sticky; top: 84px; display: flex; flex-direction: column; gap: 2px;">
+<sc-for list="{{secs}}" as="s" hint-placeholder-count="4"><a href="#{{s.id}}" class="nv"><span style="width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: {{s.dotBg}}; color: {{s.dotFg}}; font-size: 11px; font-weight: 700;" class="mono">{{s.n}}</span>{{s.t}}</a></sc-for>
+</nav>
+
+<div style="flex: 999 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+<sc-for list="{{secs}}" as="s" hint-placeholder-count="4">
+<section id="{{s.id}}" class="card rv" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;" aria-labelledby="{{s.hid}}">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="{{s.hid}}" class="disp" style="margin: 0; font-size: 24px; font-weight: 700;">{{s.t}}</h2><span style="font-size: 13.5px; color: var(--t3);">{{s.d}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 16px;">
+<sc-for list="{{s.fields}}" as="f" hint-placeholder-count="4">
+<div style="grid-column: span {{f.span}}; min-width: 0;">
+<sc-if value="{{f.isIn}}" hint-placeholder-val="{{true}}">
+<label class="lbl" for="{{f.id}}">{{f.l}}<sc-if value="{{f.req}}" hint-placeholder-val="{{false}}"><span style="color: #C0352B;"> *</span></sc-if></label>
+<div class="fld {{f.st}}"><span class="u">{{f.pre}}</span><input id="{{f.id}}" class="{{f.mono}}" value="{{f.v}}" onChange="{{f.change}}" placeholder="{{f.ph}}"><span class="u">{{f.suf}}</span><sc-if value="{{f.okIcon}}" hint-placeholder-val="{{false}}"><svg class="i" viewBox="0 0 24 24" style="color: #0F7A55;" aria-label="válido" role="img"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></sc-if></div>
+</sc-if>
+<sc-if value="{{f.isSel}}" hint-placeholder-val="{{false}}">
+<span class="lbl">{{f.l}}</span>
+<button type="button" class="fld" style="all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 8px; min-height: 46px; width: 100%; padding: 0 14px; border-radius: 14px; background: var(--s2); border: 1.5px solid var(--bd2); cursor: pointer;" aria-haspopup="listbox" aria-label="{{f.l}}: {{f.v}}"><span style="flex: 1; font-weight: 500;">{{f.v}}</span><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+</sc-if>
+<sc-if value="{{f.isSeg}}" hint-placeholder-val="{{false}}">
+<span class="lbl">{{f.l}}</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;" role="radiogroup" aria-label="{{f.l}}"><sc-for list="{{f.opts}}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{o.checked}}" class="opt {{o.cls}}" onClick="{{o.pick}}">{{o.l}}</button></sc-for></div>
+</sc-if>
+<sc-if value="{{f.isTog}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px; background: var(--s2); border: 1px solid var(--bd);"><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-weight: 500;">{{f.l}}</span><span style="font-size: 12.5px; color: var(--t3);">{{f.ph}}</span></span><button type="button" class="tgl" role="switch" aria-checked="{{f.on}}" aria-label="{{f.l}}" onClick="{{f.change}}" style="background: {{f.tBg}};"><span style="left: {{f.tLeft}};"></span></button></div>
+</sc-if>
+<sc-if value="{{f.isArea}}" hint-placeholder-val="{{false}}">
+<label class="lbl" for="{{f.id}}">{{f.l}}</label>
+<div class="fld" style="padding: 12px 14px; align-items: flex-start;"><textarea id="{{f.id}}" rows="3" onChange="{{f.change}}" placeholder="{{f.ph}}" value="{{f.v}}"></textarea></div>
+</sc-if>
+<sc-if value="{{f.hasHint}}" hint-placeholder-val="{{false}}"><span style="display: flex; gap: 6px; align-items: flex-start; font-size: 12.5px; margin-top: 6px; color: {{f.hintColor}};">{{f.hint}}</span></sc-if>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</div>
+
+<aside class="rv" aria-label="{{E.panelTitle}}" style="flex: 1 1 320px; max-width: 380px; position: sticky; top: 84px; border-radius: 30px; padding: 10px; background: linear-gradient(150deg, {{E.c1}} 0%, {{E.c2}} 70%, #E35D14 140%);">
+<div class="lg" style="border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+<h2 class="disp" style="margin: 0; font-size: 24px; font-weight: 700;">{{E.panelTitle}}</h2>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+<sc-for list="{{panelKpis}}" as="k" hint-placeholder-count="4"><div style="padding: 12px; border-radius: 16px; background: #fff;"><span style="display: block; font-size: 12.5px; color: var(--t3);">{{k.l}}</span><span class="mono" style="font-size: 20px; font-weight: 700; color: {{k.c}};">{{k.v}}</span><span style="display: block; font-size: 12px; color: var(--t2);">{{k.s}}</span></div></sc-for>
+</div>
+<span style="font-size: 13px; font-weight: 600; color: var(--t2); padding-top: 4px;">{{E.recentTitle}}</span>
+<sc-for list="{{recent}}" as="r" hint-placeholder-count="4"><a href="{{r.href}}" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #fff; text-decoration: none; color: #1E1B16;"><span style="flex: 1; display: flex; flex-direction: column; min-width: 0;"><span class="mono" style="font-size: 12px; color: var(--t3);">{{r.code}}</span><span style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{r.t}}</span></span><span class="bdg {{r.c}}">{{r.s}}</span></a></sc-for>
+<span style="font-size: 12.5px; color: var(--t2);">{{E.panelNote}}</span>
+</div>
+</aside>
+</div>
+</main>
+</div>
+
+<sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+<div class="toast" role="status" style="position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 999px; background: #1E1B16; color: #fff; font-weight: 600; box-shadow: 0 12px 30px rgba(0,0,0,.3); z-index: 30;"><svg class="i" viewBox="0 0 24 24" style="color: #3DD598;" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{toast}}<a href="{{E.list}}" style="color: #FFC08F; margin-left: 6px;">Ver na lista</a></div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { v: {}, saved: false };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  data(V) {
+    const pj = V.tipo !== 'Pessoa física';
+    return {
+      E: {
+        group: 'Comercial', plural: 'Clientes', list: 'Clientes-Lista.dc.html', c1: '#2A6AA3', c2: '#15395A',
+        badges: [{ l: 'Ativo', c: 'b-ok' }, { l: 'Cliente desde 2021', c: 'b-neu' }],
+        lead: 'Compra usinagem de precisão. Paga em dia e aprova rápido pelo portal.',
+        panelTitle: 'Ficha 360°', recentTitle: 'Últimos movimentos', panelNote: 'Custo-hora e margem por item ficam só aqui dentro. No portal, a Juliana vê apenas o resumo.'
+      },
+      titleIds: ['fant', 'razao'], titleNew: 'Novo cliente',
+      secs: [
+        { t: 'Identificação', d: pj ? 'Com o CNPJ eu busco razão social e endereço na Receita.' : 'Dados da pessoa física.', fields: [
+          { id: 'tipo', l: 'Tipo', k: 'seg', v: 'Empresa', opts: ['Empresa', 'Pessoa física'], span: 6 },
+          { id: 'doc', l: pj ? 'CNPJ' : 'CPF', v: pj ? '12.345.678/0001-95' : '123.456.789-09', mono: true, span: 2, req: true, ok: true, hint: pj ? 'Ativa na Receita desde 03/2009' : 'CPF válido', hc: '#0F7A55' },
+          { id: 'razao', l: pj ? 'Razão social' : 'Nome completo', v: pj ? 'Metalúrgica Vale do Itajaí Ltda.' : 'Carlos Eduardo Ramos', span: 4, req: true },
+          { id: 'fant', l: 'Como vocês chamam', v: 'Metalúrgica Vale', span: 3, skip: !pj },
+          { id: 'ie', l: 'Inscrição estadual', v: '254.123.987', mono: true, span: 3, skip: !pj }
+        ] },
+        { t: 'Contatos', d: 'Quem aprova, quem é técnico e quem cuida do financeiro.', fields: [
+          { id: 'c1', l: 'Contato principal', v: 'Juliana Ferreira', span: 2 },
+          { id: 'c1p', l: 'Papel', k: 'sel', v: 'Aprovador · engenharia', span: 2 },
+          { id: 'c1t', l: 'WhatsApp', v: '(47) 99812-4410', mono: true, span: 2 },
+          { id: 'mail', l: 'E-mail para orçamentos e boletos', v: 'compras@metalvale.com.br', span: 4, req: true },
+          { id: 'c2', l: 'Financeiro', v: 'Rosana Klein', span: 2 }
+        ] },
+        { t: 'Endereços', d: 'Cobrança e entrega. Digite o CEP e eu completo o resto.', fields: [
+          { id: 'cep', l: 'CEP', v: '89010-200', mono: true, span: 2, ok: true },
+          { id: 'end', l: 'Endereço', v: 'Rua Itajaí, 1450 · Velha', span: 4 },
+          { id: 'cid', l: 'Cidade / UF', v: 'Blumenau / SC', span: 3 },
+          { id: 'ent', l: 'Entregar no mesmo endereço', k: 'tog', on: true, ph: 'Desligue para informar um endereço de entrega diferente', span: 3 }
+        ] },
+        { t: 'Condições comerciais', d: 'Usadas automaticamente em cada orçamento novo.', fields: [
+          { id: 'pag', l: 'Condição de pagamento', k: 'seg', v: '28/42 dias', opts: ['PIX à vista', '28 dias', '28/42 dias', '30/60/90'], span: 6 },
+          { id: 'forma', l: 'Forma', k: 'sel', v: 'Boleto bancário', span: 2 },
+          { id: 'lim', l: 'Limite de crédito', v: '30.000,00', pre: 'R$', mono: true, span: 2, hint: 'Usado hoje: R$ 12.430,00 (41%)', hc: '#4E473D' },
+          { id: 'marg', l: 'Margem especial', v: '', suf: '%', mono: true, span: 2, ph: 'padrão: 20,0', hint: 'Deixe vazio para usar a margem alvo da empresa', hc: '#6E6557' },
+          { id: 'obs', l: 'Observações', k: 'area', v: '', ph: 'Ex.: exige certificado de material em toda entrega', span: 6 }
+        ] }
+      ],
+      panelKpis: [['Orçamentos', '14', '64% aprovados', '#1E1B16'], ['OS', '9', '2 em andamento', '#5B3FB5'], ['Margem média', '18,4%', 'alvo 20,0%', '#8A5300'], ['Em aberto', 'R$ 12.430', 'nada vencido', '#0F7A55']],
+      recent: [['ORC-2026-00128', 'Bucha de latão H7 · lote piloto', 'Rascunho', 'b-neu', 'Orcamento-Editor.dc.html'], ['OS-2026-00041', 'Bucha de latão H7', 'Em execução', 'b-run', 'OS-Detalhe.dc.html'], ['OS-2026-00029', 'Eixo excêntrico Ø38', 'Entregue', 'b-ok', '#'], ['TIT-0912', 'Parcela 2/2 · R$ 2.430,00', 'Vence 21/10', 'b-inf', '#']]
+    };
+  }
+  renderVals() {
+    const st = this.state;
+    const base = { tipo: 'Empresa' };
+    const V0 = Object.assign({}, base, st.v);
+    const D = this.data(V0);
+    const set = (id, val) => this.setState({ v: Object.assign({}, st.v, { [id]: val }), saved: false });
+    const val = (f) => (f.id in st.v ? st.v[f.id] : f.v);
+    const secs = D.secs.map((s, n) => {
+      const fields = s.fields.filter((f) => !f.skip).map((f) => {
+        const k = f.k || 'in';
+        const v = val(f);
+        const empty = f.req && !String(v).trim();
+        return {
+          id: 'f-' + f.id, l: f.l, v, span: f.span || 2, pre: f.pre || '', suf: f.suf || '', ph: f.ph || '', mono: f.mono ? 'mono' : '', req: !!f.req,
+          isIn: k === 'in', isSel: k === 'sel', isSeg: k === 'seg', isTog: k === 'tog', isArea: k === 'area',
+          st: empty ? 'err' : f.ok ? 'ok' : '', okIcon: !!f.ok && !empty,
+          hasHint: empty || !!f.hint, hint: empty ? 'Esse campo é obrigatório. Sem ele não dá para salvar.' : f.hint, hintColor: empty ? '#C0352B' : f.hc || '#6E6557',
+          change: k === 'tog' ? () => set(f.id, !(f.id in st.v ? st.v[f.id] : f.on)) : (e) => set(f.id, e.target.value),
+          on: String(f.id in st.v ? st.v[f.id] : !!f.on), tBg: (f.id in st.v ? st.v[f.id] : f.on) ? '#0F7A55' : '#CFC4B3', tLeft: (f.id in st.v ? st.v[f.id] : f.on) ? '25px' : '3px',
+          opts: (f.opts || []).map((o) => ({ l: o, cls: v === o ? 'on' : '', checked: v === o ? 'true' : 'false', pick: () => set(f.id, o) }))
+        };
+      });
+      const filled = fields.filter((f) => f.isSeg || f.isTog || String(f.v).trim()).length;
+      const done = filled === fields.length;
+      return { id: 'sec-' + n, hid: 'sec-h-' + n, n: done ? '✓' : n + 1, t: s.t, d: s.d, fields, dotBg: done ? '#0F7A55' : '#ECE7DF', dotFg: done ? '#fff' : '#4E473D' };
+    });
+    const allF = [].concat.apply([], D.secs.map((s) => s.fields.filter((f) => !f.skip)));
+    const title = D.titleIds.map((id) => { const f = allF.find((x) => x.id === id); return f ? String(val(f)).trim() : ''; }).find((x) => x) || D.titleNew;
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => { const on = r[0] === D.E.group; return { label: r[0], icon: r[1], cur: on ? 'page' : 'false', bg: on ? '#FFFFFF' : 'transparent', fg: on ? '#15395A' : '#C7D5E4' }; });
+    const hasErr = secs.some((s) => s.fields.some((f) => f.st === 'err'));
+    return {
+      E: D.E, title, secs, rail,
+      ini: title.split(' ').filter((w) => w.length > 2 || /\d/.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase(),
+      panelKpis: D.panelKpis.map((k) => ({ l: k[0], v: k[1], s: k[2], c: k[3] })),
+      recent: D.recent.map((r) => ({ code: r[0], t: r[1], s: r[2], c: r[3], href: r[4] })),
+      saveState: st.saved ? 'Salvo agora' : Object.keys(st.v).length ? 'Rascunho salvo há 2 s' : 'Tudo salvo',
+      save: () => { if (hasErr) return; this.setState({ saved: true }); clearTimeout(this.t); this.t = setTimeout(() => this.setState({ saved: false }), 3000); },
+      toast: st.saved ? title + ' salvo com sucesso.' : '',
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+  componentWillUnmount() { clearTimeout(this.t); }
+}
+</script>
+</body>
+</html>

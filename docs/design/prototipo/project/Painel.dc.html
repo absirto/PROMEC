@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Central de Comando</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.seg{display:inline-flex;padding:4px;border-radius:999px;background:var(--s3);gap:2px}
+.seg button{all:unset;box-sizing:border-box;height:32px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer}
+.seg button.on{background:#1E1B16;color:#fff}
+.btn:focus-visible,.ib:focus-visible,.seg button:focus-visible,.al:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.h3{margin:0;font-size:17px;font-weight:600}
+.sub{font-size:13px;color:var(--t3)}
+.al{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;text-decoration:none;color:#1E1B16;transition:transform .2s}
+.al:hover{transform:translateX(3px);color:#1E1B16}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rv{animation:rise .55s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.06s}.d2{animation-delay:.12s}.d3{animation-delay:.18s}.d4{animation-delay:.24s}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.grow{transform-origin:left;animation:grow .9s cubic-bezier(.2,.8,.2,1) both .2s}
+@keyframes draw{from{stroke-dashoffset:1200}to{stroke-dashoffset:0}}
+.draw{stroke-dasharray:1200;animation:draw 1.6s cubic-bezier(.2,.8,.2,1) both .3s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin 50s linear infinite}
+@media (prefers-reduced-motion:reduce){.rv,.grow,.draw,.spin{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<span style="flex: 1 1 200px; font-size: 13.5px; font-weight: 600;">Painel</span>
+<div class="seg" role="radiogroup" aria-label="Período"><sc-for list="{{periods}}" as="p" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{p.checked}}" class="{{p.cls}}" onClick="{{p.pick}}">{{p.l}}</button></sc-for></div>
+<span class="bdg b-neu" style="height: 34px; padding: 0 14px;">Matriz · Joinville</span>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 20px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 32px; background: linear-gradient(135deg, #2A6AA3 0%, #1D4E7A 45%, #15395A 100%); color: #fff; padding: clamp(24px, 3vw, 36px);">
+<svg viewBox="0 0 640 250" aria-hidden="true" style="position: absolute; right: -40px; top: 6px; width: min(660px, 58%); height: auto;" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<g stroke="rgba(255,255,255,.28)"><rect x="40" y="168" width="560" height="24" rx="3"/><rect x="40" y="58" width="132" height="110" rx="8"/><rect x="172" y="78" width="28" height="78" rx="5"/><path d="M212 100h96v34h-96M308 106h60v22h-60M368 110h34v14h-34M402 117l18-9v18z"/><rect x="420" y="94" width="76" height="74" rx="6"/><rect x="286" y="148" width="128" height="20" rx="3"/><rect x="322" y="128" width="44" height="20" rx="3"/><path d="M78 192v40M562 192v40"/></g>
+<path d="M344 128l-10-10h10z" fill="#FF8A3D" stroke="#FF8A3D"/>
+<path class="spin" d="{{gearH}}" stroke="rgba(255,255,255,.22)"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 640px;">
+<span style="font-size: 14px; font-weight: 600; color: #FFC08F;">Quarta-feira, 14 de outubro</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(42px, 5vw, 62px); font-weight: 700; line-height: .98;">Bom dia, Marina.</h1>
+<p style="margin: 0; font-size: 17px; color: #D3E0EE;">Outubro já passou do ponto de equilíbrio. Antes do café, três coisas pedem você: publicar a tabela de novembro, aprovar a compra do latão e olhar a margem da caldeiraria.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+<div class="lg" style="border-radius: 24px; padding: 18px 20px; color: #1E1B16;">
+<span style="font-size: 13.5px; color: var(--t2);">Margem real do mês</span>
+<span class="mono" style="display: block; font-size: 52px; font-weight: 700; letter-spacing: -.04em; line-height: 1.05;">{{kMargem}}</span>
+<span style="font-size: 13px; color: #8A5300;">orçada 21,0% · 1,4 ponto abaixo</span>
+</div>
+<div class="lgd" style="border-radius: 24px; padding: 18px 20px;">
+<span style="font-size: 13.5px; color: #D3E0EE;">Faturado em outubro</span>
+<span class="mono" style="display: block; font-size: 38px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15;">{{kFat}}</span>
+<div style="position: relative; height: 8px; border-radius: 99px; background: rgba(255,255,255,.2); margin-top: 8px;"><span class="grow" style="display: block; height: 100%; width: 100%; border-radius: 99px; background: linear-gradient(90deg, #3DD598, #FFD08A);"></span><span style="position: absolute; top: -5px; bottom: -5px; left: 77%; width: 3px; background: #fff; border-radius: 2px;" aria-hidden="true"></span></div>
+<span style="font-size: 12.5px; color: #D3E0EE;">ponto de equilíbrio R$ 114.525 · batido dia 23</span>
+</div>
+<div class="lgd" style="border-radius: 24px; padding: 18px 20px;">
+<span style="font-size: 13.5px; color: #D3E0EE;">Ocupação das máquinas</span>
+<span class="mono" style="display: block; font-size: 38px; font-weight: 700; line-height: 1.15;">{{kOcup}}</span>
+<span style="font-size: 12.5px; color: #D3E0EE;">solda a 97% · usinagem 02 parada</span>
+</div>
+<div class="lgd" style="border-radius: 24px; padding: 18px 20px;">
+<span style="font-size: 13.5px; color: #D3E0EE;">Caixa em 30 dias</span>
+<span class="mono" style="display: block; font-size: 38px; font-weight: 700; line-height: 1.15;">{{kCaixa}}</span>
+<span style="font-size: 12.5px; color: #D3E0EE;">60 dias R$ 81.900 · 90 dias R$ 97.400</span>
+</div>
+</div>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 18px;">
+
+<section class="card rv d1" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px;" aria-labelledby="h-al">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 id="h-al" class="h3">Precisa de você</h2><span class="sub">5 itens</span></div>
+<sc-for list="{{alerts}}" as="a" hint-placeholder-count="5">
+<a href="{{a.href}}" class="al" style="background: {{a.bg}};"><span style="width: 36px; height: 36px; border-radius: 11px; background: {{a.c}}; color: {{a.fg}}; display: grid; place-items: center; flex: none;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{a.icon}}"/></svg></span><span style="flex: 1; display: flex; flex-direction: column; line-height: 1.3; min-width: 0;"><span style="font-weight: 600; font-size: 14.5px;">{{a.t}}</span><span style="font-size: 12.5px; color: var(--t2);">{{a.s}}</span></span><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+</sc-for>
+</section>
+
+<section class="card rv d2" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-oc">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 id="h-oc" class="h3">Ocupação por máquina</h2><a href="Planejamento.dc.html" style="font-size: 13px; font-weight: 600;">Planejamento</a></div>
+<sc-for list="{{ocup}}" as="o" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 160px minmax(0, 1fr) 48px; gap: 12px; align-items: center; font-size: 14px;">
+<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.n}}</span>
+<span style="height: 12px; border-radius: 99px; background: var(--s3); overflow: hidden;"><span class="grow" style="display: block; height: 100%; width: {{o.w}}; border-radius: 99px; background: {{o.c}};"></span></span>
+<span class="mono" style="text-align: right; font-weight: 700; color: {{o.tc}};">{{o.v}}</span>
+</div>
+</sc-for>
+</section>
+
+<section class="card rv d3" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px;" aria-labelledby="h-mg">
+<div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px;"><h2 id="h-mg" class="h3">Margem orçada × real, semana a semana</h2><span style="display: flex; gap: 10px; font-size: 12px; color: var(--t2);"><span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 14px; height: 3px; background: #A3AEC0;"></span>orçada</span><span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 14px; height: 3px; background: #1D4E7A;"></span>real</span></span></div>
+<svg viewBox="0 0 420 180" role="img" aria-label="Margem orçada estável perto de 21%, margem real caindo de 22% para 17,8% na semana 42" style="width: 100%; height: auto;">
+<line x1="30" x2="410" y1="150" y2="150" stroke="#E2DACD"/><line x1="30" x2="410" y1="90" y2="90" stroke="#E2DACD"/><line x1="30" x2="410" y1="30" y2="30" stroke="#E2DACD"/>
+<text x="0" y="154" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">10%</text><text x="0" y="94" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">20%</text><text x="0" y="34" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">30%</text>
+<rect x="30" y="78" width="380" height="24" fill="#FCEFC7" opacity=".6"/><text x="406" y="94" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="#8A5300">mín 15 · alvo 20</text>
+<polyline points="{{mgO}}" fill="none" stroke="#A3AEC0" stroke-width="2.5" stroke-dasharray="6 4"/>
+<polyline class="draw" points="{{mgR}}" fill="none" stroke="#1D4E7A" stroke-width="3" stroke-linejoin="round"/>
+<sc-for list="{{mgPts}}" as="m" hint-placeholder-count="6"><circle cx="{{m.x}}" cy="{{m.y}}" r="4.5" fill="#fff" stroke="#1D4E7A" stroke-width="2.5"/><text x="{{m.x}}" y="170" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">{{m.l}}</text></sc-for>
+</svg>
+<span style="font-size: 13px; color: var(--t2);">A queda vem da caldeiraria (13,9%) e do setup acima do previsto no torno.</span>
+</section>
+
+<section class="card rv d2" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-ch">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 id="h-ch" class="h3">Custo-hora efetivo × tabelado</h2><a href="Tabela-Custos.dc.html" style="font-size: 13px; font-weight: 600;">Tabela de Custos</a></div>
+<sc-for list="{{chs}}" as="c" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 150px minmax(0, 1fr) 110px; gap: 12px; align-items: center; font-size: 14px;">
+<span>{{c.n}}</span>
+<span style="position: relative; height: 20px;"><span style="position: absolute; top: 9px; height: 2px; left: {{c.l}}; width: {{c.w}}; background: {{c.c}};"></span><span style="position: absolute; top: 4px; left: {{c.a}}; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: #A3AEC0;" title="tabelado"></span><span style="position: absolute; top: 3px; left: {{c.b}}; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: {{c.c}};" title="efetivo"></span></span>
+<span class="mono" style="text-align: right; font-size: 13px;"><span style="color: var(--t3);">{{c.tv}}</span> → <strong style="color: {{c.c}};">{{c.ev}}</strong></span>
+</div>
+</sc-for>
+<span style="font-size: 12.5px; color: var(--t2);">Efetivo = custo do mês ÷ horas apontadas. Acima do tabelado indica hora parada ou eficiência menor.</span>
+</section>
+
+<section class="card rv d3" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-os">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 id="h-os" class="h3">Ordens de serviço agora</h2><a href="OS-Lista.dc.html" style="font-size: 13px; font-weight: 600;">Ver todas</a></div>
+<div style="display: flex; height: 26px; border-radius: 10px; overflow: hidden; gap: 2px;" role="img" aria-label="{{osAria}}"><sc-for list="{{osSt}}" as="o" hint-placeholder-count="6"><span class="grow" style="width: {{o.w}}; background: {{o.c}};"></span></sc-for></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px;"><sc-for list="{{osSt}}" as="o" hint-placeholder-count="6"><span style="display: flex; align-items: center; gap: 8px; font-size: 13.5px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{o.c}};"></span><span style="flex: 1;">{{o.l}}</span><span class="mono" style="font-weight: 700;">{{o.n}}</span></span></sc-for></div>
+<div style="display: flex; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #FBE2DF; font-size: 13.5px;"><strong class="mono">2</strong><span>OS atrasadas: OS-2026-00046 (esteira, solda cheia) e OS-2026-00050 (bucha bronze, fila do torno).</span></div>
+</section>
+
+<section class="card rv d4" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 4px;" aria-labelledby="h-feed">
+<h2 id="h-feed" class="h3" style="margin-bottom: 8px;">O que aconteceu hoje</h2>
+<sc-for list="{{feed}}" as="f" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 30px 46px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--bd);">
+<span style="width: 28px; height: 28px; border-radius: 50%; background: {{f.c}}; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center;">{{f.ini}}</span>
+<span class="mono" style="font-size: 12px; color: var(--t3);">{{f.t}}</span>
+<span style="font-size: 13.5px;">{{f.txt}}</span>
+</div>
+</sc-for>
+</section>
+
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { k: 0, per: 'Mês' };
+  }
+  componentDidMount() {
+    const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { this.setState({ k: 1 }); return; }
+    const t0 = Date.now();
+    this.iv = setInterval(() => { const k = Math.min(1, (Date.now() - t0) / 1100); this.setState({ k: 1 - Math.pow(1 - k, 3) }); if (k >= 1) clearInterval(this.iv); }, 30);
+  }
+  componentWillUnmount() { clearInterval(this.iv); }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state, k = st.k;
+    const f0 = (x) => Math.round(x).toLocaleString('pt-BR');
+    const periods = ['Semana', 'Mês', 'Trimestre'].map((l) => ({ l, cls: st.per === l ? 'on' : '', checked: st.per === l ? 'true' : 'false', pick: () => this.setState({ per: l }) }));
+    const alerts = [
+      ['Publicar a Tabela de Custos de novembro', 'Custo-hora médio +2,7% · 4 orçamentos afetados', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5', '#E35D14', '#fff', '#FDE8DA', 'Tabela-Custos.dc.html'],
+      ['Aprovar a compra do latão Ø25', 'PED-0312 · Aços Sul · R$ 3.242,59', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z', '#7C5CC4', '#fff', '#ECE6FB', 'Compras.dc.html'],
+      ['Desconto acima do limite', 'Paulo pede 12% para a Estruturas Sul · margem 11,8%', 'M19 5 5 19M6.5 6.5h.01M17.5 17.5h.01', '#C0352B', '#fff', '#FBE2DF', 'Mobile-Aprovacao.dc.html'],
+      ['2 títulos vencidos da Rio Negro', 'R$ 5.130,00 · cliente já está bloqueado', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3', '#E0A100', '#1E1B16', '#FCEFC7', 'Financeiro.dc.html'],
+      ['Recalibrar o Torno CNC', 'Eficiência real 71,2% e manutenção R$ 812', 'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5', '#1D6FB8', '#fff', '#E3EDF7', 'Centro-Trabalho.dc.html']
+    ].map((a) => ({ t: a[0], s: a[1], icon: a[2], c: a[3], fg: a[4], bg: a[5], href: a[6] }));
+    const ocup = [['Célula de solda MIG 01', 97], ['Fresa CNC 01', 88], ['Torno CNC de entrada', 78], ['Box 3 (elevador)', 70], ['Box 1 (elevador)', 64], ['Centro de usinagem 02', 0]].map((o) => ({ n: o[0], v: o[1] ? o[1] + '%' : 'parada', w: o[1] + '%', c: o[1] > 95 ? '#C0352B' : o[1] > 85 ? '#E0A100' : '#0F9D76', tc: o[1] > 95 ? '#C0352B' : o[1] ? '#1E1B16' : '#6E6557' }));
+    const W = [['S37', 21.0, 22.1], ['S38', 21.2, 21.4], ['S39', 20.8, 20.6], ['S40', 21.0, 19.9], ['S41', 21.1, 18.6], ['S42', 21.0, 17.8]];
+    const Y = (v) => (150 - (v - 10) / 20 * 120).toFixed(1);
+    const X = (i) => 50 + i * 70;
+    const mgPts = W.map((w, i) => ({ x: X(i), y: Y(w[2]), l: w[0] }));
+    const chs = [['Torno CNC', 117.78, 124.06], ['Fresa CNC 01', 131.05, 128.40], ['Solda MIG 01', 94.12, 93.10], ['Box 3', 86.40, 92.80]].map((c) => {
+      const p = (v) => ((v - 80) / 60 * 100).toFixed(1) + '%';
+      const up = c[2] > c[1] * 1.03;
+      return { n: c[0], a: p(c[1]), b: p(c[2]), l: p(Math.min(c[1], c[2])), w: (Math.abs(c[2] - c[1]) / 60 * 100).toFixed(1) + '%', c: up ? '#C0352B' : '#0F7A55', tv: c[1].toFixed(2).replace('.', ','), ev: c[2].toFixed(2).replace('.', ',') };
+    });
+    const os = [['Em fila', 9, '#1A64A8'], ['Em execução', 7, '#5B3FB5'], ['Pausada', 1, '#E0A100'], ['Qualidade', 2, '#0F9D76'], ['Concluída', 4, '#7FC8A9'], ['Atrasada', 2, '#C0352B']];
+    const totOs = os.reduce((a, o) => a + o[1], 0);
+    const osSt = os.map((o) => ({ l: o[0], n: o[1], c: o[2], w: (o[1] / totOs * 100).toFixed(1) + '%' }));
+    const feed = [
+      ['13:40', 'CM', '#1A64A8', 'Carla aprovou 5 peças da bucha H7. Nenhuma fora da tolerância.'],
+      ['13:19', 'RA', '#1D4E7A', 'Ricardo apontou 6 peças boas na OS-2026-00041.'],
+      ['11:52', 'PH', '#E0A100', 'Paulo enviou o ORC-2026-00133 para a Estruturas Sul.'],
+      ['10:30', 'TR', '#8A5300', 'Tânia recebeu o PED-0310 com 2 divergências.'],
+      ['09:14', 'JF', '#0F9D76', 'Juliana (Metalúrgica Vale) aprovou o orçamento das buchas pelo portal.'],
+      ['01:00', 'PM', '#6B6458', 'O sistema fechou setembro e gerou o rascunho da Tabela 2026-11.']
+    ].map((x) => ({ t: x[0], ini: x[1], c: x[2], txt: x[3] }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z', true], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['BI', 'M3 3v18h18M18 17V9M13 17V5M8 17v-3'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      periods, alerts, ocup, mgPts, chs, osSt, feed, rail,
+      mgO: W.map((w, i) => X(i) + ',' + Y(w[1])).join(' '), mgR: mgPts.map((m) => m.x + ',' + m.y).join(' '),
+      osAria: 'OS por situação: ' + osSt.map((o) => o.l + ' ' + o.n).join(', '),
+      kMargem: (19.6 * k).toFixed(1).replace('.', ',') + '%', kFat: 'R$ ' + f0(148600 * k), kOcup: Math.round(81 * k) + '%', kCaixa: 'R$ ' + f0(64300 * k),
+      gearH: this.gear(600, 40, 60, 14, 10), logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--pm-font-sans);
+    font-size: var(--pm-size-body);
+    line-height: 1.5;
+    color: var(--pm-text-1);
+    background-color: var(--pm-canvas);
+    background-image: linear-gradient(var(--pm-grid) 1px, transparent 1px), linear-gradient(90deg, var(--pm-grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color var(--pm-dur-theme) var(--pm-ease), color var(--pm-dur-theme) var(--pm-ease);
+  }
+  h1, h2, h3 { font-family: var(--pm-font-display); }
+  a { color: var(--pm-primary-text); }
+  :focus-visible { outline: 3px solid var(--pm-primary); outline-offset: 2px; border-radius: 6px; }
+  [data-theme='alto-contraste'] :focus-visible { outline-color: #FFD400; }
+  ::selection { background: var(--pm-primary-soft); }
+  input, select, textarea, button { font: inherit; color: inherit; }
+}
+
+@layer components {
+  .mono { font-family: var(--pm-font-mono); font-variant-numeric: tabular-nums; }
+  .glass { position: relative; }
+  .glass::before, .glass-dark::before, .glass-steel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(155deg, rgba(255,255,255,.45), rgba(255,255,255,0) 30%, rgba(255,255,255,0) 75%, rgba(255,255,255,.14));
+    mix-blend-mode: soft-light;
+  }
+  .glass-dark { position: relative; }
+  .glass-steel {
+    position: relative;
+    background: var(--pm-sidebar);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 16px 40px rgba(15,35,60,.28);
+    color: #fff;
+  }
+  [data-theme='alto-contraste'] .glass-steel { background: #000; border: 2px solid #fff; box-shadow: none; }
+  [data-theme='alto-contraste'] .glass::before, [data-theme='alto-contraste'] .glass-dark::before, [data-theme='alto-contraste'] .glass-steel::before { display: none; }
+  [data-theme='alto-contraste'] .glass-dark { background: #0A0A0A; border: 2px solid #fff; }
+  .hero { background: var(--pm-hero); color: #fff; }
+  [data-theme='alto-contraste'] .hero { background: #000; border: 2px solid #fff; }
+  .hazard { background: var(--pm-hazard); }
+
+  .card { background: var(--pm-surface-1); border: 1px solid var(--pm-border); border-radius: var(--pm-radius-card); box-shadow: var(--pm-shadow-1); }
+  .campo {
+    display: flex; align-items: center; gap: 8px;
+    min-height: 46px; padding: 0 14px;
+    border-radius: var(--pm-radius-field);
+    background: var(--pm-surface-2);
+    border: 1.5px solid var(--pm-border-strong);
+    transition: border-color var(--pm-dur-micro), box-shadow var(--pm-dur-micro);
+  }
+  .campo:focus-within { border-color: var(--pm-primary); box-shadow: 0 0 0 4px var(--pm-primary-soft); }
+  .campo[data-erro='true'] { border-color: var(--pm-bad); background: var(--pm-bad-soft); }
+  .campo input, .campo select, .campo textarea { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; height: 42px; }
+  .campo textarea { height: auto; padding: 10px 0; resize: vertical; }
+  .campo select { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 22px; }
+  .campo select option { background: var(--pm-surface-1); color: var(--pm-text-1); }
+  .campo .un { color: var(--pm-text-3); font-size: 13px; white-space: nowrap; }
+
+  .chip-ico { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; flex: none; }
+
+  .skeleton { background: linear-gradient(90deg, var(--pm-surface-3) 0%, var(--pm-surface-2) 50%, var(--pm-surface-3) 100%); background-size: 200% 100%; animation: brilho 1.4s linear infinite; border-radius: 8px; }
+
+  .rt { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14.5px; }
+  .rt th { text-align: left; font-size: 13px; font-weight: 600; color: var(--pm-text-2); padding: 10px 14px; border-bottom: 1px solid var(--pm-border); background: var(--pm-surface-2); white-space: nowrap; }
+  .rt td { padding: 12px 14px; border-bottom: 1px solid var(--pm-border); vertical-align: middle; }
+  .rt tbody tr { transition: background-color var(--pm-dur-micro); }
+  .rt tbody tr[data-link='true'] { cursor: pointer; }
+  .rt tbody tr[data-link='true']:hover { background: var(--pm-surface-2); }
+  .rt tbody tr:last-child td { border-bottom: 0; }
+  @media (max-width: 767px) {
+    .rt thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .rt, .rt tbody, .rt tr, .rt td { display: block; width: 100%; }
+    .rt tr { padding: 12px 14px; border-bottom: 1px solid var(--pm-border); }
+    .rt td { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border: 0; text-align: right !important; }
+    .rt td[data-l]::before { content: attr(data-l); color: var(--pm-text-3); font-size: 13px; font-family: var(--pm-font-sans); text-align: left; }
+    .rt td[data-principal] { display: block; text-align: left !important; padding-bottom: 8px; }
+    .rt td[data-principal]::before { content: none; }
+    .rt td[data-abrir] { display: none; }
+  }
+}
+
+@layer utilities {
+  .anim-subir { animation: subir .55s var(--pm-ease) both; }
+  .anim-girar { transform-box: fill-box; transform-origin: center; animation: girar 50s linear infinite; }
+  .anim-crescer { transform-origin: left; animation: crescer .9s var(--pm-ease) both .15s; }
+  .anim-tremer { animation: tremer .4s var(--pm-ease); }
+  .anim-pulsar { animation: pulsar 2s ease-in-out infinite; }
+  .tnum { font-variant-numeric: tabular-nums; }
+}
+
+@keyframes subir { from { opacity: 0; transform: translateY(14px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes girar { to { transform: rotate(360deg); } }
+@keyframes crescer { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes brilho { to { background-position: -200% 0; } }
+@keyframes tremer { 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+@keyframes pulsar { 50% { opacity: .35; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+  .anim-girar, .anim-pulsar, .skeleton { animation: none !important; }
+}

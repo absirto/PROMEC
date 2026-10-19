@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Funcionários</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s1:#fff;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.btn-gl{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.34);color:#fff}
+.btn-gl:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.fc{all:unset;box-sizing:border-box;cursor:pointer;height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.fc.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.sg{display:inline-flex;padding:3px;border-radius:999px;background:var(--s3);gap:2px}
+.sg button{all:unset;box-sizing:border-box;height:30px;padding:0 12px;border-radius:999px;font-size:12.5px;font-weight:500;color:var(--t2);cursor:pointer}
+.sg button.on{background:#1E1B16;color:#fff}
+.srch{display:flex;align-items:center;gap:10px;height:42px;padding:0 14px;border-radius:999px;background:#fff;border:1.5px solid var(--bd2);flex:1 1 260px;max-width:420px}
+.srch input{all:unset;flex:1;min-width:0;font-size:14.5px}
+.btn:focus-visible,.ib:focus-visible,.fc:focus-visible,.sg button:focus-visible,.srch:focus-within,.rl:focus-visible,.ck:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.ck{width:20px;height:20px;accent-color:#B8460A;cursor:pointer}
+.rt{width:100%;border-collapse:collapse;font-size:14.5px}
+.rt th{font-size:12.5px;font-weight:600;color:var(--t3);text-align:left;padding:12px;position:sticky;top:0;background:var(--s2);border-bottom:1px solid var(--bd);white-space:nowrap}
+.rt td{padding:var(--rp,13px) 12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.rt tr.sel td{background:#FFF6EF}
+.rt tbody tr:hover td{background:var(--s2)}
+.rl{font-weight:600;color:#1E1B16;text-decoration:none}
+.rl:hover{color:var(--pt);text-decoration:underline}
+.sk{display:block;height:14px;border-radius:7px;background:linear-gradient(90deg,#EFE8DE 0%,#F8F4EE 50%,#EFE8DE 100%);background-size:200% 100%;animation:sh 1.2s linear infinite}
+@keyframes sh{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@media (max-width:760px){.rt thead{display:none}.rt,.rt tbody,.rt tr,.rt td{display:block;width:100%}.rt tr{margin:10px 0;border:1px solid var(--bd);border-radius:18px;background:#fff;padding:6px 4px}.rt td{border:0;padding:6px 12px}.rt td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--t3)}}
+@media (prefers-reduced-motion:reduce){.rv,.sk{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">{{E.group}}</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600;" aria-current="page">{{E.plural}}</span></nav>
+<span style="font-size: 12.5px; color: var(--t3);">Protótipo · ver estado</span>
+<div class="sg" role="radiogroup" aria-label="Estado da tela"><sc-for list="{{states}}" as="s" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{s.checked}}" class="{{s.cls}}" onClick="{{s.pick}}">{{s.label}}</button></sc-for></div>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 18px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 28px; background: linear-gradient(135deg, {{E.c1}} 0%, {{E.c2}} 100%); color: #fff; padding: 24px 28px; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; justify-content: space-between;">
+<svg viewBox="0 0 400 160" aria-hidden="true" style="position: absolute; right: 20px; top: 0; width: 360px; height: auto; opacity: .9;" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="{{E.art}}"/></svg>
+<div style="position: relative; display: flex; align-items: center; gap: 16px;">
+<span style="width: 60px; height: 60px; border-radius: 18px; background: rgba(255,255,255,.18); display: grid; place-items: center; box-shadow: inset 0 0 0 1px rgba(255,255,255,.3);"><svg class="i" viewBox="0 0 24 24" style="width: 30px; height: 30px;" aria-hidden="true"><path d="{{E.icon}}"/></svg></span>
+<span style="display: flex; flex-direction: column;"><h1 class="disp" style="margin: 0; font-size: 46px; font-weight: 700; line-height: 1;">{{E.plural}} <span class="mono" style="font-size: 22px; font-weight: 500; opacity: .8;">{{E.total}}</span></h1><span style="font-size: 15.5px; color: rgba(255,255,255,.9);">{{E.sub}}</span></span>
+</div>
+<div style="position: relative; display: flex; gap: 8px; flex-wrap: wrap;">
+<a href="Cadastros-Chat.dc.html" class="btn btn-gl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>Cadastrar conversando</a>
+<a href="{{E.form}}" class="btn btn-p"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>{{E.newLabel}}</a>
+</div>
+</section>
+
+<div class="rv" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<div class="card" style="padding: 14px 16px; display: flex; align-items: center; gap: 12px;"><span style="width: 40px; height: 40px; border-radius: 12px; background: {{k.bg}}; color: {{k.fg}}; display: grid; place-items: center; flex: none;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{k.icon}}"/></svg></span><span style="display: flex; flex-direction: column; line-height: 1.25;"><span class="mono" style="font-size: 22px; font-weight: 700;">{{k.v}}</span><span style="font-size: 13px; color: var(--t2);">{{k.l}}</span></span></div>
+</sc-for>
+</div>
+
+<section class="card rv" style="overflow: hidden;" aria-label="Lista de {{E.plural}}">
+<div style="padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; border-bottom: 1px solid var(--bd);">
+<label class="srch"><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Buscar</span><input value="{{q}}" onChange="{{onQ}}" placeholder="{{E.searchPh}}"><kbd style="font-family: 'IBM Plex Mono'; font-size: 11px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--bd2); color: var(--t2);">/</kbd></label>
+<div style="display: flex; gap: 6px; flex-wrap: wrap;" role="group" aria-label="Filtrar por situação"><sc-for list="{{filters}}" as="f" hint-placeholder-count="4"><button type="button" class="fc {{f.cls}}" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}">{{f.label}} <span class="mono" style="font-size: 12px; opacity: .8;">{{f.n}}</span></button></sc-for></div>
+<span style="flex: 1;"></span>
+<div class="sg" role="radiogroup" aria-label="Densidade"><sc-for list="{{dens}}" as="d" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{d.checked}}" class="{{d.cls}}" onClick="{{d.pick}}">{{d.label}}</button></sc-for></div>
+<button type="button" class="btn btn-sm"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exportar</button>
+</div>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #1E1B16; color: #fff; flex-wrap: wrap;" role="region" aria-label="Ações em massa">
+<span style="font-weight: 600;">{{selTxt}}</span><span style="flex: 1;"></span>
+<sc-for list="{{E.bulk}}" as="b" hint-placeholder-count="2"><button type="button" class="btn btn-sm" style="background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.25);">{{b}}</button></sc-for>
+<button type="button" class="btn btn-sm" style="background: transparent; color: #fff; border-color: transparent;" onClick="{{clearSel}}">Limpar</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isNormal}}" hint-placeholder-val="{{true}}">
+<div style="overflow-x: auto; --rp: {{rowPad}};">
+<table class="rt">
+<thead><tr>
+<th scope="col" style="width: 44px;"><input type="checkbox" class="ck" aria-label="Selecionar todos" checked="{{allSel}}" onChange="{{toggleAll}}"></th>
+<th scope="col">{{E.nameCol}} <svg class="i" viewBox="0 0 24 24" style="width: 13px; height: 13px; vertical-align: -2px;" aria-label="ordenado de A a Z" role="img"><path d="m6 9 6 6 6-6"/></svg></th>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="4"><th scope="col" style="text-align: {{c.al}};">{{c.l}}</th></sc-for>
+<th scope="col">Situação</th><th scope="col" style="width: 44px;"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Abrir</span></th>
+</tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<tr class="{{r.cls}}">
+<td><input type="checkbox" class="ck" aria-label="Selecionar {{r.name}}" checked="{{r.checked}}" onChange="{{r.toggle}}"></td>
+<td data-l="{{E.nameCol}}"><span style="display: flex; align-items: center; gap: 12px;"><span class="disp" style="width: 38px; height: 38px; border-radius: 12px; background: {{r.av}}; color: #fff; display: grid; place-items: center; font-size: 15px; font-weight: 700; flex: none;">{{r.ini}}</span><span style="display: flex; flex-direction: column; min-width: 0;"><a href="{{E.form}}" class="rl">{{r.name}}</a><span style="font-size: 12.5px; color: var(--t3);">{{r.sub}}</span></span></span></td>
+<sc-for list="{{r.cells}}" as="c" hint-placeholder-count="4"><td data-l="{{c.l}}" class="{{c.mono}}" style="text-align: {{c.al}}; color: {{c.color}}; font-weight: {{c.fw}};">{{c.v}}</td></sc-for>
+<td data-l="Situação"><span class="bdg {{r.sCls}}">{{r.sLabel}}</span></td>
+<td><a href="{{E.form}}" class="ib" style="width: 34px; height: 34px; color: var(--t3);" aria-label="Abrir {{r.name}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+<sc-if value="{{noMatch}}" hint-placeholder-val="{{false}}"><div style="padding: 40px; text-align: center; color: var(--t2);">Nada encontrado para “{{q}}”. Tente outro termo, ou <a href="{{E.form}}">cadastre agora</a>.</div></sc-if>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; font-size: 13.5px; color: var(--t2); flex-wrap: wrap; gap: 10px;">
+<span>Mostrando <strong>{{shown}}</strong> de <strong>{{E.total}}</strong></span>
+<span style="display: flex; gap: 6px;"><button type="button" class="btn btn-sm" aria-label="Página anterior" disabled="{{yes}}" style="opacity: .5;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><span class="btn btn-sm" style="background: #1E1B16; color: #fff; border-color: transparent;" aria-current="page">1</span><button type="button" class="btn btn-sm">2</button><button type="button" class="btn btn-sm" aria-label="Próxima página"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></span>
+</div>
+</sc-if>
+
+<sc-if value="{{isLoad}}" hint-placeholder-val="{{false}}">
+<div role="status" aria-label="Carregando" style="padding: 8px 16px 20px;">
+<sc-for list="{{skel}}" as="s" hint-placeholder-count="6"><div style="display: grid; grid-template-columns: 44px 38px minmax(0, 2fr) repeat(3, minmax(0, 1fr)) 90px; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--bd);"><span class="sk" style="width: 20px;"></span><span class="sk" style="height: 38px; border-radius: 12px;"></span><span class="sk" style="width: {{s.w}};"></span><span class="sk"></span><span class="sk"></span><span class="sk"></span><span class="sk" style="height: 24px; border-radius: 12px;"></span></div></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+<div style="padding: 56px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;">
+<svg viewBox="0 0 240 140" aria-hidden="true" style="width: 240px; height: auto;" fill="none" stroke="#1D4E7A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 120h200"/><path d="{{E.art}}" transform="translate(30 0) scale(.45)"/><circle cx="196" cy="40" r="14" stroke="#E35D14"/><path d="M190 40h12M196 34v12" stroke="#E35D14"/></svg>
+<h2 class="disp" style="margin: 0; font-size: 30px; font-weight: 700;">{{E.emptyTitle}}</h2>
+<p style="margin: 0; max-width: 440px; color: var(--t2);">{{E.emptyText}}</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;"><a href="Cadastros-Chat.dc.html" class="btn">Cadastrar conversando</a><a href="{{E.form}}" class="btn btn-p">{{E.newLabel}}</a><a href="#" class="btn">Importar planilha</a></div>
+</div>
+</sc-if>
+
+<sc-if value="{{isDenied}}" hint-placeholder-val="{{false}}">
+<div style="padding: 56px 24px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;">
+<span style="width: 72px; height: 72px; border-radius: 22px; background: #ECE7DF; color: #6B6458; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" style="width: 34px; height: 34px;" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+<h2 class="disp" style="margin: 0; font-size: 30px; font-weight: 700;">Essa área ainda não está liberada para você</h2>
+<p style="margin: 0; max-width: 460px; color: var(--t2);">Para ver {{E.pluralLow}} você precisa da permissão “{{E.perm}}”. A Marina, administradora, pode liberar em um clique.</p>
+<button type="button" class="btn btn-p">Pedir acesso à Marina</button>
+</div>
+</sc-if>
+</section>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { q: '', filt: 'all', sel: {}, dens: 'conf', view: 'normal' };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  data() {
+    return {
+      E: {
+        group: 'Ativos e Pessoas', plural: 'Funcionários', pluralLow: 'os funcionários', total: 14, form: 'Funcionarios-Form.dc.html', newLabel: 'Novo funcionário', nameCol: 'Pessoa',
+        sub: 'Quem faz a fábrica andar. Habilitação perto de vencer aparece em amarelo.', searchPh: 'Buscar por nome, função ou máquina',
+        c1: '#0F9D76', c2: '#0B5E48', icon: 'M20 21a8 8 0 0 0-16 0M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z',
+        art: 'M60 120a60 60 0 0 1 120 0M50 120h140M120 60V40M150 70l14-14M90 70 76 56M230 140l60-60a20 20 0 1 1 28 28l-60 60M220 150l-10 10',
+        bulk: ['Gerar escala', 'Exportar selecionados'], perm: 'Funcionários · visualizar',
+        emptyTitle: 'Ninguém cadastrado ainda', emptyText: 'Comece pelos operadores: o custo-hora de cada máquina depende deles.'
+      },
+      kpis: [['14', 'pessoas na equipe', 'M20 6 9 17l-5-5', '#DDF3E9', '#0F7A55'], ['2', 'habilitações vencendo', 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z', '#FCEFC7', '#8A5300'], ['1', 'de férias agora', 'M3 4h18v18H3zM3 10h18M8 2v4M16 2v4', '#E0EDFA', '#1A64A8'], ['R$ 47,40', 'custo-hora médio', 'M3 17l6-6 4 4 8-8', '#FDE8DA', '#9A3A06']],
+      status: { ati: ['Ativo', 'b-ok', 'Ativos'], fer: ['Férias', 'b-inf', 'Férias'], des: ['Desligado', 'b-neu', 'Desligados'] },
+      cols: [['Setor', 'left'], ['Vínculo', 'left'], ['Trabalha em', 'left'], ['Habilitação', 'left'], ['Custo-hora', 'right', true]],
+      rows: [
+        ['Carla Mendes', 'Inspetora de qualidade', ['Qualidade', 'CLT', 'Bancada de inspeção', 'até 15/03/2027', 'R$ 42,10'], 'ati', '#1A64A8'],
+        ['Diego Souza', 'Mecânico de motos', ['Oficina', 'CLT', 'Box 3 (elevador)', 'vence 10/11/2026', 'R$ 46,80'], 'ati', '#E35D14'],
+        ['Jonas Batista', 'Mecânico', ['Oficina', 'CLT', 'Box 1 e Box 2', 'até 22/08/2027', 'R$ 44,30'], 'fer', '#7C5CC4'],
+        ['Luana Prado', 'Operadora CNC', ['Usinagem', 'Horista', 'Fresa CNC 01', 'até 01/02/2027', 'R$ 52,90'], 'ati', '#0F9D76'],
+        ['Marcos Pereira', 'Soldador', ['Caldeiraria', 'CLT', 'Célula de solda MIG 01', 'venceu 02/10/2026', 'R$ 47,60'], 'ati', '#C0352B'],
+        ['Ricardo Alves', 'Operador CNC II', ['Usinagem', 'CLT', 'Torno CNC de entrada', 'até 30/06/2027', 'R$ 49,70'], 'ati', '#1D4E7A'],
+        ['Sérgio Lima', 'Caldeireiro', ['Caldeiraria', 'CLT', '—', '—', '—'], 'des', '#6B6458']
+      ],
+      warnCol: (v, k) => k === 3 && String(v).indexOf('venceu') === 0 ? '#C0352B' : k === 3 && String(v).indexOf('vence ') === 0 ? '#8A5300' : null
+    };
+  }
+  renderVals() {
+    const st = this.state, D = this.data();
+    const q = st.q.trim().toLowerCase();
+    const cols = D.cols.map((c) => ({ l: c[0], al: c[1] }));
+    const all = D.rows.map((r, i) => ({ r, i }));
+    const counts = { all: all.length };
+    Object.keys(D.status).forEach((k) => { counts[k] = all.filter((x) => x.r[3] === k).length; });
+    const list = all.filter((x) => (st.filt === 'all' || x.r[3] === st.filt) && (!q || (x.r[0] + ' ' + x.r[1] + ' ' + x.r[2].join(' ')).toLowerCase().indexOf(q) >= 0));
+    const sel = st.sel;
+    const rows = list.map(({ r, i }) => {
+      const on = !!sel[i];
+      return {
+        name: r[0], sub: r[1], av: r[4],
+        ini: r[0].split(' ').filter((w) => w.length > 2).slice(0, 2).map((w) => w[0]).join('').toUpperCase(),
+        cells: r[2].map((v, k) => { const w = D.warnCol ? D.warnCol(v, k) : null; return { v, l: D.cols[k][0], al: D.cols[k][1], mono: D.cols[k][2] ? 'mono' : '', color: w || 'inherit', fw: w ? 700 : 400 }; }),
+        sLabel: D.status[r[3]][0], sCls: D.status[r[3]][1], checked: on, cls: on ? 'sel' : '',
+        toggle: () => { const s = Object.assign({}, sel); if (s[i]) delete s[i]; else s[i] = true; this.setState({ sel: s }); }
+      };
+    });
+    const nSel = Object.keys(sel).length;
+    const filters = [['all', 'Todos']].concat(Object.keys(D.status).map((k) => [k, D.status[k][2] || D.status[k][0] + 's'])).map((f) => ({ label: f[1], n: counts[f[0]], cls: st.filt === f[0] ? 'on' : '', pressed: st.filt === f[0] ? 'true' : 'false', pick: () => this.setState({ filt: f[0] }) }));
+    const states = [['normal', 'Com dados'], ['load', 'Carregando'], ['vazio', 'Vazio'], ['403', 'Sem permissão']].map((s) => ({ label: s[1], cls: st.view === s[0] ? 'on' : '', checked: st.view === s[0] ? 'true' : 'false', pick: () => this.setState({ view: s[0] }) }));
+    const dens = [['conf', 'Confortável'], ['comp', 'Compacta']].map((d) => ({ label: d[1], cls: st.dens === d[0] ? 'on' : '', checked: st.dens === d[0] ? 'true' : 'false', pick: () => this.setState({ dens: d[0] }) }));
+    const kpis = D.kpis.map((k) => ({ v: k[0], l: k[1], icon: k[2], bg: k[3], fg: k[4] }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => { const on = r[0] === D.E.group; return { label: r[0], icon: r[1], cur: on ? 'page' : 'false', bg: on ? '#FFFFFF' : 'transparent', fg: on ? '#15395A' : '#C7D5E4' }; });
+    return {
+      E: D.E, kpis, cols, rows, filters, states, dens, rail, q: st.q, yes: true,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      isNormal: st.view === 'normal', isLoad: st.view === 'load', isEmpty: st.view === 'vazio', isDenied: st.view === '403',
+      hasSel: nSel > 0 && st.view === 'normal', selTxt: nSel + (nSel > 1 ? ' selecionados' : ' selecionado'),
+      clearSel: () => this.setState({ sel: {} }),
+      allSel: list.length > 0 && list.every((x) => sel[x.i]),
+      toggleAll: () => { const every = list.every((x) => sel[x.i]); const s = {}; if (!every) list.forEach((x) => { s[x.i] = true; }); this.setState({ sel: s }); },
+      noMatch: list.length === 0, shown: list.length, rowPad: st.dens === 'comp' ? '7px' : '13px',
+      skel: [{ w: '70%' }, { w: '55%' }, { w: '80%' }, { w: '60%' }, { w: '75%' }, { w: '50%' }],
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

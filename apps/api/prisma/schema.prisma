@@ -1,0 +1,297 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Papel {
+  ADMIN
+  GESTOR
+  ORCAMENTISTA
+  OPERADOR
+}
+
+enum Vinculo {
+  CLT
+  PJ
+  HORISTA
+  SOCIO
+}
+
+enum StatusTabela {
+  RASCUNHO
+  VIGENTE
+  ENCERRADA
+}
+
+enum TipoPessoa {
+  PF
+  PJ
+}
+
+enum StatusCliente {
+  ATIVO
+  BLOQUEADO
+  INATIVO
+}
+
+enum StatusOrcamento {
+  RASCUNHO
+  ENVIADO
+  EM_NEGOCIACAO
+  APROVADO
+  RECUSADO
+  EXPIRADO
+  CONVERTIDO
+}
+
+enum Segmento {
+  OFICINA
+  USINAGEM
+  CALDEIRARIA
+}
+
+model Empresa {
+  id       String   @id @default(cuid())
+  nome     String
+  criadaEm DateTime @default(now())
+
+  usuarios       Usuario[]
+  parametros     Parametros?
+  colaboradores  Colaborador[]
+  centros        CentroTrabalho[]
+  operadores     CentroOperador[]
+  custosFixos    LancamentoCustoFixo[]
+  tabelas        TabelaCustos[]
+  clientes       Cliente[]
+  orcamentos     Orcamento[]
+  historicos     OrcamentoHistorico[]
+  sequencias     Sequencia[]
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  tenantId  String
+  nome      String
+  email     String   @unique
+  senhaHash String
+  papel     Papel
+  ativo     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Parametros {
+  tenantId              String  @id
+  criterioRateio        String  @default("horas")
+  metodoPreco           String  @default("divisor")
+  impostosPadrao        Decimal @default(0) @db.Decimal(9, 6)
+  comissaoPadrao        Decimal @default(0) @db.Decimal(9, 6)
+  margemAlvo            Decimal @default(0.2) @db.Decimal(9, 6)
+  margemMinima          Decimal @default(0.15) @db.Decimal(9, 6)
+  validadeOrcamentoDias Int     @default(15)
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Colaborador {
+  id           String   @id @default(cuid())
+  tenantId     String
+  nome         String
+  funcao       String   @default("")
+  vinculo      Vinculo  @default(CLT)
+  salario      Decimal  @default(0) @db.Decimal(14, 2)
+  encargos     Decimal  @default(0) @db.Decimal(14, 2)
+  beneficios   Decimal  @default(0) @db.Decimal(14, 2)
+  jornadaHoras Decimal  @default(220) @db.Decimal(9, 2)
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  empresa   Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  alocacoes CentroOperador[]
+
+  @@index([tenantId])
+}
+
+model CentroTrabalho {
+  id              String   @id @default(cuid())
+  tenantId        String
+  codigo          String
+  nome            String
+  tipo            String   @default("maquina")
+  status          String   @default("ativo")
+  horasExpediente Decimal  @default(220) @db.Decimal(9, 2)
+  eficiencia      Decimal  @default(0.75) @db.Decimal(9, 6)
+  manutencao      Decimal  @default(0) @db.Decimal(14, 2)
+  insumos         Decimal  @default(0) @db.Decimal(14, 2)
+  outros          Decimal  @default(0) @db.Decimal(14, 2)
+  valorAquisicao  Decimal  @default(0) @db.Decimal(14, 2)
+  valorResidual   Decimal  @default(0) @db.Decimal(14, 2)
+  vidaUtilMeses   Int      @default(0)
+  potenciaKw      Decimal  @default(0) @db.Decimal(12, 4)
+  fatorCarga      Decimal  @default(0) @db.Decimal(9, 6)
+  tarifaKwh       Decimal  @default(0) @db.Decimal(12, 6)
+  pesoManual      Decimal? @db.Decimal(9, 6)
+  areaM2          Decimal? @db.Decimal(12, 2)
+  criadoEm        DateTime @default(now())
+  atualizadoEm    DateTime @updatedAt
+
+  empresa    Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  operadores CentroOperador[]
+
+  @@unique([tenantId, codigo])
+}
+
+model CentroOperador {
+  tenantId      String
+  centroId      String
+  colaboradorId String
+  alocacao      Decimal @db.Decimal(9, 6)
+
+  empresa     Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  centro      CentroTrabalho @relation(fields: [centroId], references: [id], onDelete: Cascade)
+  colaborador Colaborador    @relation(fields: [colaboradorId], references: [id], onDelete: Cascade)
+
+  @@id([centroId, colaboradorId])
+  @@index([tenantId])
+  @@index([colaboradorId])
+}
+
+model LancamentoCustoFixo {
+  id           String   @id @default(cuid())
+  tenantId     String
+  competencia  String
+  categoria    String
+  descricao    String   @default("")
+  valor        Decimal  @db.Decimal(14, 2)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, competencia])
+}
+
+model TabelaCustos {
+  id            String       @id @default(cuid())
+  tenantId      String
+  competencia   String
+  versao        Int
+  status        StatusTabela @default(RASCUNHO)
+  desatualizada Boolean      @default(false)
+  entrada       Json
+  resultado     Json
+  publicadaEm   DateTime?
+  encerradaEm   DateTime?
+  criadaEm      DateTime     @default(now())
+  atualizadaEm  DateTime     @updatedAt
+
+  empresa    Empresa     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orcamentos Orcamento[]
+
+  @@unique([tenantId, competencia, versao])
+  @@index([tenantId, status])
+}
+
+model Cliente {
+  id           String        @id @default(cuid())
+  tenantId     String
+  tipo         TipoPessoa
+  documento    String
+  nome         String
+  fantasia     String        @default("")
+  email        String        @default("")
+  telefone     String        @default("")
+  cidade       String        @default("")
+  uf           String        @default("")
+  status       StatusCliente @default(ATIVO)
+  observacoes  String        @default("")
+  criadoEm     DateTime      @default(now())
+  atualizadoEm DateTime      @updatedAt
+
+  empresa    Empresa     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orcamentos Orcamento[]
+
+  @@unique([tenantId, documento])
+}
+
+model Orcamento {
+  id                     String          @id @default(cuid())
+  tenantId               String
+  numero                 String
+  clienteId              String
+  tabelaCustosId         String
+  titulo                 String
+  segmento               Segmento
+  lote                   Int
+  validade               DateTime        @db.Date
+  impostos               Decimal         @db.Decimal(9, 6)
+  comissao               Decimal         @db.Decimal(9, 6)
+  margemAlvo             Decimal         @db.Decimal(9, 6)
+  margemMinima           Decimal         @db.Decimal(9, 6)
+  desconto               Decimal         @db.Decimal(9, 6)
+  metodo                 String          @default("divisor")
+  observacoes            String          @default("")
+  linhas                 Json
+  resultado              Json
+  status                 StatusOrcamento @default(RASCUNHO)
+  versao                 Int             @default(1)
+  precoFinalLote         Decimal         @db.Decimal(18, 10)
+  margemEfetiva          Decimal         @db.Decimal(18, 10)
+  situacaoMargem         String
+  exigeAprovacao         Boolean         @default(false)
+  margemLiberada         Boolean         @default(false)
+  justificativaLiberacao String?
+  liberadaPorId          String?
+  motivoRecusa           String?
+  enviadoEm              DateTime?
+  aprovadoEm             DateTime?
+  recusadoEm             DateTime?
+  criadoEm               DateTime        @default(now())
+  atualizadoEm           DateTime        @updatedAt
+
+  empresa      Empresa              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cliente      Cliente              @relation(fields: [clienteId], references: [id])
+  tabelaCustos TabelaCustos         @relation(fields: [tabelaCustosId], references: [id])
+  historico    OrcamentoHistorico[]
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, status])
+  @@index([clienteId])
+}
+
+model OrcamentoHistorico {
+  id             String          @id @default(cuid())
+  tenantId       String
+  orcamentoId    String
+  versao         Int
+  status         StatusOrcamento
+  evento         String
+  precoFinalLote Decimal         @db.Decimal(18, 10)
+  usuarioId      String?
+  detalhe        String?
+  snapshot       Json?
+  data           DateTime        @default(now())
+
+  empresa   Empresa   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orcamento Orcamento @relation(fields: [orcamentoId], references: [id], onDelete: Cascade)
+
+  @@index([orcamentoId])
+}
+
+model Sequencia {
+  tenantId String
+  chave    String
+  valor    Int    @default(0)
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, chave])
+}
