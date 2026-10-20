@@ -81,3 +81,15 @@ export function useAgora(ativo = true) {
   }, [ativo]);
   return agora;
 }
+
+/**
+ * Pausa por quebra ainda aberta: a manutenção grava a observação como "Centro: descrição (OM-AAAA-NNNNN)".
+ * Devolve o centro, a descrição e o número da ordem de manutenção para a OS mostrar a parada com clareza.
+ */
+export function quebraAberta(ocorrencias: { tipo: string; motivo: string | null; fim: string | null; inicio: string; observacao: string | null }[]) {
+  const q = [...ocorrencias].reverse().find((x) => x.tipo === 'PAUSA' && x.motivo === 'QUEBRA' && !x.fim);
+  if (!q) return null;
+  const obs = q.observacao ?? '';
+  const m = obs.match(/^(.*?):\s*(.*?)\s*\((OM-[\d-]+)\)\s*$/);
+  return { inicio: q.inicio, centro: m?.[1]?.trim() || null, descricao: (m?.[2] ?? obs).trim() || null, ordem: m?.[3] ?? null };
+}

@@ -2,21 +2,21 @@ import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ChevronDown, Cpu, Handshake, Layers, Minus, Package, Plus, RefreshCw, Save, Send, ShieldCheck, ThumbsDown, ThumbsUp, Truck, UserRound, Wrench, type LucideIcon
+  ChevronDown, Cpu, Link2, Handshake, Layers, Minus, Package, Plus, RefreshCw, Save, Send, ShieldCheck, ThumbsDown, ThumbsUp, Truck, UserRound, Wrench, type LucideIcon
 } from 'lucide-react';
 import { paraLinhaMotor, mapaCentros, useOrcamentoAoVivo, type PrecoForm } from '../features/orcamento/calculo';
 import { CartaoPrazo } from '../features/orcamento/Prazo';
 import { previaParcelas } from '../features/financeiro/fin';
 import { comId, LinhaEditor, novaLinha, type LinhaForm, type OpcaoCentro } from '../features/orcamento/LinhaEditor';
-import { api } from '../lib/api';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { api, msgErro } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { LinhaApi, Orcamento, Segmento } from '../lib/types';
 import { brl, competenciaLonga, data, pct, toNum } from '../lib/format';
-import { useAcao, useCentros, useClientes, useParametros, useTabela, useTabelaVigente } from '../lib/queries';
+import { useAcao, useUsuariosOpcoes, useCentros, useClientes, useParametros, useTabela, useTabelaVigente } from '../lib/queries';
 import { SEGMENTO } from '../lib/rotulos';
 import { Card, CardHeader } from '../components/Card';
 import { Button } from '../components/Button';
-import { DecimalInput, Field, NumberField, Segmented, SelectField, TextArea, TextField } from '../components/Field';
+import { DecimalInput, Field, NumberField, Segmented, Select, SelectField, TextArea, TextField } from '../components/Field';
 import { GlassPanel } from '../components/GlassPanel';
 import { CompositionBar, COR_ORCAMENTO, fatias } from '../components/CompositionBar';
 import { MarginRuler } from '../components/MarginRuler';
@@ -26,6 +26,10 @@ import { Pill, StatusOrcamentoPill, rotuloOrcamento } from '../components/Pill';
 import { Illustration } from '../components/Illustrations';
 import { Modal } from '../components/Modal';
 import { useTitulo } from '../layout/titulo';
+import { PerderDialog, type CorpoPerda } from '../components/PerderDialog';
+import { LinkPortal } from '../components/LinkPortal';
+import { useVerCusto } from '../components/Mascara';
+import { HistoricoLink } from '../components/HistoricoLink';
 import type { MetodoPreco, PontoCurva } from '@promec/motor';
 
 interface Form extends Omit<PrecoForm, 'linhas'> {
@@ -36,6 +40,7 @@ interface Form extends Omit<PrecoForm, 'linhas'> {
   observacoes: string;
   prazoPrometido: string;
   condicaoPagamento: string;
+  vendedorId: string;
   linhas: LinhaForm[];
 }
 
@@ -69,6 +74,7 @@ const doOrcamento = (o: Orcamento): Form => ({
   observacoes: o.observacoes ?? '',
   prazoPrometido: (o.prazoPrometido ?? '').slice(0, 10),
   condicaoPagamento: o.condicaoPagamento ?? '',
+  vendedorId: o.vendedorId ?? o.vendedor?.id ?? '',
   linhas: o.linhas.map(comId)
 });
 
@@ -99,8 +105,8 @@ export default function OrcamentoEditor() {
   const [sp] = useSearchParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { usuario } = useAuth();
-  const liberador = podeLiberarMargem(usuario?.papel);
+  const { usuario, pode } = useAuth();
+  const liberador = pode('orcamento.aprovar_desconto');
 
   const q = useQuery({ queryKey: ['orcamentos', id], queryFn: () => api<Orcamento>(`/orcamentos/${id}`), enabled: !novo });
   const o = q.data;
@@ -116,7 +122,7 @@ export default function OrcamentoEditor() {
   const [sujo, setSujo] = useState(false);
   const [tentou, setTentou] = useState(false);
   const [arvore, setArvore] = useState(false);
-  const [modal, setModal] = useState<null | 'liberar' | 'recusar'>(null);
+  const [modal, setModal] = useState<null | 'liberar' | 'recusar' | 'portal'>(null);
   const [texto, setTexto] = useState('');
 
   useEffect(() => {
@@ -128,7 +134,7 @@ export default function OrcamentoEditor() {
       setF({
         clienteId: sp.get('cliente') ?? '', titulo: '', segmento: 'USINAGEM', lote: '1', validade: hojeMais(p.validadeOrcamentoDias ?? 15),
         impostos: p.impostosPadrao, comissao: p.comissaoPadrao, margemAlvo: p.margemAlvo, margemMinima: p.margemMinima, desconto: '0',
-        metodo: p.metodoPreco ?? 'divisor', observacoes: '', prazoPrometido: '', condicaoPagamento: '', linhas: [novaLinha('material'), novaLinha('operacao')]
+        metodo: p.metodoPreco ?? 'divisor', observacoes: '', prazoPrometido: '', condicaoPagamento: '', vendedorId: '', linhas: [novaLinha('material'), novaLinha('operacao')]
       });
     }
   }, [novo, f, params.data, sp]);
@@ -140,7 +146,26 @@ export default function OrcamentoEditor() {
   }, [sujo]);
   useTitulo(novo ? 'Novo orçamento' : o ? `${o.numero} · ${o.titulo}` : 'Orçamento');
 
-  const { resultado: r, erro: erroCalc } = useOrcamentoAoVivo(f, mapa);
+  const verCusto = useVerCusto();
+  const local = useOrcamentoAoVivo(verCusto ? f : null, mapa);
+  // Sem permissão para o custo-hora, o navegador não tem os números: o servidor calcula (/orcamentos/simular).
+  const [corpoSim, setCorpoSim] = useState<string | null>(null);
+  useEffect(() => {
+    if (verCusto || !f || !f.clienteId) return;
+    const t = window.setTimeout(() => setCorpoSim(JSON.stringify(corpo(f))), 500);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verCusto, f]);
+  const sim = useQuery({
+    queryKey: ['orcamentos', 'simular', corpoSim],
+    queryFn: () => api<Orcamento['resultado']>('/orcamentos/simular', { method: 'POST', body: { ...JSON.parse(corpoSim!), tabelaCustosId: o?.tabelaCustos?.id } }),
+    enabled: !verCusto && !!corpoSim,
+    placeholderData: (ant) => ant,
+    retry: false
+  });
+  const r = verCusto ? local.resultado : (sim.data ?? o?.resultado ?? null);
+  const erroCalc = verCusto ? local.erro : sim.error ? msgErro(sim.error) : null;
+  const vendedores = useUsuariosOpcoes();
 
   const status = o?.status ?? 'RASCUNHO';
   const editavel = novo || status === 'RASCUNHO' || status === 'EM_NEGOCIACAO';
@@ -148,7 +173,7 @@ export default function OrcamentoEditor() {
   const corpo = (x: Form) => ({
     clienteId: x.clienteId, titulo: x.titulo.trim(), segmento: x.segmento, lote: Math.floor(toNum(x.lote)), validade: x.validade,
     impostos: x.impostos || '0', comissao: x.comissao || '0', margemAlvo: x.margemAlvo || '0', margemMinima: x.margemMinima || '0', desconto: x.desconto || '0',
-    metodo: x.metodo, observacoes: x.observacoes, prazoPrometido: x.prazoPrometido || null, condicaoPagamento: x.condicaoPagamento.trim() || null,
+    metodo: x.metodo, observacoes: x.observacoes, prazoPrometido: x.prazoPrometido || null, condicaoPagamento: x.condicaoPagamento.trim() || null, vendedorId: x.vendedorId || undefined,
     linhas: x.linhas.map((l) => {
       const m = paraLinhaMotor(l, mapa) as Record<string, unknown>;
       if (l.itemId) m.itemId = l.itemId;
@@ -184,7 +209,7 @@ export default function OrcamentoEditor() {
   const enviar = acao('enviar', `Pronto! O orçamento foi para ${nomeCliente}. Quando responderem, você fica sabendo.`);
   const negociar = acao('negociar', 'Em negociação. Pode ajustar: ao salvar, sai uma versão nova.');
   const aprovar = acao('aprovar', 'Aprovado! Agora é com a produção.');
-  const recusar = useAcao((motivo: string) => api<Orcamento>(`/orcamentos/${id}/recusar`, { method: 'POST', body: { motivo } }), { invalida: inval, sucesso: 'Recusa registrada. O motivo ajuda a acertar os próximos.', onSuccess: (r2) => { aposGravar(r2); setModal(null); } });
+  const recusar = useAcao((corpoPerda: CorpoPerda) => api<Orcamento>(`/orcamentos/${id}/recusar`, { method: 'POST', body: corpoPerda }), { invalida: inval, sucesso: 'Recusa registrada. O motivo ajuda a acertar os próximos.', onSuccess: (r2) => { aposGravar(r2); setModal(null); } });
   const liberar = useAcao((justificativa: string) => api<Orcamento>(`/orcamentos/${id}/liberar-margem`, { method: 'POST', body: { justificativa } }), { invalida: inval, sucesso: 'Margem liberada. O orçamento já pode ser enviado.', onSuccess: (r2) => { aposGravar(r2); setModal(null); } });
   const converter = useAcao(() => api<{ id: string; numero: string }>(`/orcamentos/${id}/converter`, { method: 'POST' }), {
     invalida: [...inval, ['ordens-servico']],
@@ -260,7 +285,8 @@ export default function OrcamentoEditor() {
           {!(precisaLiberar && !liberador) && <Button tamanho="sm" icone={Save} carregando={salvar.isPending} onClick={gravar} className="flex-1" disabled={!sujo}>{status === 'EM_NEGOCIACAO' ? 'Salvar nova versão' : 'Salvar'}</Button>}
           {status === 'EM_NEGOCIACAO' && <Button tamanho="sm" icone={ThumbsUp} onClick={() => aprovar.mutate(undefined)} className="flex-1">Aprovar</Button>}
           {status === 'EM_NEGOCIACAO' && <Button tamanho="sm" variante="perigo" icone={ThumbsDown} onClick={() => { setTexto(''); setModal('recusar'); }} className="flex-1">Recusar</Button>}
-        </div>
+        </div>,
+        ...(status === 'EM_NEGOCIACAO' ? [<Button key="p" tamanho="sm" variante="terciario" icone={Link2} onClick={() => setModal('portal')} className="w-full">Enviar link ao cliente</Button>] : [])
       ];
     }
     if (status === 'ENVIADO')
@@ -269,7 +295,8 @@ export default function OrcamentoEditor() {
         <div key="sec" className="flex flex-wrap gap-2">
           <Button tamanho="sm" icone={Handshake} carregando={negociar.isPending} onClick={() => negociar.mutate(undefined)} className="flex-1">Negociar e ajustar</Button>
           <Button tamanho="sm" variante="perigo" icone={ThumbsDown} onClick={() => { setTexto(''); setModal('recusar'); }} className="flex-1">Recusar</Button>
-        </div>
+        </div>,
+        <Button key="p" tamanho="sm" variante="terciario" icone={Link2} onClick={() => setModal('portal')} className="w-full">Enviar link ao cliente</Button>
       ];
     if (status === 'APROVADO')
       return [
@@ -412,7 +439,8 @@ export default function OrcamentoEditor() {
                 erro={parcelas.erro} hint={parcelas.texto || (f.condicaoPagamento ? undefined : 'Vazio usa a condição do cliente.')} />
               <div className="flex flex-col gap-1.5">
                 <span className="text-[13.5px] font-medium text-ink-2">Vendedor</span>
-                <span className="campo !bg-surface-3 text-ink-2">{o?.vendedor?.nome ?? usuario?.nome ?? '—'}</span>
+                <Select aria-label="Vendedor" value={f.vendedorId || usuario?.id || ''} onChange={(v) => set('vendedorId', v)} disabled={!editavel}
+                  opcoes={[...(vendedores.data ?? []), ...(o?.vendedor && !(vendedores.data ?? []).some((x) => x.id === o.vendedor!.id) ? [o.vendedor] : [])].map((x) => ({ valor: x.id, rotulo: x.nome }))} />
               </div>
             </div>
             <TextArea label="Observações" value={f.observacoes} onChange={(v) => set('observacoes', v)} hint="Prazo de entrega, quem pediu, cuidados." />
@@ -422,7 +450,7 @@ export default function OrcamentoEditor() {
 
           {o && o.historico?.length > 0 && (
             <Card className="p-5 flex flex-col gap-2" aria-labelledby="h-hist">
-              <CardHeader id="h-hist" titulo="Histórico" />
+              <CardHeader id="h-hist" titulo="Histórico" acao={<HistoricoLink entidade="Orcamento" id={o.id} />} />
               <ol className="m-0 p-0 list-none flex flex-col">
                 {o.historico.map((h, i) => (
                   <li key={i} className="grid grid-cols-[52px_minmax(0,1fr)_auto] gap-3 items-center py-2 border-t border-border first:border-0 text-[14px]">
@@ -513,14 +541,9 @@ export default function OrcamentoEditor() {
         <p className="m-0 text-ink-2">A margem ficou em <strong className="mono">{r ? pct(r.margemEfetiva) : '—'}</strong>, abaixo do mínimo de {pct(f.margemMinima)}. Conte o porquê: fica registrado no histórico.</p>
         <TextArea label="Justificativa" value={texto} onChange={setTexto} hint="Ex.: cliente estratégico, lote piloto que abre um contrato maior." />
       </Modal>
-      <Modal
-        aberto={modal === 'recusar'}
-        onFechar={() => setModal(null)}
-        titulo="O cliente recusou?"
-        rodape={<><Button onClick={() => setModal(null)}>Voltar</Button><Button variante="perigo" icone={ThumbsDown} carregando={recusar.isPending} disabled={!texto.trim()} onClick={() => recusar.mutate(texto.trim())}>Registrar recusa</Button></>}
-      >
-        <TextArea label="Motivo" value={texto} onChange={setTexto} hint="Preço, prazo, fechou com outro… isso ajuda a acertar os próximos." />
-      </Modal>
+      <PerderDialog aberto={modal === 'recusar'} onFechar={() => setModal(null)} titulo="O cliente recusou?" precoOfertado={r?.precoFinalLote ?? o?.resultado?.precoFinalLote}
+        enviando={recusar.isPending} onConfirmar={(b) => recusar.mutate(b)} />
+      <LinkPortal aberto={modal === 'portal'} onFechar={() => setModal(null)} rota={`/orcamentos/${id}/link-portal`} titulo="Enviar link ao cliente" />
     </>
   );
 }

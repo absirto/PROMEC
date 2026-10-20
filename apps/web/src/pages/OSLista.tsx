@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AlarmClock, ArrowRight, Cpu, Plus, Timer, UserRound } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { ListaOS, OSResumo, StatusOS } from '../lib/types';
 import { data, pct, toNum } from '../lib/format';
 import { HeroBand } from '../components/HeroBand';
@@ -65,6 +66,8 @@ function CartaoOS({ o }: { o: OSResumo }) {
 }
 
 export default function OSLista() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('os.gerenciar');
   useTitulo('Ordens de Serviço');
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
@@ -120,7 +123,7 @@ export default function OSLista() {
               ilustracao="torno"
               titulo="Nenhuma OS por aqui"
               texto="Quando um orçamento é aprovado, é só converter em OS. Para um serviço pequeno, abra um serviço rápido."
-              acao={<Button variante="primario" icone={Plus} to="/ordens-servico/nova">Serviço rápido</Button>}
+              acao={podeGerir && <Button variante="primario" icone={Plus} to="/ordens-servico/nova">Serviço rápido</Button>}
             />
           ) : null
         }

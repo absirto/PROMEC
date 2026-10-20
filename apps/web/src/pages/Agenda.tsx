@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarCheck2, ChevronLeft, ChevronRight, DoorOpen, Plus, Save, UserX, X } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { Agendamento, Lista, StatusAgendamento } from '../lib/types';
 import { mascaraPlaca, mascaraTelefone, placaValida, soDigitos, limparPlaca } from '../lib/documento';
 import { num } from '../lib/format';
@@ -34,9 +35,12 @@ const nomeDe = (a: Agendamento) => a.cliente?.nome ?? a.nomeCliente ?? 'Cliente 
 const MENSAGENS: Record<string, string> = {
   HORARIO_OCUPADO: 'Esse horário já está tomado nesse box ou com esse mecânico. Tente outro horário ou outro box.',
   NAO_HABILITADO: 'Esse mecânico não trabalha nesse box. Escolha alguém alocado nele, ou deixe sem mecânico.',
-  FORA_DO_EXPEDIENTE: 'Fora do expediente do box (08:00 às 18:00, nos dias de trabalho, sem feriados nem paradas). Escolha outro horário.'
+  FORA_DO_EXPEDIENTE: 'Fora do expediente do box (08:00 às 18:00, nos dias de trabalho, sem feriados nem paradas). Escolha outro horário.',
+  COLABORADOR_AUSENTE: 'Esse mecânico está ausente nesse dia (férias, folga ou afastamento). Escolha outro mecânico ou outro dia.',
+  HABILITACAO_VENCIDA: 'A habilitação desse mecânico para o box venceu. Renove em RH › Habilitações ou escolha outro mecânico.',
+  SEM_HABILITACAO: 'Esse mecânico não tem habilitação para esse box. Cadastre em RH › Habilitações ou escolha outro.'
 };
-const mensagemAgenda = (e: unknown) => (e instanceof ApiError ? e.message || (e.codigo && MENSAGENS[e.codigo]) : null) || 'Não deu para salvar agora. Tente de novo.';
+const mensagemAgenda = (e: unknown) => (e instanceof ApiError ? (e.codigo && MENSAGENS[e.codigo]) || e.message : null) || 'Não deu para salvar agora. Tente de novo.';
 
 interface Form { id?: string; clienteId: string; avulso: boolean; nomeCliente: string; telefone: string; placa: string; veiculo: string; servico: string; centroId: string; colaboradorId: string; data: string; hora: string; duracaoHoras: string; observacao: string }
 
@@ -55,6 +59,8 @@ function Bloco({ a, onAbrir, compacto }: { a: Agendamento; onAbrir: (a: Agendame
 }
 
 export default function Agenda() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('agenda.gerenciar');
   useTitulo('Agenda da oficina');
   const navigate = useNavigate();
   const [vista, setVista] = useState<'dia' | 'semana'>('dia');
@@ -91,7 +97,7 @@ export default function Agenda() {
         ilustracao="elevador"
         titulo="Agenda da oficina"
         texto={`${contagem} ${contagem === 1 ? 'horário marcado' : 'horários marcados'} ${vista === 'dia' ? `em ${rotuloDia(dia)}` : 'nesta semana'}. Toque num horário livre para marcar.`}
-        acoes={<Button variante="primario" icone={Plus} onClick={() => setForm(novo(vista === 'semana' ? box : boxes[0]?.id ?? '', dia))} disabled={!boxes.length}>Marcar horário</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} onClick={() => setForm(novo(vista === 'semana' ? box : boxes[0]?.id ?? '', dia))} disabled={!boxes.length}>Marcar horário</Button>}
       />
       <Card className="p-4 flex flex-wrap items-center gap-3">
         <Segmented<'dia' | 'semana'> label="Visão" ocultarRotulo tamanho="sm" value={vista} onChange={setVista} opcoes={[{ valor: 'dia', rotulo: 'Dia' }, { valor: 'semana', rotulo: 'Semana' }]} />

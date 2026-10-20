@@ -1,3 +1,4 @@
+import { useAuth } from '../lib/auth';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Plus, UserCheck, Wallet } from 'lucide-react';
@@ -11,11 +12,14 @@ import { DataTable } from '../components/DataTable';
 import { EmptyState } from '../components/EmptyState';
 import { Pill } from '../components/Pill';
 import { Listagem, normalizar } from '../components/Listagem';
+import { Mascara } from '../components/Mascara';
 import { useTitulo } from '../layout/titulo';
 
 type Filtro = 'todos' | 'ativos' | 'inativos';
 
 export default function ColaboradoresLista() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('cadastros.gerenciar');
   useTitulo('Funcionários');
   const q = useColaboradores();
   const [busca, setBusca] = useState('');
@@ -26,6 +30,8 @@ export default function ColaboradoresLista() {
   const linhas = todos.filter(
     (c) => (filtro === 'todos' || (filtro === 'ativos') === c.ativo) && (!termo || normalizar(`${c.nome} ${c.funcao} ${VINCULO[c.vinculo]}`).includes(termo))
   );
+  // Sem rh.ver_salario os custos vêm nulos: mostra •••• em vez de zero.
+  const oculto = ativos.some((c) => c.custoMensal == null);
   const folha = ativos.reduce((a, c) => a + toNum(c.custoMensal), 0);
   const horaMedia = ativos.length ? ativos.reduce((a, c) => a + toNum(c.custoHora), 0) / ativos.length : 0;
   const semCentro = ativos.filter((c) => c.alocacoes.length === 0).length;
@@ -36,12 +42,12 @@ export default function ColaboradoresLista() {
         ilustracao="equipe"
         titulo={<>Funcionários <span className="mono text-[22px] font-medium opacity-80">{todos.length || ''}</span></>}
         texto="Quem faz a oficina rodar. O custo de cada pessoa entra no custo-hora dos centros em que ela trabalha."
-        acoes={<Button variante="primario" icone={Plus} to="/colaboradores/novo">Novo funcionário</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} to="/colaboradores/novo">Novo funcionário</Button>}
       />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         <Kpi tom="ok" icone={<UserCheck className="size-5" aria-hidden />} valor={ativos.length} rotulo="pessoas ativas" />
-        <Kpi tom="primary" icone={<Wallet className="size-5" aria-hidden />} valor={brl(folha)} rotulo="custo mensal com encargos" />
-        <Kpi tom="steel" icone={<Clock className="size-5" aria-hidden />} valor={brl(horaMedia)} rotulo="custo-hora médio" />
+        <Kpi tom="primary" icone={<Wallet className="size-5" aria-hidden />} valor={oculto ? <Mascara /> : brl(folha)} rotulo="custo mensal com encargos" />
+        <Kpi tom="steel" icone={<Clock className="size-5" aria-hidden />} valor={oculto ? <Mascara /> : brl(horaMedia)} rotulo="custo-hora médio" />
         <Kpi tom="warn" icone={<UserCheck className="size-5" aria-hidden />} valor={semCentro} rotulo="sem centro de trabalho" />
       </div>
       <Listagem<Filtro>
@@ -65,7 +71,7 @@ export default function ColaboradoresLista() {
               ilustracao="equipe"
               titulo="Ninguém cadastrado ainda"
               texto="Comece pelo operador da sua principal máquina: com o salário e os encargos, o custo-hora dela fica completo."
-              acao={<Button variante="primario" icone={Plus} to="/colaboradores/novo">Novo funcionário</Button>}
+              acao={podeGerir && <Button variante="primario" icone={Plus} to="/colaboradores/novo">Novo funcionário</Button>}
             />
           ) : null
         }
@@ -101,8 +107,8 @@ export default function ColaboradoresLista() {
                 titulo: 'Centros',
                 render: (c) => (c.alocacoes.length ? c.alocacoes.map((a) => `${a.centroNome} (${pct(a.alocacao, 0)})`).join(', ') : <span className="text-ink-3">nenhum</span>)
               },
-              { chave: 'cm', titulo: 'Custo mensal', alinhar: 'right', mono: true, render: (c) => brl(c.custoMensal) },
-              { chave: 'ch', titulo: 'Custo-hora', alinhar: 'right', mono: true, render: (c) => <strong>{brl(c.custoHora)}</strong> },
+              { chave: 'cm', titulo: 'Custo mensal', alinhar: 'right', mono: true, render: (c) => (c.custoMensal == null ? <Mascara /> : brl(c.custoMensal)) },
+              { chave: 'ch', titulo: 'Custo-hora', alinhar: 'right', mono: true, render: (c) => (c.custoHora == null ? <Mascara /> : <strong>{brl(c.custoHora)}</strong>) },
               { chave: 's', titulo: 'Situação', render: (c) => (c.ativo ? <Pill tom="ok">Ativo</Pill> : <Pill tom="neutral">Inativo</Pill>) }
             ]}
           />

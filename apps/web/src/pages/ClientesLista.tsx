@@ -1,3 +1,4 @@
+import { useAuth } from '../lib/auth';
 import { useDeferredValue, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, Plus, ShieldAlert, ThumbsUp, UserRound } from 'lucide-react';
@@ -17,6 +18,8 @@ import { useTitulo } from '../layout/titulo';
 type Filtro = 'todos' | StatusCliente;
 
 export default function ClientesLista() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('cadastros.gerenciar');
   useTitulo('Clientes');
   const [busca, setBusca] = useState('');
   const termo = useDeferredValue(busca.trim());
@@ -33,7 +36,7 @@ export default function ClientesLista() {
         ilustracao="prancheta"
         titulo={<>Clientes <span className="mono text-[22px] font-medium opacity-80">{q.data?.total ?? ''}</span></>}
         texto="Quem confia o serviço à oficina. Cada cliente guarda os orçamentos, o que foi aprovado e quanto isso rendeu."
-        acoes={<Button variante="primario" icone={Plus} to="/clientes/novo">Novo cliente</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} to="/clientes/novo">Novo cliente</Button>}
       />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         <Kpi tom="ok" icone={<Building2 className="size-5" aria-hidden />} valor={n('ATIVO')} rotulo="clientes ativos" />
@@ -62,7 +65,7 @@ export default function ClientesLista() {
               ilustracao="prancheta"
               titulo="Nenhum cliente por aqui"
               texto="Cadastre quem mais pede serviço. Com o CNPJ em mãos, leva um minuto."
-              acao={<Button variante="primario" icone={Plus} to="/clientes/novo">Novo cliente</Button>}
+              acao={podeGerir && <Button variante="primario" icone={Plus} to="/clientes/novo">Novo cliente</Button>}
             />
           ) : null
         }

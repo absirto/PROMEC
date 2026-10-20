@@ -34,7 +34,7 @@ export function HeroKpi({ rotulo, valor, sub, destaque }: { rotulo: string; valo
   return destaque ? (
     <div className="glass rounded-[24px] px-5 py-4 text-ink-1">
       <span className="text-[13.5px] text-ink-2">{rotulo}</span>
-      <span className="mono block text-[clamp(30px,3.4vw,52px)] font-bold tracking-[-.04em] leading-[1.05] whitespace-nowrap">{valor}</span>
+      <span className="mono block text-[clamp(26px,2.5vw,48px)] font-bold tracking-[-.04em] leading-[1.05] whitespace-nowrap">{valor}</span>
       {sub && <span className="text-[13px] text-ink-2">{sub}</span>}
     </div>
   ) : (

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, CalendarOff, GripVertical, Plus, RotateCcw, Save, Trash2, TriangleAlert, Undo2 } from 'lucide-react';
 import { api } from '../lib/api';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import type { Feriado, OrdemNoPlano, Parada, Plano } from '../lib/types';
 import { data, horas, pct, toNum } from '../lib/format';
 import { useAcao, useCentros } from '../lib/queries';
@@ -27,8 +27,8 @@ const parada = (ps: Parada[] | undefined, de: string, ate: string) => (ps ?? [])
 
 export default function Planejamento() {
   useTitulo('Planejamento e Agenda');
-  const { usuario } = useAuth();
-  const podeMexer = podeLiberarMargem(usuario?.papel) || usuario?.papel === 'ORCAMENTISTA';
+  const { pode } = useAuth();
+  const podeMexer = pode('planejamento.gerenciar');
   const q = useQuery({ queryKey: ['planejamento'], queryFn: () => api<Plano>('/planejamento', { query: { horizonte: 60 } }) });
   const centrosQ = useCentros();
   const feriadosQ = useQuery({ queryKey: ['feriados'], queryFn: () => api<Feriado[] | { itens: Feriado[] }>('/feriados') });
@@ -159,6 +159,9 @@ export default function Planejamento() {
                   </th>
                   {c.semanas.slice(0, 8).map((s) => {
                     const t = tomOcupacao(s.ocupacao);
+                    // Capacidade abaixo da semana cheia: férias, ausências ou paradas tiraram horas.
+                    const cheia = Math.max(...c.semanas.slice(0, 8).map((x) => toNum(x.capacidade)));
+                    const reducao = cheia > 0 ? 1 - toNum(s.capacidade) / cheia : 0;
                     const p = parada(paradas.get(c.id), s.inicio, somarDias(s.inicio, 6));
                     return (
                       <td key={s.inicio} className="p-0">
@@ -166,13 +169,14 @@ export default function Planejamento() {
                           type="button"
                           onClick={() => setSemana(semana === s.inicio ? null : s.inicio)}
                           aria-pressed={semana === s.inicio}
-                          aria-label={`${c.nome}, semana ${rotuloSemana(s.inicio)}: ${pct(s.ocupacao, 0)} ocupado${s.sobrecarga ? ', sobrecarga' : ''}${p ? `, parada: ${p.motivo}` : ''}`}
-                          title={`${horas(s.carga, 1)} de ${horas(s.capacidade, 1)}${p ? ` · parada: ${p.motivo}` : ''}`}
+                          aria-label={`${c.nome}, semana ${rotuloSemana(s.inicio)}: ${pct(s.ocupacao, 0)} ocupado${reducao > 0.05 ? `, capacidade ${pct(reducao, 0)} menor` : ''}${s.sobrecarga ? ', sobrecarga' : ''}${p ? `, parada: ${p.motivo}` : ''}`}
+                          title={`${horas(s.carga, 1)} de ${horas(s.capacidade, 1)}${reducao > 0.05 ? ` · capacidade ${pct(reducao, 0)} menor (ausências ou paradas)` : ''}${p ? ` · parada: ${p.motivo}` : ''}`}
                           className={`relative w-full h-14 rounded-control overflow-hidden flex flex-col items-center justify-center ${FUNDO[t]} ${semana === s.inicio ? 'ring-2 ring-ink-1' : ''}`}
                           style={p ? { backgroundImage: HACHURA } : undefined}
                         >
                           {s.sobrecarga && <span className="hazard absolute inset-x-0 top-0 h-1.5" aria-hidden />}
                           <span className="mono text-[15px] font-bold">{toNum(s.capacidade) === 0 && toNum(s.carga) === 0 ? '—' : pct(s.ocupacao, 0)}</span>
+                          {reducao > 0.05 && <span className="text-[10.5px] font-semibold leading-none text-warn">{toNum(s.capacidade) === 0 ? 'sem capacidade' : `cap. −${pct(reducao, 0)}`}</span>}
                           <span className="absolute inset-x-1.5 bottom-1 h-1 rounded-full bg-surface-1/60"><span className={`block h-full rounded-full ${BARRA[t]}`} style={{ width: `${Math.min(100, toNum(s.ocupacao) * 100)}%` }} /></span>
                         </button>
                       </td>

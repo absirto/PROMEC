@@ -14,8 +14,8 @@ import type {
 } from '@promec/motor';
 
 export type Papel = 'ADMIN' | 'GESTOR' | 'ORCAMENTISTA' | 'OPERADOR';
-export interface Usuario { id: string; nome: string; email: string; papel: Papel }
-export interface Me extends Usuario { empresa: { id: string; nome: string } }
+export interface Usuario { id: string; nome: string; email: string; papel: Papel; trocarSenha?: boolean; permissoes?: string[]; perfil?: { id: string; nome: string } | null }
+export interface Me extends Usuario { empresa: { id: string; nome: string }; perfil?: { id: string; nome: string } | null; permissoes?: string[]; trocarSenha?: boolean }
 export interface Lista<T> { itens: T[]; total: number }
 
 export interface Parametros {
@@ -35,13 +35,13 @@ export interface Colaborador {
   nome: string;
   funcao: string;
   vinculo: Vinculo;
-  salario: string;
-  encargos: string;
-  beneficios: string;
+  salario: string | null;
+  encargos: string | null;
+  beneficios: string | null;
   jornadaHoras: string;
   ativo: boolean;
-  custoMensal: string;
-  custoHora: string;
+  custoMensal: string | null;
+  custoHora: string | null;
   alocacoes: { centroId: string; centroNome: string; alocacao: string }[];
 }
 
@@ -192,6 +192,8 @@ export interface Painel {
   suprimentos?: { abaixoDoMinimo: number; valorEstoque: string; pedidosAguardando: number; recebimentosAtrasados: number };
   financeiro?: { saldoContas: string; receberVencido: string; receberHoje: string; pagar7dias: string; caixa30: string; caixa60: string; caixa90: string; menorSaldo: { inicio: string; valor: string } | null; custoFixoDesvio: string | null; clientesBloqueados: number };
   qualidade?: { ncsAbertas: number; custoNaoQualidadeMes: string; garantiasAbertas: number };
+  manutencao?: { preventivasProximas: number; ordensAbertas: number; centrosParados: number; disponibilidadeMedia: string | null };
+  rh?: { ausentesHoje: number; habilitacoesVencendo: number };
   ordens?: { emExecucao: number; pausadas: number; atrasadas: number; emQualidade: number; margemProjetadaMedia: string | null };
 }
 

@@ -5,6 +5,7 @@ import { brl, hhmm, toNum } from '../../lib/format';
 import { DecimalInput, Select } from '../../components/Field';
 import { IconButton } from '../../components/Button';
 import { ItemPicker } from '../../components/ItemPicker';
+import { CustoHora } from '../../components/Mascara';
 import type { Item } from '../../lib/types';
 
 export type LinhaForm = LinhaApi & { _id: string; itemId?: string };
@@ -96,7 +97,7 @@ export function LinhaEditor({ linha, onChange, onRemover, custoLote, centros, ed
             )}
             <Mini label="R$/h" className="flex-[0_0_96px]">
               <span className="mono h-10 flex items-center justify-end font-semibold text-primary-text" title="Custo-hora cheio da Tabela de Custos">
-                {centro?.cheioHora ? brl(centro.cheioHora).replace('R$ ', '') : l.custoHora ? brl(l.custoHora).replace('R$ ', '') : '—'}
+                <CustoHora valor={centro?.cheioHora ?? l.custoHora ?? null} formatar={(v) => brl(v).replace('R$ ', '')} />
               </span>
             </Mini>
           </>

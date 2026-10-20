@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calcularCustoReal, reais } from '@promec/motor';
-import { cronometro, desvioBadge, etapaOS, normalizarFila, segundosDesde, STATUS_OS } from './os';
+import { cronometro, desvioBadge, etapaOS, normalizarFila, quebraAberta, segundosDesde, STATUS_OS } from './os';
 
 describe('OS', () => {
   it('mapeia status nas cores e variantes da identidade', () => {
@@ -43,5 +43,18 @@ describe('OS', () => {
     });
     expect(reais(r.horasProjetadas)).toBe('4.35');
     expect(Number(r.margemProjetada)).toBeCloseTo(0.113, 2);
+  });
+});
+
+describe('quebraAberta', () => {
+  it('lê centro, descrição e OM da pausa por quebra aberta', () => {
+    const r = quebraAberta([
+      { tipo: 'PAUSA', motivo: 'FALTA_PECA', fim: '2026-10-01', inicio: '2026-10-01', observacao: null },
+      { tipo: 'PAUSA', motivo: 'QUEBRA', fim: null, inicio: '2026-10-20T10:00:00Z', observacao: 'Torno CNC de entrada: Fuso travou (OM-2026-00009)' }
+    ]);
+    expect(r).toEqual({ inicio: '2026-10-20T10:00:00Z', centro: 'Torno CNC de entrada', descricao: 'Fuso travou', ordem: 'OM-2026-00009' });
+  });
+  it('ignora quebra já encerrada', () => {
+    expect(quebraAberta([{ tipo: 'PAUSA', motivo: 'QUEBRA', fim: '2026-10-21', inicio: '2026-10-20', observacao: 'x' }])).toBeNull();
   });
 });

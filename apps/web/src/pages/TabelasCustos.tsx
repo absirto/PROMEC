@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, FilePlus2, ShieldAlert } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { TabelaDetalhe, TabelaResumo } from '../lib/types';
 import { brl, competenciaAtual, competenciaLonga, data, somarMes } from '../lib/format';
 import { HeroBand } from '../components/HeroBand';
@@ -15,6 +16,8 @@ import { useAcao } from '../lib/queries';
 import { useTitulo } from '../layout/titulo';
 
 export default function TabelasCustos() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('custos.gerenciar');
   useTitulo('Tabela de Custos');
   const navigate = useNavigate();
   const q = useQuery({ queryKey: ['tabelas-custos', 'lista'], queryFn: () => api<TabelaResumo[] | { itens: TabelaResumo[] }>('/tabelas-custos') });
@@ -40,9 +43,11 @@ export default function TabelasCustos() {
         acoes={
           <>
             <CompetenciaPicker escuro valor={comp} onChange={setComp} />
-            <Button variante="primario" icone={FilePlus2} carregando={criar.isPending} onClick={() => criar.mutate(comp)}>
-              Criar rascunho
-            </Button>
+            {podeGerir && (
+              <Button variante="primario" icone={FilePlus2} carregando={criar.isPending} onClick={() => criar.mutate(comp)}>
+                Criar rascunho
+              </Button>
+            )}
           </>
         }
       />

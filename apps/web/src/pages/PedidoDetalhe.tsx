@@ -7,7 +7,7 @@ import { api, ApiError, msgErro } from '../lib/api';
 import type { Fornecedor, Item, Lista, LocalEstoque, Pedido, StatusPedido } from '../lib/types';
 import { brl, data, num, pct, toNum } from '../lib/format';
 import { useAcao } from '../lib/queries';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import { flagsDivergencia } from '../features/suprimentos/sup';
 import { HeroBand, HeroKpi } from '../components/HeroBand';
 import { Card, CardHeader } from '../components/Card';
@@ -67,8 +67,8 @@ function textoDivergencia(d: unknown): string {
 
 export default function PedidoDetalhe() {
   const { id } = useParams();
-  const { usuario } = useAuth();
-  const gestor = podeLiberarMargem(usuario?.papel);
+  const { pode } = useAuth();
+  const gestor = pode('compras.aprovar_pedido');
   const q = useQuery({ queryKey: ['compras', 'pedidos', id], queryFn: () => api<Pedido>(`/compras/pedidos/${id}`), enabled: !!id });
   const p = q.data;
   const fq = useQuery({ queryKey: ['fornecedores', 'detalhe', p?.fornecedor?.id], queryFn: () => api<Fornecedor>(`/fornecedores/${p!.fornecedor.id}`), enabled: !!p?.fornecedor?.id, retry: false });

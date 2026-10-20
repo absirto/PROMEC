@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowDownLeft, ArrowUpRight, ClipboardCheck, Plus, Wallet } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { ConsumoCentro, Item, LinhaABC, Lista, LocalEstoque, Lote, Movimento, OSResumo, SaldoLocal } from '../lib/types';
 import { brl, competenciaAtual, data, num, pct, toNum } from '../lib/format';
 import { useAcao, useCentros } from '../lib/queries';
@@ -33,6 +34,8 @@ type TipoMov = keyof typeof TIPOS_MOV;
 const ROTULO_MOV: Record<string, string> = { ...TIPOS_MOV, ENTRADA: 'Recebimento', ENTRADA_RECEBIMENTO: 'Recebimento', SAIDA_OS: 'Consumo em OS', ESTORNO: 'Estorno', ESTORNO_OS: 'Estorno de consumo', INVENTARIO: 'Inventário' };
 
 export default function Estoque() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('estoque.gerenciar');
   useTitulo('Estoque');
   const [aba, setAba] = useAba<Aba>('saldos', ABAS);
   const [novo, setNovo] = useState(false);
@@ -44,7 +47,7 @@ export default function Estoque() {
         ilustracao="cofre"
         titulo="Estoque"
         texto={!tot ? 'Saldos por local, lotes com certificado e cada movimento com a origem.' : tot.itensAbaixoMinimo ? `${tot.itensAbaixoMinimo} ${tot.itensAbaixoMinimo === 1 ? 'item está' : 'itens estão'} abaixo do mínimo. O ponto de pedido em Compras já sabe quanto pedir.` : 'Tudo acima do mínimo. Cada saída ao custo médio, cada lote com o seu certificado.'}
-        acoes={<><Button variante="vidro" to="/compras">Compras</Button><Button variante="primario" icone={Plus} onClick={() => setNovo(true)}>Novo movimento</Button></>}
+        acoes={<><Button variante="vidro" to="/compras">Compras</Button>{podeGerir && <Button variante="primario" icone={Plus} onClick={() => setNovo(true)}>Novo movimento</Button>}</>}
       />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         <Kpi tom="primary" icone={<Wallet className="size-5" aria-hidden />} valor={tot ? brl(tot.valor) : '—'} rotulo="valor em estoque" />

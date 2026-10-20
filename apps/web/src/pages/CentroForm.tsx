@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Ban, ChevronDown, Plus, Save, Trash2, TriangleAlert } from 'lucide-react';
 import { precoDaHora, type ResultadoTabela, type StatusCentro, type TipoCentro } from '@promec/motor';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { Centro } from '../lib/types';
 import { brl, competenciaAtual, horas, num, pct, toNum } from '../lib/format';
 import { useAcao, useColaboradores, useParametros } from '../lib/queries';
@@ -20,7 +21,9 @@ import { Carregando, ErroEstado } from '../components/EmptyState';
 import { StatusCentroPill, Pill } from '../components/Pill';
 import { Modal } from '../components/Modal';
 import { useTitulo } from '../layout/titulo';
+import { Mascara, useVerCusto } from '../components/Mascara';
 import { HistoricoCustosCentro } from '../features/financeiro/Ponte';
+import { CentroManutencao } from '../features/manutencao/CentroManutencao';
 
 const VAZIO: Form = {
   codigo: '', nome: '', tipo: 'maquina', status: 'ativo', horasExpediente: '220', eficiencia: '0.75', manutencao: '', insumos: '', outros: '',
@@ -37,6 +40,9 @@ const doCentro = (c: Centro): Form => ({
 const z = (v: string) => (v === '' ? '0' : v);
 
 export default function CentroForm() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('custos.gerenciar');
+  const verManutencao = podeFn_('manutencao.visualizar');
   const { id = 'novo' } = useParams();
   const novo = id === 'novo';
   const navigate = useNavigate();
@@ -44,6 +50,7 @@ export default function CentroForm() {
   const colabs = useColaboradores();
   const params = useParametros();
   const competencia = competenciaAtual();
+  const verCusto = useVerCusto();
   const previa = useQuery({ queryKey: ['centros-trabalho', 'previa', competencia], queryFn: () => api<ResultadoTabela>('/centros-trabalho/previa', { query: { competencia } }), retry: false });
 
   const [f, setF] = useState<Form | null>(novo ? VAZIO : null);
@@ -103,7 +110,8 @@ export default function CentroForm() {
     { id: 'o-que-e', titulo: 'O que é', completa: !!f.nome.trim() },
     { id: 'custos', titulo: 'Quanto custa por mês', completa: toNum(f.manutencao) + toNum(f.insumos) + toNum(f.valorAquisicao) > 0 },
     { id: 'operadores', titulo: 'Quem opera', completa: f.operadores.length > 0 },
-    { id: 'capacidade', titulo: 'Capacidade e rateio', completa: toNum(f.horasExpediente) > 0 && !erroEf }
+    { id: 'capacidade', titulo: 'Capacidade e rateio', completa: toNum(f.horasExpediente) > 0 && !erroEf },
+    ...(!novo && verManutencao ? [{ id: 'manutencao', titulo: 'Manutenção', completa: false }] : [])
   ];
 
   return (
@@ -118,7 +126,7 @@ export default function CentroForm() {
         acoes={
           <>
             {!novo && f.status !== 'desativado' && <Button variante="perigo" icone={Ban} onClick={() => setDesativar(true)}>Desativar</Button>}
-            <Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button>
+            {podeGerir && <Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button>}
           </>
         }
       />
@@ -221,7 +229,9 @@ export default function CentroForm() {
         <GlassPanel placa="aco" className="flex-[1_1_320px] max-w-full lg:max-w-[380px] lg:sticky lg:top-24" aria-label="Custo-hora ao vivo">
           <h2 className="m-0 text-[24px] font-bold">Custo-hora ao vivo</h2>
           {previa.isError && <p className="m-0 text-caption text-ink-2">Sem a prévia da tabela agora; o rateio aparece zerado até ela voltar.</p>}
-          {calc?.erro ? (
+          {!verCusto ? (
+            <p className="m-0 p-3 rounded-field bg-surface-1 text-[14px] flex items-start gap-2"><Mascara /> Você não tem permissão para ver o custo-hora. Os cadastros continuam editáveis; o valor aparece para quem cuida dos custos.</p>
+          ) : calc?.erro ? (
             <p role="alert" className="m-0 p-3 rounded-field bg-bad-soft text-[14px]">{calc.erro}</p>
           ) : f.status === 'desativado' ? (
             <p className="m-0 p-3 rounded-field bg-surface-1 text-[14px]">Centro desativado não entra no custo-hora nem no rateio.</p>
@@ -271,6 +281,8 @@ export default function CentroForm() {
           ))}
         </GlassPanel>
       </div>
+
+      {!novo && verManutencao && q.data && <div className="mt-5 min-w-0"><CentroManutencao centroId={id} centroNome={q.data.nome} cadastro={q.data.manutencao} /></div>}
 
       <Modal
         aberto={desativar}

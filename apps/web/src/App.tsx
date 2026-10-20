@@ -39,6 +39,15 @@ const DREPage = lazy(() => import('./pages/DRE'));
 const ComissoesPage = lazy(() => import('./pages/Comissoes'));
 const Recorrencias = lazy(() => import('./pages/Recorrencias'));
 const ContasCentros = lazy(() => import('./pages/ContasCentros'));
+const Usuarios = lazy(() => import('./pages/Usuarios'));
+const Auditoria = lazy(() => import('./pages/Auditoria'));
+const CRM = lazy(() => import('./pages/CRM'));
+const Manutencao = lazy(() => import('./pages/Manutencao'));
+const RH = lazy(() => import('./pages/RH'));
+const Parametros = lazy(() => import('./pages/Parametros'));
+const TrocarSenha = lazy(() => import('./pages/TrocarSenha'));
+const PortalOrcamento = lazy(() => import('./pages/PortalOrcamento'));
+const PortalOS = lazy(() => import('./pages/PortalOS'));
 const ModoOperador = lazy(() => import('./pages/ModoOperador'));
 
 function TelaLaudo() {
@@ -66,6 +75,8 @@ export function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/operador" element={<TelaOperador />} />
+      <Route path="/portal/orcamento/:token" element={<Suspense fallback={<Carregando />}><PortalOrcamento /></Suspense>} />
+      <Route path="/portal/os/:token" element={<Suspense fallback={<Carregando />}><PortalOS /></Suspense>} />
       <Route path="/ordens-servico/:id/laudo" element={<TelaLaudo />} />
       <Route element={<AppShell />}>
         <Route
@@ -99,6 +110,13 @@ export function App() {
                 <Route path="compras/cotacoes/:id" element={<CotacaoDetalhe />} />
                 <Route path="compras/pedidos/:id" element={<PedidoDetalhe />} />
                 <Route path="qualidade" element={<Qualidade />} />
+                <Route path="crm" element={<CRM />} />
+                <Route path="manutencao" element={<Manutencao />} />
+                <Route path="rh" element={<RH />} />
+                <Route path="configuracoes/parametros" element={<Parametros />} />
+                <Route path="configuracoes/usuarios" element={<Usuarios />} />
+                <Route path="configuracoes/auditoria" element={<Auditoria />} />
+                <Route path="trocar-senha" element={<TrocarSenha />} />
                 <Route path="financeiro/receber" element={<Titulos tipo="RECEBER" />} />
                 <Route path="financeiro/pagar" element={<Titulos tipo="PAGAR" />} />
                 <Route path="financeiro/fluxo" element={<FluxoCaixa />} />

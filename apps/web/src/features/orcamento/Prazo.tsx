@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarCheck2, TriangleAlert } from 'lucide-react';
 import { api, msgErro } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
 import type { Promessa } from '../../lib/types';
 import { data, pct, toNum } from '../../lib/format';
 import { Card, CardHeader } from '../../components/Card';
@@ -36,10 +37,11 @@ export function CartaoPrazo({ linhas, lote, promessaSalva, usarSalva, prazo, onP
     const t = window.setTimeout(() => setChave(chaveAgora), 700);
     return () => window.clearTimeout(t);
   }, [chaveAgora]);
+  const veFila = useAuth().pode('planejamento.visualizar');
   const q = useQuery({
     queryKey: ['promessa', chave],
     queryFn: () => api<Promessa>('/planejamento/promessa', { method: 'POST', body: { operacoes: JSON.parse(chave) } }),
-    enabled: !(usarSalva && promessaSalva) && JSON.parse(chave).length > 0,
+    enabled: veFila && !(usarSalva && promessaSalva) && JSON.parse(chave).length > 0,
     staleTime: 60_000,
     placeholderData: (p) => p
   });
@@ -50,7 +52,9 @@ export function CartaoPrazo({ linhas, lote, promessaSalva, usarSalva, prazo, onP
   return (
     <Card className="p-5 flex flex-col gap-3" aria-labelledby="h-prazo">
       <CardHeader id="h-prazo" titulo="Prazo" sub="Com a fila de hoje e a capacidade real das máquinas." />
-      {roteiro.length === 0 ? (
+      {!veFila && !p ? (
+        <p className="m-0 text-[14px] text-ink-2">A data mais cedo vem da fila da produção, que o seu perfil não vê. Combine o prazo com o planejamento.</p>
+      ) : roteiro.length === 0 ? (
         <p className="m-0 text-[14px] text-ink-2">Coloque as operações com a máquina para o ProMEC calcular a data mais cedo.</p>
       ) : q.isError && !p ? (
         <p role="alert" className="m-0 text-[14px] text-bad">{msgErro(q.error)}</p>

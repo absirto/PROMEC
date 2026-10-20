@@ -1,3 +1,4 @@
+import { useAuth } from '../lib/auth';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Cpu, Plus, TrendingUp, Wrench } from 'lucide-react';
@@ -13,13 +14,17 @@ import { EmptyState } from '../components/EmptyState';
 import { StatusCentroPill } from '../components/Pill';
 import { Listagem, normalizar } from '../components/Listagem';
 import { useTitulo } from '../layout/titulo';
+import { Mascara, useVerCusto } from '../components/Mascara';
 
 type Filtro = 'todos' | Centro['status'];
 const horasReais = (c: Centro) => toNum(c.horasExpediente) * toNum(c.eficiencia);
 
 export default function CentrosLista() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('custos.gerenciar');
   useTitulo('Centros de trabalho');
   const q = useCentros();
+  const verCusto = useVerCusto();
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const todos = q.data?.itens ?? [];
@@ -38,11 +43,11 @@ export default function CentrosLista() {
         ilustracao="torno"
         titulo={<>Centros de trabalho <span className="mono text-[22px] font-medium opacity-80">{todos.length || ''}</span></>}
         texto="Máquinas, boxes, bancadas e células de solda. Cada um tem o seu custo-hora."
-        acoes={<Button variante="primario" icone={Plus} to="/centros-trabalho/novo">Novo centro de trabalho</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} to="/centros-trabalho/novo">Novo centro de trabalho</Button>}
       />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         <Kpi tom="ok" icone={<Cpu className="size-5" aria-hidden />} valor={ativos.length} rotulo="centros produzindo" />
-        <Kpi tom="primary" icone={<TrendingUp className="size-5" aria-hidden />} valor={medio === null ? '—' : brl(medio)} rotulo="custo-hora médio na tabela vigente" />
+        <Kpi tom="primary" icone={<TrendingUp className="size-5" aria-hidden />} valor={!verCusto ? <Mascara /> : medio === null ? '—' : brl(medio)} rotulo="custo-hora médio na tabela vigente" />
         <Kpi tom="steel" icone={<Clock className="size-5" aria-hidden />} valor={horas(ativos.reduce((a, c) => a + horasReais(c), 0), 0)} rotulo="horas reais por mês" />
         <Kpi tom="warn" icone={<Wrench className="size-5" aria-hidden />} valor={n('manutencao')} rotulo="em manutenção" />
       </div>
@@ -68,7 +73,7 @@ export default function CentrosLista() {
               ilustracao="torno"
               titulo="Nenhum centro de trabalho"
               texto="Cadastre a primeira máquina: em três minutos você sabe quanto custa a hora dela."
-              acao={<Button variante="primario" icone={Plus} to="/centros-trabalho/novo">Novo centro de trabalho</Button>}
+              acao={podeGerir && <Button variante="primario" icone={Plus} to="/centros-trabalho/novo">Novo centro de trabalho</Button>}
             />
           ) : null
         }
@@ -103,7 +108,7 @@ export default function CentrosLista() {
               { chave: 'tipo', titulo: 'Tipo', render: (c) => TIPO_CENTRO[c.tipo] },
               { chave: 'op', titulo: 'Operador', render: (c) => (c.operadores.length ? c.operadores.map((o) => o.nome.split(' ')[0]).join(', ') : <span className="text-ink-3">ninguém alocado</span>) },
               { chave: 'h', titulo: 'Horas reais', alinhar: 'right', mono: true, render: (c) => horas(horasReais(c), 0) },
-              { chave: 'ch', titulo: 'Custo-hora cheio', alinhar: 'right', mono: true, render: (c) => (c.custoHoraVigente ? <strong>{brl(c.custoHoraVigente)}</strong> : <span className="text-warn text-[13px] font-sans" title={c.aviso ?? undefined}>{c.aviso ?? 'sem tabela'}</span>) },
+              { chave: 'ch', titulo: 'Custo-hora cheio', alinhar: 'right', mono: true, render: (c) => (!verCusto ? <Mascara /> : c.custoHoraVigente ? <strong>{brl(c.custoHoraVigente)}</strong> : <span className="text-warn text-[13px] font-sans" title={c.aviso ?? undefined}>{c.aviso ?? 'sem tabela'}</span>) },
               { chave: 's', titulo: 'Situação', render: (c) => <StatusCentroPill status={c.status} /> }
             ]}
           />

@@ -1,3 +1,4 @@
+import { useAuth } from '../lib/auth';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Boxes, Plus, Wallet } from 'lucide-react';
@@ -22,6 +23,8 @@ export function SituacaoPill({ s }: { s: 'ok' | 'baixo' | 'zerado' }) {
 }
 
 export default function ItensLista() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('cadastros.gerenciar') || podeFn_('compras.gerenciar') || podeFn_('estoque.gerenciar');
   useTitulo('Itens');
   const q = useItens();
   const [busca, setBusca] = useState('');
@@ -39,7 +42,7 @@ export default function ItensLista() {
         ilustracao="prancheta"
         titulo={<>Itens <span className="mono text-[22px] font-medium opacity-80">{todos.length || ''}</span></>}
         texto="Matéria-prima, peças, insumos e ferramentas. O custo médio daqui é o que vai para o orçamento."
-        acoes={<Button variante="primario" icone={Plus} to="/itens/novo">Novo item</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} to="/itens/novo">Novo item</Button>}
       />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         <Kpi tom="steel" icone={<Boxes className="size-5" aria-hidden />} valor={todos.length} rotulo="itens ativos" />
@@ -57,7 +60,7 @@ export default function ItensLista() {
         carregando={q.isLoading}
         erro={q.error}
         tentar={() => q.refetch()}
-        vazio={q.isSuccess && todos.length === 0 ? <EmptyState ilustracao="prancheta" titulo="Nenhum item cadastrado" texto="Comece pela matéria-prima que mais aparece nos orçamentos: com o custo médio certo, o preço sai certo." acao={<Button variante="primario" icone={Plus} to="/itens/novo">Novo item</Button>} /> : null}
+        vazio={q.isSuccess && todos.length === 0 ? <EmptyState ilustracao="prancheta" titulo="Nenhum item cadastrado" texto="Comece pela matéria-prima que mais aparece nos orçamentos: com o custo médio certo, o preço sai certo." acao={podeGerir && <Button variante="primario" icone={Plus} to="/itens/novo">Novo item</Button>} /> : null}
         semResultado={linhas.length === 0}
         total={todos.length}
         mostrando={linhas.length}

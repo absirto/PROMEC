@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Ban, CalendarClock, Check, ChevronDown, FileText, Trash2, ClipboardCheck, Cpu, PackageCheck, Pause, Play, Plus, Rocket, Timer, TriangleAlert, UserRound
+  Ban, CalendarClock, Check, ChevronDown, FileText, Trash2, ClipboardCheck, Cpu, PackageCheck, Pause, Play, Plus, Rocket, Timer, TriangleAlert, UserRound, Wrench,
+  Link2
 } from 'lucide-react';
+import { LinkPortal } from '../components/LinkPortal';
+import { HistoricoLink } from '../components/HistoricoLink';
 import { api, ApiError } from '../lib/api';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import type { CustoOS, MotivoPausa, OrdemServico, Prioridade } from '../lib/types';
 import { brl, data, horas, num, pct, toNum } from '../lib/format';
 import { useAcao, useParametros } from '../lib/queries';
@@ -21,7 +24,8 @@ import { Aviso, Carregando, ErroEstado } from '../components/EmptyState';
 import { Pill } from '../components/Pill';
 import { Modal } from '../components/Modal';
 import { useTitulo } from '../layout/titulo';
-import { cronometro, MOTIVOS_PAUSA, segundosDesde, textoAlerta, useAgora } from '../features/os/os';
+import { CustoHora } from '../components/Mascara';
+import { cronometro, MOTIVOS_PAUSA, quebraAberta, segundosDesde, textoAlerta, useAgora } from '../features/os/os';
 import { InspecaoDialog } from '../features/os/Inspecao';
 import { ConsumosOS } from '../features/os/Consumos';
 import { ItemPicker } from '../components/ItemPicker';
@@ -141,8 +145,13 @@ type Evento = { quando: string; titulo: string; detalhe?: string; tom: string; a
 
 export default function OSDetalhe() {
   const { id } = useParams();
-  const { usuario } = useAuth();
-  const gestor = podeLiberarMargem(usuario?.papel);
+  const { pode } = useAuth();
+  const gestor = pode('os.cancelar');
+  // Mesmas alternativas da API: o chão de fábrica aponta e pausa, a qualidade inspeciona, o estoque baixa material.
+  const gerencia = pode('os.gerenciar');
+  const operar = gerencia || pode('operador.gerenciar');
+  const inspecionar = gerencia || pode('qualidade.gerenciar');
+  const consumir = gerencia || pode('estoque.gerenciar') || pode('operador.gerenciar');
   const params = useParametros();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['ordens-servico', id], queryFn: () => api<OrdemServico>(`/ordens-servico/${id}`), refetchInterval: 30_000 });
@@ -150,7 +159,7 @@ export default function OSDetalhe() {
   useTitulo(o ? `${o.numero} · ${o.titulo}` : 'Ordem de Serviço');
   const abertos = (o?.apontamentos ?? []).filter((a) => !a.fim);
   const agora = useAgora(abertos.length > 0);
-  const [modal, setModal] = useState<null | 'pausa' | 'inspecao' | 'entregar' | 'cancelar' | 'prazo'>(null);
+  const [modal, setModal] = useState<null | 'pausa' | 'inspecao' | 'entregar' | 'cancelar' | 'prazo' | 'portal'>(null);
   const [edPrazo, setEdPrazo] = useState<{ prazo: string; prioridade: Prioridade; motivo: string; pedeMotivo: boolean }>({ prazo: '', prioridade: 'NORMAL', motivo: '', pedeMotivo: false });
   const [arvore, setArvore] = useState(false);
   const [novoCusto, setNovoCusto] = useState(false);
@@ -186,7 +195,9 @@ export default function OSDetalhe() {
   const horasVivas = abertos.reduce((a, x) => a + segundosDesde(x.inicio, agora) / 3600, 0);
   const opRes = new Map(r.operacoes.map((x) => [x.id, x]));
   const custoRes = new Map(r.custos.map((x) => [x.id, x]));
-  const editavelCustos = o.status !== 'ENTREGUE' && o.status !== 'CANCELADA';
+  const editavelCustos = gerencia && o.status !== 'ENTREGUE' && o.status !== 'CANCELADA';
+  const podeConsumir = consumir && o.status !== 'ENTREGUE' && o.status !== 'CANCELADA';
+  const quebra = o.status === 'PAUSADA' ? quebraAberta(o.ocorrencias ?? []) : null;
   const minima = o.margemMinima ?? params.data?.margemMinima ?? '0.15';
   const alvo = params.data?.margemAlvo ?? r.margemOrcada;
   const projetadaTom = toNum(r.margemProjetada) >= toNum(alvo) - 1e-7 ? 'text-ok' : toNum(r.margemProjetada) >= toNum(minima) ? 'text-warn' : 'text-bad';
@@ -220,12 +231,12 @@ export default function OSDetalhe() {
   const abrirInspecao = () => setModal('inspecao');
 
   const principal = {
-    ABERTA: <Button variante="primario" icone={Rocket} carregando={liberar.isPending} onClick={() => liberar.mutate(undefined)}>Liberar para a fila</Button>,
-    EM_FILA: <Button variante="primario" icone={Timer} to="/operador">Abrir o Modo Operador</Button>,
-    EM_EXECUCAO: <Button variante="primario" icone={Timer} to="/operador">Abrir o Modo Operador</Button>,
-    PAUSADA: <Button variante="primario" icone={Play} carregando={retomar.isPending} onClick={() => retomar.mutate(undefined)}>Retomar</Button>,
-    CONTROLE_QUALIDADE: <Button variante="primario" icone={ClipboardCheck} onClick={abrirInspecao}>Inspecionar</Button>,
-    CONCLUIDA: <Button variante="primario" icone={PackageCheck} onClick={() => setModal('entregar')}>Entregar</Button>,
+    ABERTA: gerencia && <Button variante="primario" icone={Rocket} carregando={liberar.isPending} onClick={() => liberar.mutate(undefined)}>Liberar para a fila</Button>,
+    EM_FILA: operar && <Button variante="primario" icone={Timer} to="/operador">Abrir o Modo Operador</Button>,
+    EM_EXECUCAO: operar && <Button variante="primario" icone={Timer} to="/operador">Abrir o Modo Operador</Button>,
+    PAUSADA: operar && <Button variante="primario" icone={Play} carregando={retomar.isPending} onClick={() => retomar.mutate(undefined)}>Retomar</Button>,
+    CONTROLE_QUALIDADE: inspecionar && <Button variante="primario" icone={ClipboardCheck} onClick={abrirInspecao}>Inspecionar</Button>,
+    CONCLUIDA: gerencia && <Button variante="primario" icone={PackageCheck} onClick={() => setModal('entregar')}>Entregar</Button>,
     ENTREGUE: null,
     CANCELADA: null
   }[o.status];
@@ -244,9 +255,10 @@ export default function OSDetalhe() {
         texto={<>Para <strong className="text-white">{o.cliente.nome.replace(/\.$/, '')}</strong>{o.orcamento && <> · do <Link to={`/orcamentos/${o.orcamento.id}`} className="text-[#FFC08F] mono">{o.orcamento.numero}</Link></>}. {lead(o)}</>}
         acoes={
           <>
-            {o.status === 'EM_EXECUCAO' && <Button variante="vidro" icone={Pause} onClick={() => { setMotivo(''); setModal('pausa'); }}>Pausar</Button>}
+            {operar && o.status === 'EM_EXECUCAO' && <Button variante="vidro" icone={Pause} onClick={() => { setMotivo(''); setModal('pausa'); }}>Pausar</Button>}
             {o.inspecoes.length > 0 && <Button variante="vidro" icone={FileText} to={`/ordens-servico/${o.id}/laudo`}>Laudo</Button>}
-            {o.status !== 'ENTREGUE' && o.status !== 'CANCELADA' && <Button variante="vidro" icone={CalendarClock} onClick={() => { setEdPrazo({ prazo: (o.prazo ?? '').slice(0, 10), prioridade: o.prioridade ?? 'NORMAL', motivo: '', pedeMotivo: false }); setModal('prazo'); }}>Prazo e prioridade</Button>}
+            {gerencia && o.status !== 'ENTREGUE' && o.status !== 'CANCELADA' && <Button variante="vidro" icone={CalendarClock} onClick={() => { setEdPrazo({ prazo: (o.prazo ?? '').slice(0, 10), prioridade: o.prioridade ?? 'NORMAL', motivo: '', pedeMotivo: false }); setModal('prazo'); }}>Prazo e prioridade</Button>}
+            {o.status !== 'CANCELADA' && gerencia && <Button variante="vidro" icone={Link2} onClick={() => setModal('portal')}>Enviar link ao cliente</Button>}
             {gestor && o.status !== 'ENTREGUE' && o.status !== 'CANCELADA' && <Button variante="vidro" icone={Ban} onClick={() => { setObs(''); setModal('cancelar'); }}>Cancelar OS</Button>}
             {principal}
           </>
@@ -264,6 +276,12 @@ export default function OSDetalhe() {
       {(o.ncs ?? []).filter((n) => n.status !== 'ENCERRADA').length > 0 && (
         <Aviso tom="bad" titulo="Não-conformidade nesta OS" acao={<Button to={`/qualidade?aba=ncs`}>Ver as NCs</Button>}>
           {(o.ncs ?? []).filter((n) => n.status !== 'ENCERRADA').map((n) => `${n.numero ?? 'NC'}${n.descricao ? `: ${n.descricao}` : ''}${n.status === 'ABERTA' ? ' (sem ação ainda, bloqueia a entrega)' : ' (em tratamento)'}`).join(' · ')}
+        </Aviso>
+      )}
+      {quebra && (
+        <Aviso tom="bad" faixa titulo={`Parada por quebra${quebra.centro ? ` no ${quebra.centro}` : ''}${quebra.ordem ? `, ${quebra.ordem}` : ''}`}
+          acao={<Button tamanho="sm" icone={Wrench} to={`/manutencao?aba=ordens${quebra.ordem ? `&busca=${quebra.ordem}` : ''}`}>Ver a manutenção</Button>}>
+          {quebra.descricao ? `${quebra.descricao}. ` : ''}A OS está parada desde {new Date(quebra.inicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}. Quando a manutenção concluir a ordem, é só retomar.
         </Aviso>
       )}
       {o.alertas.length > 0 && (
@@ -310,7 +328,7 @@ export default function OSDetalhe() {
                       <span className="flex-1 min-w-[200px] flex flex-col">
                         <span className="font-semibold text-[15px]">{op.descricao}</span>
                         <span className="text-caption text-ink-2 inline-flex flex-wrap gap-x-3">
-                          <span className="inline-flex items-center gap-1"><Cpu className="size-3.5" aria-hidden />{op.centroNome} · {brl(op.custoHora)}/h</span>
+                          <span className="inline-flex items-center gap-1"><Cpu className="size-3.5" aria-hidden />{op.centroNome} · <CustoHora valor={op.custoHora} sufixo="/h" /></span>
                           {op.colaboradorNome && <span className="inline-flex items-center gap-1"><UserRound className="size-3.5" aria-hidden />{op.colaboradorNome}</span>}
                         </span>
                       </span>
@@ -345,7 +363,7 @@ export default function OSDetalhe() {
             </ol>
           </Card>
 
-          <ConsumosOS o={o} editavel={editavelCustos} />
+          <ConsumosOS o={o} editavel={podeConsumir} />
 
           <Card className="overflow-hidden" aria-labelledby="h-custos">
             <div className="px-5 pt-5 pb-3">
@@ -360,7 +378,7 @@ export default function OSDetalhe() {
           </Card>
 
           <Card className="p-5 flex flex-col gap-3" aria-labelledby="h-tempo">
-            <CardHeader id="h-tempo" titulo="O que aconteceu" sub="Apontamentos, pausas e inspeções, do mais recente para o mais antigo." />
+            <CardHeader id="h-tempo" titulo="O que aconteceu" sub="Apontamentos, pausas e inspeções, do mais recente para o mais antigo." acao={<HistoricoLink entidade="OrdemServico" id={o.id} />} />
             {eventos.length === 0 ? (
               <p className="m-0 text-ink-2">Nada apontado ainda. O primeiro registro aparece quando o operador iniciar o setup.</p>
             ) : (
@@ -441,6 +459,7 @@ export default function OSDetalhe() {
       </div>
 
 
+      <LinkPortal aberto={modal === 'portal'} onFechar={() => setModal(null)} rota={`/ordens-servico/${o.id}/link-portal`} titulo="Enviar link ao cliente" oQueVe="cada etapa da produção e o prazo" />
       <Modal aberto={modal === 'prazo'} onFechar={() => setModal(null)} titulo="Prazo e prioridade"
         rodape={<><Button onClick={() => setModal(null)}>Voltar</Button><Button variante="primario" icone={Check} carregando={reprogramar.isPending}
           disabled={(atrasa || edPrazo.pedeMotivo) && edPrazo.motivo.trim().length < 5}

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeftRight, ArrowRight, Banknote, CheckCircle2, CircleSlash, Landmark, Lock, Pencil, Plus } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { Categoria, Centro, CentroCusto, ComponenteDireto, ContaFin, Lista } from '../lib/types';
 import { brl, data, toNum } from '../lib/format';
 import { useAcao, useCentros } from '../lib/queries';
@@ -32,6 +33,8 @@ const useCentrosTrabalho = () => {
 };
 
 export default function ContasCentros() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('financeiro.gerenciar');
   useTitulo('Contas e centros de custo');
   const [aba, setAba] = useAba<Aba>('contas', ABAS);
   const contas = useContas();
@@ -52,11 +55,11 @@ export default function ContasCentros() {
         acoes={
           aba === 'contas' ? (
             <>
-              <Button variante="vidro" icone={ArrowLeftRight} disabled={ativas.length < 2} onClick={() => setTransferir(true)}>Transferir</Button>
-              <Button variante="primario" icone={Plus} onClick={() => setConta('nova')}>Nova conta</Button>
+              {podeGerir && <Button variante="vidro" icone={ArrowLeftRight} disabled={ativas.length < 2} onClick={() => setTransferir(true)}>Transferir</Button>}
+              {podeGerir && <Button variante="primario" icone={Plus} onClick={() => setConta('nova')}>Nova conta</Button>}
             </>
           ) : (
-            <Button variante="primario" icone={Plus} onClick={() => setCentro('novo')}>Novo centro de custo</Button>
+            podeGerir && <Button variante="primario" icone={Plus} onClick={() => setCentro('novo')}>Novo centro de custo</Button>
           )
         }
       >

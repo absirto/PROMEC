@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Ban, CheckCircle2, Save } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { Fornecedor, StatusCliente, TipoCliente, TipoItem } from '../lib/types';
 import { brl, data, iniciais } from '../lib/format';
 import { documentoValido, mascaraDocumento, mascaraTelefone, soDigitos } from '../lib/documento';
@@ -24,6 +25,8 @@ interface Form { tipo: TipoCliente; documento: string; nome: string; fantasia: s
 const VAZIO: Form = { tipo: 'PJ', documento: '', nome: '', fantasia: '', email: '', telefone: '', cidade: '', uf: 'SC', categorias: [], prazoMedioDias: '7', condicaoPagamento: '28 dias', status: 'ATIVO' };
 
 export default function FornecedorForm() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('cadastros.gerenciar') || podeFn_('compras.gerenciar');
   const { id = 'novo' } = useParams();
   const novo = id === 'novo';
   const navigate = useNavigate();
@@ -71,7 +74,7 @@ export default function FornecedorForm() {
         titulo={novo ? 'Novo fornecedor' : f.fantasia || f.nome}
         lead={novo ? 'Com o CNPJ certo e as categorias, ele aparece na hora de cotar.' : f.fantasia ? f.nome : 'Contato, condições e o histórico de preços.'}
         pills={!novo && <StatusClientePill status={f.status} />}
-        acoes={<>{!novo && f.status !== 'INATIVO' && <Button variante="perigo" icone={Ban} onClick={() => setInativar(true)}>Inativar</Button>}<Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button></>}
+        acoes={<>{podeGerir && !novo && f.status !== 'INATIVO' && <Button variante="perigo" icone={Ban} onClick={() => setInativar(true)}>Inativar</Button>}{podeGerir && <Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button>}</>}
       />
       <div className="flex flex-wrap gap-5 items-start">
         <NavSecoes secoes={[{ id: 'quem', titulo: 'Quem é', completa: docOk && !!f.nome.trim() }, { id: 'fornece', titulo: 'O que fornece', completa: f.categorias.length > 0 }, { id: 'contato', titulo: 'Contato', completa: !!(f.email || f.telefone) }]} />

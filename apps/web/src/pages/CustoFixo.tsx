@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Check, Copy, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { Categoria, CompetenciaResumo, CustoFixoMes, Lancamento } from '../lib/types';
 import { brl, competenciaAtual, competenciaLonga, mesNome, pct, somarMes, toNum } from '../lib/format';
 import { CATEGORIA } from '../lib/rotulos';
@@ -49,6 +50,8 @@ function Linha({ l, competencia }: { l: Lancamento; competencia: string }) {
 }
 
 export default function CustoFixo() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('custos.gerenciar');
   useTitulo('Custo fixo');
   const [sp, setSp] = useSearchParams();
   const comp = sp.get('competencia') ?? competenciaAtual();
@@ -109,7 +112,7 @@ export default function CustoFixo() {
 
       <CustoFixoRealizadoCard competencia={comp} />
 
-      <Card className="p-5 flex flex-col gap-4" aria-labelledby="h-novo">
+      {podeGerir && <Card className="p-5 flex flex-col gap-4" aria-labelledby="h-novo">
         <CardHeader id="h-novo" titulo="Novo lançamento" sub="Mexer no custo fixo do mês vigente marca a Tabela de Custos como desatualizada." />
         <form onSubmit={enviar} className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1fr)_auto] gap-3 items-end">
           <SelectField label="Categoria" value={novo.categoria} onChange={(c) => setNovo({ ...novo, categoria: c as Categoria })} opcoes={OPCOES} />
@@ -117,7 +120,7 @@ export default function CustoFixo() {
           <NumberField label="Valor no mês" prefixo="R$" value={novo.valor} onChange={(v) => setNovo({ ...novo, valor: v })} erro={erroNovo} />
           <Button type="submit" variante="primario" icone={Plus} carregando={add.isPending} className={erroNovo ? 'sm:mb-[26px]' : ''}>Adicionar</Button>
         </form>
-      </Card>
+      </Card>}
 
       <Card className="overflow-hidden" aria-label={`Lançamentos de ${competenciaLonga(comp)}`}>
         {q.isLoading && <Carregando />}

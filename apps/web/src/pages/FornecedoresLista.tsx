@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Star, Truck } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { Fornecedor, Lista, StatusCliente } from '../lib/types';
 import { mascaraDocumento } from '../lib/documento';
 import { num, toNum } from '../lib/format';
@@ -20,6 +21,8 @@ import { useTitulo } from '../layout/titulo';
 type Filtro = 'todos' | StatusCliente;
 
 export default function FornecedoresLista() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('cadastros.gerenciar') || podeFn_('compras.gerenciar');
   useTitulo('Fornecedores');
   const [busca, setBusca] = useState('');
   const termo = useDeferredValue(busca.trim());
@@ -35,7 +38,7 @@ export default function FornecedoresLista() {
         ilustracao="prancheta"
         titulo={<>Fornecedores <span className="mono text-[22px] font-medium opacity-80">{todos.length || ''}</span></>}
         texto="Quem entrega material e serviço. A nota sobe com entrega no prazo e cai com divergência e não-conformidade."
-        acoes={<Button variante="primario" icone={Plus} to="/fornecedores/novo">Novo fornecedor</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} to="/fornecedores/novo">Novo fornecedor</Button>}
       />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         <Kpi tom="steel" icone={<Truck className="size-5" aria-hidden />} valor={n('ATIVO')} rotulo="fornecedores ativos" />
@@ -52,7 +55,7 @@ export default function FornecedoresLista() {
         carregando={q.isLoading}
         erro={q.error}
         tentar={() => q.refetch()}
-        vazio={q.isSuccess && todos.length === 0 && !termo ? <EmptyState ilustracao="prancheta" titulo="Nenhum fornecedor" texto="Cadastre quem entrega a matéria-prima principal: o comparativo de cotação começa por ele." acao={<Button variante="primario" icone={Plus} to="/fornecedores/novo">Novo fornecedor</Button>} /> : null}
+        vazio={q.isSuccess && todos.length === 0 && !termo ? <EmptyState ilustracao="prancheta" titulo="Nenhum fornecedor" texto="Cadastre quem entrega a matéria-prima principal: o comparativo de cotação começa por ele." acao={podeGerir && <Button variante="primario" icone={Plus} to="/fornecedores/novo">Novo fornecedor</Button>} /> : null}
         semResultado={linhas.length === 0}
         total={todos.length}
         mostrando={linhas.length}

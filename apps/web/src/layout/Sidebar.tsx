@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  ArrowDownLeft, ArrowUpRight, BarChart3, Boxes, Landmark, LineChart, Percent, Repeat, Building2, Truck, Calculator, CalendarClock, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
-  Package, PieChart, Receipt, Ruler, Settings2, ShoppingCart, Target, Timer, Users, Wrench, X, type LucideIcon
+  ArrowDownLeft, ArrowUpRight, BarChart3, Boxes, History, Landmark, LineChart, Percent, Repeat, Building2, Truck, Calculator, CalendarClock, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
+  Package, PieChart, Receipt, Ruler, Settings2, ShoppingCart, Target, Timer, UserCheck, Users, Wrench, X, type LucideIcon
 } from 'lucide-react';
 import { LogoProMEC } from '../components/Illustrations';
+import { useAuth } from '../lib/auth';
 
 interface Item { rotulo: string; icone: LucideIcon; to?: string }
 interface Grupo { titulo: string; itens: Item[] }
@@ -16,7 +17,7 @@ const GRUPOS: Grupo[] = [
     itens: [
       { rotulo: 'Orçamentos', icone: FileText, to: '/orcamentos' },
       { rotulo: 'Simulador rápido', icone: Calculator },
-      { rotulo: 'Oportunidades', icone: Target },
+      { rotulo: 'Oportunidades', icone: Target, to: '/crm' },
       { rotulo: 'Clientes', icone: Building2, to: '/clientes' }
     ]
   },
@@ -57,7 +58,8 @@ const GRUPOS: Grupo[] = [
     titulo: 'Ativos e Pessoas',
     itens: [
       { rotulo: 'Centros de trabalho', icone: Cpu, to: '/centros-trabalho' },
-      { rotulo: 'Manutenção', icone: Hammer },
+      { rotulo: 'Manutenção', icone: Hammer, to: '/manutencao' },
+      { rotulo: 'RH', icone: UserCheck, to: '/rh' },
       { rotulo: 'Funcionários', icone: Users, to: '/colaboradores' }
     ]
   },
@@ -73,8 +75,17 @@ const GRUPOS: Grupo[] = [
     ]
   },
   { titulo: 'BI', itens: [{ rotulo: 'Painéis', icone: BarChart3 }] },
-  { titulo: 'Configurações', itens: [{ rotulo: 'Empresa, usuários e parâmetros', icone: Settings2 }] }
+  { titulo: 'Configurações', itens: [{ rotulo: 'Usuários e perfis', icone: Users, to: '/configuracoes/usuarios' }, { rotulo: 'Auditoria', icone: History, to: '/configuracoes/auditoria' }, { rotulo: 'Empresa e parâmetros', icone: Settings2, to: '/configuracoes/parametros' }] }
 ];
+
+const PERM: [string, string][] = [
+  ['/configuracoes/usuarios', 'usuarios.visualizar'], ['/configuracoes/parametros', 'configuracoes.visualizar'], ['/manutencao', 'manutencao.visualizar'], ['/rh', 'rh.visualizar'], ['/configuracoes/auditoria', 'configuracoes.visualizar|usuarios.visualizar'], ['/orcamentos', 'orcamentos.visualizar'], ['/crm', 'crm.visualizar'],
+  ['/ordens-servico', 'os.visualizar'], ['/operador', 'operador.visualizar'], ['/planejamento', 'planejamento.visualizar'], ['/agenda', 'agenda.visualizar'],
+  ['/qualidade', 'qualidade.visualizar'], ['/tabelas-custos', 'custos.visualizar'], ['/custo-fixo', 'custos.visualizar'], ['/centros-trabalho', 'custos.visualizar'],
+  ['/clientes', 'cadastros.visualizar'], ['/colaboradores', 'cadastros.visualizar'], ['/itens', 'cadastros.visualizar|compras.visualizar|estoque.visualizar'], ['/fornecedores', 'cadastros.visualizar|compras.visualizar'],
+  ['/estoque', 'estoque.visualizar'], ['/compras', 'compras.visualizar'], ['/financeiro', 'financeiro.visualizar'], ['/', 'painel.visualizar']
+];
+const permDe = (to: string) => PERM.find(([p]) => (p === '/' ? to === '/' : to.startsWith(p)))?.[1] ?? 'cadastros.visualizar';
 
 const itemCls = 'flex items-center gap-3 h-10 px-3 rounded-[12px] text-[14px] transition duration-micro';
 
@@ -89,9 +100,13 @@ function EmBreve({ i }: { i: Item }) {
   );
 }
 
-function GrupoNav({ g, onNavegar }: { g: Grupo; onNavegar?: () => void }) {
+function GrupoNav({ g: grupo, onNavegar }: { g: Grupo; onNavegar?: () => void }) {
+  const { pode } = useAuth();
+  const g = { ...grupo, itens: grupo.itens.filter((i) => !i.to || permDe(i.to).split('|').some((c) => pode(c))) };
   const ativos = g.itens.some((i) => i.to);
   const [aberto, setAberto] = useState(false);
+  // Grupo com telas, mas nenhuma liberada para este perfil: some (não é "em breve").
+  if (!ativos && grupo.itens.some((i) => i.to)) return null;
   if (!ativos) {
     return (
       <li>

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Ban, Save } from 'lucide-react';
 import { sugestaoDeCompra } from '@promec/motor';
 import { api, ApiError } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { Fornecedor, Item, Lista, Movimento, SaldoLocal, TipoItem } from '../lib/types';
 import { brl, data, num, toNum } from '../lib/format';
 import { useAcao } from '../lib/queries';
@@ -29,6 +30,8 @@ const z = (v: string | null | undefined) => (v === '' || v == null ? '0' : v);
 const lista = <T,>(x: T[] | Lista<T> | undefined) => (Array.isArray(x) ? x : x?.itens ?? []);
 
 export default function ItemForm() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('cadastros.gerenciar') || podeFn_('compras.gerenciar') || podeFn_('estoque.gerenciar');
   const { id = 'novo' } = useParams();
   const novo = id === 'novo';
   const navigate = useNavigate();
@@ -92,7 +95,7 @@ export default function ItemForm() {
         titulo={novo ? 'Novo item' : f.descricao}
         lead="O custo médio muda sozinho a cada recebimento. Aqui você define unidades, limites de estoque e como o item é controlado."
         pills={!novo && q.data && <><Pill tom="neutral">{TIPO_ITEM[f.tipo]}</Pill>{q.data.classeABC && <Pill tom="primary">classe {q.data.classeABC}</Pill>}{f.rastreavel && <Pill tom="steel">rastreável</Pill>}<SituacaoPill s={situacaoItem(q.data)} /></>}
-        acoes={<>{!novo && f.ativo && <Button variante="perigo" icone={Ban} onClick={() => setInativar(true)}>Inativar</Button>}<Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button></>}
+        acoes={<>{podeGerir && !novo && f.ativo && <Button variante="perigo" icone={Ban} onClick={() => setInativar(true)}>Inativar</Button>}{podeGerir && <Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button>}</>}
       />
       <div className="flex flex-wrap gap-5 items-start">
         <NavSecoes secoes={[

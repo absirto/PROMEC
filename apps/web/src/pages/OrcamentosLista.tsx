@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Plus, TrendingDown, Wallet } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { ListaOrcamentos, OrcamentoResumo, StatusOrcamento } from '../lib/types';
 import { brl, data, pct, toNum } from '../lib/format';
 import { HeroBand } from '../components/HeroBand';
@@ -18,6 +19,8 @@ type Filtro = 'todos' | StatusOrcamento;
 const STATUS: StatusOrcamento[] = ['RASCUNHO', 'ENVIADO', 'EM_NEGOCIACAO', 'APROVADO', 'RECUSADO', 'EXPIRADO', 'CONVERTIDO'];
 
 export default function OrcamentosLista() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('orcamentos.gerenciar');
   useTitulo('Orçamentos');
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
@@ -39,7 +42,7 @@ export default function OrcamentosLista() {
         ilustracao="paquimetro"
         titulo="Orçamentos"
         texto="Cada preço com a conta aberta: material, hora de máquina, setup, rateio e margem. Nada de número tirado da cartola."
-        acoes={<Button variante="primario" icone={Plus} to="/orcamentos/novo">Novo orçamento</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} to="/orcamentos/novo">Novo orçamento</Button>}
       />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
         <Kpi tom="steel" icone={<FileText className="size-5" aria-hidden />} valor={(cont.ENVIADO ?? 0) + (cont.EM_NEGOCIACAO ?? 0)} rotulo="esperando o cliente" />
@@ -63,7 +66,7 @@ export default function OrcamentosLista() {
               ilustracao="paquimetro"
               titulo="Nenhum orçamento ainda"
               texto="Monte o primeiro: escolha o cliente, coloque o material e as operações, e o preço aparece enquanto você digita."
-              acao={<Button variante="primario" icone={Plus} to="/orcamentos/novo">Novo orçamento</Button>}
+              acao={podeGerir && <Button variante="primario" icone={Plus} to="/orcamentos/novo">Novo orçamento</Button>}
             />
           ) : null
         }

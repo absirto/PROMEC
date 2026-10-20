@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarPlus, CheckCircle2, CircleSlash, Pencil, Plus, Repeat } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import type { CentroCusto, Fornecedor, Lista, Recorrencia } from '../lib/types';
 import { brl, competenciaAtual, competenciaLonga, data, mesNome, toNum } from '../lib/format';
 import { useAcao } from '../lib/queries';
@@ -42,6 +43,8 @@ function useCentrosCusto() {
 }
 
 export default function Recorrencias() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('financeiro.gerenciar');
   useTitulo('Recorrências');
   const [editando, setEditando] = useState<Recorrencia | 'nova' | null>(null);
   const [filtro, setFiltro] = useState<Filtro>('ativas');
@@ -106,7 +109,7 @@ export default function Recorrencias() {
         ilustracao="cofre"
         titulo="Recorrências"
         texto="Aluguel, sistemas, seguros: o que se repete todo mês vira título a pagar sozinho, já com centro de custo. O custo fixo do mês fica quase pronto."
-        acoes={<Button variante="primario" icone={Plus} onClick={() => setEditando('nova')}>Nova recorrência</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} onClick={() => setEditando('nova')}>Nova recorrência</Button>}
       >
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
           <HeroKpi destaque rotulo={`Total de ${competenciaLonga(comp)}`} valor={brl(totalMes)} sub={plural(doMes.length, 'recorrência vigente', 'recorrências vigentes')} />

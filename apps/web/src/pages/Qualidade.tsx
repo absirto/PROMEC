@@ -9,7 +9,7 @@ import type { Fornecedor, Garantia, ItemPlano, Lote, NaoConformidade, OrigemNC, 
 import { data, num, toNum } from '../lib/format';
 import { SEGMENTO } from '../lib/rotulos';
 import { useAuth } from '../lib/auth';
-import { useAcao, useCentros, useColaboradores, useParametros } from '../lib/queries';
+import { useAcao, useUsuariosOpcoes, useCentros, useColaboradores, useParametros } from '../lib/queries';
 import { nomeDe } from '../features/os/os';
 import { useTitulo } from '../layout/titulo';
 import { useToast } from '../components/Toast';
@@ -263,7 +263,8 @@ function DetalheNC({ nc, onFechar }: { nc: NaoConformidade; onFechar: () => void
   const [erro, setErro] = useState<string | null>(null);
   const [perguntar, setPerguntar] = useState(false);
   const { usuario } = useAuth();
-  const responsaveis = [...new Map([...(usuario ? [[usuario.id, usuario.nome]] : []), ...(nc.responsavel ? [[nc.responsavel.id, nc.responsavel.nome]] : [])] as [string, string][]).entries()].map(([valor, rotulo]) => ({ valor, rotulo }));
+  const usuarios = useUsuariosOpcoes();
+  const responsaveis = [...new Map([...(usuarios.data ?? []).map((x) => [x.id, x.nome]), ...(usuario ? [[usuario.id, usuario.nome]] : []), ...(nc.responsavel ? [[nc.responsavel.id, nc.responsavel.nome]] : [])] as [string, string][]).entries()].map(([valor, rotulo]) => ({ valor, rotulo }));
   const salvar = useAcao(
     () => api(`/qualidade/ncs/${nc.id}`, { method: 'PATCH', body: { causa: f.causa.trim(), acaoCorretiva: f.acaoCorretiva.trim(), responsavelId: f.responsavelId || null, prazo: f.prazo || null } }),
     { invalida: INVAL, sucesso: 'Tratamento registrado. A NC está em tratamento e a OS pode ser entregue.', onSuccess: onFechar }

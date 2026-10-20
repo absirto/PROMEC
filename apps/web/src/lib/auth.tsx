@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, getToken, SESSAO_EXPIRADA, setToken } from './api';
 import { gravar, ler } from './storage';
 import type { Me, Usuario } from './types';
+import { temPermissao } from './permissoes';
 
 interface Auth {
   usuario: (Usuario & Partial<Pick<Me, 'empresa'>>) | null;
@@ -11,6 +12,7 @@ interface Auth {
   entrar: (email: string, senha: string) => Promise<void>;
   sair: (motivo?: string) => void;
   motivoSaida: string | null;
+  pode: (chave: string) => boolean;
 }
 
 const Ctx = createContext<Auth | null>(null);
@@ -32,7 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  const me = useQuery({ queryKey: ['me'], queryFn: () => api<Me>('/auth/me'), enabled: logado, staleTime: 5 * 60_000 });
+  const publica = typeof window !== 'undefined' && window.location.pathname.startsWith('/portal');
+  const me = useQuery({ queryKey: ['me'], queryFn: () => api<Me>('/auth/me'), enabled: logado && !publica, staleTime: 5 * 60_000 });
 
   const sair = useCallback(
     (motivo?: string) => {
@@ -62,9 +65,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLogado(true);
   }, []);
 
+  const atual = me.data ?? usuario;
+  const pode = useCallback((chave: string) => temPermissao(atual?.permissoes, chave, atual?.papel), [atual]);
   const valor = useMemo<Auth>(
-    () => ({ usuario: me.data ?? usuario, logado, entrar, sair, motivoSaida }),
-    [me.data, usuario, logado, entrar, sair, motivoSaida]
+    () => ({ usuario: atual, logado, entrar, sair, motivoSaida, pode }),
+    [atual, logado, entrar, sair, motivoSaida, pode]
   );
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
 }
@@ -75,4 +80,4 @@ export const useAuth = () => {
   return c;
 };
 
-export const podeLiberarMargem = (papel?: string) => papel === 'GESTOR' || papel === 'ADMIN';
+

@@ -6,7 +6,7 @@ import { api } from '../lib/api';
 import type { Comissoes as DadosComissoes } from '../lib/types';
 import { brl, competenciaAtual, competenciaLonga, iniciais, mesNome, pct, toNum } from '../lib/format';
 import { useAcao } from '../lib/queries';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import { HeroBand, HeroKpi } from '../components/HeroBand';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
@@ -54,8 +54,8 @@ function CartaoVendedor({ v }: { v: Vendedor }) {
 
 export default function Comissoes() {
   useTitulo('Comissões');
-  const { usuario } = useAuth();
-  const pode = podeLiberarMargem(usuario?.papel);
+  const { pode: podeFn } = useAuth();
+  const pode = podeFn('financeiro.gerenciar');
   const [sp, setSp] = useSearchParams();
   const comp = sp.get('competencia') ?? competenciaAtual();
   const setComp = (c: string) => setSp({ competencia: c }, { replace: true });

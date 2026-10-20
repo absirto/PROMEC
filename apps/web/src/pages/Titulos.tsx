@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Ban, CheckCheck, CircleDollarSign, Clock, Handshake, Plus, Undo2 } from 'lucide-react';
 import { api, ApiError, msgErro } from '../lib/api';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import type { CentroCusto, Cliente, ContaFin, Fornecedor, Lista, ListaTitulos, StatusTitulo, TipoTitulo, Titulo } from '../lib/types';
 import { brl, competenciaAtual, competenciaLonga, data, num, toNum } from '../lib/format';
 import { useAcao, useCentros, useParametros } from '../lib/queries';
@@ -15,6 +15,7 @@ import { Busca, FiltroChips } from '../components/DataTable';
 import { Carregando, EmptyState, ErroEstado } from '../components/EmptyState';
 import { Pill, type Tom } from '../components/Pill';
 import { Modal } from '../components/Modal';
+import { HistoricoLink } from '../components/HistoricoLink';
 import { CompetenciaPicker } from '../components/CompetenciaPicker';
 import { useToast } from '../components/Toast';
 import { encargosNaData, previaBaixa, previaParcelas } from '../features/financeiro/fin';
@@ -43,6 +44,8 @@ function origemLink(t: Titulo) {
 type Filtro = 'abertos' | 'VENCIDO' | 'PAGO' | 'todos' | 'CANCELADO' | 'RENEGOCIADO';
 
 export default function Titulos({ tipo }: { tipo: TipoTitulo }) {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('financeiro.gerenciar');
   const receber = tipo === 'RECEBER';
   useTitulo(receber ? 'Contas a receber' : 'Contas a pagar');
   const [filtro, setFiltro] = useState<Filtro>('abertos');
@@ -52,7 +55,8 @@ export default function Titulos({ tipo }: { tipo: TipoTitulo }) {
   const [comp, setComp] = useState<string | null>(null);
   const [centroCustoId, setCC] = useState('');
   const [sel, setSel] = useState<Set<string>>(new Set());
-  const [aberto, setAberto] = useState<string | null>(null);
+  const [sp] = useSearchParams();
+  const [aberto, setAberto] = useState<string | null>(sp.get('titulo'));
   const [novo, setNovo] = useState(false);
   const [lote, setLote] = useState(false);
   const params = useParametros();
@@ -86,7 +90,7 @@ export default function Titulos({ tipo }: { tipo: TipoTitulo }) {
         ilustracao="prancheta"
         titulo={receber ? 'Contas a receber' : 'Contas a pagar'}
         texto={receber ? 'O que os clientes devem, parcela por parcela. Vencido há mais tempo bloqueia o cliente sozinho.' : 'O que a oficina deve. Cada título mostra se compõe o custo fixo ou o custo direto de uma máquina.'}
-        acoes={<Button variante="primario" icone={Plus} onClick={() => setNovo(true)}>Novo lançamento</Button>}
+        acoes={podeGerir && <Button variante="primario" icone={Plus} onClick={() => setNovo(true)}>Novo lançamento</Button>}
       >
         <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
           <HeroKpi destaque rotulo="Em aberto" valor={tot ? brl(tot.aberto) : '—'} sub={receber ? 'a receber' : 'a pagar'} />
@@ -276,8 +280,9 @@ function NovoLancamento({ tipo, ccs, onFechar }: { tipo: TipoTitulo; ccs: Centro
 
 function Detalhe({ id, tipo, onFechar }: { id: string; tipo: TipoTitulo; onFechar: () => void }) {
   const receber = tipo === 'RECEBER';
-  const { usuario } = useAuth();
-  const gestor = podeLiberarMargem(usuario?.papel);
+  const { pode } = useAuth();
+  const gestor = pode('financeiro.estornar');
+  const gere = pode('financeiro.gerenciar');
   const qc = useQueryClient();
   const toast = useToast();
   const q = useQuery({ queryKey: ['financeiro', 'titulo', id], queryFn: () => api<Titulo>(`/financeiro/titulos/${id}`) });
@@ -304,9 +309,9 @@ function Detalhe({ id, tipo, onFechar }: { id: string; tipo: TipoTitulo; onFecha
       <Modal aberto={!modo} onFechar={onFechar} largura={720} titulo={<span>{t.numero}{t.parcela ? <span className="text-ink-3 text-[20px]"> · {t.parcela}</span> : null}</span>}
         rodape={
           <>
-            {emAberto && semBaixa && <Button variante="perigo" icone={Ban} onClick={() => { setMotivo(''); setModo('cancelar'); }}>Cancelar</Button>}
-            {emAberto && <Button icone={Handshake} onClick={() => setModo('renegociar')}>Renegociar</Button>}
-            {emAberto && <Button variante="primario" icone={CircleDollarSign} onClick={() => setModo('baixa')}>{receber ? 'Receber' : 'Pagar'}</Button>}
+            {emAberto && gere && semBaixa && <Button variante="perigo" icone={Ban} onClick={() => { setMotivo(''); setModo('cancelar'); }}>Cancelar</Button>}
+            {emAberto && gere && <Button icone={Handshake} onClick={() => setModo('renegociar')}>Renegociar</Button>}
+            {emAberto && gere && <Button variante="primario" icone={CircleDollarSign} onClick={() => setModo('baixa')}>{receber ? 'Receber' : 'Pagar'}</Button>}
           </>
         }>
         <div className="flex flex-wrap gap-2 items-center"><StatusTitulo t={t} />{t.compoeCustoFixo && <Pill tom="steel">compõe custo fixo</Pill>}{t.custoDiretoCentro && <Pill tom="primary">custo direto · {COMPONENTE[t.custoDiretoCentro.componente] ?? t.custoDiretoCentro.componente}</Pill>}</div>
@@ -348,6 +353,7 @@ function Detalhe({ id, tipo, onFechar }: { id: string; tipo: TipoTitulo; onFecha
             </ol>
           </div>
         )}
+        <HistoricoLink entidade="Titulo" id={t.id} className="self-start" />
       </Modal>
       {modo === 'baixa' && <BaixaSheet t={t} onFechar={(ok) => { setModo(null); if (ok) q.refetch(); }} />}
       {modo === 'renegociar' && <Renegociar t={t} onFechar={(ok) => { if (ok) onFechar(); else setModo(null); }} />}

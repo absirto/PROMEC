@@ -5,7 +5,7 @@ import { Ban, CheckCircle2, FilePlus2, Save } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import type { Cliente, StatusCliente, TipoCliente } from '../lib/types';
 import { brl, data, iniciais } from '../lib/format';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth';
 import { previaParcelas } from '../features/financeiro/fin';
 import { documentoValido, mascaraDocumento, mascaraTelefone, soDigitos } from '../lib/documento';
 import { useAcao } from '../lib/queries';
@@ -18,6 +18,7 @@ import { Aviso, Carregando, ErroEstado } from '../components/EmptyState';
 import { StatusClientePill } from '../components/Pill';
 import { Modal } from '../components/Modal';
 import { useTitulo } from '../layout/titulo';
+import { Ficha360 } from '../features/clientes/Ficha360';
 
 const UFS = 'AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO'.split(' ');
 type Form = Omit<Cliente, 'id' | 'resumo'>;
@@ -25,6 +26,8 @@ const VAZIO: Form = { tipo: 'PJ', documento: '', nome: '', fantasia: '', email: 
 const emailOk = (e: string) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export default function ClienteForm() {
+  const { pode: podeFn_ } = useAuth();
+  const podeGerir = podeFn_('cadastros.gerenciar');
   const { id = 'novo' } = useParams();
   const novo = id === 'novo';
   const navigate = useNavigate();
@@ -49,7 +52,7 @@ export default function ClienteForm() {
       onSuccess: (r) => novo && r?.id && navigate(`/clientes/${r.id}`, { replace: true })
     }
   );
-  const { usuario } = useAuth();
+  const { pode } = useAuth();
   const liberar = useAcao(() => api<Cliente>(`/clientes/${id}`, { method: 'PATCH', body: { status: 'ATIVO' } }), {
     invalida: [['clientes']],
     sucesso: (c) => `Cliente liberado${c?.liberadoAte ? ` até ${data(c.liberadoAte)}` : ' por 7 dias'}. Se os títulos não forem pagos, ele volta a bloquear sozinho.`
@@ -98,13 +101,13 @@ export default function ClienteForm() {
         acoes={
           <>
             {!novo && f.status !== 'INATIVO' && <Button variante="perigo" icone={Ban} onClick={() => setInativar(true)}>Inativar</Button>}
-            <Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button>
+            {podeGerir && <Button variante="primario" icone={Save} carregando={salvar.isPending} onClick={enviar}>Salvar</Button>}
           </>
         }
       />
       {q.data?.status === 'BLOQUEADO' && q.data.bloqueioAutomatico && (
-        <Aviso tom="bad" faixa titulo="Bloqueado por inadimplência" acao={podeLiberarMargem(usuario?.papel) ? <Button carregando={liberar.isPending} onClick={() => liberar.mutate(undefined)}>Liberar por 7 dias</Button> : undefined}>
-          O ProMEC bloqueou sozinho porque há título vencido há mais tempo que o combinado. {podeLiberarMargem(usuario?.papel) ? 'Se combinou o pagamento, libere por 7 dias.' : 'Só a gestão pode liberar.'} <Link to="/financeiro/receber">Ver os títulos</Link>
+        <Aviso tom="bad" faixa titulo="Bloqueado por inadimplência" acao={pode('financeiro.gerenciar') ? <Button carregando={liberar.isPending} onClick={() => liberar.mutate(undefined)}>Liberar por 7 dias</Button> : undefined}>
+          O ProMEC bloqueou sozinho porque há título vencido há mais tempo que o combinado. {pode('financeiro.gerenciar') ? 'Se combinou o pagamento, libere por 7 dias.' : 'Só a gestão pode liberar.'} <Link to="/financeiro/receber">Ver os títulos</Link>
         </Aviso>
       )}
       {q.data?.liberadoAte && q.data.status === 'ATIVO' && <Aviso tom="warn" titulo={`Liberado até ${data(q.data.liberadoAte)}`}>Liberação temporária da gestão. Depois disso, se ainda houver título vencido, o bloqueio volta.</Aviso>}
@@ -172,6 +175,7 @@ export default function ClienteForm() {
           {!novo && <Button icone={FilePlus2} to={`/orcamentos/novo?cliente=${id}`}>Novo orçamento para este cliente</Button>}
         </GlassPanel>
       </div>
+      {!novo && (pode('crm.visualizar') || pode('cadastros.visualizar')) && <Ficha360 clienteId={id} />}
       <Modal
         aberto={inativar}
         onFechar={() => setInativar(false)}

@@ -8,6 +8,7 @@ import { brl, competenciaLonga, data, horas, num, pct, toNum } from '../lib/form
 import { useAcao, useTabela } from '../lib/queries';
 import { CRITERIO, TIPO_CENTRO, corTipoCentro } from '../lib/rotulos';
 import { HeroBand, HeroKpi } from '../components/HeroBand';
+import { HistoricoLink } from '../components/HistoricoLink';
 import { Card, CardHeader } from '../components/Card';
 import { Button } from '../components/Button';
 import { Aviso, Carregando, ErroEstado } from '../components/EmptyState';
@@ -17,7 +18,8 @@ import { ExplainTree } from '../components/ExplainTree';
 import { Modal } from '../components/Modal';
 import { DataTable } from '../components/DataTable';
 import { useTitulo } from '../layout/titulo';
-import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { useAuth } from '../lib/auth';
+import { CustoHora, useVerCusto } from '../components/Mascara';
 
 function ListaOcorrencias({ itens, nomes }: { itens: Ocorrencia[]; nomes: Map<string, string> }) {
   return (
@@ -54,6 +56,7 @@ function Variacao({ v }: { v: string }) {
 
 function CentroCard({ c }: { c: ResultadoCentro }) {
   const [aberto, setAberto] = useState(false);
+  const ver = useVerCusto() && !!c.explicacao;
   return (
     <Card as="article" className="p-5 flex flex-col gap-4 anim-subir" aria-labelledby={`c-${c.id}`}>
       <div className="flex items-start gap-3">
@@ -70,7 +73,7 @@ function CentroCard({ c }: { c: ResultadoCentro }) {
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div className="flex flex-col">
           <span className="text-[13px] text-ink-2">Custo-hora cheio</span>
-          <span className="mono text-[34px] font-bold tracking-[-.03em] leading-none">{brl(c.cheioHora)}<span className="text-[15px] text-ink-3 font-medium">/h</span></span>
+          <span className="mono text-[34px] font-bold tracking-[-.03em] leading-none"><CustoHora valor={c.cheioHora} /><span className="text-[15px] text-ink-3 font-medium">/h</span></span>
         </div>
         <dl className="m-0 grid grid-cols-3 gap-3 text-right">
           {[
@@ -80,17 +83,17 @@ function CentroCard({ c }: { c: ResultadoCentro }) {
           ].map(([l, v]) => (
             <div key={l} className="flex flex-col">
               <dt className="text-caption text-ink-3">{l}</dt>
-              <dd className="m-0 mono text-[14px] font-semibold">{num(v)}</dd>
+              <dd className="m-0 mono text-[14px] font-semibold"><CustoHora valor={v} formatar={(x) => num(x)} /></dd>
             </div>
           ))}
         </dl>
       </div>
-      <CompositionBar itens={fatias(c.composicaoHora as unknown as Record<string, string>, COR_CENTRO)} unidade="R$/h" rotulo={`Composição do custo-hora de ${c.nome}`} />
-      <button type="button" onClick={() => setAberto(!aberto)} aria-expanded={aberto} className="self-start inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-primary-text">
+      {ver && <CompositionBar itens={fatias(c.composicaoHora as unknown as Record<string, string>, COR_CENTRO)} unidade="R$/h" rotulo={`Composição do custo-hora de ${c.nome}`} />}
+      {ver && <button type="button" onClick={() => setAberto(!aberto)} aria-expanded={aberto} className="self-start inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-primary-text">
         <ChevronDown className={`size-4 transition-transform ${aberto ? 'rotate-180' : ''}`} aria-hidden />
         Como chegamos nesse valor
-      </button>
-      {aberto && (
+      </button>}
+      {ver && aberto && (
         <div className="rounded-field bg-surface-2 p-3">
           <ExplainTree raiz={c.explicacao} />
         </div>
@@ -103,8 +106,9 @@ export default function TabelaDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
   const q = useTabela(id);
-  const { usuario } = useAuth();
-  const gestor = podeLiberarMargem(usuario?.papel);
+  const verCusto = useVerCusto();
+  const { pode } = useAuth();
+  const gestor = pode('custo.publicar_tabela');
   const t = q.data;
   useTitulo(t ? `Tabela ${t.competencia} · v${t.versao}` : 'Tabela de Custos');
   const [publicar, setPublicar] = useState(false);
@@ -179,12 +183,13 @@ export default function TabelaDetalhe() {
         }
       >
         <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
-          <HeroKpi destaque rotulo="Custo-hora médio" valor={brl(cheioMedio)} sub={`${r.centros.length} centros de trabalho`} />
+          <HeroKpi destaque rotulo="Custo-hora médio" valor={<CustoHora valor={verCusto ? cheioMedio : null} />} sub={`${r.centros.length} centros de trabalho`} />
           <HeroKpi rotulo="Custo fixo do mês" valor={brl(r.custoFixoTotal)} sub={<Link to="/custo-fixo" className="text-[#FFC08F]">ver lançamentos</Link>} />
           <HeroKpi rotulo="Horas reais" valor={horas(r.horasReaisTotais, 0)} sub="expediente × eficiência" />
           <HeroKpi rotulo="Rateio" valor={<span className="text-[24px]">{CRITERIO[r.criterioRateio]}</span>} sub={t.publicadaEm ? `publicada em ${data(t.publicadaEm)}` : `criada em ${data(t.criadaEm)}`} />
         </div>
       </HeroBand>
+      <div className="flex justify-end -mt-2"><HistoricoLink entidade="TabelaCustos" id={t.id} /></div>
 
       {r.bloqueios.length > 0 && (
         <Aviso tom="bad" faixa titulo={`Antes de publicar, ${r.bloqueios.length === 1 ? 'uma coisa precisa' : `${r.bloqueios.length} coisas precisam`} de ajuste`}>
@@ -206,8 +211,8 @@ export default function TabelaDetalhe() {
             linhas={t.comparativo}
             colunas={[
               { chave: 'n', titulo: 'Centro', principal: true, render: (c) => <span className="font-medium">{c.nome}</span> },
-              { chave: 'a', titulo: 'Antes', alinhar: 'right', mono: true, render: (c) => <span className="text-ink-3">{brl(c.anterior)}</span> },
-              { chave: 'b', titulo: 'Agora', alinhar: 'right', mono: true, render: (c) => <strong>{brl(c.atual)}</strong> },
+              { chave: 'a', titulo: 'Antes', alinhar: 'right', mono: true, render: (c) => <span className="text-ink-3"><CustoHora valor={c.anterior} /></span> },
+              { chave: 'b', titulo: 'Agora', alinhar: 'right', mono: true, render: (c) => <strong><CustoHora valor={c.atual} /></strong> },
               { chave: 'v', titulo: 'Variação', alinhar: 'right', render: (c) => <Variacao v={c.variacao} /> }
             ]}
           />
@@ -239,7 +244,7 @@ export default function TabelaDetalhe() {
               <li key={c.centroId} className="flex items-center justify-between gap-3 px-3 py-2 text-[14px]">
                 <span className="truncate">{c.nome}</span>
                 <span className="flex items-center gap-2 mono">
-                  {brl(c.anterior)} → <strong>{brl(c.atual)}</strong> <Variacao v={c.variacao} />
+                  <CustoHora valor={c.anterior} /> → <strong><CustoHora valor={c.atual} /></strong> <Variacao v={c.variacao} />
                 </span>
               </li>
             ))}

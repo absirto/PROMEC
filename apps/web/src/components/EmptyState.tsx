@@ -54,7 +54,7 @@ export function Aviso({ tom = 'warn', titulo, children, faixa, acao }: { tom?: '
       <div className="flex flex-wrap items-center gap-3 px-4 py-3">
         <div className="flex-1 min-w-[200px] flex flex-col gap-0.5 text-[14px]">
           {titulo && <strong className="font-semibold">{titulo}</strong>}
-          {children}
+          {children != null && children !== false && <div>{children}</div>}
         </div>
         {acao}
       </div>

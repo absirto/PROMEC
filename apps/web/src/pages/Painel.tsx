@@ -12,6 +12,8 @@ import { useTitulo } from '../layout/titulo';
 import { useAuth } from '../lib/auth';
 import { saudacaoAgora } from './Login';
 import { tomOcupacao } from '../features/planejamento/plano';
+import { CustoHora } from '../components/Mascara';
+import { rotaNotificacao } from '../layout/rotaNotificacao';
 
 const BARRA_OCUP = { ok: 'bg-ok', warn: 'bg-signal', bad: 'bg-bad' };
 
@@ -49,7 +51,7 @@ export default function Painel() {
             <HeroKpi rotulo="Taxa de conversão" valor={pct(p.orcamentos.taxaConversao)} sub="aprovados sobre enviados" />
             <HeroKpi
               rotulo="Custo-hora médio"
-              valor={p.tabelaVigente ? brl(p.tabelaVigente.cheioMedio) : '—'}
+              valor={p.tabelaVigente ? <CustoHora valor={p.tabelaVigente.cheioMedio} /> : '—'}
               sub={p.tabelaVigente ? `Tabela ${p.tabelaVigente.competencia} · v${p.tabelaVigente.versao}${p.tabelaVigente.desatualizada ? ' · desatualizada' : ''}` : 'sem tabela vigente'}
             />
           </div>
@@ -130,6 +132,25 @@ export default function Painel() {
               {p.qualidade && <span className="text-[13.5px] text-ink-2">Custo da não-qualidade no mês: <strong className={`mono ${toNum(p.qualidade.custoNaoQualidadeMes) > 0 ? 'text-bad' : 'text-ink-1'}`}>{brl(p.qualidade.custoNaoQualidadeMes)}</strong></span>}
             </Card>
           )}
+          {(p.manutencao || p.rh) && (
+            <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-ativos">
+              <CardHeader id="h-ativos" titulo="Máquinas e pessoas" sub={p.manutencao?.disponibilidadeMedia != null ? `Disponibilidade média das máquinas: ${pct(p.manutencao.disponibilidadeMedia)}` : undefined} />
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  p.manutencao && ['Centros parados', String(p.manutencao.centrosParados), p.manutencao.centrosParados ? 'bg-bad-soft text-bad' : 'bg-ok-soft text-ok', '/manutencao?aba=ordens&status=EM_EXECUCAO'],
+                  p.manutencao && ['Preventivas a programar', String(p.manutencao.preventivasProximas), p.manutencao.preventivasProximas ? 'bg-warn-soft text-warn' : 'bg-surface-2 text-ink-2', '/manutencao?aba=planos'],
+                  p.manutencao && ['Ordens de manutenção abertas', String(p.manutencao.ordensAbertas), p.manutencao.ordensAbertas ? 'bg-info-soft text-info' : 'bg-surface-2 text-ink-2', '/manutencao?aba=ordens'],
+                  p.rh && ['Ausentes hoje', String(p.rh.ausentesHoje), p.rh.ausentesHoje ? 'bg-steel-soft text-steel' : 'bg-surface-2 text-ink-2', '/rh?aba=ausencias'],
+                  p.rh && ['Habilitações vencendo', String(p.rh.habilitacoesVencendo), p.rh.habilitacoesVencendo ? 'bg-warn-soft text-warn' : 'bg-surface-2 text-ink-2', '/rh?aba=habilitacoes']
+                ].filter((x): x is string[] => !!x).map(([l, v, cor, to]) => (
+                  <Link key={l} to={to!} className={`no-underline rounded-[16px] p-3 flex flex-col ${cor}`}>
+                    <span className="mono text-[22px] font-bold leading-tight">{v}</span>
+                    <span className="text-[13px] font-medium">{l}</span>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          )}
           {p.ordens && (
             <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-ordens">
               <CardHeader id="h-ordens" titulo="Chão de fábrica agora" acao={<Link to="/ordens-servico" className="text-[13px] font-semibold">Ordens de Serviço</Link>} />
@@ -169,8 +190,9 @@ export default function Painel() {
                     {a.link && <ChevronRight className="size-[18px] text-ink-3" aria-hidden />}
                   </>
                 );
-                return a.link ? (
-                  <Link key={i} to={a.link} className="flex items-center gap-3 p-3 rounded-[16px] bg-surface-2 no-underline hover:translate-x-[3px] transition-transform duration-micro">{conteudo}</Link>
+                const destino = rotaNotificacao(a.link);
+                return destino ? (
+                  <Link key={i} to={destino.rota} className="flex items-center gap-3 p-3 rounded-[16px] bg-surface-2 no-underline hover:translate-x-[3px] transition-transform duration-micro">{conteudo}</Link>
                 ) : (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-[16px] bg-surface-2">{conteudo}</div>
                 );
@@ -194,7 +216,7 @@ export default function Painel() {
                   <Link key={c.id} to={`/centros-trabalho/${c.id}`} className="no-underline text-ink-1 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 items-center p-2 -mx-2 rounded-control hover:bg-surface-2">
                     <span className="truncate text-[14px] font-medium">{c.nome}</span>
                     <span className="mono text-[13.5px] text-right whitespace-nowrap">
-                      <span className="text-ink-3">{num(c.cheioHora)}</span> → <strong>{brl(c.precoHora)}</strong>
+                      <span className="text-ink-3"><CustoHora valor={c.cheioHora} formatar={(v) => num(v)} /></span> → <strong>{brl(c.precoHora)}</strong>
                       <span className="text-ink-3">/h</span>
                     </span>
                     <span className="col-span-2 relative h-2.5 rounded-full bg-surface-3 overflow-hidden" aria-hidden>

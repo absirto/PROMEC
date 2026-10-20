@@ -6,10 +6,11 @@ import { Topbar } from './Topbar';
 import { TituloProvider } from './titulo';
 
 export function AppShell() {
-  const { logado } = useAuth();
+  const { logado, usuario } = useAuth();
   const [menu, setMenu] = useState(false);
   const loc = useLocation();
   if (!logado) return <Navigate to="/login" replace state={{ de: loc.pathname }} />;
+  if (usuario?.trocarSenha && loc.pathname !== '/trocar-senha') return <Navigate to="/trocar-senha" replace />;
   return (
     <TituloProvider>
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-2 focus:left-2 focus:bg-surface-1 focus:px-4 focus:py-2 focus:rounded-full">

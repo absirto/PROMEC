@@ -22,6 +22,9 @@ const mensagemOperador = (e: unknown) => {
   if (e instanceof ApiError && e.codigo === 'SEM_APONTAMENTO_ABERTO') return 'Não tem nada rodando para parar. Atualize a fila: alguém pode ter parado antes.';
   if (e instanceof ApiError && e.codigo === 'STATUS_INVALIDO') return 'Essa OS não está liberada para começar agora. Se ela estiver pausada, retome primeiro; se estiver aberta, peça ao líder para liberar.';
   if (e instanceof ApiError && e.codigo === 'NAO_HABILITADO') return 'Você não está alocado nessa máquina. Peça ao seu líder para liberar antes de começar.';
+  if (e instanceof ApiError && e.codigo === 'COLABORADOR_AUSENTE') return 'Hoje você consta como ausente (férias, folga ou afastamento). Se veio trabalhar, peça ao líder para ajustar a ausência no RH.';
+  if (e instanceof ApiError && e.codigo === 'HABILITACAO_VENCIDA') return 'Sua habilitação para essa máquina venceu. Fale com o líder para renovar antes de começar.';
+  if (e instanceof ApiError && e.codigo === 'SEM_HABILITACAO') return 'Você não tem habilitação para essa máquina. Fale com o líder.';
   return msgErro(e);
 };
 

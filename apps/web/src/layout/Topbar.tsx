@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Contrast, Layers, LogOut, Menu, Moon, Search, Sun } from 'lucide-react';
+import { Contrast, KeyRound, Layers, LogOut, Menu, Moon, Search, Sun } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { useTema, type Tema } from '../lib/theme';
 import { api } from '../lib/api';
 import type { TabelaResumo } from '../lib/types';
 import { iniciais } from '../lib/format';
 import { useTituloAtual } from './titulo';
+import { Notificacoes } from './Notificacoes';
 
 const PAPEIS: Record<string, string> = { ADMIN: 'Administração', GESTOR: 'Gestão', ORCAMENTISTA: 'Orçamentos', OPERADOR: 'Operação' };
 
@@ -73,9 +74,12 @@ function MenuUsuario() {
             <span className="text-caption text-ink-3 truncate">{usuario?.email}</span>
             <span className="text-caption text-ink-2 mt-1">
               {usuario?.empresa?.nome ? `${usuario.empresa.nome} · ` : ''}
-              {PAPEIS[usuario?.papel ?? ''] ?? usuario?.papel}
+              {usuario?.perfil?.nome ?? PAPEIS[usuario?.papel ?? ''] ?? usuario?.papel}
             </span>
           </div>
+          <Link role="menuitem" to="/trocar-senha" onClick={() => setAberto(false)} className="w-full flex items-center gap-2 h-10 px-3 rounded-control hover:bg-surface-3 text-[14px] no-underline text-ink-1">
+            <KeyRound className="size-4" aria-hidden /> Trocar senha
+          </Link>
           <button role="menuitem" type="button" onClick={() => sair()} className="w-full flex items-center gap-2 h-10 px-3 rounded-control hover:bg-surface-3 text-[14px]">
             <LogOut className="size-4" aria-hidden /> Sair
           </button>
@@ -87,7 +91,8 @@ function MenuUsuario() {
 
 export function Topbar({ onMenu }: { onMenu: () => void }) {
   const titulo = useTituloAtual();
-  const vigente = useQuery({ queryKey: ['tabelas-custos', 'vigente'], queryFn: () => api<TabelaResumo>('/tabelas-custos/vigente'), retry: false, staleTime: 60_000 });
+  const verTabela = useAuth().pode('custos.visualizar');
+  const vigente = useQuery({ queryKey: ['tabelas-custos', 'vigente'], queryFn: () => api<TabelaResumo>('/tabelas-custos/vigente'), retry: false, staleTime: 60_000, enabled: verTabela });
   return (
     <header className="glass sticky top-3 z-20 mx-3 sm:mx-5 mt-3 rounded-full pl-2 sm:pl-5 pr-2 py-1.5 flex items-center gap-2 sm:gap-3">
       <button type="button" onClick={onMenu} aria-label="Abrir menu" className="lg:hidden size-10 grid place-items-center rounded-full hover:bg-surface-3">
@@ -107,6 +112,7 @@ export function Topbar({ onMenu }: { onMenu: () => void }) {
         </Link>
       )}
       <SeletorTema />
+      <Notificacoes />
       <MenuUsuario />
     </header>
   );
