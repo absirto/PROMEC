@@ -10,6 +10,8 @@ import { OrdensModule } from './ordens/ordens.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { PainelModule } from './painel/painel.module';
 import { PlanejamentoModule } from './planejamento/planejamento.module';
+import { QualidadeModule } from './qualidade/qualidade.module';
+import { SuprimentosModule } from './suprimentos/suprimentos.module';
 import { ParametrosModule } from './parametros/parametros.module';
 import { PrismaModule } from './prisma/prisma.service';
 import { TabelasModule } from './tabelas-custos/tabelas.module';
@@ -29,6 +31,8 @@ import { TabelasModule } from './tabelas-custos/tabelas.module';
     OrdensModule,
     PlanejamentoModule,
     AgendaModule,
+    SuprimentosModule,
+    QualidadeModule,
     PainelModule
   ]
 })

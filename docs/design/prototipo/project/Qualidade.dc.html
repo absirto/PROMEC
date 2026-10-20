@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Qualidade</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.btn-bad{background:#C0352B;border-color:transparent;color:#fff}
+.btn-bad:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.tab{all:unset;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tab.on{background:#1E1B16;color:#fff}
+.pc{all:unset;box-sizing:border-box;cursor:pointer;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font:700 15px/1 'IBM Plex Mono',monospace;border:2px solid transparent}
+.fld{display:flex;align-items:center;gap:8px;height:52px;padding:0 14px;border-radius:14px;background:#fff;border:2px solid var(--bd2)}
+.fld input{all:unset;flex:1;min-width:0;font:600 20px/1 'IBM Plex Mono',monospace;color:#1E1B16}
+.fld2{display:flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;border-radius:14px;background:var(--s2);border:1.5px solid var(--bd2)}
+.fld2 input,.fld2 textarea{all:unset;flex:1;min-width:0;font:500 15px/1.4 'IBM Plex Sans',sans-serif}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center}
+.opt.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.ph{all:unset;box-sizing:border-box;cursor:pointer;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;background:#fff;border:1px solid var(--bd)}
+.btn:focus-visible,.ib:focus-visible,.tab:focus-visible,.pc:focus-visible,.fld:focus-within,.fld2:focus-within,.opt:focus-visible,.ph:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:26px;line-height:1.1;font-weight:700}
+.sub{font-size:13.5px;color:var(--t3)}
+.mark{transition:left .35s cubic-bezier(.2,.8,.2,1),background-color .3s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fade{animation:fade .25s ease both}
+@media (prefers-reduced-motion:reduce){.rv,.fade{animation:none}.mark{transition:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start; position: relative;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">Operação</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600;" aria-current="page">Qualidade</span></nav>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--t2);"><span style="width: 30px; height: 30px; border-radius: 50%; background: #1A64A8; color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center;">CM</span>Carla Mendes · inspetora</span>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 20px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: linear-gradient(135deg, #0F9D76 0%, #0B6E54 45%, #15395A 100%); color: #fff; padding: clamp(22px, 3vw, 32px);">
+<svg viewBox="0 0 420 200" aria-hidden="true" style="position: absolute; right: 10px; top: 0; width: min(520px, 48%); height: auto;" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<rect x="20" y="40" width="380" height="20" rx="2"/><path d="{{ticks}}" stroke-width="1.5"/><path d="M24 60v66l16-8V60M24 40V22h12v18"/><rect x="140" y="34" width="72" height="34" rx="5"/><path d="M146 68v58l14-8V68M146 34V20h10v14"/><circle cx="198" cy="76" r="6"/>
+<path d="M40 100h106" stroke="#FFD08A" stroke-dasharray="4 4"/><text x="93" y="94" fill="#FFD08A" stroke="none" font-family="IBM Plex Mono" font-size="13" text-anchor="middle">Ø20,013</text>
+<circle cx="320" cy="140" r="36"/><circle cx="320" cy="140" r="20"/><path d="M320 96v-6M320 190v-6M276 140h-6M370 140h-6"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 600px;">
+<span style="font-size: 14px; font-weight: 600; color: #BFF0DC;">Qualidade</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.4vw, 54px); font-weight: 700; line-height: 1;">Medir, aprovar e provar</h1>
+<p style="margin: 0; font-size: 16px; color: #DDF3E9;">Bom dia, Carla! Tem 6 peças da bucha H7 esperando a sua medição. Até agora o mês está com 97,2% de conformidade.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Inspeções hoje</span><span class="mono" style="display: block; font-size: 30px; font-weight: 600;">6</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Conformidade do mês</span><span class="mono" style="display: block; font-size: 30px; font-weight: 600;">97,2%</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Não conformidades abertas</span><span class="mono" style="display: block; font-size: 30px; font-weight: 600; color: #FFD08A;">{{ncOpen}}</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Custo da não-qualidade</span><span class="mono" style="display: block; font-size: 30px; font-weight: 600;">R$ 1.284</span></div>
+</div>
+</div>
+</section>
+
+<div class="rv" role="tablist" aria-label="Seções" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; border-radius: 999px; align-self: flex-start; max-width: 100%; background: var(--s3);">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg>{{t.label}}<sc-if value="{{t.n}}" hint-placeholder-val="{{false}}"><span class="mono" style="font-size: 12px; opacity: .8;">{{t.n}}</span></sc-if></button></sc-for>
+</div>
+
+<sc-if value="{{vMed}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+<section class="card rv" style="flex: 999 1 600px; min-width: 0; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;" aria-labelledby="h-med">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-med" class="h2">OS-2026-00041 · bucha de latão H7</h2><span class="sub">Plano de inspeção da usinagem · desenho BUC-H7-020 rev. C · 100% das peças</span></div>
+<span class="bdg b-inf">{{doneTxt}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;" role="radiogroup" aria-label="Peça">
+<sc-for list="{{pieces}}" as="p" hint-placeholder-count="10"><button type="button" role="radio" aria-checked="{{p.checked}}" class="pc" onClick="{{p.pick}}" style="background: {{p.bg}}; color: {{p.fg}}; border-color: {{p.bc}};" aria-label="{{p.aria}}">{{p.n}}</button></sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px;">
+<sc-for list="{{chars}}" as="c" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: minmax(0, 1.2fr) 180px minmax(0, 1.4fr) 130px; gap: 16px; align-items: center; padding: 14px 16px; border-radius: 18px; background: {{c.rowBg}}; border: 1px solid var(--bd);">
+<span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600;">{{c.name}}</span><span class="mono" style="font-size: 12.5px; color: var(--t3);">{{c.spec}}</span><span style="font-size: 12px; color: var(--t3);">{{c.inst}}</span></span>
+<label class="fld" style="border-color: {{c.bc}};"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{c.name}} medido</span><input value="{{c.v}}" onChange="{{c.change}}" placeholder="{{c.ph}}" inputmode="decimal"><span style="font-size: 13px; color: var(--t3); font-weight: 500;">{{c.unit}}</span></label>
+<div style="position: relative; height: 34px; border-radius: 10px; background: var(--s3);" role="img" aria-label="{{c.aria}}">
+<span style="position: absolute; top: 0; bottom: 0; left: {{c.bandL}}; width: {{c.bandW}}; background: #DDF3E9; border-left: 2px solid #0F7A55; border-right: 2px solid #0F7A55;"></span>
+<span class="mono" style="position: absolute; bottom: -18px; left: {{c.bandL}}; transform: translateX(-50%); font-size: 10.5px; color: var(--t3);">{{c.minTxt}}</span>
+<span class="mono" style="position: absolute; bottom: -18px; left: {{c.bandR}}; transform: translateX(-50%); font-size: 10.5px; color: var(--t3);">{{c.maxTxt}}</span>
+<sc-if value="{{c.has}}" hint-placeholder-val="{{true}}"><span class="mark" style="position: absolute; top: 4px; bottom: 4px; left: {{c.pos}}; width: 6px; margin-left: -3px; border-radius: 3px; background: {{c.mc}};"></span></sc-if>
+</div>
+<span class="bdg {{c.cls}}" style="justify-self: end;" aria-live="polite">{{c.res}}</span>
+</div>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 18px; background: {{sumBg}};">
+<span style="flex: 1 1 300px; font-size: 15px;">{{sumTxt}}</span>
+<sc-if value="{{canNc}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-bad" onClick="{{openNc}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>Abrir não conformidade</button></sc-if>
+<sc-if value="{{canOk}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-p" onClick="{{approve}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Aprovar peça {{curN}}</button></sc-if>
+</div>
+</section>
+
+<aside class="rv" style="flex: 1 1 320px; max-width: 400px; display: flex; flex-direction: column; gap: 16px;" aria-label="Fotos e instrumento">
+<section class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 style="margin: 0; font-size: 16px; font-weight: 600;">Fotos da inspeção</h2><span class="sub">toque para ampliar</span></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+<sc-for list="{{photos}}" as="ph" hint-placeholder-count="3"><button type="button" class="ph" onClick="{{ph.open}}" aria-label="Ampliar foto: {{ph.t}}"><div style="height: 90px; background: {{ph.bg}}; display: grid; place-items: center; color: {{ph.fg}};"><svg class="i" viewBox="0 0 24 24" style="width: 40px; height: 40px; stroke-width: 1.3;" aria-hidden="true"><path d="{{ph.icon}}"/></svg></div><span style="padding: 8px 10px; font-size: 12.5px; text-align: left;"><strong>{{ph.t}}</strong><span style="display: block; color: var(--t3);">{{ph.s}}</span></span></button></sc-for>
+<button type="button" class="ph" style="border: 2px dashed var(--bd2); background: var(--s2); align-items: center; justify-content: center; gap: 6px; min-height: 140px; color: var(--pt); font-weight: 600; font-size: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 30px; height: 30px;" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3zM12 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>Fotografar</button>
+</div>
+</section>
+<section class="card" style="padding: 18px; display: flex; gap: 14px; align-items: center; background: #E3EDF7; border-color: transparent;">
+<svg viewBox="0 0 420 130" aria-hidden="true" style="width: 120px; height: auto; color: #1D4E7A; flex: none;" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"><rect x="20" y="40" width="380" height="20" rx="2"/><path d="M24 60v66l16-8V60"/><rect x="140" y="34" width="72" height="34" rx="5"/><path d="M146 68v58l14-8V68"/></svg>
+<span style="display: flex; flex-direction: column; font-size: 13.5px;"><strong>Súbito digital 18–35 mm</strong><span style="color: var(--t2);">Calibração válida até 14/02/2027</span><span class="mono" style="color: var(--t3);">INS-0007</span></span>
+</section>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{vNc}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+<section class="card fade" style="flex: 999 1 560px; min-width: 0; padding: 22px 24px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-nc">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-nc" class="h2">Não conformidades</h2><span class="sub">O que deu errado, por quê, o que foi feito e quem cuida</span></div>
+<sc-for list="{{ncs}}" as="n" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 6px minmax(0, 1fr) auto; gap: 14px; padding: 14px 16px 14px 0; border-radius: 18px; background: var(--s2); border: 1px solid var(--bd); overflow: hidden;">
+<span style="background: {{n.c}};"></span>
+<span style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+<span style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;"><span class="mono" style="font-size: 12.5px; color: var(--t3);">{{n.code}} · {{n.os}}</span><span class="bdg {{n.ocls}}">{{n.orig}}</span></span>
+<span style="font-weight: 600;">{{n.t}}</span>
+<span style="font-size: 13.5px; color: var(--t2);"><strong>Causa:</strong> {{n.causa}} · <strong>Ação:</strong> {{n.acao}}</span>
+<span style="font-size: 12.5px; color: var(--t3);">{{n.resp}} · prazo {{n.prazo}} · custo {{n.custo}}</span>
+</span>
+<span class="bdg {{n.cls}}" style="align-self: flex-start;">{{n.st}}</span>
+</div>
+</sc-for>
+</section>
+<section class="card fade" style="flex: 1 1 360px; max-width: 460px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; border: 2px solid {{ncFormBc}};" aria-labelledby="h-newnc">
+<h2 id="h-newnc" class="h2" style="font-size: 22px;">Abrir não conformidade</h2>
+<div><span style="display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">De onde veio?</span><div style="display: flex; flex-wrap: wrap; gap: 6px;" role="radiogroup" aria-label="Origem"><sc-for list="{{origins}}" as="o" hint-placeholder-count="4"><button type="button" role="radio" aria-checked="{{o.checked}}" class="opt {{o.cls}}" onClick="{{o.pick}}">{{o.l}}</button></sc-for></div></div>
+<label style="display: block;"><span style="display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">O que aconteceu</span><span class="fld2" style="padding: 12px 14px; align-items: flex-start;"><textarea rows="3" value="{{ncDesc}}" onChange="{{onNcDesc}}" placeholder="Ex.: Ø do furo fora da tolerância"></textarea></span></label>
+<label style="display: block;"><span style="display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">Causa provável</span><span class="fld2"><input value="{{ncCausa}}" onChange="{{onNcCausa}}" placeholder="Ex.: desgaste do alargador"></span></label>
+<div><span style="display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">O que fazer com a peça</span><div style="display: flex; flex-wrap: wrap; gap: 6px;" role="radiogroup" aria-label="Destino"><sc-for list="{{dests}}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{o.checked}}" class="opt {{o.cls}}" onClick="{{o.pick}}">{{o.l}}</button></sc-for></div></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"><label><span style="display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">Responsável</span><span class="fld2"><input value="Ricardo Alves"></span></label><label><span style="display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">Prazo</span><span class="fld2"><input class="mono" value="15/10/2026"></span></label></div>
+<button type="button" class="btn btn-p" onClick="{{saveNc}}" style="height: 48px;">Registrar e avisar o Ricardo</button>
+<sc-if value="{{ncSaved}}" hint-placeholder-val="{{false}}"><span role="status" style="font-size: 14px; color: #0F7A55; font-weight: 600;">Registrada como NC-0032. O Ricardo recebeu no tablet e a peça foi separada.</span></sc-if>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{vRas}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h-ras">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-ras" class="h2">De onde veio cada peça</h2><span class="sub">Do lote do material até o equipamento do cliente</span></div>
+<label class="fld2" style="width: min(360px, 100%);"><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Buscar</span><input value="L-2610-033" placeholder="Lote, OS ou número da peça"></label>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 0;">
+<sc-for list="{{chain}}" as="c" hint-placeholder-count="5">
+<div style="flex: 1 1 170px; display: flex; align-items: center; min-width: 0;">
+<a href="{{c.href}}" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 18px; background: {{c.bg}}; color: {{c.fg}}; text-decoration: none; min-height: 118px;"><svg class="i" viewBox="0 0 24 24" style="width: 24px; height: 24px;" aria-hidden="true"><path d="{{c.icon}}"/></svg><span style="font-size: 12.5px; opacity: .85;">{{c.k}}</span><span class="mono" style="font-weight: 700;">{{c.v}}</span><span style="font-size: 12.5px; opacity: .85;">{{c.s}}</span></a>
+<sc-if value="{{c.arrow}}" hint-placeholder-val="{{true}}"><svg class="i" viewBox="0 0 24 24" style="width: 26px; height: 26px; color: var(--t3); margin: 0 4px;" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="overflow-x: auto;">
+<table style="width: 100%; min-width: 720px; border-collapse: collapse; font-size: 14px;">
+<thead><tr style="text-align: left; font-size: 12.5px; color: var(--t3);"><th scope="col" style="padding: 10px 12px;">Peça</th><th scope="col" style="padding: 10px 12px;">Lote do material</th><th scope="col" style="padding: 10px 12px;">Usinada por</th><th scope="col" style="padding: 10px 12px;">Medida em</th><th scope="col" style="padding: 10px 12px;">Ø do furo</th><th scope="col" style="padding: 10px 12px;">Resultado</th></tr></thead>
+<tbody>
+<sc-for list="{{trace}}" as="t" hint-placeholder-count="6"><tr style="border-top: 1px solid var(--bd);"><td class="mono" style="padding: 10px 12px; font-weight: 600;">{{t.p}}</td><td class="mono" style="padding: 10px 12px;">L-2610-033</td><td style="padding: 10px 12px;">Ricardo · Torno CNC</td><td class="mono" style="padding: 10px 12px;">{{t.d}}</td><td class="mono" style="padding: 10px 12px;">{{t.m}}</td><td style="padding: 10px 12px;"><span class="bdg {{t.cls}}">{{t.r}}</span></td></tr></sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vLaudo}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+<section class="fade" aria-label="Prévia do laudo" style="flex: 999 1 560px; min-width: 0; background: #fff; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.08), 0 24px 50px rgba(40,30,15,.16); padding: 40px 44px; display: flex; flex-direction: column; gap: 18px; font-size: 13.5px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1E1B16; padding-bottom: 14px;">
+<span style="display: flex; flex-direction: column;"><span class="disp" style="font-size: 30px; font-weight: 700; line-height: 1;">Laudo de inspeção dimensional</span><span style="color: var(--t2);">Usinagem Joinville · Rua das Indústrias, 900 · Joinville/SC</span></span>
+<span class="mono" style="text-align: right; font-size: 12.5px;">LAU-2026-0188<br>14/10/2026</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px;">
+<span><span style="display: block; color: var(--t3); font-size: 12px;">Cliente</span>Metalúrgica Vale do Itajaí</span>
+<span><span style="display: block; color: var(--t3); font-size: 12px;">Peça · desenho</span>Bucha Ø20 H7 · BUC-H7-020 rev. C</span>
+<span><span style="display: block; color: var(--t3); font-size: 12px;">OS · lote do material</span><span class="mono">OS-2026-00041 · L-2610-033</span></span>
+</div>
+<table style="width: 100%; border-collapse: collapse;">
+<thead><tr style="background: #F1ECE4; text-align: left; font-size: 12px;"><th scope="col" style="padding: 8px;">Característica</th><th scope="col" style="padding: 8px;">Especificado</th><th scope="col" style="padding: 8px;">Mín. medido</th><th scope="col" style="padding: 8px;">Máx. medido</th><th scope="col" style="padding: 8px;">Instrumento</th><th scope="col" style="padding: 8px;">Resultado</th></tr></thead>
+<tbody class="mono" style="font-size: 12.5px;">
+<tr style="border-bottom: 1px solid var(--bd);"><td style="padding: 8px; font-family: 'IBM Plex Sans';">Ø do furo</td><td style="padding: 8px;">20,000 +0,021/0</td><td style="padding: 8px;">20,008</td><td style="padding: 8px;">20,016</td><td style="padding: 8px;">INS-0007</td><td style="padding: 8px; color: #0F7A55; font-weight: 700;">Conforme</td></tr>
+<tr style="border-bottom: 1px solid var(--bd);"><td style="padding: 8px; font-family: 'IBM Plex Sans';">Ø externo</td><td style="padding: 8px;">25,00 ±0,05</td><td style="padding: 8px;">24,98</td><td style="padding: 8px;">25,02</td><td style="padding: 8px;">INS-0003</td><td style="padding: 8px; color: #0F7A55; font-weight: 700;">Conforme</td></tr>
+<tr style="border-bottom: 1px solid var(--bd);"><td style="padding: 8px; font-family: 'IBM Plex Sans';">Comprimento</td><td style="padding: 8px;">42,0 ±0,1</td><td style="padding: 8px;">41,96</td><td style="padding: 8px;">42,04</td><td style="padding: 8px;">INS-0003</td><td style="padding: 8px; color: #0F7A55; font-weight: 700;">Conforme</td></tr>
+<tr><td style="padding: 8px; font-family: 'IBM Plex Sans';">Rugosidade Ra do furo</td><td style="padding: 8px;">≤ 1,6 µm</td><td style="padding: 8px;">0,8</td><td style="padding: 8px;">1,2</td><td style="padding: 8px;">INS-0011</td><td style="padding: 8px; color: #0F7A55; font-weight: 700;">Conforme</td></tr>
+</tbody>
+</table>
+<span>Foram inspecionadas 10 de 10 peças (100%). Nenhuma não conformidade registrada.</span>
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+<span style="display: flex; flex-direction: column;"><svg viewBox="0 0 200 50" aria-hidden="true" style="width: 160px; height: auto;"><path d="M10 35c20-30 30 10 45-5s15-20 30 0 20 10 35-10 25 15 40 5" fill="none" stroke="#1A64A8" stroke-width="2.5" stroke-linecap="round"/></svg><span style="border-top: 1px solid #1E1B16; padding-top: 4px;">Carla Mendes · inspetora de qualidade</span></span>
+<span class="mono" style="font-size: 11px; color: var(--t3); text-align: right;">Verificar autenticidade<br>promec.app/l/LAU-2026-0188</span>
+</div>
+</section>
+<aside style="flex: 1 1 280px; max-width: 340px; display: flex; flex-direction: column; gap: 10px;">
+<button type="button" class="btn btn-p" style="height: 48px;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Baixar PDF</button>
+<button type="button" class="btn" style="height: 48px;">Enviar para a Juliana</button>
+<span style="font-size: 13px; color: var(--t2);">O laudo também aparece no portal do cliente, junto com a OS.</span>
+</aside>
+</div>
+</sc-if>
+
+</main>
+</div>
+
+<sc-if value="{{lbOpen}}" hint-placeholder-val="{{false}}">
+<div class="fade" role="dialog" aria-modal="true" aria-label="Foto ampliada" style="position: fixed; inset: 0; z-index: 30; background: rgba(15,12,8,.82); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px;">
+<div style="width: min(720px, 100%); aspect-ratio: 4 / 3; border-radius: 22px; background: {{lb.bg}}; display: grid; place-items: center; color: {{lb.fg}};"><svg class="i" viewBox="0 0 24 24" style="width: 180px; height: 180px; stroke-width: .9;" aria-hidden="true"><path d="{{lb.icon}}"/></svg></div>
+<span style="color: #fff; font-size: 16px;"><strong>{{lb.t}}</strong> · {{lb.s}}</span>
+<div style="display: flex; gap: 10px;"><button type="button" class="btn" onClick="{{lbPrev}}" aria-label="Foto anterior"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><button type="button" class="btn" onClick="{{lbClose}}">Fechar</button><button type="button" class="btn" onClick="{{lbNext}}" aria-label="Próxima foto"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { tab: 'med', cur: 5, res: ['ok', 'ok', 'ok', 'ok', 'ok', null, null, null, null, null], vals: { c1: '20,013', c2: '25,01', c3: '', c4: '' }, lb: -1, orig: 'Inspeção', dest: 'Retrabalho', ncDesc: '', ncCausa: '', ncSaved: false, ncExtra: 0 };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const num = (s) => { const v = parseFloat(String(s).replace(',', '.')); return isNaN(v) ? null : v; };
+    const fx = (v, d) => v.toFixed(d).replace('.', ',');
+    const C = [
+      ['c1', 'Ø do furo', '20,000 +0,021 / 0 (H7)', 'Súbito digital · INS-0007', 20.000, 20.021, 'mm', 3],
+      ['c2', 'Ø externo', '25,00 ± 0,05', 'Micrômetro 25–50 · INS-0003', 24.95, 25.05, 'mm', 2],
+      ['c3', 'Comprimento', '42,0 ± 0,1', 'Paquímetro digital · INS-0003', 41.9, 42.1, 'mm', 2],
+      ['c4', 'Rugosidade Ra do furo', 'até 1,6', 'Rugosímetro · INS-0011', 0, 1.6, 'µm', 1]
+    ];
+    let anyBad = false, allFilled = true, anyNear = false;
+    const chars = C.map((c) => {
+      const raw = st.vals[c[0]];
+      const v = num(raw);
+      const band = c[5] - c[4];
+      const lo = c[4] - band * 0.5, hi = c[5] + band * 0.5;
+      const pct = (x) => Math.max(0, Math.min(100, (x - lo) / (hi - lo) * 100)).toFixed(1) + '%';
+      let res = 'Aguardando', cls = 'b-neu', mc = '#6E6557', bc = 'var(--bd2)', rowBg = '#fff';
+      if (v == null) allFilled = false;
+      else if (v < c[4] || v > c[5]) { res = 'Fora da tolerância'; cls = 'b-bad'; mc = '#C0352B'; bc = '#C0352B'; rowBg = '#FFF4F2'; anyBad = true; }
+      else if (v - c[4] < band * 0.1 && c[4] > 0 || c[5] - v < band * 0.1) { res = 'No limite'; cls = 'b-wa'; mc = '#E0A100'; bc = '#E0A100'; anyNear = true; }
+      else { res = 'Conforme'; cls = 'b-ok'; mc = '#0F7A55'; bc = '#0F7A55'; }
+      return {
+        name: c[1], spec: c[2], inst: c[3], unit: c[6], v: raw, ph: fx((c[4] + c[5]) / 2, c[7]),
+        bandL: pct(c[4]), bandR: pct(c[5]), bandW: (band / (hi - lo) * 100).toFixed(1) + '%',
+        minTxt: fx(c[4], c[7]), maxTxt: fx(c[5], c[7]), has: v != null, pos: v != null ? pct(v) : '0%', mc, res, cls, bc, rowBg,
+        aria: c[1] + ': faixa ' + fx(c[4], c[7]) + ' a ' + fx(c[5], c[7]) + (v != null ? ', medido ' + fx(v, c[7]) : ''),
+        change: (e) => this.setState({ vals: Object.assign({}, st.vals, { [c[0]]: e.target.value }), ncSaved: false })
+      };
+    });
+    const curN = st.cur + 1;
+    const pieces = st.res.map((r, i) => {
+      const cur = i === st.cur;
+      return {
+        n: i + 1, checked: cur ? 'true' : 'false',
+        bg: cur ? '#1E1B16' : r === 'ok' ? '#DDF3E9' : r === 'bad' ? '#FBE2DF' : '#fff',
+        fg: cur ? '#fff' : r === 'ok' ? '#0F7A55' : r === 'bad' ? '#C0352B' : '#6E6557',
+        bc: cur ? '#1E1B16' : r ? 'transparent' : '#CFC4B3',
+        aria: 'Peça ' + (i + 1) + ': ' + (cur ? 'medindo agora' : r === 'ok' ? 'conforme' : r === 'bad' ? 'não conforme' : 'aguardando'),
+        pick: () => this.setState({ cur: i, vals: { c1: '', c2: '', c3: '', c4: '' } })
+      };
+    });
+    const nDone = st.res.filter((r) => r).length;
+    let sumTxt = 'Preencha as medidas: o resultado aparece na hora, peça por peça.', sumBg = 'var(--s2)';
+    if (anyBad) { sumTxt = 'Peça ' + curN + ' tem medida fora da tolerância. Separe a peça e abra uma não conformidade: o Ricardo é avisado no tablet.'; sumBg = '#FBE2DF'; }
+    else if (allFilled && anyNear) { sumTxt = 'Peça ' + curN + ' aprovada, mas perto do limite. Vale avisar o Ricardo para conferir o desgaste do alargador.'; sumBg = '#FCEFC7'; }
+    else if (allFilled) { sumTxt = 'Tudo dentro da tolerância. Pode aprovar a peça ' + curN + '.'; sumBg = '#DDF3E9'; }
+    const P = [
+      ['Medição do furo', 'Peça 1 · 20,008 mm', 'M3 7h18v6H3zM7 13v4M11 13v2M15 13v4', '#E3EDF7', '#1D4E7A'],
+      ['Buchas aprovadas', '5 peças na bandeja', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z', '#FDE8DA', '#9A3A06'],
+      ['Tampão H7', 'Passa / não passa', 'M8 3h8v6H8zM10 9v12M14 9v12', '#DDF3E9', '#0F7A55']
+    ];
+    const photos = P.map((p, i) => ({ t: p[0], s: p[1], icon: p[2], bg: p[3], fg: p[4], open: () => this.setState({ lb: i }) }));
+    const lbI = st.lb;
+    const lb = lbI >= 0 ? photos[lbI] : photos[0];
+    const ncs = [
+      ['NC-0031', 'OS-2026-00040', 'Porosidade no cordão de solda do suporte 3/16', 'Inspeção', 'b-inf', 'gás com umidade no cilindro', 'trocar cilindro e refazer o cordão (sub-OS)', 'Marcos Pereira', '16/10', 'R$ 412,00', 'Em andamento', 'b-run', '#5B3FB5'],
+      ['NC-0030', 'OS-2026-00038', 'Ø do pino 0,03 mm abaixo do mínimo em 2 peças', 'Inspeção', 'b-inf', 'compensação de ferramenta não atualizada', 'peças refeitas · rotina de conferência a cada 10', 'Ricardo Alves', '09/10', 'R$ 186,00', 'Concluída', 'b-ok', '#0F7A55'],
+      ['NC-0029', 'OS-2026-00035', 'Rosca do flange amassada na entrega', 'Cliente', 'b-wa', 'embalagem sem protetor de rosca', 'protetor plástico obrigatório em flanges', 'Paulo Henrique', '20/10', 'R$ 686,00', 'Aguardando ação', 'b-wa', '#E0A100']
+    ].map((n) => ({ code: n[0], os: n[1], t: n[2], orig: n[3], ocls: n[4], causa: n[5], acao: n[6], resp: n[7], prazo: n[8], custo: n[9], st: n[10], cls: n[11], c: n[12] }));
+    const origins = ['Inspeção', 'Processo', 'Fornecedor', 'Cliente'].map((l) => ({ l, cls: st.orig === l ? 'on' : '', checked: st.orig === l ? 'true' : 'false', pick: () => this.setState({ orig: l }) }));
+    const dests = ['Retrabalho', 'Refugo', 'Aceitar com desvio'].map((l) => ({ l, cls: st.dest === l ? 'on' : '', checked: st.dest === l ? 'true' : 'false', pick: () => this.setState({ dest: l }) }));
+    const chain = [
+      ['Lote do material', 'L-2610-033', 'Aços Sul · certificado anexo', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z', '#FCEFC7', '#1E1B16', 'Estoque.dc.html'],
+      ['Ordem de serviço', 'OS-2026-00041', 'Torno CNC · Ricardo', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', '#ECE6FB', '#1E1B16', 'OS-Detalhe.dc.html'],
+      ['Peças', '10 buchas', nDone + ' medidas · 0 refugo', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z', '#DDF3E9', '#1E1B16', '#'],
+      ['Cliente', 'Metalúrgica Vale', 'entrega prevista 20/10', 'M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18ZM10 6h4M10 10h4M10 14h4', '#E3EDF7', '#1E1B16', 'Clientes-Form.dc.html'],
+      ['Equipamento', 'MV-RED-014', 'Redutor RV-200', 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v3M12 19v3M2 12h3M19 12h3', '#1D4E7A', '#fff', 'Ativos-Form.dc.html']
+    ].map((c, i, a) => ({ k: c[0], v: c[1], s: c[2], icon: c[3], bg: c[4], fg: c[5], href: c[6], arrow: i < a.length - 1 }));
+    const M = ['20,008', '20,011', '20,016', '20,012', '20,010'];
+    const trace = st.res.map((r, i) => ({ p: '#' + String(i + 1).padStart(2, '0'), d: r ? '14/10 ' + (13 + Math.floor(i / 3)) + ':' + String(5 + i * 7).padStart(2, '0') : '—', m: i < 5 ? M[i] : r ? '—' : 'aguardando', r: r === 'ok' ? 'Conforme' : r === 'bad' ? 'Não conforme' : 'Aguardando', cls: r === 'ok' ? 'b-ok' : r === 'bad' ? 'b-bad' : 'b-neu' }));
+    const T = [['med', 'Medir agora', 'M3 7h18v6H3zM7 13v4M11 13v2M15 13v4', ''], ['nc', 'Não conformidades', 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z', String(2 + st.ncExtra)], ['ras', 'Rastreabilidade', 'M5 12h14M13 6l6 6-6 6M3 6v12'], ['laudo', 'Laudo', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M9 15l2 2 4-4']];
+    const tabs = T.map((t) => ({ label: t[1], icon: t[2], n: t[3] || '', cls: st.tab === t[0] ? 'on' : '', sel: st.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', true], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    let ticks = '';
+    for (let x = 60, k = 0; x <= 390; x += 6, k++) ticks += 'M' + x + ' 40v' + (k % 5 === 0 ? 10 : 5);
+    const badVal = C.map((c) => ({ c, v: num(st.vals[c[0]]) })).find((x) => x.v != null && (x.v < x.c[4] || x.v > x.c[5]));
+    return {
+      tabs, rail, ticks, chars, pieces, photos, ncs, origins, dests, chain, trace,
+      vMed: st.tab === 'med', vNc: st.tab === 'nc', vRas: st.tab === 'ras', vLaudo: st.tab === 'laudo',
+      doneTxt: nDone + ' de 10 medidas', curN, sumTxt, sumBg,
+      canNc: anyBad, canOk: allFilled && !anyBad,
+      approve: () => { const r = st.res.slice(); r[st.cur] = 'ok'; const nx = r.findIndex((x) => !x); this.setState({ res: r, cur: nx < 0 ? st.cur : nx, vals: { c1: '', c2: '', c3: '', c4: '' } }); },
+      openNc: () => { const r = st.res.slice(); r[st.cur] = 'bad'; this.setState({ res: r, tab: 'nc', orig: 'Inspeção', ncDesc: 'Peça ' + curN + ' da OS-2026-00041: ' + badVal.c[1].toLowerCase() + ' medido ' + st.vals[badVal.c[0]] + ' ' + badVal.c[6] + ' (faixa ' + fx(badVal.c[4], badVal.c[7]) + ' a ' + fx(badVal.c[5], badVal.c[7]) + ').', ncCausa: badVal.c[0] === 'c1' ? 'Possível desgaste do alargador H7' : '', ncSaved: false }); },
+      ncDesc: st.ncDesc, ncCausa: st.ncCausa, onNcDesc: (e) => this.setState({ ncDesc: e.target.value }), onNcCausa: (e) => this.setState({ ncCausa: e.target.value }),
+      ncFormBc: st.ncDesc ? '#C0352B' : 'var(--bd)', ncSaved: st.ncSaved, ncOpen: 2 + st.ncExtra,
+      saveNc: () => this.setState({ ncSaved: true, ncExtra: st.ncSaved ? st.ncExtra : st.ncExtra + 1 }),
+      lbOpen: lbI >= 0, lb, lbClose: () => this.setState({ lb: -1 }),
+      lbPrev: () => this.setState({ lb: (lbI + photos.length - 1) % photos.length }), lbNext: () => this.setState({ lb: (lbI + 1) % photos.length }),
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

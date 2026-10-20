@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Compras</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.tab{all:unset;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tab.on{background:#1E1B16;color:#fff}
+.pick{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:flex;flex-direction:column;gap:4px;padding:16px;border-radius:20px;border:2px solid var(--bd);background:#fff;transition:border-color .25s,box-shadow .25s,transform .2s}
+.pick:hover{transform:translateY(-2px)}
+.pick.on{border-color:var(--p);box-shadow:0 0 0 4px var(--ps)}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;min-height:36px;padding:0 12px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:13px;font-weight:500;display:inline-flex;align-items:center}
+.opt.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.btn:focus-visible,.ib:focus-visible,.tab:focus-visible,.pick:focus-visible,.opt:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:26px;line-height:1.1;font-weight:700}
+.sub{font-size:13.5px;color:var(--t3)}
+.rt{width:100%;border-collapse:collapse;font-size:14.5px}
+.rt th{font-size:12.5px;font-weight:600;color:var(--t3);text-align:left;padding:12px;background:var(--s2);border-bottom:1px solid var(--bd);white-space:nowrap}
+.rt td{padding:12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fade{animation:fade .25s ease both}
+@media (prefers-reduced-motion:reduce){.rv,.fade{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">Suprimentos</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600;" aria-current="page">Compras</span></nav>
+<a href="Estoque.dc.html" class="btn btn-sm">Ver estoque</a>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 20px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: linear-gradient(135deg, #7C5CC4 0%, #4A3290 45%, #15395A 100%); color: #fff; padding: clamp(22px, 3vw, 32px);">
+<svg viewBox="0 0 400 200" aria-hidden="true" style="position: absolute; right: 16px; top: 10px; width: min(460px, 44%); height: auto;" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M30 150V70h170v80M200 95h70l36 36v19H200M30 150h276"/><circle cx="85" cy="158" r="16"/><circle cx="250" cy="158" r="16"/>
+<path d="M50 92h40v40H50zM100 92h40v40h-40zM150 92h40v40h-40z"/><path d="M60 104h20M110 104h20M160 104h20" stroke="#FFD08A"/>
+<path d="M330 40h50v70h-50zM340 56h30M340 70h30M340 84h20"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 620px;">
+<span style="font-size: 14px; font-weight: 600; color: #E4D9FF;">Compras</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.4vw, 54px); font-weight: 700; line-height: 1;">Comprar certo, sem correria</h1>
+<p style="margin: 0; font-size: 16px; color: #EDE7FF;">Chegaram as 3 cotações do latão Ø25. A mais barata não manda certificado e a outra chega atrasada. Montei o comparativo para você decidir.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #EDE7FF;">Requisições abertas</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">5</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #EDE7FF;">Cotações para decidir</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">2</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #EDE7FF;">Esperando aprovação</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600; color: #FFD08A;">{{waitN}}</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #EDE7FF;">Comprado em outubro</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">R$ 14.380</span></div>
+</div>
+</div>
+</section>
+
+<div class="rv" role="tablist" aria-label="Etapas da compra" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; border-radius: 999px; align-self: flex-start; max-width: 100%; background: var(--s3);">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" onClick="{{t.pick}}"><span class="mono" style="width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: {{t.nb}}; color: {{t.nf}};">{{t.n}}</span>{{t.label}}</button></sc-for>
+</div>
+
+<sc-if value="{{vReq}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="overflow: hidden;" aria-labelledby="h-req">
+<div style="padding: 18px 20px 10px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;"><div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-req" class="h2">Requisições</h2><span class="sub">Nascem da OS, do ponto de pedido do estoque ou de alguém da equipe</span></div><button type="button" class="btn btn-sm btn-p">Cotar selecionadas</button></div>
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 900px;">
+<thead><tr><th scope="col">Requisição</th><th scope="col">Item</th><th scope="col" style="text-align: right;">Quantidade</th><th scope="col">Veio de</th><th scope="col">Precisa até</th><th scope="col">Situação</th></tr></thead>
+<tbody>
+<sc-for list="{{reqs}}" as="r" hint-placeholder-count="5"><tr><td class="mono" style="font-weight: 600;">{{r.c}}</td><td>{{r.item}}</td><td class="mono" style="text-align: right;">{{r.q}}</td><td><span class="bdg {{r.oc}}">{{r.o}}</span><span style="display: block; font-size: 12.5px; color: var(--t3); margin-top: 4px;">{{r.od}}</span></td><td class="mono">{{r.need}}</td><td><span class="bdg {{r.sc}}">{{r.s}}</span></td></tr></sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vCot}}" hint-placeholder-val="{{true}}">
+<section class="card rv" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h-cot">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-cot" class="h2">COT-0045 · barra de latão C360 Ø25 mm</h2><span class="sub">6 barras de 3 m · 75,06 kg · da REQ-0098 (ponto de pedido) · precisa chegar até 23/10 · item exige certificado do material</span></div>
+<span class="bdg b-wa">Escolha um fornecedor</span>
+</div>
+<div style="display: grid; grid-template-columns: 200px repeat(3, minmax(0, 1fr)); gap: 10px; align-items: stretch;">
+<span></span>
+<sc-for list="{{sups}}" as="s" hint-placeholder-count="3">
+<button type="button" class="pick {{s.cls}}" onClick="{{s.pick}}" aria-pressed="{{s.pressed}}">
+<span style="display: flex; justify-content: space-between; align-items: center; gap: 6px;"><span style="font-weight: 700; font-size: 16px;">{{s.n}}</span><sc-if value="{{s.rec}}" hint-placeholder-val="{{false}}"><span class="bdg" style="background: #E35D14; color: #fff;">Recomendado</span></sc-if></span>
+<span class="mono" style="font-size: 26px; font-weight: 700; letter-spacing: -.02em;">{{s.total}}</span>
+<span style="font-size: 12.5px; color: var(--t3);">total com frete</span>
+</button>
+</sc-for>
+<sc-for list="{{crit}}" as="c" hint-placeholder-count="7">
+<span style="display: flex; align-items: center; font-size: 14px; font-weight: 500; color: var(--t2); padding: 10px 0; border-top: 1px solid var(--bd);">{{c.k}}</span>
+<sc-for list="{{c.cells}}" as="v" hint-placeholder-count="3"><span style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--bd); background: {{v.bg}}; border-radius: 10px; font-weight: {{v.fw}}; color: {{v.fg}};"><sc-if value="{{v.icon}}" hint-placeholder-val="{{false}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{v.icon}}"/></svg></sc-if><span class="{{v.mono}}">{{v.t}}</span></span></sc-for>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center; padding: 16px 18px; border-radius: 20px; background: {{decBg}};">
+<span style="width: 40px; height: 40px; border-radius: 12px; background: {{decIc}}; color: #fff; display: grid; place-items: center; flex: none;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{decIcon}}"/></svg></span>
+<span style="flex: 1 1 320px; font-size: 15px;">{{decTxt}}</span>
+<sc-if value="{{canOrder}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-p" onClick="{{makeOrder}}">{{orderLbl}}</button></sc-if>
+</div>
+<sc-if value="{{ordered}}" hint-placeholder-val="{{false}}"><div role="status" class="fade" style="display: flex; gap: 10px; align-items: center; padding: 14px 18px; border-radius: 18px; background: #E0EDFA; color: #15395A;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 6v6l4 2"/></svg><span style="flex: 1;"><strong>PED-0312 criado.</strong> Como passa de R$ 3.000,00, foi para a Marina aprovar. Ela recebeu no celular.</span><button type="button" class="btn btn-sm" onClick="{{goPed}}">Ver pedido</button></div></sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{vPed}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="overflow: hidden;" aria-labelledby="h-ped">
+<div style="padding: 18px 20px 10px; display: flex; flex-direction: column; gap: 2px;"><h2 id="h-ped" class="h2">Pedidos de compra</h2><span class="sub">Até R$ 3.000,00 o comprador aprova. Acima disso, vai para a Marina.</span></div>
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 900px;">
+<thead><tr><th scope="col">Pedido</th><th scope="col">Fornecedor</th><th scope="col">O quê</th><th scope="col" style="text-align: right;">Valor</th><th scope="col">Alçada</th><th scope="col">Entrega</th><th scope="col">Situação</th></tr></thead>
+<tbody>
+<sc-for list="{{peds}}" as="p" hint-placeholder-count="5"><tr style="background: {{p.bg}};"><td class="mono" style="font-weight: 600;">{{p.c}}</td><td>{{p.f}}</td><td style="font-size: 13.5px; color: var(--t2);">{{p.o}}</td><td class="mono" style="text-align: right; font-weight: 600;">{{p.v}}</td><td style="font-size: 13.5px;">{{p.a}}</td><td class="mono">{{p.e}}</td><td><span class="bdg {{p.sc}}">{{p.s}}</span></td></tr></sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vRec}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="h-rec">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-rec" class="h2">Recebendo o PED-0310</h2><span class="sub">Ferramentas Catarinense · nota 48.211 · chegou hoje às 09:40 · conferido por Tânia Rocha</span></div>
+<span class="bdg b-wa">2 divergências</span>
+</div>
+<sc-for list="{{recs}}" as="r" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: minmax(0, 1.4fr) 110px 110px 120px 120px minmax(0, 1.6fr); gap: 12px; align-items: center; padding: 14px 16px; border-radius: 18px; background: {{r.bg}}; border: 1px solid var(--bd);">
+<span style="display: flex; flex-direction: column;"><span style="font-weight: 600;">{{r.item}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">{{r.code}}</span></span>
+<span style="display: flex; flex-direction: column; font-size: 12.5px; color: var(--t3);">Pedido<span class="mono" style="font-size: 15px; color: #1E1B16;">{{r.qp}}</span></span>
+<span style="display: flex; flex-direction: column; font-size: 12.5px; color: var(--t3);">Chegou<span class="mono" style="font-size: 15px; font-weight: 700; color: {{r.qc}};">{{r.qr}}</span></span>
+<span style="display: flex; flex-direction: column; font-size: 12.5px; color: var(--t3);">Preço pedido<span class="mono" style="font-size: 15px; color: #1E1B16;">{{r.pp}}</span></span>
+<span style="display: flex; flex-direction: column; font-size: 12.5px; color: var(--t3);">Preço na nota<span class="mono" style="font-size: 15px; font-weight: 700; color: {{r.pc}};">{{r.pn}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 13px; color: var(--t2);">{{r.msg}}</span><sc-if value="{{r.hasOpts}}" hint-placeholder-val="{{false}}"><span style="display: flex; flex-wrap: wrap; gap: 6px;" role="radiogroup" aria-label="Decisão para {{r.item}}"><sc-for list="{{r.opts}}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{o.checked}}" class="opt {{o.cls}}" onClick="{{o.pick}}">{{o.l}}</button></sc-for></span></sc-if></span>
+</div>
+</sc-for>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding-top: 6px;">
+<span style="font-size: 14px; color: var(--t2);">{{recTxt}}</span>
+<button type="button" class="btn btn-p" onClick="{{confirmRec}}" disabled="{{recBlocked}}" style="opacity: {{recOp}};">Confirmar recebimento</button>
+</div>
+<sc-if value="{{recDone}}" hint-placeholder-val="{{false}}"><div role="status" class="fade" style="padding: 14px 18px; border-radius: 18px; background: #DDF3E9; color: #0F7A55; font-weight: 600;">Recebido! O estoque já foi atualizado, 1 caixa de pastilha ficou pendente no pedido e o Financeiro recebeu a nota para lançar no Contas a pagar.</div></sc-if>
+</section>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1800}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { tab: 'cot', win: null, ordered: false, d1: null, d2: null, recDone: false };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const f = (x) => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const KG = 75.06;
+    const S = [
+      { n: 'Aços Sul', kg: 43.20, frete: 0, freteT: 'CIF · incluso', dias: 5, chega: '21/10', late: false, pag: '28 dias', cert: true, aval: '4,8 · 94% no prazo' },
+      { n: 'Metais Brasil', kg: 40.60, frete: 180, freteT: 'FOB · + R$ 180,00', dias: 12, chega: '30/10', late: true, pag: '28/42 dias', cert: true, aval: '4,2 · 81% no prazo' },
+      { n: 'Latões Paraná', kg: 41.30, frete: 0, freteT: 'CIF · incluso', dias: 3, chega: '19/10', late: false, pag: 'À vista', cert: false, aval: '3,9 · primeira compra' }
+    ].map((s) => Object.assign(s, { total: KG * s.kg + s.frete }));
+    const minTot = Math.min.apply(null, S.map((s) => s.total));
+    const minDias = Math.min.apply(null, S.map((s) => s.dias));
+    const win = st.win;
+    const sups = S.map((s, i) => ({ n: s.n, total: 'R$ ' + f(s.total), rec: i === 0, cls: win === i ? 'on' : '', pressed: win === i ? 'true' : 'false', pick: () => this.setState({ win: i, ordered: false }) }));
+    const good = { bg: '#DDF3E9', fg: '#0F7A55', fw: 700, icon: 'M20 6 9 17l-5-5' };
+    const bad = { bg: '#FBE2DF', fg: '#C0352B', fw: 700, icon: 'M18 6 6 18M6 6l12 12' };
+    const plain = { bg: 'transparent', fg: '#1E1B16', fw: 500, icon: '' };
+    const cell = (t, kind, mono) => Object.assign({ t, mono: mono ? 'mono' : '' }, kind === 'g' ? good : kind === 'b' ? bad : plain);
+    const crit = [
+      { k: 'Preço por kg', cells: S.map((s) => cell('R$ ' + f(s.kg), s.kg === Math.min(43.2, 40.6, 41.3) ? 'g' : '', true)) },
+      { k: 'Frete', cells: S.map((s) => cell(s.freteT, s.frete ? 'b' : '', false)) },
+      { k: 'Total', cells: S.map((s) => cell('R$ ' + f(s.total), s.total === minTot ? 'g' : '', true)) },
+      { k: 'Chega em', cells: S.map((s) => cell(s.chega + ' · ' + s.dias + ' dias', s.late ? 'b' : s.dias === minDias ? 'g' : '', true)) },
+      { k: 'Certificado do material', cells: S.map((s) => cell(s.cert ? 'Envia' : 'Não envia', s.cert ? '' : 'b', false)) },
+      { k: 'Pagamento', cells: S.map((s) => cell(s.pag, '', false)) },
+      { k: 'Histórico', cells: S.map((s) => cell(s.aval, '', false)) }
+    ];
+    let decTxt = 'Recomendo a Aços Sul: chega em 21/10, antes do prazo, e manda o certificado que o lote exige. Custa R$ ' + f(S[0].total - S[2].total) + ' a mais que a mais barata.', decBg = '#FDE8DA', decIc = '#E35D14', decIcon = 'M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1Z', canOrder = false, orderLbl = '';
+    if (win === 0) { decTxt = 'Aços Sul escolhida. Como o pedido passa de R$ 3.000,00, ele vai para a Marina aprovar antes de seguir para o fornecedor.'; decBg = '#DDF3E9'; decIc = '#0F7A55'; decIcon = 'M20 6 9 17l-5-5'; canOrder = !st.ordered; orderLbl = 'Gerar pedido · R$ ' + f(S[0].total); }
+    if (win === 1) { decTxt = 'Metais Brasil chega só em 30/10, uma semana depois do prazo. O estoque de latão acaba antes disso.'; decBg = '#FBE2DF'; decIc = '#C0352B'; decIcon = 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z'; canOrder = !st.ordered; orderLbl = 'Comprar mesmo assim'; }
+    if (win === 2) { decTxt = 'Latões Paraná é a mais barata, mas não manda certificado. Sem ele, o lote não passa no recebimento e a rastreabilidade da bucha H7 se perde.'; decBg = '#FBE2DF'; decIc = '#C0352B'; decIcon = 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z'; canOrder = false; }
+    const reqs = [
+      ['REQ-0098', 'Barra de latão C360 Ø25 mm', '6 barras', 'Ponto de pedido', 'b-wa', 'estoque caiu para 3 barras', '23/10', 'Em cotação', 'b-inf'],
+      ['REQ-0099', 'Arame MIG ER70S-6 1,0 mm', '6 rolos', 'Ponto de pedido', 'b-wa', 'estoque caiu para 1 rolo', '20/10', 'Aberta', 'b-neu'],
+      ['REQ-0100', 'Chapa aço 3/16" 1200×3000', '4 chapas', 'OS', 'b-run', 'OS-2026-00046 · esteira', '18/10', 'Aberta', 'b-neu'],
+      ['REQ-0096', 'Têmpera de 12 eixos Ø45', '12 peças', 'OS · terceiro', 'b-run', 'OS-2026-00044 · Agro Pampa', '21/10', 'Em cotação', 'b-inf'],
+      ['REQ-0097', 'Pastilha TNMG 160408', '2 caixas', 'Manual', 'b-neu', 'pedida por Ricardo Alves', '16/10', 'Virou PED-0310', 'b-ok']
+    ].map((r) => ({ c: r[0], item: r[1], q: r[2], o: r[3], oc: r[4], od: r[5], need: r[6], s: r[7], sc: r[8] }));
+    const peds = [];
+    if (st.ordered) peds.push({ c: 'PED-0312', f: S[win].n, o: '6 barras de latão C360 Ø25', v: 'R$ ' + f(S[win].total), a: 'Marina Costa · acima de R$ 3.000', e: S[win].chega, s: 'Aguardando aprovação', sc: 'b-wa', bg: '#FFF8EC' });
+    [['PED-0311', 'Aços Sul', '6 barras de latão C360 Ø25', 'R$ 3.024,00', 'Marina Costa · aprovado 08/10', '13/10', 'Recebido', 'b-ok'],
+      ['PED-0310', 'Ferramentas Catarinense', 'Pastilhas, brocas e machos', 'R$ 1.016,50', 'Tânia Rocha · até R$ 3.000', 'hoje', 'Em recebimento', 'b-run'],
+      ['PED-0309', 'Gases Industriais Litoral', '2 cilindros de C25', 'R$ 690,00', 'Tânia Rocha · até R$ 3.000', '16/10', 'Enviado', 'b-inf'],
+      ['PED-0308', 'Têmpera Norte Tratamentos', 'Têmpera de 8 pinos', 'R$ 2.100,00', 'Tânia Rocha · até R$ 3.000', '17/10', 'Aprovado', 'b-ok']
+    ].forEach((p) => peds.push({ c: p[0], f: p[1], o: p[2], v: p[3], a: p[4], e: p[5], s: p[6], sc: p[7], bg: 'transparent' }));
+    const opt = (key, l) => ({ l, cls: st[key] === l ? 'on' : '', checked: st[key] === l ? 'true' : 'false', pick: () => this.setState({ [key]: l, recDone: false }) });
+    const recs = [
+      { item: 'Pastilha TNMG 160408', code: 'FG-0310 · caixa com 10', qp: '2 cx', qr: '1 cx', qc: '#C0352B', pp: 'R$ 420,00', pn: 'R$ 420,00', pc: '#1E1B16', msg: 'Veio 1 caixa a menos.', hasOpts: true, opts: [opt('d1', 'Aceitar e deixar 1 pendente'), opt('d1', 'Recusar a entrega')], bg: '#FFF8EC' },
+      { item: 'Broca HSS Ø8,5 mm', code: 'FG-0118', qp: '5 un.', qr: '5 un.', qc: '#0F7A55', pp: 'R$ 18,50', pn: 'R$ 19,60', pc: '#C0352B', msg: 'Preço na nota 5,9% acima do pedido.', hasOpts: true, opts: [opt('d2', 'Aceitar novo preço'), opt('d2', 'Contestar com o fornecedor')], bg: '#FFF8EC' },
+      { item: 'Macho máquina M10', code: 'FG-0204', qp: '2 un.', qr: '2 un.', qc: '#0F7A55', pp: 'R$ 42,00', pn: 'R$ 42,00', pc: '#0F7A55', msg: 'Tudo certo.', hasOpts: false, opts: [], bg: '#fff' }
+    ];
+    const pending = (st.d1 ? 0 : 1) + (st.d2 ? 0 : 1);
+    const T = [['req', 'Requisições'], ['cot', 'Cotações'], ['ped', 'Pedidos'], ['rec', 'Recebimento']];
+    const tabs = T.map((t, i) => ({ label: t[1], n: i + 1, cls: st.tab === t[0] ? 'on' : '', sel: st.tab === t[0] ? 'true' : 'false', nb: st.tab === t[0] ? '#E35D14' : '#fff', nf: st.tab === t[0] ? '#fff' : '#4E473D', pick: () => this.setState({ tab: t[0] }) }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12', true], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      tabs, rail, sups, crit, reqs, peds, recs,
+      vReq: st.tab === 'req', vCot: st.tab === 'cot', vPed: st.tab === 'ped', vRec: st.tab === 'rec',
+      decTxt, decBg, decIc, decIcon, canOrder, orderLbl, ordered: st.ordered,
+      makeOrder: () => this.setState({ ordered: true }), goPed: () => this.setState({ tab: 'ped' }),
+      waitN: st.ordered ? 1 : 0,
+      recTxt: pending ? 'Decida as ' + pending + ' divergência' + (pending > 1 ? 's' : '') + ' para confirmar.' : 'Tudo decidido. O estoque e o Contas a pagar são atualizados juntos.',
+      recBlocked: pending > 0, recOp: pending > 0 ? '.5' : '1', recDone: st.recDone,
+      confirmRec: () => { if (pending) return; this.setState({ recDone: true }); },
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

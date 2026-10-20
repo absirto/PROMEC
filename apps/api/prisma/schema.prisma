@@ -59,27 +59,46 @@ model Empresa {
   nome     String
   criadaEm DateTime @default(now())
 
-  usuarios      Usuario[]
-  parametros    Parametros?
-  colaboradores Colaborador[]
-  centros       CentroTrabalho[]
-  operadores    CentroOperador[]
-  custosFixos   LancamentoCustoFixo[]
-  tabelas       TabelaCustos[]
-  clientes      Cliente[]
-  orcamentos    Orcamento[]
-  historicos    OrcamentoHistorico[]
-  sequencias    Sequencia[]
-  ordens        OrdemServico[]
-  osOperacoes   OsOperacao[]
-  osCustos      OsCusto[]
-  apontamentos  Apontamento[]
-  ocorrencias   Ocorrencia[]
-  inspecoes     Inspecao[]
-  osHistoricos  OsHistorico[]
-  feriados      Feriado[]
-  paradas       ParadaCentro[]
-  agendamentos  Agendamento[]
+  usuarios         Usuario[]
+  parametros       Parametros?
+  colaboradores    Colaborador[]
+  centros          CentroTrabalho[]
+  operadores       CentroOperador[]
+  custosFixos      LancamentoCustoFixo[]
+  tabelas          TabelaCustos[]
+  clientes         Cliente[]
+  orcamentos       Orcamento[]
+  historicos       OrcamentoHistorico[]
+  sequencias       Sequencia[]
+  ordens           OrdemServico[]
+  osOperacoes      OsOperacao[]
+  osCustos         OsCusto[]
+  apontamentos     Apontamento[]
+  ocorrencias      Ocorrencia[]
+  inspecoes        Inspecao[]
+  osHistoricos     OsHistorico[]
+  feriados         Feriado[]
+  paradas          ParadaCentro[]
+  agendamentos     Agendamento[]
+  itens            Item[]
+  fornecedores     Fornecedor[]
+  fornecedorItens  FornecedorItem[]
+  locais           LocalEstoque[]
+  saldos           Saldo[]
+  lotes            Lote[]
+  movimentos       Movimento[]
+  reservas         Reserva[]
+  requisicoes      Requisicao[]
+  requisicaoItens  RequisicaoItem[]
+  cotacoes         Cotacao[]
+  cotacaoRespostas CotacaoResposta[]
+  pedidos          Pedido[]
+  pedidoItens      PedidoItem[]
+  recebimentos     Recebimento[]
+  inventarios      Inventario[]
+  planosInspecao   PlanoInspecao[]
+  naoConformidades NaoConformidade[]
+  garantias        Garantia[]
 }
 
 model Usuario {
@@ -107,6 +126,8 @@ model Parametros {
   margemMinima          Decimal @default(0.15) @db.Decimal(9, 6)
   validadeOrcamentoDias Int     @default(15)
   limiteServicoRapido   Decimal @default(1500) @db.Decimal(14, 2)
+  limiteAprovacaoCompra Decimal @default(5000) @db.Decimal(14, 2)
+  garantiaDias          Int     @default(90)
 
   empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
@@ -276,6 +297,7 @@ model Orcamento {
   aprovadoEm             DateTime?
   recusadoEm             DateTime?
   prazoPrometido         DateTime?       @db.Date
+  custoDesatualizado     Boolean         @default(false)
   criadoEm               DateTime        @default(now())
   atualizadoEm           DateTime        @updatedAt
 
@@ -362,6 +384,9 @@ model OrdemServico {
   prazo              DateTime   @db.Date
   prioridade         Prioridade @default(NORMAL)
   posicaoFila        Int?
+  planoInspecaoId    String?
+  planoVersao        Int?
+  garantiaDeId       String?
   objeto             Json
   observacoes        String     @default("")
   status             StatusOs   @default(ABERTA)
@@ -433,6 +458,7 @@ model OsCusto {
   orcado        Decimal  @db.Decimal(18, 10)
   real          Decimal? @db.Decimal(18, 10)
   doOrcamento   Boolean  @default(false)
+  itemId        String?
   justificativa String?
   criadoEm      DateTime @default(now())
 
@@ -490,6 +516,7 @@ model Inspecao {
   itens              Json
   observacao         String?
   centroRetrabalhoId String?
+  inspetor           String?
   usuarioId          String?
   data               DateTime @default(now())
 
@@ -576,4 +603,451 @@ model Agendamento {
 
   @@index([tenantId, inicio])
   @@index([tenantId, centroId])
+}
+
+enum TipoItem {
+  MATERIA_PRIMA
+  PECA_REPOSICAO
+  INSUMO
+  FERRAMENTA_GERAL
+  FERRAMENTA_ESPECIFICA
+  PRODUTO_ACABADO
+  SERVICO_EXTERNO
+}
+
+enum TipoLocal {
+  ALMOXARIFADO
+  PECAS
+  MATERIA_PRIMA
+  FERRAMENTARIA
+}
+
+enum TipoMovimento {
+  ENTRADA_RECEBIMENTO
+  ENTRADA_AVULSA
+  SAIDA_OS
+  ESTORNO_OS
+  SAIDA_CENTRO
+  AJUSTE
+  TRANSFERENCIA
+  PERDA
+  DEVOLUCAO
+}
+
+enum StatusReserva {
+  ATIVA
+  ATENDIDA
+  LIBERADA
+}
+
+enum StatusRequisicao {
+  ABERTA
+  EM_COTACAO
+  ATENDIDA
+  CANCELADA
+}
+
+enum OrigemRequisicao {
+  OS
+  PONTO_PEDIDO
+  MANUAL
+}
+
+enum StatusCotacao {
+  ABERTA
+  ENCERRADA
+}
+
+enum StatusPedido {
+  AGUARDANDO_APROVACAO
+  APROVADO
+  PARCIAL
+  RECEBIDO
+  CANCELADO
+}
+
+enum OrigemNc {
+  MATERIAL
+  PROCESSO
+  OPERADOR
+  PROJETO
+  FORNECEDOR
+}
+
+enum StatusNc {
+  ABERTA
+  EM_TRATAMENTO
+  ENCERRADA
+}
+
+enum StatusGarantia {
+  EM_ANALISE
+  PROCEDENTE
+  IMPROCEDENTE
+}
+
+model Item {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  codigo                String
+  descricao             String
+  tipo                  TipoItem
+  unidadeCompra         String
+  unidadeConsumo        String
+  fatorConversao        Decimal  @default(1) @db.Decimal(20, 10)
+  pesoPorMetroKg        Decimal? @db.Decimal(14, 6)
+  custoMedio            Decimal  @default(0) @db.Decimal(20, 10)
+  ultimoCusto           Decimal  @default(0) @db.Decimal(20, 10)
+  precoVenda            Decimal? @db.Decimal(14, 4)
+  margemPeca            Decimal? @db.Decimal(9, 6)
+  estoqueMinimo         Decimal  @default(0) @db.Decimal(20, 10)
+  estoqueMaximo         Decimal  @default(0) @db.Decimal(20, 10)
+  fornecedorPreferidoId String?
+  rastreavel            Boolean  @default(false)
+  categoriaDespesa      String   @default("")
+  ativo                 Boolean  @default(true)
+  criadoEm              DateTime @default(now())
+  atualizadoEm          DateTime @updatedAt
+
+  empresa      Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fornecedores FornecedorItem[]
+  saldos       Saldo[]
+  lotes        Lote[]
+  movimentos   Movimento[]
+  reservas     Reserva[]
+
+  @@unique([tenantId, codigo])
+}
+
+model Fornecedor {
+  id                String        @id @default(cuid())
+  tenantId          String
+  tipo              TipoPessoa
+  documento         String
+  nome              String
+  fantasia          String        @default("")
+  email             String        @default("")
+  telefone          String        @default("")
+  cidade            String        @default("")
+  uf                String        @default("")
+  categorias        String[]
+  prazoMedioDias    Int           @default(0)
+  condicaoPagamento String        @default("")
+  avaliacao         Decimal       @default(3) @db.Decimal(14, 10)
+  entregas          Int           @default(0)
+  status            StatusCliente @default(ATIVO)
+  observacoes       String        @default("")
+  criadoEm          DateTime      @default(now())
+  atualizadoEm      DateTime      @updatedAt
+
+  empresa Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  itens   FornecedorItem[]
+  pedidos Pedido[]
+
+  @@unique([tenantId, documento])
+}
+
+model FornecedorItem {
+  tenantId     String
+  fornecedorId String
+  itemId       String
+  ultimoPreco  Decimal  @db.Decimal(20, 10)
+  data         DateTime @default(now())
+
+  empresa    Empresa    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fornecedor Fornecedor @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+  item       Item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([fornecedorId, itemId])
+}
+
+model LocalEstoque {
+  id       String    @id @default(cuid())
+  tenantId String
+  nome     String
+  tipo     TipoLocal
+  ativo    Boolean   @default(true)
+  criadoEm DateTime  @default(now())
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  saldos  Saldo[]
+
+  @@index([tenantId])
+}
+
+model Saldo {
+  tenantId String
+  itemId   String
+  localId  String
+  fisico   Decimal @default(0) @db.Decimal(20, 10)
+
+  empresa Empresa      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item    Item         @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  local   LocalEstoque @relation(fields: [localId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, localId])
+  @@index([tenantId])
+}
+
+model Lote {
+  id                String   @id @default(cuid())
+  tenantId          String
+  itemId            String
+  codigo            String
+  fornecedorId      String?
+  recebimentoId     String?
+  localId           String
+  data              DateTime @default(now())
+  quantidadeInicial Decimal  @db.Decimal(20, 10)
+  saldo             Decimal  @db.Decimal(20, 10)
+  certificado       Json?
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, itemId, codigo])
+}
+
+model Movimento {
+  id            String        @id @default(cuid())
+  tenantId      String
+  data          DateTime      @default(now())
+  tipo          TipoMovimento
+  itemId        String
+  localId       String
+  quantidade    Decimal       @db.Decimal(20, 10)
+  custoUnitario Decimal       @db.Decimal(20, 10)
+  valor         Decimal       @db.Decimal(20, 10)
+  loteId        String?
+  osId          String?
+  osCustoId     String?
+  centroId      String?
+  recebimentoId String?
+  inventarioId  String?
+  estornoDeId   String?
+  estornado     Boolean       @default(false)
+  usuarioId     String?
+  observacao    String?
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, itemId])
+  @@index([tenantId, osId])
+  @@index([tenantId, data])
+}
+
+model Reserva {
+  id         String        @id @default(cuid())
+  tenantId   String
+  itemId     String
+  localId    String
+  osId       String
+  quantidade Decimal       @db.Decimal(20, 10)
+  consumida  Decimal       @default(0) @db.Decimal(20, 10)
+  status     StatusReserva @default(ATIVA)
+  criadoEm   DateTime      @default(now())
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  item    Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, itemId])
+  @@index([osId])
+}
+
+model Requisicao {
+  id         String           @id @default(cuid())
+  tenantId   String
+  numero     String
+  status     StatusRequisicao @default(ABERTA)
+  origem     OrigemRequisicao @default(MANUAL)
+  osId       String?
+  cotacaoId  String?
+  pedidoId   String?
+  observacao String           @default("")
+  usuarioId  String?
+  criadoEm   DateTime         @default(now())
+
+  empresa Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  itens   RequisicaoItem[]
+
+  @@unique([tenantId, numero])
+}
+
+model RequisicaoItem {
+  id           String  @id @default(cuid())
+  tenantId     String
+  requisicaoId String
+  itemId       String
+  quantidade   Decimal @db.Decimal(20, 10)
+
+  empresa    Empresa    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requisicao Requisicao @relation(fields: [requisicaoId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+}
+
+model Cotacao {
+  id                    String        @id @default(cuid())
+  tenantId              String
+  numero                String
+  status                StatusCotacao @default(ABERTA)
+  requisicaoIds         String[]
+  fornecedorIds         String[]
+  itens                 Json
+  fornecedorEscolhidoId String?
+  justificativa         String?
+  pedidoId              String?
+  criadoEm              DateTime      @default(now())
+
+  empresa   Empresa           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  respostas CotacaoResposta[]
+
+  @@unique([tenantId, numero])
+}
+
+model CotacaoResposta {
+  id           String   @id @default(cuid())
+  tenantId     String
+  cotacaoId    String
+  fornecedorId String
+  itens        Json
+  frete        Decimal  @default(0) @db.Decimal(14, 4)
+  prazoDias    Int
+  criadoEm     DateTime @default(now())
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cotacao Cotacao @relation(fields: [cotacaoId], references: [id], onDelete: Cascade)
+
+  @@unique([cotacaoId, fornecedorId])
+}
+
+model Pedido {
+  id                String       @id @default(cuid())
+  tenantId          String
+  numero            String
+  fornecedorId      String
+  cotacaoId         String?
+  status            StatusPedido
+  frete             Decimal      @default(0) @db.Decimal(14, 4)
+  total             Decimal      @db.Decimal(20, 10)
+  previsaoEntrega   DateTime     @db.Date
+  condicaoPagamento String       @default("")
+  observacao        String       @default("")
+  aprovadoPorId     String?
+  aprovadoEm        DateTime?
+  canceladoEm       DateTime?
+  criadoEm          DateTime     @default(now())
+  atualizadoEm      DateTime     @updatedAt
+
+  empresa      Empresa       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fornecedor   Fornecedor    @relation(fields: [fornecedorId], references: [id], onDelete: Cascade)
+  itens        PedidoItem[]
+  recebimentos Recebimento[]
+
+  @@unique([tenantId, numero])
+}
+
+model PedidoItem {
+  id            String  @id @default(cuid())
+  tenantId      String
+  pedidoId      String
+  itemId        String
+  quantidade    Decimal @db.Decimal(20, 10)
+  precoUnitario Decimal @db.Decimal(20, 10)
+  recebido      Decimal @default(0) @db.Decimal(20, 10)
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pedido  Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+}
+
+model Recebimento {
+  id           String   @id @default(cuid())
+  tenantId     String
+  pedidoId     String
+  localId      String
+  notaFiscal   String?
+  data         DateTime @default(now())
+  itens        Json
+  divergencias Json
+  noPrazo      Boolean
+  contaPagar   Json
+  observacao   String?
+  usuarioId    String?
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pedido  Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+}
+
+model Inventario {
+  id        String   @id @default(cuid())
+  tenantId  String
+  localId   String
+  data      DateTime @default(now())
+  itens     Json
+  usuarioId String?
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model PlanoInspecao {
+  id            String   @id @default(cuid())
+  tenantId      String
+  planoId       String
+  versao        Int
+  nome          String
+  segmento      Segmento
+  ativo         Boolean  @default(true)
+  exigeInspecao Boolean  @default(true)
+  itens         Json
+  criadoEm      DateTime @default(now())
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([planoId, versao])
+  @@index([tenantId])
+}
+
+model NaoConformidade {
+  id            String    @id @default(cuid())
+  tenantId      String
+  numero        String
+  origem        OrigemNc
+  descricao     String
+  status        StatusNc  @default(ABERTA)
+  osId          String?
+  centroId      String?
+  loteId        String?
+  fornecedorId  String?
+  colaboradorId String?
+  causa         String?
+  acaoCorretiva String?
+  responsavelId String?
+  prazo         DateTime? @db.Date
+  eficaz        Boolean?
+  encerradaEm   DateTime?
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, osId])
+}
+
+model Garantia {
+  id           String         @id @default(cuid())
+  tenantId     String
+  numero       String
+  osId         String
+  relato       String
+  status       StatusGarantia @default(EM_ANALISE)
+  analise      String?
+  osGarantiaId String?
+  decididaEm   DateTime?
+  criadoEm     DateTime       @default(now())
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, numero])
 }

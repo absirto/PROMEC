@@ -17,8 +17,8 @@ describe('OS a partir do orçamento', () => {
       { sequencia: 20, descricao: 'Montagem', centroId: 'banc', custoHora: '50', setupOrcadoHoras: '3', cicloOrcadoHorasPorPeca: '0' }
     ]);
     expect(custos).toEqual([
-      { descricao: 'Latão', categoria: 'material', orcado: '80' },
-      { descricao: 'Entrega', categoria: 'frete', orcado: '60' }
+      { descricao: 'Latão', categoria: 'material', orcado: '80', itemId: null },
+      { descricao: 'Entrega', categoria: 'frete', orcado: '60', itemId: null }
     ]);
   });
 

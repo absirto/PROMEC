@@ -7,6 +7,7 @@ import { conflito, invalido, naoEncontrado, regra } from '../comum/erros';
 import { Sessao } from '../comum/sessao';
 import { proximoNumero } from '../orcamentos/numeracao';
 import { mesclarObjeto } from '../ordens/custo';
+import { planoDoSegmento } from '../qualidade/qualidade-core';
 import { ParametrosService } from '../parametros/parametros.service';
 import { dataBanco, diaDaSemana, hojeLocal, inicioDoDia, lerHorario, local, somarDias } from '../planejamento/calendario';
 import { PrismaService } from '../prisma/prisma.service';
@@ -139,6 +140,7 @@ export class AgendaService {
         data: {
           tenantId: s.tenantId,
           numero: await proximoNumero(tx, s.tenantId, 'OS'),
+          ...(await planoDoSegmento(tx, s.tenantId, 'OFICINA')),
           clienteId: a.clienteId!,
           tabelaCustosId: vigente.id,
           titulo: a.servico,

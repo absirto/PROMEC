@@ -41,7 +41,9 @@ export class ParametrosService {
           margemAlvo: alvo,
           margemMinima: minima,
           validadeOrcamentoDias: dto.validadeOrcamentoDias,
-          limiteServicoRapido: pdOpc(dto.limiteServicoRapido)
+          limiteServicoRapido: pdOpc(dto.limiteServicoRapido),
+          limiteAprovacaoCompra: pdOpc(dto.limiteAprovacaoCompra),
+          garantiaDias: dto.garantiaDias
         }
       });
       const empresa = dto.nomeEmpresa
@@ -63,7 +65,9 @@ export class ParametrosService {
       margemAlvo: tt(p.margemAlvo),
       margemMinima: tt(p.margemMinima),
       validadeOrcamentoDias: p.validadeOrcamentoDias,
-      limiteServicoRapido: tt(p.limiteServicoRapido)
+      limiteServicoRapido: tt(p.limiteServicoRapido),
+      limiteAprovacaoCompra: tt(p.limiteAprovacaoCompra),
+      garantiaDias: p.garantiaDias
     };
   }
 }

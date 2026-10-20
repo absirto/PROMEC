@@ -7,16 +7,16 @@ export const TIPOS_LINHA = ['material', 'materialCorte', 'ferramental', 'operaca
 type TipoLinha = (typeof TIPOS_LINHA)[number];
 
 const CAMPOS: Record<TipoLinha, { obrigatorios: string[]; opcionais: string[] }> = {
-  material: { obrigatorios: ['quantidade', 'custoUnitario'], opcionais: ['base'] },
-  materialCorte: { obrigatorios: ['comprimentoMm', 'pesoPorMetroKg', 'precoKg'], opcionais: ['sobraMm'] },
-  ferramental: { obrigatorios: ['custo'], opcionais: [] },
+  material: { obrigatorios: ['quantidade', 'custoUnitario'], opcionais: ['base', 'itemId'] },
+  materialCorte: { obrigatorios: ['comprimentoMm', 'pesoPorMetroKg', 'precoKg'], opcionais: ['sobraMm', 'itemId'] },
+  ferramental: { obrigatorios: ['custo'], opcionais: ['itemId'] },
   operacao: { obrigatorios: ['cicloHorasPorPeca'], opcionais: ['centroId', 'custoHora', 'rateioHora', 'setupHorasPorLote'] },
   maoDeObra: { obrigatorios: ['tempoPadraoHoras'], opcionais: ['base', 'centroId', 'custoHora', 'rateioHora', 'fatorDificuldade'] },
   terceiro: { obrigatorios: ['custo'], opcionais: ['base', 'markup'] },
   frete: { obrigatorios: [], opcionais: ['valor', 'km', 'valorKm'] }
 };
 
-const TEXTO = new Set(['base', 'centroId']);
+const TEXTO = new Set(['base', 'centroId', 'itemId']);
 
 export type LinhaEntrada = { tipo: string; descricao?: string; [campo: string]: unknown };
 

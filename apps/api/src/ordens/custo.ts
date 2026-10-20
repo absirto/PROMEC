@@ -142,7 +142,7 @@ const CATEGORIA_DA_LINHA: Partial<Record<LinhaOrcamento['tipo'], (typeof CATEGOR
 /** Roteiro e custos orçados copiados das linhas do orçamento (o orçado vem do resultado do motor). */
 export function roteiroDoOrcamento(linhas: LinhaOrcamento[], resultado: ResultadoOrcamento) {
   const operacoes: { sequencia: number; descricao: string; centroId: string; custoHora: string; setupOrcadoHoras: string; cicloOrcadoHorasPorPeca: string }[] = [];
-  const custos: { descricao: string; categoria: string; orcado: string }[] = [];
+  const custos: { descricao: string; categoria: string; orcado: string; itemId: string | null }[] = [];
   linhas.forEach((l, i) => {
     if (l.tipo === 'operacao' || l.tipo === 'maoDeObra') {
       const centroId = (l as { centroId?: string }).centroId;
@@ -158,7 +158,7 @@ export function roteiroDoOrcamento(linhas: LinhaOrcamento[], resultado: Resultad
         operacoes.push({ ...base, setupOrcadoHoras: porPeca ? '0' : horas, cicloOrcadoHorasPorPeca: porPeca ? horas : '0' });
       }
     } else {
-      custos.push({ descricao: l.descricao, categoria: CATEGORIA_DA_LINHA[l.tipo]!, orcado: resultado.linhas[i].custoLote });
+      custos.push({ descricao: l.descricao, categoria: CATEGORIA_DA_LINHA[l.tipo]!, orcado: resultado.linhas[i].custoLote, itemId: (l as { itemId?: string }).itemId ?? null });
     }
   });
   return { operacoes, custos };

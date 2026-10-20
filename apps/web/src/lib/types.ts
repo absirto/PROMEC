@@ -162,6 +162,7 @@ export interface Orcamento extends CabecalhoOrcamento {
   tabelaCustos: { id: string; competencia: string; versao: number };
   tabelaMaisNova: boolean;
   prazoPrometido?: string | null;
+  custoDesatualizado?: boolean;
   promessa?: Promessa | null;
   resultado: ResultadoOrcamento;
   historico: { versao: number; status: StatusOrcamento; precoFinalLote: string; data: string; evento?: string; detalhe?: string | null }[];
@@ -181,6 +182,8 @@ export interface Painel {
   centros: { id: string; nome: string; tipo: TipoCentro; cheioHora: string; precoHora: string }[];
   alertas: { tipo: 'atencao' | 'perigo' | 'info' | 'ok'; mensagem: string; link?: string }[];
   ocupacao?: { centroId: string; nome: string; semanaAtual: string; proximaSemana: string }[];
+  suprimentos?: { abaixoDoMinimo: number; valorEstoque: string; pedidosAguardando: number; recebimentosAtrasados: number };
+  qualidade?: { ncsAbertas: number; custoNaoQualidadeMes: string; garantiasAbertas: number };
   ordens?: { emExecucao: number; pausadas: number; atrasadas: number; emQualidade: number; margemProjetadaMedia: string | null };
 }
 
@@ -242,6 +245,13 @@ export interface OrdemServico {
   resultado: ResultadoCustoReal;
   alertas: (string | { tipo?: 'perigo' | 'atencao'; codigo?: string; mensagem: string; operacaoId?: string })[];
   recebidoPor?: string | null;
+  planoInspecaoId?: string | null;
+  planoVersao?: number | null;
+  planoInspecao?: PlanoInspecao | null;
+  consumos?: Movimento[];
+  reservas?: { id: string; itemId: string; codigo?: string; descricao: string; unidade?: string; quantidade: string; consumida: string; pendente: string; status: string }[];
+  ncs?: { id: string; numero?: string; status: string; descricao?: string; origem?: string }[];
+  garantiaDeId?: string | null;
   custoRealFinal?: string | null;
   desvioFinal?: string | null;
 }
@@ -276,4 +286,76 @@ export interface Agendamento {
   id: string; cliente: { id: string | null; nome: string } | null; nomeCliente?: string | null; telefone: string | null; placa: string | null; veiculo: string | null; servico: string;
   centroId: string; centroNome: string; colaboradorId: string | null; colaboradorNome: string | null; inicio: string; duracaoHoras: string | number;
   status: StatusAgendamento; osId: string | null; observacao: string | null;
+}
+
+export type TipoItem = 'MATERIA_PRIMA' | 'PECA_REPOSICAO' | 'INSUMO' | 'FERRAMENTA_GERAL' | 'FERRAMENTA_ESPECIFICA' | 'PRODUTO_ACABADO' | 'SERVICO_EXTERNO';
+export interface Saldo { fisico: string; reservado: string; disponivel: string }
+export interface Item {
+  id: string; codigo: string; descricao: string; tipo: TipoItem; unidadeCompra: string; unidadeConsumo: string; fatorConversao: string;
+  pesoPorMetroKg: string | null; custoMedio: string; ultimoCusto: string | null; precoVenda: string | null; margemPeca: string | null;
+  estoqueMinimo: string; estoqueMaximo: string; fornecedorPreferidoId: string | null; rastreavel: boolean; categoriaDespesa: string | null; ativo: boolean;
+  saldo: Saldo; classeABC: 'A' | 'B' | 'C' | null;
+  abaixoDoMinimo?: boolean;
+  fornecedores?: { fornecedorId: string; nome: string; ultimoPreco: string; data: string }[];
+  saldosPorLocal?: { localId: string; localNome: string; fisico: string; reservado: string; disponivel: string }[];
+}
+export interface Fornecedor {
+  id: string; tipo: TipoCliente; documento: string; nome: string; fantasia: string; email: string; telefone: string; cidade: string; uf: string;
+  categorias: TipoItem[]; prazoMedioDias: number; condicaoPagamento: string; avaliacao: string; entregas: number; status: StatusCliente;
+  itens?: { itemId: string; descricao: string; ultimoPreco: string; data: string }[];
+}
+export interface LocalEstoque { id: string; nome: string; tipo: 'ALMOXARIFADO' | 'PECAS' | 'MATERIA_PRIMA' | 'FERRAMENTARIA' }
+export interface SaldoLocal {
+  item: { id: string; codigo: string; descricao: string; unidade: string; tipo: TipoItem }; localId: string | null; localNome: string | null;
+  fisico: string; reservado: string; disponivel: string; custoMedio: string; valor: string; minimo: string; situacao: 'ok' | 'baixo' | 'zerado';
+}
+export type TipoMovimento = 'ENTRADA' | 'ENTRADA_AVULSA' | 'SAIDA_OS' | 'SAIDA_CENTRO' | 'AJUSTE' | 'TRANSFERENCIA' | 'PERDA' | 'DEVOLUCAO' | 'ESTORNO' | string;
+export interface Movimento {
+  id: string; data: string; tipo: TipoMovimento; item: { id: string; codigo?: string; descricao: string; unidade?: string }; local: { id: string; nome: string } | string | null;
+  quantidade: string; custoUnitario: string; valor: string; lote: { id: string; codigo: string } | string | null;
+  origem: { tipo: 'OS' | 'CENTRO' | 'RECEBIMENTO' | 'AJUSTE' | 'INVENTARIO'; id: string | null; numero: string | null } | null; usuario: string | { nome: string } | null; observacao: string | null; estornado?: boolean;
+}
+export interface Lote {
+  id: string; codigo: string; itemId: string; fornecedor: { id: string; nome: string } | string | null; recebimentoId: string | null; data: string;
+  quantidadeInicial: string; saldo: string; certificado: { numero: string; corrida?: string; norma?: string; observacao?: string } | null;
+}
+export interface ConsumoCentro { centroId: string; nome: string; consumido: string; insumosCadastro: string; diferenca: string }
+export interface LinhaABC { id: string; descricao?: string; codigo?: string; valor: string; participacao: string; acumulado: string; classe: 'A' | 'B' | 'C' }
+
+export type StatusRequisicao = 'ABERTA' | 'EM_COTACAO' | 'ATENDIDA' | 'CANCELADA';
+export interface Requisicao {
+  id: string; numero?: string; status: StatusRequisicao; origem: 'OS' | 'PONTO_PEDIDO' | 'MANUAL'; criadaEm?: string; criadoEm?: string; cotacaoId?: string | null; pedidoId?: string | null; data?: string; observacao?: string | null;
+  os?: { id: string; numero: string } | null;
+  itens: { itemId: string; descricao?: string; codigo?: string; unidade?: string; quantidade: string; item?: { id: string; descricao: string; codigo?: string; unidade?: string } }[];
+}
+export interface Cotacao {
+  id: string; numero?: string; status?: string; criadaEm?: string;
+  requisicaoIds?: string[];
+  itens: { itemId: string; descricao: string; quantidade: string; unidade?: string; custoMedio?: string }[];
+  fornecedores: { id: string; nome: string; avaliacao?: string; prazoMedioDias?: number }[];
+  respostas: { fornecedorId: string; itens: { itemId: string; precoUnitario: string }[]; frete: string; prazoDias: number }[];
+  comparativo?: unknown;
+  escolhido?: { fornecedorId: string; justificativa?: string | null } | null; pedidoId?: string | null;
+}
+export type StatusPedido = 'AGUARDANDO_APROVACAO' | 'APROVADO' | 'PARCIAL' | 'RECEBIDO' | 'CANCELADO';
+export interface Pedido {
+  id: string; numero: string; status: StatusPedido; fornecedor: { id: string; nome: string; condicaoPagamento?: string; prazoMedioDias?: number };
+  total: string; frete?: string; previsao?: string | null; previsaoEntrega?: string | null; atrasado?: boolean; condicaoPagamento?: string; criadoEm?: string; cotacaoId?: string | null;
+  itens: { itemId: string; descricao: string; codigo?: string; unidade?: string; quantidade: string; recebido?: string; pendente?: string; precoUnitario: string; rastreavel?: boolean; custoMedio?: string; saldo?: string }[];
+  recebimentos?: { id: string; data: string; notaFiscal?: string | null; divergencias?: unknown[]; alertas?: unknown[]; noPrazo?: boolean; contaPagar?: { valor: string; vencimento: string; categoria: string } | null }[];
+}
+
+export type TipoItemPlano = 'DIMENSIONAL' | 'VISUAL' | 'SOLDA' | 'CHECK';
+export interface ItemPlano { id?: string; descricao: string; tipo: TipoItemPlano; nominal?: string | null; tolInferior?: string | null; tolSuperior?: string | null; unidade?: string | null; instrumento?: string | null }
+export interface PlanoInspecao { id: string; nome: string; segmento: Segmento; versao: number; ativo: boolean; exigeInspecao: boolean; itens: ItemPlano[] }
+export type OrigemNC = 'MATERIAL' | 'PROCESSO' | 'OPERADOR' | 'PROJETO' | 'FORNECEDOR';
+export interface NaoConformidade {
+  id: string; numero?: string; origem: OrigemNC; descricao: string; status: 'ABERTA' | 'EM_TRATAMENTO' | 'ENCERRADA';
+  os?: { id: string; numero: string } | null; centro?: { id: string; nome: string } | null; lote?: { id: string; codigo: string } | null; fornecedor?: { id: string; nome: string } | null;
+  colaborador?: { id: string; nome: string } | null; causa?: string | null; acaoCorretiva?: string | null; responsavel?: { id: string; nome: string } | null; responsavelId?: string | null;
+  prazo?: string | null; eficaz?: boolean | null; criadaEm?: string; encerradaEm?: string | null; recorrencia?: boolean;
+}
+export interface Garantia {
+  id: string; os: { id: string; numero: string; titulo?: string; cliente?: { nome: string } | string }; relato: string; status: string; procedente?: boolean | null; analise?: string | null;
+  criadaEm?: string; osGarantia?: { id: string; numero: string } | null;
 }

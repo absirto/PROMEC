@@ -110,6 +110,9 @@ export class AtualizarOsDto {
 
   @IsOptional() @IsString()
   motivoReprogramacao?: string;
+
+  @IsOptional() @IsString()
+  planoInspecaoId?: string | null;
 }
 
 export class IniciarDto {
@@ -146,25 +149,37 @@ export class PausarDto {
 
   @IsOptional() @IsString()
   observacao?: string;
+
+  @IsOptional() @IsString()
+  itemId?: string;
+
+  @Dec({ naoNegativo: true, opcional: true })
+  quantidade?: string;
 }
 
 export class ItemInspecaoDto {
+  @IsOptional() @IsString()
+  planoItemId?: string;
+
   @IsString() @IsNotEmpty()
   descricao: string;
 
   @IsOptional() @IsString()
   esperado?: string;
 
-  @IsOptional() @IsString()
-  medido?: string;
+  @IsOptional()
+  medido?: string | number;
 
-  @IsBoolean()
-  conforme: boolean;
+  @IsOptional() @IsBoolean()
+  conforme?: boolean;
 }
 
 export class InspecaoDto {
-  @IsBoolean()
-  aprovada: boolean;
+  @IsOptional() @IsBoolean()
+  aprovada?: boolean;
+
+  @IsOptional() @IsString()
+  inspetor?: string;
 
   @IsArray() @ValidateNested({ each: true }) @Type(() => ItemInspecaoDto)
   itens: ItemInspecaoDto[];

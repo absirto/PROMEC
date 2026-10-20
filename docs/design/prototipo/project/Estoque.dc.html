@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Estoque</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.tab{all:unset;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tab.on{background:#1E1B16;color:#fff}
+.fc{all:unset;box-sizing:border-box;cursor:pointer;height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.fc.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.srch{display:flex;align-items:center;gap:10px;height:42px;padding:0 14px;border-radius:999px;background:#fff;border:1.5px solid var(--bd2);flex:1 1 240px;max-width:400px}
+.srch input{all:unset;flex:1;min-width:0;font-size:14.5px}
+.btn:focus-visible,.ib:focus-visible,.tab:focus-visible,.fc:focus-visible,.srch:focus-within{outline:3px solid var(--p);outline-offset:2px}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:26px;line-height:1.1;font-weight:700}
+.sub{font-size:13.5px;color:var(--t3)}
+.rt{width:100%;border-collapse:collapse;font-size:14.5px}
+.rt th{font-size:12.5px;font-weight:600;color:var(--t3);text-align:left;padding:12px;background:var(--s2);border-bottom:1px solid var(--bd);white-space:nowrap}
+.rt td{padding:12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.rt tbody tr:hover td{background:var(--s2)}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fade{animation:fade .25s ease both}
+@media (max-width:760px){.rt thead{display:none}.rt,.rt tbody,.rt tr,.rt td{display:block;width:100%}.rt tr{margin:10px 0;border:1px solid var(--bd);border-radius:18px;background:#fff;padding:6px 4px}.rt td{border:0;padding:6px 12px}.rt td[data-l]::before{content:attr(data-l);display:block;font-size:12px;color:var(--t3)}}
+@media (prefers-reduced-motion:reduce){.rv,.fade{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">Suprimentos</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600;" aria-current="page">Estoque</span></nav>
+<button type="button" class="btn btn-sm"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="M3 7V4a1 1 0 0 1 1-1h3M17 3h3a1 1 0 0 1 1 1v3M21 17v3a1 1 0 0 1-1 1h-3M7 21H4a1 1 0 0 1-1-1v-3M7 8h3v3H7zM14 8h3v3h-3zM7 14h3v3H7zM14 14h3v3h-3z"/></svg>Ler etiqueta</button>
+<a href="Compras.dc.html" class="btn btn-sm">Ir para Compras</a>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 20px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: linear-gradient(135deg, #C98A00 0%, #8A5300 45%, #15395A 100%); color: #fff; padding: clamp(22px, 3vw, 32px);">
+<svg viewBox="0 0 420 220" aria-hidden="true" style="position: absolute; right: 10px; top: 4px; width: min(480px, 45%); height: auto;" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M40 210V20M380 210V20M40 70h340M40 130h340M40 190h340"/>
+<rect x="60" y="34" width="60" height="36" rx="3"/><rect x="130" y="44" width="50" height="26" rx="3"/><path d="M200 60h160M200 52h160M200 44h120" stroke="#FFD08A"/>
+<rect x="60" y="94" width="40" height="36" rx="3"/><rect x="110" y="94" width="40" height="36" rx="3"/><circle cx="210" cy="112" r="18"/><circle cx="210" cy="112" r="7"/><circle cx="260" cy="112" r="18"/><circle cx="260" cy="112" r="7"/><path d="M300 94h60v36h-60z"/>
+<path d="M60 172h300M60 160h300" stroke="rgba(255,255,255,.4)"/><rect x="70" y="146" width="80" height="44" rx="3"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 600px;">
+<span style="font-size: 14px; font-weight: 600; color: #FFE2A8;">Estoque</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.4vw, 54px); font-weight: 700; line-height: 1;">O que tem, o que está prometido e o que falta</h1>
+<p style="margin: 0; font-size: 16px; color: #FFF0D0;">Tânia, 4 itens estão abaixo do mínimo. O latão Ø25 já tem requisição aberta. Os outros 3 esperam o seu ok.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #FFF0D0;">Valor em estoque</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">R$ 84.320</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #FFF0D0;">Reservado para OS</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">R$ 6.120</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #FFF0D0;">Abaixo do mínimo</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600; color: #FFD08A;">{{lowN}}</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #FFF0D0;">Sem saída há 90 dias</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">23</span></div>
+</div>
+</div>
+</section>
+
+<div class="rv" role="tablist" aria-label="Seções" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; border-radius: 999px; align-self: flex-start; max-width: 100%; background: var(--s3);">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg>{{t.label}}</button></sc-for>
+</div>
+
+<sc-if value="{{vSaldo}}" hint-placeholder-val="{{true}}">
+<section class="card rv" style="overflow: hidden;" aria-labelledby="h-saldo">
+<div style="padding: 18px 20px 10px; display: flex; flex-direction: column; gap: 2px;"><h2 id="h-saldo" class="h2">Saldos por item</h2><span class="sub">Disponível = físico − reservado para OS e orçamentos aprovados. A linha laranja é o mínimo.</span></div>
+<div style="padding: 8px 20px 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; border-bottom: 1px solid var(--bd);">
+<label class="srch"><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Buscar item</span><input value="{{q}}" onChange="{{onQ}}" placeholder="Buscar item, código ou local"></label>
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="3"><button type="button" class="fc {{f.cls}}" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}">{{f.l}} <span class="mono" style="font-size: 12px; opacity: .8;">{{f.n}}</span></button></sc-for>
+</div>
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 980px;">
+<thead><tr><th scope="col">Item</th><th scope="col">Local</th><th scope="col" style="text-align: right;">Físico</th><th scope="col" style="text-align: right;">Reservado</th><th scope="col" style="text-align: right;">Disponível</th><th scope="col" style="width: 190px;">Nível</th><th scope="col" style="text-align: right;">Custo médio</th><th scope="col">Situação</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+<tr>
+<td data-l="Item"><span style="display: flex; flex-direction: column;"><a href="Itens-Form.dc.html" style="font-weight: 600; color: #1E1B16; text-decoration: none;">{{r.n}}</a><span class="mono" style="font-size: 12px; color: var(--t3);">{{r.code}}</span></span></td>
+<td data-l="Local" style="font-size: 13.5px; color: var(--t2);">{{r.loc}}</td>
+<td data-l="Físico" class="mono" style="text-align: right;">{{r.fis}}</td>
+<td data-l="Reservado" class="mono" style="text-align: right; color: var(--t2);"><span title="{{r.resFor}}">{{r.res}}</span></td>
+<td data-l="Disponível" class="mono" style="text-align: right; font-weight: 700; color: {{r.dc}};">{{r.disp}}</td>
+<td data-l="Nível"><div style="position: relative; height: 12px; border-radius: 99px; background: var(--s3);" role="img" aria-label="{{r.aria}}"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{r.wf}}; border-radius: 99px; background: rgba(29,78,122,.22);"></span><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{r.wd}}; border-radius: 99px; background: {{r.bar}};"></span><span style="position: absolute; top: -4px; bottom: -4px; left: {{r.wm}}; width: 3px; border-radius: 2px; background: #E35D14;"></span></div><span class="mono" style="font-size: 11px; color: var(--t3);">mín {{r.min}} · máx {{r.max}}</span></td>
+<td data-l="Custo médio" class="mono" style="text-align: right;">{{r.custo}}</td>
+<td data-l="Situação"><sc-if value="{{r.isLow}}" hint-placeholder-val="{{false}}"><sc-if value="{{r.req}}" hint-placeholder-val="{{false}}"><a href="Compras.dc.html" class="bdg b-inf" style="text-decoration: none;">{{r.reqTxt}}</a></sc-if><sc-if value="{{r.noReq}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-sm btn-p" onClick="{{r.ask}}">Pedir compra</button></sc-if></sc-if><sc-if value="{{r.isOk}}" hint-placeholder-val="{{true}}"><span class="bdg b-ok">Normal</span></sc-if></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vMov}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 6px;" aria-labelledby="h-mov">
+<div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px;"><h2 id="h-mov" class="h2">Movimentações</h2><span class="sub">Toda entrada, saída, reserva e ajuste, com quem fez e por quê</span></div>
+<sc-for list="{{movs}}" as="m" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 44px 110px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--bd);">
+<span style="width: 40px; height: 40px; border-radius: 12px; background: {{m.bg}}; color: {{m.fg}}; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{m.icon}}"/></svg></span>
+<span style="display: flex; flex-direction: column; line-height: 1.3;"><span style="font-weight: 600; font-size: 14px;">{{m.tipo}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">{{m.when}}</span></span>
+<span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 500;">{{m.item}}</span><span style="font-size: 13px; color: var(--t2);">{{m.det}}</span></span>
+<span class="mono" style="font-weight: 700; color: {{m.qc}};">{{m.q}}</span>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{vLote}}" hint-placeholder-val="{{false}}">
+<section class="fade" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px;" aria-label="Lotes">
+<sc-for list="{{lotes}}" as="l" hint-placeholder-count="4">
+<article class="card" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;"><span style="display: flex; flex-direction: column;"><span class="mono" style="font-size: 18px; font-weight: 700;">{{l.code}}</span><span style="font-weight: 500;">{{l.item}}</span></span><span class="bdg {{l.cls}}">{{l.st}}</span></div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 13.5px;"><span style="color: var(--t3);">Fornecedor</span><span>{{l.forn}}</span><span style="color: var(--t3);">Recebido</span><span class="mono">{{l.rec}}</span><span style="color: var(--t3);">Saldo</span><span class="mono">{{l.saldo}}</span><span style="color: var(--t3);">Usado em</span><span class="mono">{{l.uso}}</span></div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: {{l.certBg}};"><svg class="i" viewBox="0 0 24 24" style="color: {{l.certFg}};" aria-hidden="true"><path d="{{l.certIcon}}"/></svg><span style="flex: 1; font-size: 13.5px; color: {{l.certFg}}; font-weight: 600;">{{l.cert}}</span><sc-if value="{{l.hasCert}}" hint-placeholder-val="{{true}}"><a href="#" class="btn btn-sm">Abrir PDF</a></sc-if><sc-if value="{{l.noCert}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-sm">Pedir ao fornecedor</button></sc-if></div>
+</article>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{toast}}" hint-placeholder-val="{{false}}">
+<div role="status" class="fade" style="position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-radius: 999px; background: #1E1B16; color: #fff; font-weight: 600; box-shadow: 0 12px 30px rgba(0,0,0,.3); z-index: 30;"><svg class="i" viewBox="0 0 24 24" style="color: #3DD598;" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{toast}}<a href="Compras.dc.html" style="color: #FFC08F;">Ver em Compras</a></div>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1700}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { tab: 'saldo', q: '', filt: 'all', req: { 0: 'REQ-0098' }, toast: '', n: 101 };
+  }
+  componentWillUnmount() { clearTimeout(this.t); }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const I = [
+      ['MP-0112', 'Barra de latão C360 Ø25 mm', 'Almoxarifado · B3', 4, 1, 'Bucha Ø25 · ORC-2026-00135', 5, 15, 'barras', 'R$ 525,42'],
+      ['MP-0087', 'Barra aço SAE 1045 Ø45 mm', 'Almoxarifado · B1', 11, 2, 'Eixo Ø45 · OS-2026-00044', 4, 12, 'barras', 'R$ 812,30'],
+      ['MP-0201', 'Chapa aço 3/16" 1200×3000', 'Pátio coberto', 6, 4, 'Esteira · OS-2026-00046', 3, 10, 'chapas', 'R$ 1.140,00'],
+      ['IN-0045', 'Arame MIG ER70S-6 1,0 mm', 'Solda · armário 2', 2, 1, 'Suporte · OS-2026-00040', 3, 8, 'rolos', 'R$ 289,00'],
+      ['IN-0052', 'Gás C25 · cilindro 10 m³', 'Solda · gaiola', 3, 0, '', 2, 4, 'cilindros', 'R$ 310,00'],
+      ['PR-1033', 'Kit relação DID c/ retentor CG 160', 'Oficina · prateleira 4', 5, 1, 'Honda CG · OS-2026-00052', 2, 6, 'un.', 'R$ 128,00'],
+      ['PR-0877', 'Óleo 10W30 semissintético 1 L', 'Oficina · prateleira 1', 24, 2, 'OS-2026-00052 e OS-2026-00053', 12, 36, 'L', 'R$ 26,00'],
+      ['FG-0310', 'Pastilha TNMG 160408', 'Ferramentaria', 1, 0, '', 2, 5, 'caixas', 'R$ 420,00']
+    ];
+    const q = st.q.trim().toLowerCase();
+    const all = I.map((r, i) => ({ r, i, disp: r[3] - r[4] }));
+    const lows = all.filter((x) => x.disp < x.r[6]);
+    const list = all.filter((x) => (st.filt === 'all' || (st.filt === 'low' ? x.disp < x.r[6] : x.r[4] > 0)) && (!q || (x.r[0] + ' ' + x.r[1] + ' ' + x.r[2]).toLowerCase().indexOf(q) >= 0));
+    const rows = list.map(({ r, i, disp }) => {
+      const low = disp < r[6];
+      const req = st.req[i];
+      const pct = (v) => Math.min(100, v / r[7] * 100).toFixed(1) + '%';
+      return {
+        code: r[0], n: r[1], loc: r[2], fis: r[3] + ' ' + r[8], res: r[4] ? r[4] + ' ' + r[8] : '—', resFor: r[5] ? 'Reservado para ' + r[5] : 'Nada reservado',
+        disp: disp + ' ' + r[8], dc: low ? '#8A5300' : '#1E1B16', min: r[6], max: r[7], custo: r[9],
+        wf: pct(r[3]), wd: pct(disp), wm: pct(r[6]), bar: low ? '#E0A100' : '#0F9D76',
+        aria: 'Disponível ' + disp + ' de máximo ' + r[7] + ', mínimo ' + r[6],
+        isLow: low, isOk: !low, req: low && !!req, noReq: low && !req, reqTxt: req ? req + ' aberta' : '',
+        ask: () => { const code = 'REQ-0' + st.n; this.setState({ req: Object.assign({}, st.req, { [i]: code }), n: st.n + 1, toast: code + ': requisição de ' + (r[7] - disp) + ' ' + r[8] + ' enviada para Compras' }); clearTimeout(this.t); this.t = setTimeout(() => this.setState({ toast: '' }), 3500); }
+      };
+    });
+    const filters = [['all', 'Todos', all.length], ['low', 'Abaixo do mínimo', lows.length], ['res', 'Com reserva', all.filter((x) => x.r[4] > 0).length]].map((f) => ({ l: f[1], n: f[2], cls: st.filt === f[0] ? 'on' : '', pressed: st.filt === f[0] ? 'true' : 'false', pick: () => this.setState({ filt: f[0] }) }));
+    const MI = {
+      out: ['M12 5v14M19 12l-7 7-7-7', '#FBE2DF', '#C0352B', '#C0352B'], in: ['M12 19V5M5 12l7-7 7 7', '#DDF3E9', '#0F7A55', '#0F7A55'],
+      res: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 6v6l4 2', '#ECE6FB', '#5B3FB5', '#5B3FB5'], tr: ['M7 7h13l-3-3M17 17H4l3 3', '#E0EDFA', '#1A64A8', '#1A64A8'],
+      aj: ['M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z', '#FCEFC7', '#8A5300', '#8A5300']
+    };
+    const movs = [
+      ['out', 'Saída para OS', '14/10 13:19', 'Barra de latão C360 Ø25 mm', 'OS-2026-00041 · 450 mm consumidos · retalho de 2.550 mm voltou ao estoque', '−450 mm'],
+      ['res', 'Reserva', '14/10 11:02', 'Kit relação DID CG 160', 'OS-2026-00052 · Box 3 · Diego', '1 un.'],
+      ['in', 'Entrada', '13/10 16:40', 'Barra de latão C360 Ø25 mm', 'PED-0311 · Aços Sul · lote L-2610-033 · certificado conferido', '+6 barras'],
+      ['tr', 'Transferência', '13/10 10:15', 'Arame MIG ER70S-6', 'Almoxarifado → Solda · armário 2', '2 rolos'],
+      ['aj', 'Ajuste de inventário', '12/10 17:30', 'Pastilha TNMG 160408', 'Contagem cíclica · Tânia Rocha · caixa aberta sem registro', '−1 caixa'],
+      ['out', 'Saída para OS', '12/10 09:00', 'Chapa aço 3/16"', 'OS-2026-00040 · suporte soldado', '−1 chapa']
+    ].map((m) => ({ icon: MI[m[0]][0], bg: MI[m[0]][1], fg: MI[m[0]][2], qc: MI[m[0]][3], tipo: m[1], when: m[2], item: m[3], det: m[4], q: m[5] }));
+    const ck = 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM9 15l2 2 4-4';
+    const wn = 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z';
+    const lotes = [
+      ['L-2610-033', 'Latão C360 Ø25 mm', 'Aços Sul', '13/10/2026', '3 de 6 barras', 'OS-2026-00041', 'Em uso', 'b-run', 'Certificado CQ-88213 anexado', true],
+      ['L-2609-118', 'Aço SAE 1045 Ø45 mm', 'Aços Sul', '22/09/2026', '11 barras', 'OS-2026-00044 (reservado)', 'Disponível', 'b-ok', 'Certificado CQ-87790 anexado', true],
+      ['L-2610-007', 'Arame MIG ER70S-6 1,0 mm', 'Gases Industriais Litoral', '07/10/2026', '2 rolos', 'OS-2026-00040', 'Em uso', 'b-run', 'Certificado de conformidade anexado', true],
+      ['L-2608-051', 'Chapa aço 3/16"', 'Aços Sul', '18/08/2026', '6 chapas', 'OS-2026-00046 (reservado)', 'Disponível', 'b-ok', 'Falta o certificado do material', false]
+    ].map((l) => ({ code: l[0], item: l[1], forn: l[2], rec: l[3], saldo: l[4], uso: l[5], st: l[6], cls: l[7], cert: l[8], hasCert: l[9], noCert: !l[9], certIcon: l[9] ? ck : wn, certBg: l[9] ? '#DDF3E9' : '#FCEFC7', certFg: l[9] ? '#0F7A55' : '#8A5300' }));
+    const T = [['saldo', 'Saldos', 'M3 3v18h18M7 16V9M12 16V5M17 16v-4'], ['mov', 'Movimentações', 'M7 7h13l-3-3M17 17H4l3 3'], ['lote', 'Lotes e certificados', 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM9 15l2 2 4-4']];
+    const tabs = T.map((t) => ({ label: t[1], icon: t[2], cls: st.tab === t[0] ? 'on' : '', sel: st.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12', true], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      tabs, rail, rows, filters, movs, lotes, q: st.q, onQ: (e) => this.setState({ q: e.target.value }),
+      vSaldo: st.tab === 'saldo', vMov: st.tab === 'mov', vLote: st.tab === 'lote',
+      lowN: lows.length, toast: st.toast, logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

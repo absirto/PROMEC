@@ -7,6 +7,7 @@ import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada } fro
 import { formatarNumero } from '../orcamentos/numeracao';
 import { json, montarEntrada, resultadoDe } from '../tabelas-custos/entrada';
 import { semearAgenda } from './agenda';
+import { semearSuprimentos } from './suprimentos';
 import { semearOrdens } from './ordens';
 
 export interface OpcoesSemente {
@@ -389,7 +390,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
       status: 'CONVERTIDO',
       validadeEm: 14,
       linhas: [
-        { tipo: 'material', descricao: 'Barra de latão C360 Ø25', base: 'peca', quantidade: '1', custoUnitario: '8.00' },
+        { tipo: 'material', descricao: 'Barra de latão C360 Ø25', base: 'peca', quantidade: '1', custoUnitario: '8.00', itemId: id('item-latao') },
         { tipo: 'operacao', descricao: 'Torneamento CNC', centroId: centro('torno'), cicloHorasPorPeca: '0.1', setupHorasPorLote: '3' }
       ],
       eventos: [['criado', 'RASCUNHO', 1, 2], ['enviado', 'ENVIADO', 1, 2], ['aprovado', 'APROVADO', 1, 1], ['convertido', 'CONVERTIDO', 1, 1, 'OS-2026-00041']]
@@ -455,6 +456,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
   }
 
   const ordens = await semearOrdens(db, tenantId, id);
+  const suprimentos = await semearSuprimentos(db, tenantId, id, { centroFresa: centro('fresa') });
   const agenda = await semearAgenda(db, tenantId, id, { box3, jonas, fresa: centro('fresa'), cliente: id('cliente-metalvale') });
 
   return {
@@ -469,6 +471,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     box3,
     jonas,
     agenda,
+    suprimentos,
     orcamentoProvisorioId: id('orcamento-122'),
     precos: resultados
   };

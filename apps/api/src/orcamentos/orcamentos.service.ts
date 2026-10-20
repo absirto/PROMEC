@@ -87,13 +87,22 @@ export class OrcamentosService {
     };
   }
 
+  private async conferirItens(tenantId: string, dto: SimularDto) {
+    const ids = [...new Set(dto.linhas.map((l) => l.itemId).filter(Boolean) as string[])];
+    if (ids.length && (await this.prisma.item.count({ where: { tenantId, id: { in: ids } } })) !== ids.length) {
+      throw naoEncontrado('um dos itens de estoque usados nas linhas');
+    }
+  }
+
   async simular(tenantId: string, dto: SimularDto) {
+    await this.conferirItens(tenantId, dto);
     const tabela = await this.tabelaPara(tenantId, dto.tabelaCustosId, false);
     return calcular(dto.linhas as LinhaEntrada[], resultadoDe(tabela), await this.precificacao(tenantId, dto)).resultado;
   }
 
   async criar(s: Sessao, dto: OrcamentoDto) {
     await this.clienteApto(s.tenantId, dto.clienteId);
+    await this.conferirItens(s.tenantId, dto);
     const tabela = await this.tabelaPara(s.tenantId, dto.tabelaCustosId, true);
     const p = await this.precificacao(s.tenantId, dto);
     const { linhas, resultado } = calcular(dto.linhas as LinhaEntrada[], resultadoDe(tabela), p);
@@ -144,6 +153,7 @@ export class OrcamentosService {
       throw conflito('ORCAMENTO_BLOQUEADO', `Este orçamento está ${ROTULO[o.status]} e não pode ser editado.${dica}`);
     }
     if (dto.clienteId !== o.clienteId) await this.clienteApto(s.tenantId, dto.clienteId);
+    await this.conferirItens(s.tenantId, dto);
     const tabela = await this.tabelaPara(s.tenantId, o.tabelaCustosId, true);
     const p = await this.precificacao(s.tenantId, dto);
     const { linhas, resultado } = calcular(dto.linhas as LinhaEntrada[], resultadoDe(tabela), p);
@@ -165,6 +175,7 @@ export class OrcamentosService {
           margemLiberada: false,
           justificativaLiberacao: null,
           liberadaPorId: null,
+          custoDesatualizado: false,
           ...(novaVersao ? { versao: o.versao + 1 } : {})
         }
       });
@@ -237,6 +248,7 @@ export class OrcamentosService {
         where: { id },
         data: {
           tabelaCustosId: vigente.id,
+          custoDesatualizado: false,
           linhas: json(linhas),
           ...colunasDoResultado(resultado),
           versao: o.versao + 1,
@@ -353,6 +365,7 @@ function cabecalho(o: OrcamentoCompleto) {
     lote: o.lote,
     validade: dataIso(o.validade),
     prazoPrometido: o.prazoPrometido ? dataIso(o.prazoPrometido) : null,
+    custoDesatualizado: o.custoDesatualizado,
     impostos: tt(o.impostos),
     comissao: tt(o.comissao),
     margemAlvo: tt(o.margemAlvo),

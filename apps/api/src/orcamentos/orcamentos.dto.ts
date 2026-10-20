@@ -16,6 +16,9 @@ export class LinhaDto {
   @IsOptional() @IsString()
   centroId?: string;
 
+  @IsOptional() @IsString()
+  itemId?: string;
+
   @Dec({ naoNegativo: true, opcional: true }) quantidade?: string;
   @Dec({ naoNegativo: true, opcional: true }) custoUnitario?: string;
   @Dec({ naoNegativo: true, opcional: true }) comprimentoMm?: string;

@@ -15,7 +15,7 @@ export interface Coluna<T> {
 export function DataTable<T>({ colunas, linhas, chave, href, rotulo, rotuloLinha }: { colunas: Coluna<T>[]; linhas: T[]; chave: (l: T) => string; href?: (l: T) => string; rotulo: string; rotuloLinha?: (l: T) => string }) {
   const navigate = useNavigate();
   return (
-    <div className="overflow-x-auto">
+    <div className="relative overflow-x-auto">
       <table className="rt" aria-label={rotulo}>
         <thead>
           <tr>

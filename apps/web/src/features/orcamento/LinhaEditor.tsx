@@ -4,8 +4,10 @@ import type { LinhaApi } from '../../lib/types';
 import { brl, hhmm, toNum } from '../../lib/format';
 import { DecimalInput, Select } from '../../components/Field';
 import { IconButton } from '../../components/Button';
+import { ItemPicker } from '../../components/ItemPicker';
+import type { Item } from '../../lib/types';
 
-export type LinhaForm = LinhaApi & { _id: string };
+export type LinhaForm = LinhaApi & { _id: string; itemId?: string };
 type Valor = string | number | undefined;
 
 function Mini({ label, children, className = '', dica }: { label: string; children: ReactNode; className?: string; dica?: ReactNode }) {
@@ -118,8 +120,23 @@ export function LinhaEditor({ linha, onChange, onRemover, custoLote, centros, ed
     }
   })();
 
+  const comItem = linha.tipo === 'material' || linha.tipo === 'materialCorte' || linha.tipo === 'ferramental';
+  const escolher = (id: string, it?: Item) => {
+    if (!it) return onChange({ ...linha, itemId: undefined } as LinhaForm);
+    const base = { ...linha, itemId: id, descricao: linha.descricao || it.descricao } as LinhaForm & Record<string, unknown>;
+    if (linha.tipo === 'material') base.custoUnitario = it.custoMedio;
+    if (linha.tipo === 'materialCorte') { base.precoKg = it.custoMedio; if (it.pesoPorMetroKg) base.pesoPorMetroKg = it.pesoPorMetroKg; }
+    if (linha.tipo === 'ferramental') base.custo = it.custoMedio;
+    onChange(base as LinhaForm);
+  };
+
   return (
     <div className="flex flex-wrap items-end gap-x-3 gap-y-2 px-4 py-3 border-t border-border">
+      {comItem && (
+        <Mini label="Item do estoque" className="basis-full">
+          <ItemPicker value={String(l.itemId ?? '')} onChange={escolher} disabled={d} vazio="Sem vínculo com o estoque (preço à mão)" tipos={linha.tipo === 'ferramental' ? ['FERRAMENTA_ESPECIFICA', 'FERRAMENTA_GERAL'] : undefined} className="!min-h-[40px] !rounded-control" />
+        </Mini>
+      )}
       <Mini label="Descrição" className="flex-[3_1_220px]">
         <span className="campo !min-h-[40px] !px-3 !rounded-control">
           <input value={linha.descricao ?? ''} onChange={(e) => set('descricao', e.target.value)} disabled={d} className="!h-9" placeholder={PLACEHOLDER[linha.tipo]} />

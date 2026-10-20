@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  BarChart3, Building2, Calculator, CalendarClock, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
+  BarChart3, Boxes, Building2, Truck, Calculator, CalendarClock, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
   Package, PieChart, Receipt, Ruler, Settings2, ShoppingCart, Target, Timer, Users, Wallet, Wrench, X, type LucideIcon
 } from 'lucide-react';
 import { LogoProMEC } from '../components/Illustrations';
@@ -27,7 +27,7 @@ const GRUPOS: Grupo[] = [
       { rotulo: 'Modo Operador', icone: Timer, to: '/operador' },
       { rotulo: 'Planejamento e Agenda', icone: CalendarRange, to: '/planejamento' },
       { rotulo: 'Agenda da oficina', icone: CalendarClock, to: '/agenda' },
-      { rotulo: 'Qualidade', icone: Ruler }
+      { rotulo: 'Qualidade', icone: Ruler, to: '/qualidade' }
     ]
   },
   {
@@ -40,7 +40,7 @@ const GRUPOS: Grupo[] = [
       { rotulo: 'Simulador what-if', icone: FlaskConical }
     ]
   },
-  { titulo: 'Suprimentos', itens: [{ rotulo: 'Estoque', icone: Package }, { rotulo: 'Compras', icone: ShoppingCart }] },
+  { titulo: 'Suprimentos', itens: [{ rotulo: 'Estoque', icone: Package, to: '/estoque' }, { rotulo: 'Compras', icone: ShoppingCart, to: '/compras' }] },
   {
     titulo: 'Financeiro',
     itens: [
@@ -62,9 +62,9 @@ const GRUPOS: Grupo[] = [
   {
     titulo: 'Cadastros',
     itens: [
-      { rotulo: 'Fornecedores', icone: Building2 },
+      { rotulo: 'Fornecedores', icone: Truck, to: '/fornecedores' },
       { rotulo: 'Veículos e ativos do cliente', icone: Database },
-      { rotulo: 'Itens', icone: Package },
+      { rotulo: 'Itens', icone: Boxes, to: '/itens' },
       { rotulo: 'Catálogo de operações', icone: Wrench },
       { rotulo: 'Centros de custo', icone: Layers },
       { rotulo: 'Tabelas auxiliares', icone: Database }

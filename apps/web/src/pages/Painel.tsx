@@ -78,6 +78,27 @@ export default function Painel() {
               <span className="text-caption text-ink-3">Barra cheia: esta semana · clara: próxima. Acima de 90% é sobrecarga.</span>
             </Card>
           )}
+          {(p.suprimentos || p.qualidade) && (
+            <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-sup">
+              <CardHeader id="h-sup" titulo="Estoque, compras e qualidade" />
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  p.suprimentos && ['Abaixo do mínimo', String(p.suprimentos.abaixoDoMinimo), p.suprimentos.abaixoDoMinimo ? 'bg-warn-soft text-warn' : 'bg-surface-2 text-ink-2', '/estoque'],
+                  p.suprimentos && ['Valor em estoque', brl(p.suprimentos.valorEstoque), 'bg-steel-soft text-steel', '/estoque'],
+                  p.suprimentos && ['Pedidos para aprovar', String(p.suprimentos.pedidosAguardando), p.suprimentos.pedidosAguardando ? 'bg-info-soft text-info' : 'bg-surface-2 text-ink-2', '/compras?aba=pedidos'],
+                  p.suprimentos && ['Entregas atrasadas', String(p.suprimentos.recebimentosAtrasados), p.suprimentos.recebimentosAtrasados ? 'bg-bad-soft text-bad' : 'bg-surface-2 text-ink-2', '/compras?aba=pedidos'],
+                  p.qualidade && ['NCs abertas', String(p.qualidade.ncsAbertas), p.qualidade.ncsAbertas ? 'bg-bad-soft text-bad' : 'bg-ok-soft text-ok', '/qualidade?aba=ncs'],
+                  p.qualidade && ['Garantias em análise', String(p.qualidade.garantiasAbertas), p.qualidade.garantiasAbertas ? 'bg-warn-soft text-warn' : 'bg-surface-2 text-ink-2', '/qualidade?aba=garantias']
+                ].filter((x): x is string[] => !!x).map(([l, v, cor, to]) => (
+                  <Link key={l} to={to!} className={`no-underline rounded-[16px] p-3 flex flex-col ${cor}`}>
+                    <span className="mono text-[22px] font-bold leading-tight">{v}</span>
+                    <span className="text-[13px] font-medium">{l}</span>
+                  </Link>
+                ))}
+              </div>
+              {p.qualidade && <span className="text-[13.5px] text-ink-2">Custo da não-qualidade no mês: <strong className={`mono ${toNum(p.qualidade.custoNaoQualidadeMes) > 0 ? 'text-bad' : 'text-ink-1'}`}>{brl(p.qualidade.custoNaoQualidadeMes)}</strong></span>}
+            </Card>
+          )}
           {p.ordens && (
             <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-ordens">
               <CardHeader id="h-ordens" titulo="Chão de fábrica agora" acao={<Link to="/ordens-servico" className="text-[13px] font-semibold">Ordens de Serviço</Link>} />

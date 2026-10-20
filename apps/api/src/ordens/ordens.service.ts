@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, StatusOs } from '@prisma/client';
-import { arredondar, dec, reais, soma, type LinhaOrcamento, type ResultadoOrcamento } from '@promec/motor';
+import { arredondar, avaliarMedicao, dec, reais, soma, txt, type LinhaOrcamento, type ResultadoOrcamento } from '@promec/motor';
 import { dataIso, hoje, pct, pd, pdOpc, tt } from '../comum/decimal';
 import { conflito, invalido, naoEncontrado, regra } from '../comum/erros';
 import { Sessao } from '../comum/sessao';
@@ -10,6 +10,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, Db, json, resultadoDe } from '../tabelas-custos/entrada';
 import { semVigente } from '../tabelas-custos/tabelas.service';
 import { promessaDoOrcamento } from '../planejamento/entrada';
+import { abrirNc, ItemPlano, planoDoSegmento, ultimaVersao } from '../qualidade/qualidade-core';
+import { criarRequisicao } from '../suprimentos/compras.service';
+import { baixarReserva, buscarItem, conferirSaida, liberarReservas, localPreferido, movimentar, reservarDoOrcamento } from '../suprimentos/estoque-core';
+import { EstoqueService } from '../suprimentos/estoque.service';
+import { ConsumoDto } from '../suprimentos/estoque.dto';
 import {
   custoRealDa,
   exigeJustificativa,
@@ -40,6 +45,13 @@ const ENCERRADAS: StatusOs[] = ['ENTREGUE', 'CANCELADA'];
 const EM_ANDAMENTO: StatusOs[] = ['ABERTA', 'EM_FILA', 'EM_EXECUCAO', 'PAUSADA', 'CONTROLE_QUALIDADE', 'CONCLUIDA'];
 const ORDEM_PRIORIDADE = { URGENTE: 0, ALTA: 1, NORMAL: 2, BAIXA: 3 } as const;
 const HORAS_PAUSA_LONGA = 4;
+const CATEGORIA_DO_ITEM: Partial<Record<string, string>> = {
+  MATERIA_PRIMA: 'material',
+  PECA_REPOSICAO: 'material',
+  PRODUTO_ACABADO: 'material',
+  FERRAMENTA_ESPECIFICA: 'ferramental',
+  SERVICO_EXTERNO: 'terceiros'
+};
 
 const ROTULO: Record<StatusOs, string> = {
   ABERTA: 'aberta',
@@ -71,7 +83,8 @@ const MOTIVO: Record<string, string> = {
 export class OrdensService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly parametros: ParametrosService
+    private readonly parametros: ParametrosService,
+    private readonly estoque: EstoqueService
   ) {}
 
   async listar(tenantId: string, filtro: { status?: string; q?: string; atrasadas?: string }) {
@@ -104,11 +117,15 @@ export class OrdensService {
 
   async detalhe(tenantId: string, id: string) {
     const os = await this.buscar(tenantId, id);
-    const [apontamentos, ocorrencias, inspecoes, historico] = await Promise.all([
+    const [apontamentos, ocorrencias, inspecoes, historico, consumos, reservas, ncs, plano] = await Promise.all([
       this.prisma.apontamento.findMany({ where: { osId: id }, orderBy: { inicio: 'asc' }, include: { colaborador: { select: { nome: true } } } }),
       this.prisma.ocorrencia.findMany({ where: { osId: id }, orderBy: { inicio: 'asc' } }),
       this.prisma.inspecao.findMany({ where: { osId: id }, orderBy: { data: 'asc' } }),
-      this.prisma.osHistorico.findMany({ where: { osId: id }, orderBy: { data: 'asc' } })
+      this.prisma.osHistorico.findMany({ where: { osId: id }, orderBy: { data: 'asc' } }),
+      this.prisma.movimento.findMany({ where: { tenantId, osId: id, tipo: { in: ['SAIDA_OS', 'ESTORNO_OS', 'DEVOLUCAO'] } }, orderBy: { data: 'asc' } }),
+      this.prisma.reserva.findMany({ where: { tenantId, osId: id }, include: { item: { select: { codigo: true, descricao: true, unidadeConsumo: true } } } }),
+      this.prisma.naoConformidade.findMany({ where: { tenantId, osId: id }, orderBy: { criadoEm: 'asc' } }),
+      os.planoInspecaoId ? this.prisma.planoInspecao.findFirst({ where: { tenantId, planoId: os.planoInspecaoId, versao: os.planoVersao ?? undefined } }) : null
     ]);
     const resultado = custoRealDa(os);
     return {
@@ -122,8 +139,25 @@ export class OrdensService {
         orcado: tt(c.orcado),
         real: c.real === null ? null : tt(c.real),
         doOrcamento: c.doOrcamento,
+        itemId: c.itemId,
         justificativa: c.justificativa
       })),
+      consumos: await this.estoque.saidaMovimentos(tenantId, consumos),
+      reservas: reservas.map((r) => ({
+        id: r.id,
+        itemId: r.itemId,
+        codigo: r.item.codigo,
+        descricao: r.item.descricao,
+        unidade: r.item.unidadeConsumo,
+        quantidade: tt(r.quantidade),
+        consumida: tt(r.consumida),
+        pendente: tt(r.quantidade.minus(r.consumida)),
+        status: r.status
+      })),
+      planoInspecao: plano
+        ? { id: plano.planoId, nome: plano.nome, versao: plano.versao, exigeInspecao: plano.exigeInspecao, itens: plano.itens as unknown as ItemPlano[] }
+        : null,
+      ncs: ncs.map((n) => ({ id: n.id, numero: n.numero, origem: n.origem, status: n.status, descricao: n.descricao })),
       apontamentos: apontamentos.map(saidaApontamento),
       ocorrencias: ocorrencias.map((o) => ({
         id: o.id,
@@ -134,7 +168,7 @@ export class OrdensService {
         horas: o.horas === null ? null : tt(o.horas),
         observacao: o.observacao
       })),
-      inspecoes: inspecoes.map((i) => ({ id: i.id, aprovada: i.aprovada, itens: i.itens, observacao: i.observacao, centroRetrabalhoId: i.centroRetrabalhoId, data: i.data })),
+      inspecoes: inspecoes.map((i) => ({ id: i.id, aprovada: i.aprovada, itens: i.itens, inspetor: i.inspetor, observacao: i.observacao, centroRetrabalhoId: i.centroRetrabalhoId, data: i.data })),
       historico: historico.map((h) => ({ status: h.status, evento: h.evento, detalhe: h.detalhe, data: h.data })),
       tabelaCustos: { id: os.tabelaCustos.id, competencia: os.tabelaCustos.competencia, versao: os.tabelaCustos.versao },
       resultado,
@@ -158,11 +192,13 @@ export class OrdensService {
     const prazoFinal = prazo
       ? data(prazo)
       : (o.prazoPrometido ?? (await promessaDoOrcamento(this.prisma, s.tenantId, o).then((p) => (p.fim ? data(p.fim) : null))) ?? (await this.prazoPadrao()));
+    const plano = await planoDoSegmento(this.prisma, s.tenantId, o.segmento);
     const id = await this.prisma.$transaction(async (tx) => {
       const os = await tx.ordemServico.create({
         data: {
           tenantId: s.tenantId,
           numero: await proximoNumero(tx, s.tenantId, 'OS'),
+          ...plano,
           orcamentoId: o.id,
           clienteId: o.clienteId,
           tabelaCustosId: o.tabelaCustosId,
@@ -189,6 +225,7 @@ export class OrdensService {
           custos: { create: custos.map((c) => ({ ...c, tenantId: s.tenantId, orcado: pd(c.orcado), doOrcamento: true })) }
         }
       });
+      await reservarDoOrcamento(tx, s.tenantId, os.id, o.linhas as unknown as LinhaOrcamento[], o.lote);
       const convertido = await tx.orcamento.update({ where: { id: o.id }, data: { status: 'CONVERTIDO' } });
       await tx.orcamentoHistorico.create({
         data: {
@@ -239,6 +276,7 @@ export class OrdensService {
         data: {
           tenantId: s.tenantId,
           numero: await proximoNumero(tx, s.tenantId, 'OS'),
+          ...(await planoDoSegmento(tx, s.tenantId, dto.segmento)),
           clienteId: dto.clienteId,
           tabelaCustosId: vigente.id,
           titulo: dto.titulo.trim(),
@@ -294,7 +332,8 @@ export class OrdensService {
         prazo: dto.prazo ? data(dto.prazo) : undefined,
         prioridade: dto.prioridade,
         observacoes: dto.observacoes,
-        ...(dto.objeto ? { objeto: json(mesclarObjeto(os.objeto, dto.objeto)) } : {})
+        ...(dto.objeto ? { objeto: json(mesclarObjeto(os.objeto, dto.objeto)) } : {}),
+        ...(dto.planoInspecaoId !== undefined ? await this.planoEscolhido(s.tenantId, dto.planoInspecaoId) : {})
       }
       });
     });
@@ -487,7 +526,19 @@ export class OrdensService {
       await tx.osOperacao.updateMany({ where: { osId: id, status: 'EM_ANDAMENTO' }, data: { status: 'PAUSADA' } });
       await tx.ocorrencia.create({ data: { tenantId: s.tenantId, osId: id, tipo: 'PAUSA', motivo: dto.motivo, inicio: agora, observacao: dto.observacao ?? null } });
       await tx.ordemServico.update({ where: { id }, data: { status: 'PAUSADA' } });
-      await this.registrar(tx, s.tenantId, id, 'PAUSADA', 'pausada', s.id, MOTIVO[dto.motivo] + (dto.observacao ? `: ${dto.observacao}` : ''));
+      let requisicao = '';
+      if (dto.motivo === 'FALTA_PECA' && dto.itemId) {
+        await buscarItem(tx, s.tenantId, dto.itemId);
+        const r = await criarRequisicao(tx, s.tenantId, {
+          origem: 'OS',
+          osId: id,
+          usuarioId: s.id,
+          observacao: `Falta de peça na ${os.numero}${dto.observacao ? `: ${dto.observacao}` : ''}`,
+          itens: [{ itemId: dto.itemId, quantidade: String(dto.quantidade ?? '1') }]
+        });
+        requisicao = ` (requisição ${r.numero})`;
+      }
+      await this.registrar(tx, s.tenantId, id, 'PAUSADA', 'pausada', s.id, MOTIVO[dto.motivo] + (dto.observacao ? `: ${dto.observacao}` : '') + requisicao);
     });
     return this.detalhe(s.tenantId, id);
   }
@@ -506,25 +557,48 @@ export class OrdensService {
 
   async inspecao(s: Sessao, id: string, dto: InspecaoDto) {
     const os = await this.emStatus(s.tenantId, id, ['CONTROLE_QUALIDADE'], 'registrar inspeção de');
-    const observacao = dto.observacao?.trim();
-    if (!dto.aprovada && !observacao) {
+    const plano = os.planoInspecaoId
+      ? await this.prisma.planoInspecao.findFirst({ where: { tenantId: s.tenantId, planoId: os.planoInspecaoId, versao: os.planoVersao ?? undefined } })
+      : null;
+    const itensPlano = (plano?.itens ?? []) as unknown as ItemPlano[];
+    const itens = dto.itens.map((i) => {
+      const pi = i.planoItemId ? itensPlano.find((x) => x.id === i.planoItemId) : undefined;
+      if (i.planoItemId && !pi) throw regra('ITEM_FORA_DO_PLANO', `"${i.descricao}" não faz parte do plano de inspeção desta OS. Atualize a tela e meça de novo.`);
+      if (pi?.tipo === 'DIMENSIONAL') {
+        const medido = i.medido === undefined || i.medido === null ? '' : String(i.medido).replace(',', '.');
+        if (!/^-?\d+(\.\d+)?$/.test(medido)) {
+          throw regra('MEDICAO_OBRIGATORIA', `Informe a medida de "${pi.descricao}" em ${pi.unidade ?? 'mm'}, com ponto ou vírgula decimal, para conferir a tolerância.`);
+        }
+        const m = avaliarMedicao({ nominal: pi.nominal!, tolInferior: pi.tolInferior ?? '0', tolSuperior: pi.tolSuperior ?? '0', medido });
+        return { planoItemId: pi.id, descricao: pi.descricao, tipo: pi.tipo, nominal: pi.nominal, tolInferior: pi.tolInferior, tolSuperior: pi.tolSuperior, unidade: pi.unidade, instrumento: pi.instrumento, medido, ...m };
+      }
+      if (i.conforme === undefined) {
+        throw invalido(`Diga se "${i.descricao}" está conforme.`, [{ campo: 'itens.conforme', mensagem: 'conforme é obrigatório para itens não dimensionais' }]);
+      }
+      return { planoItemId: pi?.id ?? null, descricao: i.descricao, tipo: pi?.tipo ?? null, esperado: i.esperado ?? null, medido: i.medido ?? null, conforme: i.conforme };
+    });
+    const aprovada = (dto.aprovada ?? true) && itens.every((i) => i.conforme);
+    const foraDoEspecificado = itens.filter((i) => !i.conforme).map((i) => ('minimo' in i ? `${i.descricao}: medido ${i.medido} fora de ${i.minimo}–${i.maximo}` : i.descricao));
+    const observacao = dto.observacao?.trim() || (!aprovada && foraDoEspecificado.length ? foraDoEspecificado.join('; ') : undefined);
+    if (!aprovada && !observacao) {
       throw regra('OBSERVACAO_OBRIGATORIA', 'Para reprovar, descreva o que ficou fora do especificado. Isso orienta o retrabalho e fica no histórico da OS.');
     }
     const centroId = dto.centroRetrabalhoId ?? os.operacoes[os.operacoes.length - 1]?.centroId;
-    const custoHora = dto.aprovada ? null : this.custoHora(resultadoDe(os.tabelaCustos), centroId, 'retrabalho');
+    const custoHora = aprovada ? null : this.custoHora(resultadoDe(os.tabelaCustos), centroId, 'retrabalho');
     await this.prisma.$transaction(async (tx) => {
       await tx.inspecao.create({
         data: {
           tenantId: s.tenantId,
           osId: id,
-          aprovada: dto.aprovada,
-          itens: json(dto.itens),
+          aprovada,
+          itens: json(itens),
+          inspetor: dto.inspetor?.trim() || s.nome,
           observacao: observacao ?? null,
-          centroRetrabalhoId: dto.aprovada ? null : centroId,
+          centroRetrabalhoId: aprovada ? null : centroId,
           usuarioId: s.id
         }
       });
-      if (dto.aprovada) {
+      if (aprovada) {
         await tx.ordemServico.update({ where: { id }, data: { status: 'CONCLUIDA' } });
         await this.registrar(tx, s.tenantId, id, 'CONCLUIDA', 'inspecao_aprovada', s.id, observacao);
         return;
@@ -544,16 +618,123 @@ export class OrdensService {
           justificativa: observacao
         }
       });
+      const lote = await tx.movimento.findFirst({ where: { tenantId: s.tenantId, osId: id, tipo: 'SAIDA_OS', estornado: false, loteId: { not: null } }, orderBy: { data: 'asc' } });
+      const ultima = [...os.operacoes].reverse().find((o) => o.centroId === centroId);
+      await abrirNc(tx, s.tenantId, {
+        origem: 'PROCESSO',
+        descricao: `Inspeção reprovada na ${os.numero}: ${observacao}`,
+        osId: id,
+        centroId,
+        loteId: lote?.loteId ?? null,
+        colaboradorId: ultima?.colaboradorId ?? null
+      });
       await tx.ordemServico.update({ where: { id }, data: { status: 'EM_EXECUCAO' } });
       await this.registrar(tx, s.tenantId, id, 'EM_EXECUCAO', 'inspecao_reprovada', s.id, observacao);
     });
     return this.detalhe(s.tenantId, id);
   }
 
+  async consumir(s: Sessao, id: string, dto: ConsumoDto) {
+    const os = await this.naoEncerrada(s.tenantId, id, 'baixar material em');
+    const item = await buscarItem(this.prisma, s.tenantId, dto.itemId);
+    if (item.tipo === 'INSUMO' || item.tipo === 'FERRAMENTA_GERAL') {
+      throw regra('ITEM_DE_CENTRO', `${item.descricao} é ${item.tipo === 'INSUMO' ? 'insumo' : 'ferramenta geral'}: entra no custo do centro de trabalho, não na OS. Baixe pelo estoque contra o centro.`);
+    }
+    const q = dec(dto.quantidade);
+    if (q.lte(0)) throw invalido('A quantidade consumida precisa ser maior que zero.', [{ campo: 'quantidade', mensagem: 'quantidade precisa ser maior que zero' }]);
+    const lote = dto.loteId ? await this.prisma.lote.findFirst({ where: { id: dto.loteId, tenantId: s.tenantId, itemId: item.id } }) : null;
+    if (dto.loteId && !lote) throw naoEncontrado('esse lote do item');
+    const reserva = await this.prisma.reserva.findFirst({ where: { tenantId: s.tenantId, osId: id, itemId: item.id, status: 'ATIVA' } });
+    const localId = dto.localId ?? lote?.localId ?? reserva?.localId ?? (await localPreferido(this.prisma, s.tenantId, item.id));
+    if (!localId) throw regra('SALDO_INSUFICIENTE', `Não há saldo de ${item.descricao} em nenhum local. Registre a entrada antes de consumir.`);
+    const valor = txt(q.times(dec(tt(item.custoMedio))));
+    const alvo = dto.custoId ? os.custos.find((c) => c.id === dto.custoId) : os.custos.find((c) => c.itemId === item.id);
+    if (dto.custoId && !alvo) throw naoEncontrado('esse custo nesta OS');
+    const novoReal = txt(dec(alvo?.real ? tt(alvo.real) : 0).plus(valor));
+    this.conferirJustificativa(alvo?.descricao ?? item.descricao, alvo ? tt(alvo.orcado) : '0', novoReal, dto.justificativa ?? alvo?.justificativa ?? undefined);
+    await this.prisma.$transaction(async (tx) => {
+      await conferirSaida(tx, { tenantId: s.tenantId, item, localId, quantidade: q, loteId: dto.loteId, osId: id });
+      const custo = alvo
+        ? await tx.osCusto.update({ where: { id: alvo.id }, data: { real: pd(novoReal), ...(dto.justificativa ? { justificativa: dto.justificativa.trim() } : {}) } })
+        : await tx.osCusto.create({
+            data: {
+              tenantId: s.tenantId,
+              osId: id,
+              descricao: item.descricao,
+              categoria: CATEGORIA_DO_ITEM[item.tipo] ?? 'material',
+              orcado: pd(0),
+              real: pd(valor),
+              itemId: item.id,
+              justificativa: dto.justificativa?.trim() || null
+            }
+          });
+      await movimentar(tx, {
+        tenantId: s.tenantId,
+        tipo: 'SAIDA_OS',
+        item,
+        localId,
+        quantidade: q.neg(),
+        custoUnitario: tt(item.custoMedio),
+        loteId: dto.loteId,
+        osId: id,
+        osCustoId: custo.id,
+        usuarioId: s.id,
+        observacao: os.numero
+      });
+      await baixarReserva(tx, s.tenantId, id, item.id, q);
+    });
+    return this.detalhe(s.tenantId, id);
+  }
+
+  async estornarConsumo(s: Sessao, id: string, movimentoId: string) {
+    const os = await this.naoEncerrada(s.tenantId, id, 'estornar material de');
+    const m = await this.prisma.movimento.findFirst({ where: { id: movimentoId, tenantId: s.tenantId, osId: id, tipo: 'SAIDA_OS' } });
+    if (!m) throw naoEncontrado('esse consumo nesta OS');
+    if (m.estornado) throw conflito('JA_ESTORNADO', 'Esse consumo já foi estornado.');
+    const item = await buscarItem(this.prisma, s.tenantId, m.itemId);
+    const q = dec(tt(m.quantidade)).neg();
+    await this.prisma.$transaction(async (tx) => {
+      await movimentar(tx, {
+        tenantId: s.tenantId,
+        tipo: 'ESTORNO_OS',
+        item,
+        localId: m.localId,
+        quantidade: q,
+        custoUnitario: tt(m.custoUnitario),
+        loteId: m.loteId,
+        osId: id,
+        osCustoId: m.osCustoId,
+        estornoDeId: m.id,
+        usuarioId: s.id,
+        observacao: `Estorno do consumo na ${os.numero}`
+      });
+      await tx.movimento.update({ where: { id: m.id }, data: { estornado: true } });
+      const custo = m.osCustoId ? os.custos.find((c) => c.id === m.osCustoId) : undefined;
+      if (custo?.real) {
+        const real = dec(tt(custo.real)).plus(dec(tt(m.valor)));
+        await tx.osCusto.update({ where: { id: custo.id }, data: { real: real.gt(0) ? pd(txt(real)) : null } });
+      }
+      await baixarReserva(tx, s.tenantId, id, item.id, q.neg());
+    });
+    return this.detalhe(s.tenantId, id);
+  }
+
+  private async planoEscolhido(tenantId: string, planoId: string | null) {
+    if (!planoId) return { planoInspecaoId: null, planoVersao: null };
+    const p = await ultimaVersao(this.prisma, tenantId, planoId);
+    if (!p) throw naoEncontrado('esse plano de inspeção');
+    return { planoInspecaoId: p.planoId, planoVersao: p.versao };
+  }
+
   async entregar(s: Sessao, id: string, dto: EntregarDto) {
     const os = await this.emStatus(s.tenantId, id, ['CONCLUIDA'], 'entregar');
+    const aberta = await this.prisma.naoConformidade.findFirst({ where: { tenantId: s.tenantId, osId: id, status: 'ABERTA' } });
+    if (aberta) {
+      throw conflito('NC_ABERTA', `${aberta.numero} está aberta sem ação registrada para esta OS. Registre a causa e a ação corretiva antes de entregar.`, { ncId: aberta.id });
+    }
     const r = custoRealDa(os);
     await this.prisma.$transaction(async (tx) => {
+      await liberarReservas(tx, s.tenantId, id);
       await tx.ordemServico.update({
         where: { id },
         data: {
@@ -577,6 +758,7 @@ export class OrdensService {
     await this.prisma.$transaction(async (tx) => {
       await this.fecharApontamentos(tx, os, agora);
       await this.fecharOcorrencias(tx, os, agora);
+      await liberarReservas(tx, s.tenantId, id);
       const atual = await tx.ordemServico.findUniqueOrThrow({ where: { id }, include: incluirOs });
       const r = custoRealDa(atual);
       await tx.ordemServico.update({
@@ -694,6 +876,7 @@ export class OrdensService {
       comissao: tt(o.comissao),
       margemMinima: tt(o.margemMinima),
       observacoes: o.observacoes,
+      garantiaDeId: o.garantiaDeId,
       custoRealFinal: o.custoRealFinal === null ? null : tt(o.custoRealFinal),
       desvioFinal: o.desvioFinal === null ? null : tt(o.desvioFinal),
       recebidoPor: o.recebidoPor,

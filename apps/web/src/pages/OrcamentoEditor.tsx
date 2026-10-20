@@ -148,6 +148,7 @@ export default function OrcamentoEditor() {
     metodo: x.metodo, observacoes: x.observacoes, prazoPrometido: x.prazoPrometido || null,
     linhas: x.linhas.map((l) => {
       const m = paraLinhaMotor(l, mapa) as Record<string, unknown>;
+      if (l.itemId) m.itemId = l.itemId;
       if (l.tipo === 'operacao' || l.tipo === 'maoDeObra') {
         delete m.custoHora;
         delete m.rateioHora;
@@ -310,6 +311,11 @@ export default function OrcamentoEditor() {
           acao={(status === 'RASCUNHO' || status === 'EM_NEGOCIACAO') && <Button icone={RefreshCw} carregando={atualizar.isPending} onClick={() => atualizar.mutate(undefined)}>Recalcular com a vigente</Button>}
         >
           Este orçamento usa os custos de {competenciaLonga(o.tabelaCustos.competencia)}. Ao recalcular, sai uma versão nova com os custos de hoje; a atual fica guardada.
+        </Aviso>
+      )}
+      {o?.custoDesatualizado && editavel && (
+        <Aviso tom="warn" titulo="O custo de algum material mudou">
+          Um recebimento recente mudou mais de 5% o preço de um item deste orçamento. Escolha o item de novo na linha para puxar o custo médio atual, confira a margem e salve.
         </Aviso>
       )}
       {novo && vigente.isError && (

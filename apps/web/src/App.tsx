@@ -23,7 +23,27 @@ const OSNova = lazy(() => import('./pages/OSNova'));
 const OSDetalhe = lazy(() => import('./pages/OSDetalhe'));
 const Planejamento = lazy(() => import('./pages/Planejamento'));
 const Agenda = lazy(() => import('./pages/Agenda'));
+const ItensLista = lazy(() => import('./pages/ItensLista'));
+const ItemForm = lazy(() => import('./pages/ItemForm'));
+const FornecedoresLista = lazy(() => import('./pages/FornecedoresLista'));
+const FornecedorForm = lazy(() => import('./pages/FornecedorForm'));
+const Estoque = lazy(() => import('./pages/Estoque'));
+const Compras = lazy(() => import('./pages/Compras'));
+const CotacaoDetalhe = lazy(() => import('./pages/CotacaoDetalhe'));
+const PedidoDetalhe = lazy(() => import('./pages/PedidoDetalhe'));
+const Qualidade = lazy(() => import('./pages/Qualidade'));
+const Laudo = lazy(() => import('./pages/Laudo'));
 const ModoOperador = lazy(() => import('./pages/ModoOperador'));
+
+function TelaLaudo() {
+  const { logado } = useAuth();
+  if (!logado) return <Navigate to="/login" replace />;
+  return (
+    <Suspense fallback={<Carregando />}>
+      <Laudo />
+    </Suspense>
+  );
+}
 
 function TelaOperador() {
   const { logado } = useAuth();
@@ -40,6 +60,7 @@ export function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/operador" element={<TelaOperador />} />
+      <Route path="/ordens-servico/:id/laudo" element={<TelaLaudo />} />
       <Route element={<AppShell />}>
         <Route
           path="*"
@@ -63,6 +84,15 @@ export function App() {
                 <Route path="ordens-servico/:id" element={<OSDetalhe />} />
                 <Route path="planejamento" element={<Planejamento />} />
                 <Route path="agenda" element={<Agenda />} />
+                <Route path="itens" element={<ItensLista />} />
+                <Route path="itens/:id" element={<ItemForm />} />
+                <Route path="fornecedores" element={<FornecedoresLista />} />
+                <Route path="fornecedores/:id" element={<FornecedorForm />} />
+                <Route path="estoque" element={<Estoque />} />
+                <Route path="compras" element={<Compras />} />
+                <Route path="compras/cotacoes/:id" element={<CotacaoDetalhe />} />
+                <Route path="compras/pedidos/:id" element={<PedidoDetalhe />} />
+                <Route path="qualidade" element={<Qualidade />} />
                 <Route path="*" element={<NaoEncontrado />} />
               </Routes>
             </Suspense>

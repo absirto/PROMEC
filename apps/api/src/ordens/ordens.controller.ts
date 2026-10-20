@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Papeis, Sessao, SessaoAtual } from '../comum/sessao';
+import { ConsumoDto } from '../suprimentos/estoque.dto';
 import {
   AtualizarCustoDto,
   AtualizarOperacaoDto,
@@ -90,6 +91,16 @@ export class OrdensController {
   @Delete(':id/custos/:custoId')
   removerCusto(@SessaoAtual() s: Sessao, @Param('id') id: string, @Param('custoId') custoId: string) {
     return this.ordens.removerCusto(s, id, custoId);
+  }
+
+  @Post(':id/consumos')
+  consumir(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: ConsumoDto) {
+    return this.ordens.consumir(s, id, dto);
+  }
+
+  @Delete(':id/consumos/:movimentoId')
+  estornarConsumo(@SessaoAtual() s: Sessao, @Param('id') id: string, @Param('movimentoId') movimentoId: string) {
+    return this.ordens.estornarConsumo(s, id, movimentoId);
   }
 
   @Post(':id/pausar')

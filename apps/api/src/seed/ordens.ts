@@ -99,6 +99,7 @@ const ORDENS: OsSemente[] = [
     inicioHa: 4.3,
     objeto: { desenho: 'BUC-H7-020', revisao: 'C', material: 'Latão C360 Ø25' },
     operacoes: [{ colaborador: 'ricardo', status: 'EM_ANDAMENTO', setupConcluido: true, apontamentos: [['SETUP', 3.4, 0], ['PRODUCAO', 0.38, 4], ['PRODUCAO', null, 0]] }],
+    reais: ['80'],
     eventos: [['criada', 'EM_FILA', 20, 'Convertida de ORC-2026-00121'], ['execucao_iniciada', 'EM_EXECUCAO', 4.3, 'Torneamento CNC por Ricardo Lima']]
   }
 ];
@@ -186,6 +187,7 @@ export async function semearOrdens(db: PrismaClient, tenantId: string, id: (s: s
         descricao: c.descricao,
         categoria: c.categoria,
         orcado: pd(c.orcado),
+        itemId: c.itemId,
         real: os.reais?.[i] ? pd(os.reais[i]!) : null,
         doOrcamento: true
       }))

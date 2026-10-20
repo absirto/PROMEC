@@ -169,7 +169,7 @@ export function Select({
   ...rest
 }: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> & { value: string; onChange: (v: string) => void; opcoes: { valor: string; rotulo: string }[]; vazio?: string; invalido?: boolean }) {
   return (
-    <div className={`campo relative ${className}`} data-erro={invalido}>
+    <div className={`campo relative min-w-0 max-w-full ${className}`} data-erro={invalido}>
       <select value={value} onChange={(e) => onChange(e.target.value)} {...rest}>
         {vazio !== undefined && <option value="">{vazio}</option>}
         {opcoes.map((o) => (

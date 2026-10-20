@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Ban, CalendarClock, Check, ChevronDown, Trash2, ClipboardCheck, Cpu, ListChecks, PackageCheck, Pause, Play, Plus, Rocket, Timer, TriangleAlert, UserRound, X
+  Ban, CalendarClock, Check, ChevronDown, FileText, Trash2, ClipboardCheck, Cpu, PackageCheck, Pause, Play, Plus, Rocket, Timer, TriangleAlert, UserRound
 } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import { podeLiberarMargem, useAuth } from '../lib/auth';
@@ -13,7 +13,7 @@ import { SEGMENTO } from '../lib/rotulos';
 import { HeroBand, HeroKpi } from '../components/HeroBand';
 import { Card, CardHeader } from '../components/Card';
 import { Button, IconButton } from '../components/Button';
-import { DecimalInput, Segmented, Select, SelectField, TextArea, TextField, NumberField } from '../components/Field';
+import { DecimalInput, Segmented, SelectField, TextArea, TextField, NumberField } from '../components/Field';
 import { GlassPanel } from '../components/GlassPanel';
 import { MarginRuler } from '../components/MarginRuler';
 import { ExplainTree } from '../components/ExplainTree';
@@ -22,6 +22,9 @@ import { Pill } from '../components/Pill';
 import { Modal } from '../components/Modal';
 import { useTitulo } from '../layout/titulo';
 import { cronometro, MOTIVOS_PAUSA, segundosDesde, textoAlerta, useAgora } from '../features/os/os';
+import { InspecaoDialog } from '../features/os/Inspecao';
+import { ConsumosOS } from '../features/os/Consumos';
+import { ItemPicker } from '../components/ItemPicker';
 import { BarrasOrcadoReal, DesvioBadge, ilustracaoSegmento, PlacaMercosul, StatusOSPill, StepperOS } from '../features/os/componentes';
 
 const EVENTOS: Record<string, string> = {
@@ -154,14 +157,15 @@ export default function OSDetalhe() {
   const [motivo, setMotivo] = useState<MotivoPausa | ''>('');
   const [obs, setObs] = useState('');
   const [entrega, setEntrega] = useState({ recebidoPor: '', documento: '', observacao: '' });
-  const [insp, setInsp] = useState<{ aprovada: boolean; itens: { descricao: string; esperado: string; medido: string; conforme: boolean }[]; observacao: string; centroRetrabalhoId: string }>({ aprovada: true, itens: [], observacao: '', centroRetrabalhoId: '' });
+  const [faltaItem, setFaltaItem] = useState({ itemId: '', quantidade: '' });
+  const [ncAberta, setNcAberta] = useState<string | null>(null);
 
   const inval = [['ordens-servico'], ['painel'], ['orcamentos']];
   const post = (rota: string, sucesso: string) =>
     useAcao((body?: unknown) => api<OrdemServico>(`/ordens-servico/${id}/${rota}`, { method: 'POST', body }), {
       invalida: inval,
       sucesso,
-      onSuccess: (os) => { if (os?.id) qc.setQueryData(['ordens-servico', id], os); setModal(null); setObs(''); }
+      onSuccess: (os) => { if (os?.operacoes && os.resultado) qc.setQueryData(['ordens-servico', id], os); setModal(null); setObs(''); }
     });
   const liberar = post('liberar', 'Liberada. A OS entrou na fila do chão de fábrica.');
   const pausar = post('pausar', 'Pausa registrada. Quando resolver, é só retomar.');
@@ -171,7 +175,7 @@ export default function OSDetalhe() {
   const cancelar = post('cancelar', 'OS cancelada. O que já foi apontado ficou como perda.');
   const reprogramar = useAcao(
     () => api<OrdemServico>(`/ordens-servico/${id}`, { method: 'PATCH', body: { prazo: edPrazo.prazo || null, prioridade: edPrazo.prioridade, ...(edPrazo.motivo.trim() ? { motivoReprogramacao: edPrazo.motivo.trim() } : {}) } }),
-    { invalida: [['ordens-servico'], ['planejamento'], ['painel']], sucesso: 'Prazo e prioridade atualizados. A fila já foi recalculada.', onSuccess: (os) => { if (os?.id) qc.setQueryData(['ordens-servico', id], os); setModal(null); } }
+    { invalida: [['ordens-servico'], ['planejamento'], ['painel']], sucesso: 'Prazo e prioridade atualizados. A fila já foi recalculada.', onSuccess: (os) => { if (os?.operacoes && os.resultado) qc.setQueryData(['ordens-servico', id], os); setModal(null); } }
   );
 
   if (q.isLoading) return <Card><Carregando /></Card>;
@@ -213,12 +217,7 @@ export default function OSDetalhe() {
     ...o.historico.filter((h) => h.evento).map((h) => ({ quando: h.data, titulo: EVENTOS[h.evento!] ?? (h.evento!.charAt(0).toUpperCase() + h.evento!.slice(1)).replace(/_/g, ' '), detalhe: h.detalhe ?? undefined, tom: 'bg-neutral' }))
   ].sort((a, b) => (b.quando ?? '').localeCompare(a.quando ?? ''));
 
-  const abrirInspecao = () => {
-    setInsp({ aprovada: true, itens: itensPadrao(o).map((descricao) => ({ descricao, esperado: '', medido: '', conforme: true })), observacao: '', centroRetrabalhoId: o.operacoes[o.operacoes.length - 1]?.centroId ?? '' });
-    setModal('inspecao');
-  };
-  const reprovando = !insp.aprovada;
-  const centrosOS = [...new Map(o.operacoes.map((x) => [x.centroId, x.centroNome])).entries()].map(([valor, rotulo]) => ({ valor, rotulo }));
+  const abrirInspecao = () => setModal('inspecao');
 
   const principal = {
     ABERTA: <Button variante="primario" icone={Rocket} carregando={liberar.isPending} onClick={() => liberar.mutate(undefined)}>Liberar para a fila</Button>,
@@ -242,10 +241,11 @@ export default function OSDetalhe() {
           </span>
         }
         titulo={o.titulo}
-        texto={<>Para <strong className="text-white">{o.cliente.nome}</strong>{o.orcamento && <> · do <Link to={`/orcamentos/${o.orcamento.id}`} className="text-[#FFC08F] mono">{o.orcamento.numero}</Link></>}. {lead(o)}</>}
+        texto={<>Para <strong className="text-white">{o.cliente.nome.replace(/\.$/, '')}</strong>{o.orcamento && <> · do <Link to={`/orcamentos/${o.orcamento.id}`} className="text-[#FFC08F] mono">{o.orcamento.numero}</Link></>}. {lead(o)}</>}
         acoes={
           <>
             {o.status === 'EM_EXECUCAO' && <Button variante="vidro" icone={Pause} onClick={() => { setMotivo(''); setModal('pausa'); }}>Pausar</Button>}
+            {o.inspecoes.length > 0 && <Button variante="vidro" icone={FileText} to={`/ordens-servico/${o.id}/laudo`}>Laudo</Button>}
             {o.status !== 'ENTREGUE' && o.status !== 'CANCELADA' && <Button variante="vidro" icone={CalendarClock} onClick={() => { setEdPrazo({ prazo: (o.prazo ?? '').slice(0, 10), prioridade: o.prioridade ?? 'NORMAL', motivo: '', pedeMotivo: false }); setModal('prazo'); }}>Prazo e prioridade</Button>}
             {gestor && o.status !== 'ENTREGUE' && o.status !== 'CANCELADA' && <Button variante="vidro" icone={Ban} onClick={() => { setObs(''); setModal('cancelar'); }}>Cancelar OS</Button>}
             {principal}
@@ -261,6 +261,11 @@ export default function OSDetalhe() {
         </div>
       </HeroBand>
 
+      {(o.ncs ?? []).filter((n) => n.status !== 'ENCERRADA').length > 0 && (
+        <Aviso tom="bad" titulo="Não-conformidade nesta OS" acao={<Button to={`/qualidade?aba=ncs`}>Ver as NCs</Button>}>
+          {(o.ncs ?? []).filter((n) => n.status !== 'ENCERRADA').map((n) => `${n.numero ?? 'NC'}${n.descricao ? `: ${n.descricao}` : ''}${n.status === 'ABERTA' ? ' (sem ação ainda, bloqueia a entrega)' : ' (em tratamento)'}`).join(' · ')}
+        </Aviso>
+      )}
       {o.alertas.length > 0 && (
         <Aviso tom={o.alertas.some((a) => typeof a !== 'string' && a.tipo === 'perigo') ? 'bad' : 'warn'} faixa titulo={o.alertas.length === 1 ? 'Um ponto pede atenção' : `${o.alertas.length} pontos pedem atenção`}>
           <ul className="m-0 pl-0 list-none flex flex-col gap-1">
@@ -339,6 +344,8 @@ export default function OSDetalhe() {
               })}
             </ol>
           </Card>
+
+          <ConsumosOS o={o} editavel={editavelCustos} />
 
           <Card className="overflow-hidden" aria-labelledby="h-custos">
             <div className="px-5 pt-5 pb-3">
@@ -450,7 +457,7 @@ export default function OSDetalhe() {
       </Modal>
 
       <Modal aberto={modal === 'pausa'} onFechar={() => setModal(null)} titulo="Por que parou?"
-        rodape={<><Button onClick={() => setModal(null)}>Voltar</Button><Button variante="primario" icone={Pause} disabled={!motivo} carregando={pausar.isPending} onClick={() => pausar.mutate({ motivo, observacao: obs.trim() || undefined })}>Pausar a OS</Button></>}>
+        rodape={<><Button onClick={() => setModal(null)}>Voltar</Button><Button variante="primario" icone={Pause} disabled={!motivo} carregando={pausar.isPending} onClick={() => pausar.mutate({ motivo, observacao: obs.trim() || undefined, ...(motivo === 'FALTA_PECA' && faltaItem.itemId && toNum(faltaItem.quantidade) > 0 ? { itemId: faltaItem.itemId, quantidade: faltaItem.quantidade } : {}) })}>Pausar a OS</Button></>}>
         <div role="radiogroup" aria-label="Motivo da pausa" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {(Object.keys(MOTIVOS_PAUSA) as MotivoPausa[]).map((m) => (
             <button key={m} type="button" role="radio" aria-checked={motivo === m} onClick={() => setMotivo(m)}
@@ -459,52 +466,32 @@ export default function OSDetalhe() {
             </button>
           ))}
         </div>
+        {motivo === 'FALTA_PECA' && (
+          <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3 p-3 rounded-field bg-warn-soft">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[13.5px] font-medium text-ink-2">Qual item falta (opcional)</span>
+              <ItemPicker value={faltaItem.itemId} onChange={(id) => setFaltaItem({ ...faltaItem, itemId: id })} vazio="Não sei ou não é de estoque" />
+            </label>
+            <NumberField label="Quanto precisa" value={faltaItem.quantidade} onChange={(v) => setFaltaItem({ ...faltaItem, quantidade: v })} />
+            <span className="sm:col-span-2 text-caption text-ink-2">Com o item escolhido, Compras recebe a requisição ligada a esta OS na hora.</span>
+          </div>
+        )}
         <TextArea label="Observação" value={obs} onChange={setObs} hint={motivo === 'FALTA_PECA' ? 'Qual peça? Ajuda compras a correr atrás.' : 'Opcional.'} />
         <p className="m-0 text-caption text-ink-3">Os apontamentos abertos são fechados agora e o tempo parado fica registrado.</p>
       </Modal>
 
-      <Modal aberto={modal === 'inspecao'} onFechar={() => setModal(null)} largura={640} titulo="Inspeção"
-        rodape={<><Button onClick={() => setModal(null)}>Voltar</Button>
-          <Button variante={reprovando ? 'perigo' : 'primario'} icone={reprovando ? X : Check} carregando={inspecao.isPending}
-            disabled={insp.itens.length === 0 || (reprovando && !insp.observacao.trim())}
-            onClick={() => inspecao.mutate({ aprovada: insp.aprovada, itens: insp.itens.filter((x) => x.descricao.trim()).map((x) => ({ descricao: x.descricao, esperado: x.esperado || undefined, medido: x.medido || undefined, conforme: x.conforme })), observacao: insp.observacao.trim() || undefined, ...(reprovando && insp.centroRetrabalhoId ? { centroRetrabalhoId: insp.centroRetrabalhoId } : {}) })}>
-            {reprovando ? 'Reprovar e abrir retrabalho' : 'Aprovar e concluir'}
-          </Button></>}>
-        <ul className="m-0 p-0 list-none flex flex-col gap-2" aria-label="Itens verificados">
-          {insp.itens.map((it, i) => {
-            const set = (k: string, v: unknown) => setInsp((s) => {
-              const itens = s.itens.map((x, j) => (j === i ? { ...x, [k]: v } : x));
-              return { ...s, itens, aprovada: k === 'conforme' ? itens.every((x) => x.conforme) : s.aprovada };
-            });
-            return (
-              <li key={i} className={`flex flex-wrap items-end gap-2 p-3 rounded-field border ${it.conforme ? 'border-border bg-surface-2' : 'border-bad bg-bad-soft'}`}>
-                <TextField className="flex-[3_1_200px]" label="Item" value={it.descricao} onChange={(v) => set('descricao', v)} />
-                <TextField className="flex-[1_1_90px]" label="Esperado" mono value={it.esperado} onChange={(v) => set('esperado', v)} />
-                <TextField className="flex-[1_1_90px]" label="Medido" mono value={it.medido} onChange={(v) => set('medido', v)} />
-                <Segmented<'s' | 'n'> label={`Conforme: ${it.descricao}`} ocultarRotulo tamanho="sm" value={it.conforme ? 's' : 'n'} onChange={(v) => set('conforme', v === 's')}
-                  opcoes={[{ valor: 's', rotulo: 'Conforme' }, { valor: 'n', rotulo: 'Não conforme' }]} />
-                <IconButton icone={X} rotulo={`Tirar ${it.descricao}`} onClick={() => setInsp((s) => ({ ...s, itens: s.itens.filter((_, j) => j !== i) }))} />
-              </li>
-            );
-          })}
-        </ul>
-        <Button tamanho="sm" variante="terciario" icone={ListChecks} className="self-start" onClick={() => setInsp((s) => ({ ...s, itens: [...s.itens, { descricao: '', esperado: '', medido: '', conforme: true }] }))}>Adicionar item</Button>
-        <Segmented<'a' | 'r'> label="Resultado" value={insp.aprovada ? 'a' : 'r'} onChange={(v) => setInsp((s) => ({ ...s, aprovada: v === 'a' }))} opcoes={[{ valor: 'a', rotulo: 'Aprovada' }, { valor: 'r', rotulo: 'Reprovada' }]} />
-        {reprovando && (
-          <>
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[13.5px] font-medium text-ink-2">Onde vai ser o retrabalho</span>
-              <Select value={insp.centroRetrabalhoId} onChange={(v) => setInsp((s) => ({ ...s, centroRetrabalhoId: v }))} opcoes={centrosOS} vazio="O último centro do roteiro" />
-            </label>
-            <p className="m-0 text-caption text-ink-2">A OS volta para execução com uma operação de retrabalho. O custo dela entra como não-qualidade.</p>
-          </>
-        )}
-        <TextArea label={reprovando ? 'O que deu errado? (obrigatório)' : 'Observação'} value={insp.observacao} onChange={(v) => setInsp((s) => ({ ...s, observacao: v }))} />
-      </Modal>
+      <InspecaoDialog o={o} aberto={modal === 'inspecao'} onFechar={() => setModal(null)} enviando={inspecao.isPending} padrao={itensPadrao(o)} onEnviar={(b) => inspecao.mutate(b)} />
 
       <Modal aberto={modal === 'entregar'} onFechar={() => setModal(null)} faixa titulo={`Entregar ${o.numero}?`}
         rodape={<><Button onClick={() => setModal(null)}>Ainda não</Button><Button variante="primario" icone={PackageCheck} disabled={!entrega.recebidoPor.trim()} carregando={entregar.isPending}
-          onClick={() => entregar.mutate({ recebidoPor: entrega.recebidoPor.trim(), documento: entrega.documento.trim() || undefined, observacao: entrega.observacao.trim() || undefined })}>Confirmar entrega</Button></>}>
+          onClick={() => { setNcAberta(null); entregar.mutate({ recebidoPor: entrega.recebidoPor.trim(), documento: entrega.documento.trim() || undefined, observacao: entrega.observacao.trim() || undefined }, { onError: (e) => e instanceof ApiError && e.codigo === 'NC_ABERTA' && setNcAberta(e.message) }); }}>Confirmar entrega</Button></>}>
+        {ncAberta && (
+          <div role="alert" className="p-3 rounded-field bg-bad-soft text-[14px] flex flex-col gap-1">
+            <strong>Tem uma não-conformidade aberta nesta OS</strong>
+            <span>{ncAberta}</span>
+            <Link to={`/qualidade?aba=ncs&os=${o.id}`} className="font-semibold">Abrir as não-conformidades</Link>
+          </div>
+        )}
         <dl className="m-0 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[['Preço do lote', brl(o.precoFinalLote)], ['Custo real', brl(r.custoReal)], ['Margem final', pct(r.margemProjetada)], ['Desvio de custo', pct(r.desvioCusto)]].map(([l, v]) => (
             <div key={l} className="p-3 rounded-field bg-surface-2"><dt className="text-caption text-ink-3">{l}</dt><dd className="m-0 mono font-bold">{v}</dd></div>

@@ -31,4 +31,10 @@ export class ParametrosDto {
 
   @Dec({ naoNegativo: true, opcional: true })
   limiteServicoRapido?: string;
+
+  @Dec({ naoNegativo: true, opcional: true })
+  limiteAprovacaoCompra?: string;
+
+  @IsOptional() @IsInt() @Min(0) @Max(3650)
+  garantiaDias?: number;
 }

@@ -302,15 +302,25 @@ describe('API ProMEC (e2e)', () => {
 
       const semObs = await api(token).post(`/ordens-servico/${id}/inspecao`, { aprovada: false, itens: [] }).expect(422);
       expect(semObs.body.codigo).toBe('OBSERVACAO_OBRIGATORIA');
+      expect(r.body.planoInspecao).toMatchObject({ nome: 'Dimensional — bucha H7', versao: 2 });
+      const furo = r.body.planoInspecao.itens.find((i: { descricao: string }) => i.descricao === 'Furo Ø20 H7');
+      const semMedida = await api(token).post(`/ordens-servico/${id}/inspecao`, { itens: [{ planoItemId: furo.id, descricao: 'Furo Ø20 H7' }] }).expect(422);
+      expect(semMedida.body.codigo).toBe('MEDICAO_OBRIGATORIA');
       r = await api(token)
         .post(`/ordens-servico/${id}/inspecao`, {
-          aprovada: false,
+          inspetor: 'Marina Kowalski',
           observacao: 'Furo H7 acima da tolerância em 2 peças',
           centroRetrabalhoId: base.centros.torno,
-          itens: [{ descricao: 'Furo Ø20 H7', esperado: '20,000–20,021', medido: '20,030', conforme: false }]
+          itens: [
+            { planoItemId: furo.id, descricao: 'Furo Ø20 H7', medido: '20,030' },
+            { descricao: 'Acabamento sem rebarba', conforme: true }
+          ]
         })
         .expect(200);
       expect(r.body.status).toBe('EM_EXECUCAO');
+      expect(r.body.inspecoes[0]).toMatchObject({ aprovada: false, inspetor: 'Marina Kowalski', itens: [{ conforme: false, minimo: '20', maximo: '20.021' }, { conforme: true }] });
+      expect(r.body.ncs).toEqual([expect.objectContaining({ origem: 'PROCESSO', status: 'ABERTA' })]);
+      const ncId = r.body.ncs[0].id;
       const retrabalho = r.body.operacoes.find((o: { retrabalho: boolean }) => o.retrabalho);
       expect(retrabalho).toMatchObject({ sequencia: 20, status: 'PENDENTE', centroId: base.centros.torno });
 
@@ -320,6 +330,10 @@ describe('API ProMEC (e2e)', () => {
       expect(r.body.status).toBe('CONTROLE_QUALIDADE');
       r = await api(token).post(`/ordens-servico/${id}/inspecao`, { aprovada: true, itens: [{ descricao: 'Furo Ø20 H7', conforme: true }] }).expect(200);
       expect(r.body.status).toBe('CONCLUIDA');
+      const bloqueada = await api(token).post(`/ordens-servico/${id}/entregar`, { recebidoPor: 'Carlos' }).expect(409);
+      expect(bloqueada.body.codigo).toBe('NC_ABERTA');
+      const tratada = await api(token).patch(`/qualidade/ncs/${ncId}`, { causa: 'Alargador gasto', acaoCorretiva: 'Troca do alargador e conferência a cada 20 peças' }).expect(200);
+      expect(tratada.body.status).toBe('EM_TRATAMENTO');
       r = await api(token).post(`/ordens-servico/${id}/entregar`, { recebidoPor: 'Carlos, compras da Metalúrgica Vale' }).expect(200);
       expect(r.body).toMatchObject({ status: 'ENTREGUE', recebidoPor: 'Carlos, compras da Metalúrgica Vale' });
       expect(r.body.custoRealFinal).toBe(r.body.resultado.custoReal);
@@ -499,6 +513,168 @@ describe('API ProMEC (e2e)', () => {
     });
   });
 
+  describe('itens, estoque, compras e qualidade', () => {
+    const del = (t: string, url: string) => http().delete(`/api/v1${url}`).set('Authorization', `Bearer ${t}`);
+    const sup = () => base.suprimentos;
+    let itemTeste: string;
+
+    it('custo médio após dois recebimentos, conta a pagar e custo desatualizado no orçamento', async () => {
+      const novo = { codigo: 'MP-TESTE-01', descricao: 'Tarugo de bronze TM23 Ø50', tipo: 'MATERIA_PRIMA', unidadeCompra: 'kg', unidadeConsumo: 'kg' };
+      const item = await api(token).post('/itens', novo).expect(201);
+      itemTeste = item.body.id;
+      expect((await api(token).post('/itens', novo).expect(409)).body.codigo).toBe('CODIGO_DUPLICADO');
+      expect((await api(token).post('/itens', { ...novo, codigo: 'X', unidadeCompra: 'barra' }).expect(422)).body.codigo).toBe('FATOR_OBRIGATORIO');
+
+      const receber = async (preco: string) => {
+        const p = await api(token).post('/compras/pedidos', { fornecedorId: sup().fornecedores.metais, itens: [{ itemId: itemTeste, quantidade: '10', precoUnitario: preco }] }).expect(201);
+        expect(p.body.status).toBe('APROVADO');
+        return api(token).post(`/compras/pedidos/${p.body.id}/recebimentos`, { localId: sup().locais.mp, notaFiscal: '9001', itens: [{ itemId: itemTeste, quantidade: '10', precoUnitario: preco }] }).expect(201);
+      };
+      const r1 = await receber('20');
+      expect(r1.body).toMatchObject({ status: 'RECEBIDO', recebimentos: [{ divergencias: [], contaPagar: { valor: '200', categoria: 'materiaPrima' } }] });
+      expect((await api(token).get(`/itens/${itemTeste}`).expect(200)).body).toMatchObject({ custoMedio: '20', saldo: { fisico: '10' } });
+
+      const orc = await api(token)
+        .post('/orcamentos', { ...bucha(), linhas: [{ tipo: 'material', descricao: 'Bronze', base: 'peca', quantidade: '0.5', custoUnitario: '20', itemId: itemTeste }] })
+        .expect(201);
+      expect(orc.body.custoDesatualizado).toBe(false);
+      const r2 = await receber('26');
+      expect(r2.body.recebimentos[0].alertas[0]).toContain('orçamento');
+      expect((await api(token).get(`/itens/${itemTeste}`).expect(200)).body).toMatchObject({ custoMedio: '23', ultimoCusto: '26', saldo: { fisico: '20' } });
+      expect((await api(token).get(`/orcamentos/${orc.body.id}`).expect(200)).body.custoDesatualizado).toBe(true);
+      const mov = await api(token).get(`/estoque/movimentos?itemId=${itemTeste}`).expect(200);
+      expect(mov.body.itens.map((m: { tipo: string; origem: { tipo: string } }) => [m.tipo, m.origem.tipo])).toEqual([
+        ['ENTRADA_RECEBIMENTO', 'RECEBIMENTO'],
+        ['ENTRADA_RECEBIMENTO', 'RECEBIMENTO']
+      ]);
+    });
+
+    it('saída acima do disponível e item rastreável sem lote', async () => {
+      const semSaldo = await api(token).post('/estoque/movimentos', { tipo: 'PERDA', itemId: itemTeste, localId: sup().locais.mp, quantidade: '999', motivo: 'Teste' }).expect(422);
+      expect(semSaldo.body.codigo).toBe('SALDO_INSUFICIENTE');
+      const semLote = await api(token).post('/estoque/movimentos', { tipo: 'PERDA', itemId: sup().itens.latao, localId: sup().locais.mp, quantidade: '1', motivo: 'Queda' }).expect(422);
+      expect(semLote.body.codigo).toBe('LOTE_OBRIGATORIO');
+      const centro = await api(token).post('/estoque/movimentos', { tipo: 'SAIDA_CENTRO', itemId: sup().itens.oleo, localId: sup().locais.almox, quantidade: '5', centroId: base.centros.torno }).expect(201);
+      expect(centro.body).toMatchObject({ quantidade: '-5', origem: { tipo: 'CENTRO' } });
+      const consumo = await api(token).get(`/estoque/consumo-centros`).expect(200);
+      expect(consumo.body.find((c: { centroId: string }) => c.centroId === base.centros.torno)).toMatchObject({ consumido: '142.5', insumosCadastro: '700' });
+    });
+
+    it('reserva na conversão, consumo eleva o custo real, estorno e liberação no cancelamento', async () => {
+      const antes = (await api(token).get(`/itens/${sup().itens.latao}`).expect(200)).body.saldo;
+      const linhas = [
+        { tipo: 'material', descricao: 'Barra de latão C360 Ø25', base: 'peca', quantidade: '0.19', custoUnitario: '42', itemId: sup().itens.latao },
+        { tipo: 'operacao', descricao: 'Torneamento', centroId: base.centros.torno, cicloHorasPorPeca: '0.1', setupHorasPorLote: '3' }
+      ];
+      const orc = await api(token).post('/orcamentos', { ...bucha(), linhas }).expect(201);
+      await api(token).post(`/orcamentos/${orc.body.id}/enviar`).expect(200);
+      await api(token).post(`/orcamentos/${orc.body.id}/aprovar`).expect(200);
+      const os = await api(token).post(`/orcamentos/${orc.body.id}/converter`, { prazo: '2030-02-01' }).expect(201);
+      expect(os.body.reservas).toEqual([expect.objectContaining({ itemId: sup().itens.latao, pendente: '1.9', status: 'ATIVA' })]);
+      expect(os.body.custos[0]).toMatchObject({ itemId: sup().itens.latao, orcado: '79.8', real: null });
+      const reservado = (await api(token).get(`/itens/${sup().itens.latao}`).expect(200)).body.saldo.reservado;
+      expect(Number(reservado) - Number(antes.reservado)).toBeCloseTo(1.9, 6);
+
+      const id = os.body.id;
+      const semLote = await api(token).post(`/ordens-servico/${id}/consumos`, { itemId: sup().itens.latao, quantidade: '1' }).expect(422);
+      expect(semLote.body.codigo).toBe('LOTE_OBRIGATORIO');
+      await api(token).post(`/ordens-servico/${id}/consumos`, { itemId: sup().itens.oleo, quantidade: '1' }).expect(422);
+      const c = await api(token).post(`/ordens-servico/${id}/consumos`, { itemId: sup().itens.latao, quantidade: '1', loteId: sup().lotes.latao }).expect(201);
+      expect(c.body.custos[0].real).toBe('42');
+      expect(c.body.reservas[0].pendente).toBe('0.9');
+      expect(Number(c.body.resultado.custoReal)).toBeGreaterThan(Number(os.body.resultado.custoReal));
+      expect(c.body.consumos).toEqual([expect.objectContaining({ tipo: 'SAIDA_OS', quantidade: '-1', lote: expect.objectContaining({ codigo: '24-8812' }) })]);
+
+      const rast = await api(token).get(`/qualidade/rastreabilidade?loteId=${sup().lotes.latao}`).expect(200);
+      expect(rast.body).toMatchObject({ certificado: { corrida: '24-8812' }, fornecedor: { id: sup().fornecedores.metais } });
+      expect(rast.body.ordens.map((o: { id: string }) => o.id)).toEqual(expect.arrayContaining([base.ordens[41], id]));
+      const inverso = await api(token).get(`/qualidade/rastreabilidade?osId=${base.ordens[41]}`).expect(200);
+      expect(inverso.body.lotes[0]).toMatchObject({ codigo: '24-8812', quantidade: '1.9047619048', certificado: { corrida: '24-8812' } });
+
+      const e = await del(token, `/ordens-servico/${id}/consumos/${c.body.consumos[0].id}`).expect(200);
+      expect(e.body.custos[0].real).toBeNull();
+      expect(e.body.reservas[0].pendente).toBe('1.9');
+      await del(token, `/ordens-servico/${id}/consumos/${c.body.consumos[0].id}`).expect(409);
+      const cancelada = await api(token).post(`/ordens-servico/${id}/cancelar`, { motivo: 'Teste de reserva' }).expect(200);
+      expect(cancelada.body.reservas[0].status).toBe('LIBERADA');
+      expect((await api(token).get(`/itens/${sup().itens.latao}`).expect(200)).body.saldo).toEqual(antes);
+    });
+
+    it('ponto de pedido não duplica requisição aberta', async () => {
+      await api(token).patch(`/itens/${sup().itens.filtro}`, { estoqueMinimo: '20', estoqueMaximo: '30' }).expect(200);
+      const r = await api(token).post('/compras/requisicoes/gerar-ponto-pedido').expect(201);
+      const itens = r.body.requisicoes.flatMap((q: { itens: { itemId: string; quantidade: string }[] }) => q.itens);
+      expect(itens).toEqual([expect.objectContaining({ itemId: sup().itens.filtro, quantidade: '18' })]);
+      expect(r.body.requisicoes[0].origem).toBe('PONTO_PEDIDO');
+      const de_novo = await api(token).post('/compras/requisicoes/gerar-ponto-pedido').expect(201);
+      expect(de_novo.body.total).toBe(0);
+    });
+
+    it('cotação compara fornecedores e escolher fora do 1º lugar exige justificativa', async () => {
+      const req = (await api(token).get('/compras/requisicoes?status=ABERTA').expect(200)).body.itens.find((q: { itens: { itemId: string }[] }) => q.itens[0].itemId === sup().itens.filtro);
+      const cot = await api(token).post('/compras/cotacoes', { requisicaoIds: [req.id], fornecedorIds: [sup().fornecedores.moto, sup().fornecedores.metais] }).expect(201);
+      await api(token).post(`/compras/cotacoes/${cot.body.id}/respostas`, { fornecedorId: sup().fornecedores.acos, itens: [{ itemId: sup().itens.filtro, precoUnitario: '1' }], prazoDias: 1 }).expect(422);
+      await api(token).post(`/compras/cotacoes/${cot.body.id}/respostas`, { fornecedorId: sup().fornecedores.moto, itens: [{ itemId: sup().itens.filtro, precoUnitario: '14.00' }], prazoDias: 2 }).expect(201);
+      const c = await api(token)
+        .post(`/compras/cotacoes/${cot.body.id}/respostas`, { fornecedorId: sup().fornecedores.metais, itens: [{ itemId: sup().itens.filtro, precoUnitario: '13.50' }], frete: '0', prazoDias: 10 })
+        .expect(201);
+      expect(c.body.comparativo[0].resultado).toHaveLength(2);
+      expect(c.body.geral.map((g: { posicao: number }) => g.posicao).sort()).toEqual([1, 2]);
+      const segundo = c.body.geral.find((g: { posicao: number }) => g.posicao === 2);
+      const r = await api(token).post(`/compras/cotacoes/${cot.body.id}/escolher`, { fornecedorId: segundo.fornecedorId }).expect(422);
+      expect(r.body.codigo).toBe('JUSTIFICATIVA_OBRIGATORIA');
+      const pedido = await api(token).post(`/compras/cotacoes/${cot.body.id}/escolher`, { fornecedorId: segundo.fornecedorId, justificativa: 'Entrega junto com o pedido aberto' }).expect(201);
+      expect(pedido.body).toMatchObject({ status: 'APROVADO', cotacaoId: cot.body.id, fornecedor: { id: segundo.fornecedorId } });
+      expect((await api(token).get(`/compras/cotacoes/${cot.body.id}`).expect(200)).body.status).toBe('ENCERRADA');
+    });
+
+    it('pedido acima da alçada, aprovação e recebimento parcial com divergência', async () => {
+      const p = await api(tokenOrcamentista).post('/compras/pedidos', { fornecedorId: sup().fornecedores.acos, itens: [{ itemId: sup().itens.aco1045, quantidade: '600', precoUnitario: '9.80' }] }).expect(201);
+      expect(p.body).toMatchObject({ status: 'AGUARDANDO_APROVACAO', total: '5880' });
+      const recebimento = { localId: sup().locais.mp, notaFiscal: '7711', itens: [{ itemId: sup().itens.aco1045, quantidade: '300', precoUnitario: '10.10', lote: { codigo: 'L-1045-1020', certificado: { numero: 'CQ-A1045-3402', corrida: 'A1045-3402', norma: 'SAE J403' } } }] };
+      expect((await api(token).post(`/compras/pedidos/${p.body.id}/recebimentos`, recebimento).expect(409)).body.codigo).toBe('PEDIDO_NAO_APROVADO');
+      await api(tokenOrcamentista).post(`/compras/pedidos/${p.body.id}/aprovar`).expect(403);
+      await api(token).post(`/compras/pedidos/${p.body.id}/aprovar`).expect(200);
+      const semCert = await api(token).post(`/compras/pedidos/${p.body.id}/recebimentos`, { ...recebimento, itens: [{ ...recebimento.itens[0], lote: undefined }] }).expect(422);
+      expect(semCert.body.codigo).toBe('CERTIFICADO_OBRIGATORIO');
+      const antes = (await api(token).get(`/fornecedores/${sup().fornecedores.acos}`).expect(200)).body;
+      const r = await api(token).post(`/compras/pedidos/${p.body.id}/recebimentos`, recebimento).expect(201);
+      expect(r.body.status).toBe('PARCIAL');
+      expect(r.body.recebimentos[0].divergencias.map((d: { tipo: string }) => d.tipo).sort()).toEqual(['PRECO', 'QUANTIDADE']);
+      expect(r.body.recebimentos[0].contaPagar).toMatchObject({ valor: '3030', categoria: 'materiaPrima', vencimento: expect.stringMatching(/^\d{4}-/) });
+      const depois = (await api(token).get(`/fornecedores/${sup().fornecedores.acos}`).expect(200)).body;
+      expect(depois.entregas).toBe(antes.entregas + 1);
+      expect(Number(depois.avaliacao)).toBeLessThan(Number(antes.avaliacao));
+      const lotes = await api(token).get(`/estoque/lotes?itemId=${sup().itens.aco1045}`).expect(200);
+      expect(lotes.body.find((l: { codigo: string }) => l.codigo === 'L-1045-1020')).toMatchObject({ saldo: '300', certificado: { corrida: 'A1045-3402' } });
+    });
+
+    it('garantia fora do prazo e procedente abrindo OS sem cobrança', async () => {
+      const fora = await api(token).post('/qualidade/garantias', { osId: base.ordens[41], relato: 'Folga' }).expect(422);
+      expect(fora.body.codigo).toBe('FORA_DA_GARANTIA');
+      const g = await api(token).post('/qualidade/garantias', { osId: base.ordens[37], relato: 'Dentes com desgaste prematuro' }).expect(201);
+      expect(g.body).toMatchObject({ status: 'EM_ANALISE', numero: 'GAR-2026-00002' });
+      const d = await api(token).post(`/qualidade/garantias/${g.body.id}/decidir`, { procedente: true, analise: 'Têmpera por indução abaixo da dureza especificada' }).expect(200);
+      expect(d.body.status).toBe('PROCEDENTE');
+      const os = await api(token).get(`/ordens-servico/${d.body.osGarantia.id}`).expect(200);
+      expect(os.body).toMatchObject({ status: 'EM_FILA', precoFinalLote: '0', garantiaDeId: base.ordens[37] });
+      expect(os.body.operacoes.every((o: { retrabalho: boolean }) => o.retrabalho)).toBe(true);
+      await api(token).post(`/qualidade/garantias/${g.body.id}/decidir`, { procedente: false, analise: 'x' }).expect(409);
+      const laudo = await api(token).get(`/ordens-servico/${base.ordens[37]}/laudo`).expect(200);
+      expect(laudo.body).toMatchObject({ cliente: { nome: 'Metalúrgica Vale do Itajaí Ltda.' }, garantia: { dias: 90 } });
+    });
+
+    it('isola suprimentos e qualidade entre empresas', async () => {
+      await api(tokenOutra).get(`/itens/${sup().itens.latao}`).expect(404);
+      expect((await api(tokenOutra).get(`/estoque/lotes?itemId=${sup().itens.latao}`).expect(200)).body).toEqual([]);
+      await api(tokenOutra).get(`/compras/pedidos/${sup().pedidos.aguardando}`).expect(404);
+      await api(tokenOutra).post(`/ordens-servico/${base.ordens[41]}/consumos`, { itemId: sup().itens.latao, quantidade: '1' }).expect(404);
+      await api(tokenOutra).get(`/qualidade/rastreabilidade?loteId=${sup().lotes.latao}`).expect(404);
+      const ncs = await api(tokenOutra).get('/qualidade/ncs').expect(200);
+      expect(ncs.body.itens.some((n: { id: string }) => n.id.startsWith('e2e-a-'))).toBe(false);
+    });
+  });
+
   it('painel resume a operação', async () => {
     const r = await api(token).get('/painel').expect(200);
     expect(r.body.usuario).toBe('Marina');
@@ -506,5 +682,7 @@ describe('API ProMEC (e2e)', () => {
     expect(r.body.centros[0]).toMatchObject({ cheioHora: '117.78', precoHora: '178.45' });
     expect(r.body.ordens).toMatchObject({ emExecucao: 1, pausadas: 1, atrasadas: 1, emQualidade: 1 });
     expect(r.body.ordens.margemProjetadaMedia).toEqual(expect.any(String));
+    expect(r.body.suprimentos).toMatchObject({ abaixoDoMinimo: expect.any(Number), valorEstoque: expect.any(String), pedidosAguardando: expect.any(Number) });
+    expect(r.body.qualidade).toMatchObject({ ncsAbertas: expect.any(Number), garantiasAbertas: expect.any(Number), custoNaoQualidadeMes: expect.any(String) });
   });
 });

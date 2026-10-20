@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { dec, precoDaHora, reais, soma, txt } from '@promec/motor';
 import { tt } from '../comum/decimal';
+import { custoRealDa, incluirOs } from '../ordens/custo';
+import { hojeLocal, dataBanco } from '../planejamento/calendario';
+import { saldosDosItens } from '../suprimentos/itens.service';
 import { Sessao } from '../comum/sessao';
 import { ABERTOS, expirarVencidos } from '../orcamentos/orcamentos.service';
 import { OrdensService } from '../ordens/ordens.service';
@@ -30,6 +33,34 @@ export class PainelService {
     private readonly ordens: OrdensService,
     private readonly planejamento: PlanejamentoService
   ) {}
+
+  private async suprimentos(tenantId: string) {
+    const itens = await this.prisma.item.findMany({ where: { tenantId, ativo: true, tipo: { not: 'SERVICO_EXTERNO' } } });
+    const saldos = await saldosDosItens(this.prisma, tenantId, itens.map((i) => i.id));
+    const [pedidosAguardando, recebimentosAtrasados] = await Promise.all([
+      this.prisma.pedido.count({ where: { tenantId, status: 'AGUARDANDO_APROVACAO' } }),
+      this.prisma.pedido.count({ where: { tenantId, status: { in: ['APROVADO', 'PARCIAL'] }, previsaoEntrega: { lt: dataBanco(hojeLocal()) } } })
+    ]);
+    return {
+      abaixoDoMinimo: itens.filter((i) => i.estoqueMinimo.gt(0) && saldos.get(i.id)!.disponivel.lt(tt(i.estoqueMinimo))).length,
+      valorEstoque: reais(txt(soma(itens.map((i) => saldos.get(i.id)!.fisico.times(tt(i.custoMedio)))))),
+      pedidosAguardando,
+      recebimentosAtrasados
+    };
+  }
+
+  private async qualidade(tenantId: string) {
+    const [ncsAbertas, garantiasAbertas, ordens] = await Promise.all([
+      this.prisma.naoConformidade.count({ where: { tenantId, status: { not: 'ENCERRADA' } } }),
+      this.prisma.garantia.count({ where: { tenantId, status: 'EM_ANALISE' } }),
+      this.prisma.ordemServico.findMany({ where: { tenantId, atualizadoEm: { gte: inicioDoMes() } }, include: incluirOs })
+    ]);
+    return {
+      ncsAbertas,
+      custoNaoQualidadeMes: reais(txt(soma(ordens.map((o) => dec(custoRealDa(o).custoNaoQualidade))))),
+      garantiasAbertas
+    };
+  }
 
   async painel(s: Sessao) {
     const tenantId = s.tenantId;
@@ -83,6 +114,21 @@ export class PainelService {
       });
     }
     alertas.push(...planejado.alertas);
+    const [suprimentos, qualidade, desatualizados] = await Promise.all([
+      this.suprimentos(tenantId),
+      this.qualidade(tenantId),
+      this.prisma.orcamento.count({ where: { tenantId, status: 'RASCUNHO', custoDesatualizado: true } })
+    ]);
+    if (desatualizados) {
+      alertas.push({
+        tipo: 'atencao',
+        mensagem: `${desatualizados === 1 ? '1 orçamento em rascunho usa' : `${desatualizados} orçamentos em rascunho usam`} material que mudou de preço no último recebimento. Revise o custo antes de enviar.`,
+        link: '/orcamentos?status=RASCUNHO'
+      });
+    }
+    if (suprimentos.recebimentosAtrasados) {
+      alertas.push({ tipo: 'atencao', mensagem: `${suprimentos.recebimentosAtrasados} pedido(s) de compra passaram da data prevista de entrega. Cobre o fornecedor.`, link: '/compras/pedidos' });
+    }
     if (ordens.atrasadas) {
       alertas.push({
         tipo: 'perigo',
@@ -120,6 +166,8 @@ export class PainelService {
       },
       ordens,
       ocupacao: planejado.ocupacao,
+      suprimentos,
+      qualidade,
       centros: (resultado?.centros ?? []).map((c) => ({
         id: c.id,
         nome: c.nome,
