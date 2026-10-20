@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  BarChart3, Boxes, Building2, Truck, Calculator, CalendarClock, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
-  Package, PieChart, Receipt, Ruler, Settings2, ShoppingCart, Target, Timer, Users, Wallet, Wrench, X, type LucideIcon
+  ArrowDownLeft, ArrowUpRight, BarChart3, Boxes, Landmark, LineChart, Percent, Repeat, Building2, Truck, Calculator, CalendarClock, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
+  Package, PieChart, Receipt, Ruler, Settings2, ShoppingCart, Target, Timer, Users, Wrench, X, type LucideIcon
 } from 'lucide-react';
 import { LogoProMEC } from '../components/Illustrations';
 
@@ -44,11 +44,13 @@ const GRUPOS: Grupo[] = [
   {
     titulo: 'Financeiro',
     itens: [
-      { rotulo: 'Contas a receber', icone: Wallet },
-      { rotulo: 'Contas a pagar', icone: Wallet },
-      { rotulo: 'Fluxo de caixa', icone: BarChart3 },
-      { rotulo: 'Comissões', icone: Receipt },
-      { rotulo: 'DRE gerencial', icone: BarChart3 }
+      { rotulo: 'Contas a receber', icone: ArrowDownLeft, to: '/financeiro/receber' },
+      { rotulo: 'Contas a pagar', icone: ArrowUpRight, to: '/financeiro/pagar' },
+      { rotulo: 'Fluxo de caixa', icone: LineChart, to: '/financeiro/fluxo' },
+      { rotulo: 'Comissões', icone: Percent, to: '/financeiro/comissoes' },
+      { rotulo: 'DRE gerencial', icone: BarChart3, to: '/financeiro/dre' },
+      { rotulo: 'Recorrências', icone: Repeat, to: '/financeiro/recorrencias' },
+      { rotulo: 'Contas e centros de custo', icone: Landmark, to: '/financeiro/contas' }
     ]
   },
   {

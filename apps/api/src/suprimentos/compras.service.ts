@@ -11,6 +11,7 @@ import { dataBanco, hojeLocal, somarDias, textoData } from '../planejamento/cale
 import { PrismaService } from '../prisma/prisma.service';
 import { Db, json } from '../tabelas-custos/entrada';
 import { buscarItem, entrarComCusto } from './estoque-core';
+import { tituloDoRecebimento } from '../financeiro/financeiro-core';
 import { CotacaoDto, EscolherDto, PedidoDto, RecebimentoDto, RequisicaoDto, RespostaDto } from './compras.dto';
 import { saldosDosItens } from './itens.service';
 
@@ -262,7 +263,12 @@ export class ComprasService {
 
   async pedido(tenantId: string, id: string) {
     const p = await this.buscarPedido(tenantId, id);
-    return this.cabecalho(p, await this.prisma.item.findMany({ where: { tenantId, id: { in: p.itens.map((i) => i.itemId) } } }));
+    const [itens, titulos] = await Promise.all([
+      this.prisma.item.findMany({ where: { tenantId, id: { in: p.itens.map((i) => i.itemId) } } }),
+      this.prisma.titulo.findMany({ where: { tenantId, origemTipo: 'RECEBIMENTO', origemId: { in: p.recebimentos.map((r) => r.id) } }, select: { id: true, numero: true, origemId: true, status: true } })
+    ]);
+    const cab = this.cabecalho(p, itens);
+    return { ...cab, recebimentos: cab.recebimentos.map((r) => ({ ...r, titulo: titulos.find((t) => t.origemId === r.id) ?? null })) };
   }
 
   async aprovar(s: Sessao, id: string) {
@@ -391,6 +397,7 @@ export class ComprasService {
           usuarioId: s.id
         }
       });
+      await tituloDoRecebimento(tx, s.tenantId, recebimentoId, s.id);
       const atualizados = await tx.pedidoItem.findMany({ where: { pedidoId: p.id } });
       const completo = atualizados.every((i) => D(i.recebido).gte(D(i.quantidade)));
       await tx.pedido.update({ where: { id: p.id }, data: { status: completo ? 'RECEBIDO' : 'PARCIAL' } });

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { paraLinhaMotor, mapaCentros, useOrcamentoAoVivo, type PrecoForm } from '../features/orcamento/calculo';
 import { CartaoPrazo } from '../features/orcamento/Prazo';
+import { previaParcelas } from '../features/financeiro/fin';
 import { comId, LinhaEditor, novaLinha, type LinhaForm, type OpcaoCentro } from '../features/orcamento/LinhaEditor';
 import { api } from '../lib/api';
 import { podeLiberarMargem, useAuth } from '../lib/auth';
@@ -34,6 +35,7 @@ interface Form extends Omit<PrecoForm, 'linhas'> {
   validade: string;
   observacoes: string;
   prazoPrometido: string;
+  condicaoPagamento: string;
   linhas: LinhaForm[];
 }
 
@@ -66,6 +68,7 @@ const doOrcamento = (o: Orcamento): Form => ({
   metodo: o.metodo ?? 'divisor',
   observacoes: o.observacoes ?? '',
   prazoPrometido: (o.prazoPrometido ?? '').slice(0, 10),
+  condicaoPagamento: o.condicaoPagamento ?? '',
   linhas: o.linhas.map(comId)
 });
 
@@ -125,7 +128,7 @@ export default function OrcamentoEditor() {
       setF({
         clienteId: sp.get('cliente') ?? '', titulo: '', segmento: 'USINAGEM', lote: '1', validade: hojeMais(p.validadeOrcamentoDias ?? 15),
         impostos: p.impostosPadrao, comissao: p.comissaoPadrao, margemAlvo: p.margemAlvo, margemMinima: p.margemMinima, desconto: '0',
-        metodo: p.metodoPreco ?? 'divisor', observacoes: '', prazoPrometido: '', linhas: [novaLinha('material'), novaLinha('operacao')]
+        metodo: p.metodoPreco ?? 'divisor', observacoes: '', prazoPrometido: '', condicaoPagamento: '', linhas: [novaLinha('material'), novaLinha('operacao')]
       });
     }
   }, [novo, f, params.data, sp]);
@@ -145,7 +148,7 @@ export default function OrcamentoEditor() {
   const corpo = (x: Form) => ({
     clienteId: x.clienteId, titulo: x.titulo.trim(), segmento: x.segmento, lote: Math.floor(toNum(x.lote)), validade: x.validade,
     impostos: x.impostos || '0', comissao: x.comissao || '0', margemAlvo: x.margemAlvo || '0', margemMinima: x.margemMinima || '0', desconto: x.desconto || '0',
-    metodo: x.metodo, observacoes: x.observacoes, prazoPrometido: x.prazoPrometido || null,
+    metodo: x.metodo, observacoes: x.observacoes, prazoPrometido: x.prazoPrometido || null, condicaoPagamento: x.condicaoPagamento.trim() || null,
     linhas: x.linhas.map((l) => {
       const m = paraLinhaMotor(l, mapa) as Record<string, unknown>;
       if (l.itemId) m.itemId = l.itemId;
@@ -204,7 +207,7 @@ export default function OrcamentoEditor() {
   };
   const valido = () => {
     setTentou(true);
-    return !!f.clienteId && !!f.titulo.trim() && !!r;
+    return !!f.clienteId && !!f.titulo.trim() && !!r && !parcelas.erro;
   };
   const gravar = () => valido() && salvar.mutate(f);
   const gravarEEnviar = async () => {
@@ -238,6 +241,7 @@ export default function OrcamentoEditor() {
   const corMargem = { ok: 'text-ok', atencao: 'text-warn', perigo: 'text-bad' }[sit];
   const fundoMargem = { ok: 'bg-ok-soft', atencao: 'bg-warn-soft', perigo: 'bg-bad-soft' }[sit];
   const lote = Math.floor(toNum(f.lote)) || 0;
+  const parcelas = previaParcelas(f.condicaoPagamento || clienteSel?.condicaoPagamento || '', r?.precoFinalLote ?? '', new Date().toISOString().slice(0, 10));
   const custoLinha = (i: number) => r?.linhas[i]?.custoLote;
   const ocupado = salvar.isPending || enviar.isPending;
 
@@ -402,7 +406,16 @@ export default function OrcamentoEditor() {
               onChange={(v) => editavel && set('metodo', v)}
               opcoes={[{ valor: 'divisor', rotulo: 'Divisor: custo ÷ (1 − impostos − comissão − margem)' }, { valor: 'markup', rotulo: 'Markup sobre o custo' }]}
             />
-            <TextArea label="Observações" value={f.observacoes} onChange={(v) => set('observacoes', v)} hint="Condição de pagamento, prazo de entrega, quem pediu." />
+            <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-3">
+              <TextField label="Condição de pagamento" value={f.condicaoPagamento} onChange={(v) => set('condicaoPagamento', v)} disabled={!editavel}
+                placeholder={clienteSel?.condicaoPagamento ? `do cliente: ${clienteSel.condicaoPagamento}` : '28 dias, 30/60/90, entrada + 30'}
+                erro={parcelas.erro} hint={parcelas.texto || (f.condicaoPagamento ? undefined : 'Vazio usa a condição do cliente.')} />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[13.5px] font-medium text-ink-2">Vendedor</span>
+                <span className="campo !bg-surface-3 text-ink-2">{o?.vendedor?.nome ?? usuario?.nome ?? '—'}</span>
+              </div>
+            </div>
+            <TextArea label="Observações" value={f.observacoes} onChange={(v) => set('observacoes', v)} hint="Prazo de entrega, quem pediu, cuidados." />
           </Card>
 
           <CartaoPrazo linhas={f.linhas} lote={lote} promessaSalva={o?.promessa} usarSalva={!sujo} prazo={f.prazoPrometido} onPrazo={(d) => set('prazoPrometido', d)} editavel={editavel} />

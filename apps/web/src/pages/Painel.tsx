@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronRight, Info, Layers, Plus, XCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import type { Painel as PainelT } from '../lib/types';
-import { brl, competenciaLonga, num, pct, toNum } from '../lib/format';
+import { brl, competenciaLonga, data, num, pct, toNum } from '../lib/format';
 import { HeroBand, HeroKpi } from '../components/HeroBand';
 import { Card, CardHeader } from '../components/Card';
 import { Carregando, EmptyState, ErroEstado } from '../components/EmptyState';
@@ -76,6 +76,37 @@ export default function Painel() {
                 </div>
               ))}
               <span className="text-caption text-ink-3">Barra cheia: esta semana · clara: próxima. Acima de 90% é sobrecarga.</span>
+            </Card>
+          )}
+          {p.financeiro && (
+            <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-fin">
+              <CardHeader id="h-fin" titulo="Dinheiro" sub={`Saldo nas contas: ${brl(p.financeiro.saldoContas)}`} acao={<Link to="/financeiro/fluxo" className="text-[13px] font-semibold">Fluxo de caixa</Link>} />
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  ['A receber vencido', brl(p.financeiro.receberVencido), toNum(p.financeiro.receberVencido) > 0 ? 'bg-bad-soft text-bad' : 'bg-surface-2 text-ink-2', '/financeiro/receber'],
+                  ['A receber hoje', brl(p.financeiro.receberHoje), 'bg-ok-soft text-ok', '/financeiro/receber'],
+                  ['A pagar em 7 dias', brl(p.financeiro.pagar7dias), 'bg-warn-soft text-warn', '/financeiro/pagar'],
+                  ['Clientes bloqueados', String(p.financeiro.clientesBloqueados), p.financeiro.clientesBloqueados ? 'bg-bad-soft text-bad' : 'bg-surface-2 text-ink-2', '/clientes']
+                ] as const).map(([l, v, cor, to]) => (
+                  <Link key={l} to={to} className={`no-underline rounded-[16px] p-3 flex flex-col ${cor}`}>
+                    <span className="mono text-[18px] font-bold leading-tight">{v}</span>
+                    <span className="text-[13px] font-medium">{l}</span>
+                  </Link>
+                ))}
+              </div>
+              <dl className="m-0 grid grid-cols-3 gap-2 text-center">
+                {([['30 dias', p.financeiro.caixa30], ['60 dias', p.financeiro.caixa60], ['90 dias', p.financeiro.caixa90]] as const).map(([l, v]) => (
+                  <div key={l} className="p-2 rounded-[12px] bg-surface-2"><dt className="text-caption text-ink-3">caixa em {l}</dt><dd className={`m-0 mono font-semibold ${toNum(v) < 0 ? 'text-bad' : ''}`}>{brl(v)}</dd></div>
+                ))}
+              </dl>
+              {p.financeiro.menorSaldo && (
+                <span className={`text-[13.5px] ${toNum(p.financeiro.menorSaldo.valor) < 0 ? 'text-bad font-semibold' : 'text-ink-2'}`}>
+                  Menor saldo previsto: <strong className="mono">{brl(p.financeiro.menorSaldo.valor)}</strong> na semana de {data(p.financeiro.menorSaldo.inicio)}.
+                </span>
+              )}
+              {p.financeiro.custoFixoDesvio != null && Math.abs(toNum(p.financeiro.custoFixoDesvio)) > 0.0005 && (
+                <span className="text-[13.5px] text-ink-2">Custo fixo realizado {toNum(p.financeiro.custoFixoDesvio) > 0 ? 'acima' : 'abaixo'} da tabela: <strong className="mono">{toNum(p.financeiro.custoFixoDesvio) > 0 ? '+' : ''}{pct(p.financeiro.custoFixoDesvio)}</strong> · <Link to="/custo-fixo">ver</Link></span>
+              )}
             </Card>
           )}
           {(p.suprimentos || p.qualidade) && (

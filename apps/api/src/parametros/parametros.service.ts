@@ -4,6 +4,7 @@ import { pd, pdOpc, pct, tt } from '../comum/decimal';
 import { regra } from '../comum/erros';
 import { PrismaService } from '../prisma/prisma.service';
 import { marcarDesatualizada } from '../tabelas-custos/entrada';
+import { prazosDe } from '../financeiro/financeiro-core';
 import { ParametrosDto } from './parametros.dto';
 
 @Injectable()
@@ -30,6 +31,7 @@ export class ParametrosService {
         `A margem mínima (${pct(minima.toFixed())}) ficou acima da margem alvo (${pct(alvo.toFixed())}). Ajuste uma das duas para a mínima ser o piso da alvo.`
       );
     }
+    if (dto.condicaoPadrao) prazosDe(dto.condicaoPadrao);
     const [p, empresa] = await this.prisma.$transaction(async (tx) => {
       const p = await tx.parametros.update({
         where: { tenantId },
@@ -43,7 +45,12 @@ export class ParametrosService {
           validadeOrcamentoDias: dto.validadeOrcamentoDias,
           limiteServicoRapido: pdOpc(dto.limiteServicoRapido),
           limiteAprovacaoCompra: pdOpc(dto.limiteAprovacaoCompra),
-          garantiaDias: dto.garantiaDias
+          garantiaDias: dto.garantiaDias,
+          multaAtraso: pdOpc(dto.multaAtraso),
+          jurosMes: pdOpc(dto.jurosMes),
+          toleranciaCustoFixo: pdOpc(dto.toleranciaCustoFixo),
+          diasBloqueioInadimplencia: dto.diasBloqueioInadimplencia,
+          condicaoPadrao: dto.condicaoPadrao?.trim()
         }
       });
       const empresa = dto.nomeEmpresa
@@ -67,7 +74,12 @@ export class ParametrosService {
       validadeOrcamentoDias: p.validadeOrcamentoDias,
       limiteServicoRapido: tt(p.limiteServicoRapido),
       limiteAprovacaoCompra: tt(p.limiteAprovacaoCompra),
-      garantiaDias: p.garantiaDias
+      garantiaDias: p.garantiaDias,
+      multaAtraso: tt(p.multaAtraso),
+      jurosMes: tt(p.jurosMes),
+      diasBloqueioInadimplencia: p.diasBloqueioInadimplencia,
+      toleranciaCustoFixo: tt(p.toleranciaCustoFixo),
+      condicaoPadrao: p.condicaoPadrao
     };
   }
 }

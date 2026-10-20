@@ -227,6 +227,9 @@ function Recebimentos({ itens }: { itens: Rec[] }) {
                     <span>Conta a pagar <strong className="mono">{brl(r.contaPagar.valor)}</strong></span>
                     <span>vence <span className="mono">{data(r.contaPagar.vencimento)}</span></span>
                     {r.contaPagar.categoria && <span className="text-ink-3">{r.contaPagar.categoria}</span>}
+                    {(r as { titulo?: { id: string; numero: string; status: string } | null }).titulo && (
+                      <Link to="/financeiro/pagar" className="mono font-semibold">{(r as { titulo?: { numero: string; status: string } }).titulo!.numero} · {(r as { titulo?: { status: string } }).titulo!.status.toLowerCase()}</Link>
+                    )}
                   </div>
                 )}
               </li>

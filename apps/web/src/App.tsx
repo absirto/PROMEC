@@ -33,6 +33,12 @@ const CotacaoDetalhe = lazy(() => import('./pages/CotacaoDetalhe'));
 const PedidoDetalhe = lazy(() => import('./pages/PedidoDetalhe'));
 const Qualidade = lazy(() => import('./pages/Qualidade'));
 const Laudo = lazy(() => import('./pages/Laudo'));
+const Titulos = lazy(() => import('./pages/Titulos'));
+const FluxoCaixa = lazy(() => import('./pages/FluxoCaixa'));
+const DREPage = lazy(() => import('./pages/DRE'));
+const ComissoesPage = lazy(() => import('./pages/Comissoes'));
+const Recorrencias = lazy(() => import('./pages/Recorrencias'));
+const ContasCentros = lazy(() => import('./pages/ContasCentros'));
 const ModoOperador = lazy(() => import('./pages/ModoOperador'));
 
 function TelaLaudo() {
@@ -93,6 +99,13 @@ export function App() {
                 <Route path="compras/cotacoes/:id" element={<CotacaoDetalhe />} />
                 <Route path="compras/pedidos/:id" element={<PedidoDetalhe />} />
                 <Route path="qualidade" element={<Qualidade />} />
+                <Route path="financeiro/receber" element={<Titulos tipo="RECEBER" />} />
+                <Route path="financeiro/pagar" element={<Titulos tipo="PAGAR" />} />
+                <Route path="financeiro/fluxo" element={<FluxoCaixa />} />
+                <Route path="financeiro/dre" element={<DREPage />} />
+                <Route path="financeiro/comissoes" element={<ComissoesPage />} />
+                <Route path="financeiro/recorrencias" element={<Recorrencias />} />
+                <Route path="financeiro/contas" element={<ContasCentros />} />
                 <Route path="*" element={<NaoEncontrado />} />
               </Routes>
             </Suspense>

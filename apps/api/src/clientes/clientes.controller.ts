@@ -27,7 +27,7 @@ export class ClientesController {
 
   @Patch(':id')
   atualizar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: AtualizarClienteDto) {
-    return this.clientes.atualizar(s.tenantId, id, dto);
+    return this.clientes.atualizar(s, id, dto);
   }
 
   @Delete(':id')

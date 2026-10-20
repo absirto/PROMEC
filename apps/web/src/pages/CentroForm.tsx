@@ -20,6 +20,7 @@ import { Carregando, ErroEstado } from '../components/EmptyState';
 import { StatusCentroPill, Pill } from '../components/Pill';
 import { Modal } from '../components/Modal';
 import { useTitulo } from '../layout/titulo';
+import { HistoricoCustosCentro } from '../features/financeiro/Ponte';
 
 const VAZIO: Form = {
   codigo: '', nome: '', tipo: 'maquina', status: 'ativo', horasExpediente: '220', eficiencia: '0.75', manutencao: '', insumos: '', outros: '',
@@ -146,6 +147,11 @@ export default function CentroForm() {
             <NumberField className={span(2)} label="Fator de carga" percentual value={f.fatorCarga} onChange={(v) => set('fatorCarga', v)} />
             <NumberField className={span(2)} label="Tarifa de energia" prefixo="R$" sufixo="/kWh" value={f.tarifaKwh} onChange={(v) => set('tarifaKwh', v)} />
           </Secao>
+
+          {!novo && (
+            <HistoricoCustosCentro centroId={id} atual={{ manutencao: f.manutencao, insumos: f.insumos, outros: f.outros }}
+              onUsarMedia={(m) => setF({ ...f, ...(m.manutencao !== undefined ? { manutencao: String(m.manutencao) } : {}), ...(m.insumos !== undefined ? { insumos: String(m.insumos) } : {}), ...(m.outros !== undefined ? { outros: String(m.outros) } : {}) })} />
+          )}
 
           <Secao id="operadores" titulo="Quem opera" descricao="O custo de cada pessoa entra pela parte do tempo que ela passa aqui.">
             <div className={`${span(6)} flex flex-col gap-3`}>

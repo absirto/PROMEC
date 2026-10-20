@@ -1,5 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsDateString, IsIn, IsNotEmpty, IsOptional, IsString, Length, ValidateIf } from 'class-validator';
+import { Dec } from '../comum/validadores';
 
 export class CriarClienteDto {
   @IsIn(['PF', 'PJ'])
@@ -23,6 +24,16 @@ export class CriarClienteDto {
   status?: 'ATIVO' | 'BLOQUEADO' | 'INATIVO';
 
   @IsOptional() @IsString() observacoes?: string;
+
+  @IsOptional() @IsString()
+  condicaoPagamento?: string;
+
+  @ValidateIf((_, v) => v !== null && v !== undefined)
+  @Dec({ naoNegativo: true })
+  limiteCredito?: string | null;
+
+  @IsOptional() @IsDateString()
+  liberadoAte?: string;
 }
 
 export class AtualizarClienteDto extends PartialType(CriarClienteDto) {}

@@ -72,6 +72,12 @@ export class SimularDto {
   @IsOptional() @IsDateString()
   prazoPrometido?: string | null;
 
+  @IsOptional() @IsString()
+  condicaoPagamento?: string;
+
+  @IsOptional() @IsString()
+  vendedorId?: string;
+
   @IsArray() @ValidateNested({ each: true }) @Type(() => LinhaDto)
   linhas: LinhaDto[];
 }

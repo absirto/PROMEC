@@ -37,4 +37,14 @@ export class ParametrosDto {
 
   @IsOptional() @IsInt() @Min(0) @Max(3650)
   garantiaDias?: number;
+
+  @Dec({ fracao: true, opcional: true }) multaAtraso?: string;
+  @Dec({ fracao: true, opcional: true }) jurosMes?: string;
+  @Dec({ fracao: true, opcional: true }) toleranciaCustoFixo?: string;
+
+  @IsOptional() @IsInt() @Min(1) @Max(365)
+  diasBloqueioInadimplencia?: number;
+
+  @IsOptional() @IsString() @IsNotEmpty()
+  condicaoPadrao?: string;
 }

@@ -14,6 +14,7 @@ import { DecimalInput, NumberField, Select, SelectField, TextField } from '../co
 import { Carregando, EmptyState, ErroEstado } from '../components/EmptyState';
 import { CompetenciaPicker } from '../components/CompetenciaPicker';
 import { useTitulo } from '../layout/titulo';
+import { CustoFixoRealizadoCard } from '../features/financeiro/Ponte';
 
 const OPCOES = (Object.keys(CATEGORIA) as Categoria[]).map((k) => ({ valor: k, rotulo: CATEGORIA[k] }));
 
@@ -105,6 +106,8 @@ export default function CustoFixo() {
           />
         </div>
       </HeroBand>
+
+      <CustoFixoRealizadoCard competencia={comp} />
 
       <Card className="p-5 flex flex-col gap-4" aria-labelledby="h-novo">
         <CardHeader id="h-novo" titulo="Novo lançamento" sub="Mexer no custo fixo do mês vigente marca a Tabela de Custos como desatualizada." />

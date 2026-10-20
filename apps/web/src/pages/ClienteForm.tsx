@@ -1,25 +1,27 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Ban, CheckCircle2, FilePlus2, Save } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import type { Cliente, StatusCliente, TipoCliente } from '../lib/types';
-import { brl, iniciais } from '../lib/format';
+import { brl, data, iniciais } from '../lib/format';
+import { podeLiberarMargem, useAuth } from '../lib/auth';
+import { previaParcelas } from '../features/financeiro/fin';
 import { documentoValido, mascaraDocumento, mascaraTelefone, soDigitos } from '../lib/documento';
 import { useAcao } from '../lib/queries';
 import { FormHeader, NavSecoes, Secao, span } from '../components/Form';
-import { Field, Segmented, SelectField, TextArea, TextField } from '../components/Field';
+import { Field, NumberField, Segmented, SelectField, TextArea, TextField } from '../components/Field';
 import { Button } from '../components/Button';
 import { GlassPanel } from '../components/GlassPanel';
 import { Card } from '../components/Card';
-import { Carregando, ErroEstado } from '../components/EmptyState';
+import { Aviso, Carregando, ErroEstado } from '../components/EmptyState';
 import { StatusClientePill } from '../components/Pill';
 import { Modal } from '../components/Modal';
 import { useTitulo } from '../layout/titulo';
 
 const UFS = 'AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO'.split(' ');
 type Form = Omit<Cliente, 'id' | 'resumo'>;
-const VAZIO: Form = { tipo: 'PJ', documento: '', nome: '', fantasia: '', email: '', telefone: '', cidade: '', uf: 'SC', status: 'ATIVO', observacoes: '' };
+const VAZIO: Form = { tipo: 'PJ', documento: '', nome: '', fantasia: '', email: '', telefone: '', cidade: '', uf: 'SC', status: 'ATIVO', observacoes: '', condicaoPagamento: '', limiteCredito: '' };
 const emailOk = (e: string) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export default function ClienteForm() {
@@ -34,19 +36,24 @@ export default function ClienteForm() {
   useEffect(() => {
     if (q.data) {
       const { id: _i, resumo: _r, ...resto } = q.data;
-      setF({ ...VAZIO, ...resto, fantasia: resto.fantasia ?? '', email: resto.email ?? '', telefone: resto.telefone ?? '', cidade: resto.cidade ?? '', uf: resto.uf ?? '', observacoes: resto.observacoes ?? '' });
+      setF({ ...VAZIO, ...resto, fantasia: resto.fantasia ?? '', email: resto.email ?? '', telefone: resto.telefone ?? '', cidade: resto.cidade ?? '', uf: resto.uf ?? '', observacoes: resto.observacoes ?? '', condicaoPagamento: resto.condicaoPagamento ?? '', limiteCredito: resto.limiteCredito ?? '' });
     }
   }, [q.data]);
   useTitulo(novo ? 'Novo cliente' : q.data?.fantasia || q.data?.nome || 'Cliente');
 
   const salvar = useAcao(
-    (x: Form) => api<Cliente>(novo ? '/clientes' : `/clientes/${id}`, { method: novo ? 'POST' : 'PATCH', body: { ...x, documento: soDigitos(x.documento), telefone: soDigitos(x.telefone), nome: x.nome.trim(), fantasia: x.tipo === 'PJ' ? x.fantasia.trim() : '' } }),
+    (x: Form) => api<Cliente>(novo ? '/clientes' : `/clientes/${id}`, { method: novo ? 'POST' : 'PATCH', body: { ...x, condicaoPagamento: x.condicaoPagamento?.trim() || null, limiteCredito: x.limiteCredito || null, bloqueioAutomatico: undefined, liberadoAte: undefined, documento: soDigitos(x.documento), telefone: soDigitos(x.telefone), nome: x.nome.trim(), fantasia: x.tipo === 'PJ' ? x.fantasia.trim() : '' } }),
     {
       invalida: [['clientes']],
       sucesso: (_r, x) => `${x.fantasia || x.nome} está na carteira. Já dá para montar um orçamento.`,
       onSuccess: (r) => novo && r?.id && navigate(`/clientes/${r.id}`, { replace: true })
     }
   );
+  const { usuario } = useAuth();
+  const liberar = useAcao(() => api<Cliente>(`/clientes/${id}`, { method: 'PATCH', body: { status: 'ATIVO' } }), {
+    invalida: [['clientes']],
+    sucesso: (c) => `Cliente liberado${c?.liberadoAte ? ` até ${data(c.liberadoAte)}` : ' por 7 dias'}. Se os títulos não forem pagos, ele volta a bloquear sozinho.`
+  });
   const del = useAcao(() => api(`/clientes/${id}`, { method: 'DELETE' }), { invalida: [['clientes']], sucesso: 'Cliente inativado. O histórico continua guardado.', onSuccess: () => navigate('/clientes') });
 
   if (!novo && q.isLoading) return <Card><Carregando /></Card>;
@@ -78,6 +85,7 @@ export default function ClienteForm() {
   };
 
   const r = q.data?.resumo;
+  const previaCond = previaParcelas(f.condicaoPagamento ?? '', '1000', new Date().toISOString().slice(0, 10));
   return (
     <>
       <FormHeader
@@ -94,8 +102,14 @@ export default function ClienteForm() {
           </>
         }
       />
+      {q.data?.status === 'BLOQUEADO' && q.data.bloqueioAutomatico && (
+        <Aviso tom="bad" faixa titulo="Bloqueado por inadimplência" acao={podeLiberarMargem(usuario?.papel) ? <Button carregando={liberar.isPending} onClick={() => liberar.mutate(undefined)}>Liberar por 7 dias</Button> : undefined}>
+          O ProMEC bloqueou sozinho porque há título vencido há mais tempo que o combinado. {podeLiberarMargem(usuario?.papel) ? 'Se combinou o pagamento, libere por 7 dias.' : 'Só a gestão pode liberar.'} <Link to="/financeiro/receber">Ver os títulos</Link>
+        </Aviso>
+      )}
+      {q.data?.liberadoAte && q.data.status === 'ATIVO' && <Aviso tom="warn" titulo={`Liberado até ${data(q.data.liberadoAte)}`}>Liberação temporária da gestão. Depois disso, se ainda houver título vencido, o bloqueio volta.</Aviso>}
       <div className="flex flex-wrap gap-5 items-start">
-        <NavSecoes secoes={[{ id: 'quem', titulo: 'Quem é', completa: docOk && !!f.nome.trim() }, { id: 'contato', titulo: 'Contato', completa: !!(f.email || f.telefone) }, { id: 'situacao', titulo: 'Situação', completa: true }]} />
+        <NavSecoes secoes={[{ id: 'quem', titulo: 'Quem é', completa: docOk && !!f.nome.trim() }, { id: 'contato', titulo: 'Contato', completa: !!(f.email || f.telefone) }, { id: 'pagamento', titulo: 'Pagamento', completa: !!f.condicaoPagamento }, { id: 'situacao', titulo: 'Situação', completa: true }]} />
         <form className="flex-[999_1_480px] min-w-0 flex flex-col gap-[18px]" onSubmit={(e) => { e.preventDefault(); enviar(); }} noValidate>
           <Secao id="quem" titulo="Quem é">
             <div className={span(6)}>
@@ -132,6 +146,10 @@ export default function ClienteForm() {
             <TextField className={span(3)} label="Telefone" mono inputMode="tel" value={mascaraTelefone(f.telefone)} onChange={(v) => set('telefone', v)} placeholder="(47) 3333-0000" />
             <TextField className={span(4)} label="Cidade" value={f.cidade} onChange={(v) => set('cidade', v)} />
             <SelectField className={span(2)} label="UF" value={f.uf} onChange={(v) => set('uf', v)} opcoes={UFS.map((u) => ({ valor: u, rotulo: u }))} vazio="—" />
+          </Secao>
+          <Secao id="pagamento" titulo="Pagamento" descricao="Vale para os orçamentos e para os títulos da entrega, quando o orçamento não disser outra coisa.">
+            <TextField className={span(3)} label="Condição de pagamento" value={f.condicaoPagamento ?? ''} onChange={(v) => set('condicaoPagamento', v)} placeholder="28 dias, 30/60/90, entrada + 30" erro={previaCond.erro} hint={previaCond.texto ? `Ex. em R$ 1.000 hoje: ${previaCond.texto.replace(/^\d+ parcelas?: /, '')}` : undefined} />
+            <NumberField className={span(3)} label="Limite de crédito" prefixo="R$" value={f.limiteCredito ?? ''} onChange={(v) => set('limiteCredito', v)} hint="Em aberto acima disso pede atenção antes de aprovar." />
           </Secao>
           <Secao id="situacao" titulo="Situação">
             <div className={span(6)}>

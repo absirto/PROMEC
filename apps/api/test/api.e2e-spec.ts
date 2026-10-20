@@ -675,6 +675,172 @@ describe('API ProMEC (e2e)', () => {
     });
   });
 
+  describe('financeiro', () => {
+    const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+    const dia = (n: number) => new Date(Date.parse(`${hoje}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+    const fin = () => base.financeiro;
+    const receber = (extra: object) => ({ tipo: 'RECEBER', pessoa: { clienteId: base.clientes.metalvale }, descricao: 'Serviço avulso de teste', centroCustoId: fin().centrosCusto.receita, ...extra });
+    const buscar = async (q: string, tipo = 'RECEBER') => (await api(token).get(`/financeiro/titulos?tipo=${tipo}&q=${encodeURIComponent(q)}`).expect(200)).body.itens;
+
+    it('parcelas 30/60/90 fecham os centavos e condição inválida é recusada', async () => {
+      const r = await api(token).post('/financeiro/titulos', receber({ valor: '793.27', condicao: '30/60/90', dataBase: '2026-11-01' })).expect(201);
+      expect(r.body.itens.map((t: { valor: string; vencimento: string; parcela: string }) => [t.parcela, t.valor, t.vencimento])).toEqual([
+        ['1/3', '264.43', '2026-12-01'],
+        ['2/3', '264.42', '2026-12-31'],
+        ['3/3', '264.42', '2027-01-30']
+      ]);
+      expect(new Set(r.body.itens.map((t: { grupoId: string }) => t.grupoId)).size).toBe(1);
+      expect(r.body.itens[0].numero).toMatch(/^CR-2026-/);
+      expect((await api(token).post('/financeiro/titulos', receber({ valor: '100', condicao: 'quando der' })).expect(422)).body.codigo).toBe('CONDICAO_INVALIDA');
+      expect((await api(token).post('/orcamentos', { ...bucha(), condicaoPagamento: 'quando der' }).expect(422)).body.codigo).toBe('CONDICAO_INVALIDA');
+      await api(token).post('/financeiro/titulos', { ...receber({ valor: '10' }), centroCustoId: undefined }).expect(400);
+    });
+
+    it('baixa parcial e depois total com multa e juros', async () => {
+      const [t] = (await api(token).post('/financeiro/titulos', receber({ valor: '1000', vencimento: dia(-10) })).expect(201)).body.itens;
+      expect(t).toMatchObject({ diasAtraso: 10, vencido: true });
+      let r = await api(token).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: '500', contaId: fin().contas.bb, multa: '0', juros: '0' }).expect(201);
+      expect(r.body).toMatchObject({ status: 'PARCIAL', saldo: '500.00', encargosHoje: { multa: '10.00', juros: '1.67', total: '511.67' } });
+      r = await api(token).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: '511.67', contaId: fin().contas.bb }).expect(201);
+      expect(r.body).toMatchObject({ status: 'PAGO', saldo: '0.00', valorPago: '1000.00' });
+      expect(r.body.baixas[1]).toMatchObject({ valor: '511.67', principal: '500.00', multa: '10.00', juros: '1.67' });
+      await api(token).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: '1', contaId: fin().contas.bb }).expect(422);
+    });
+
+    it('pagar em partes custa o mesmo que pagar de uma vez (encargos proporcionais)', async () => {
+      const [t] = (await api(token).post('/financeiro/titulos', receber({ valor: '1380', vencimento: dia(-45) })).expect(201)).body.itens;
+      const r1 = await api(token).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: '600', contaId: fin().contas.bb }).expect(201);
+      expect(r1.body).toMatchObject({ status: 'PARCIAL', saldo: '800.29' });
+      expect(r1.body.baixas[0]).toMatchObject({ valor: '600.00', principal: '579.71', multa: '11.59', juros: '8.70' });
+      const resto = r1.body.encargosHoje.total;
+      await api(token).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: (Number(resto) + 0.01).toFixed(2), contaId: fin().contas.bb }).expect(422).expect((r) => expect(r.body.codigo).toBe('VALOR_ACIMA_DO_DEVIDO'));
+      const r2 = await api(token).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: resto, contaId: fin().contas.bb }).expect(201);
+      expect(r2.body).toMatchObject({ status: 'PAGO', saldo: '0.00', valorPago: '1380.00' });
+      const pago = r2.body.baixas.reduce((a: number, b: { valor: string }) => a + Number(b.valor), 0);
+      expect(pago.toFixed(2)).toBe('1428.30');
+    });
+
+    it('baixa em lote quita cada título', async () => {
+      const { itens } = (await api(token).post('/financeiro/titulos', receber({ valor: '200', condicao: '30/60', dataBase: hoje })).expect(201)).body;
+      const r = await api(token).post('/financeiro/baixas-lote', { tituloIds: itens.map((t: { id: string }) => t.id), data: hoje, contaId: fin().contas.caixa }).expect(201);
+      expect(r.body.itens.map((t: { status: string }) => t.status)).toEqual(['PAGO', 'PAGO']);
+      expect(r.body.valor).toBe('200.00');
+    });
+
+    it('baixa de título de OS gera comissão e o estorno a desfaz', async () => {
+      const competencia = hoje.slice(0, 7);
+      const antes = (await api(token).get(`/financeiro/comissoes?competencia=${competencia}`).expect(200)).body.total;
+      const [p2] = (await buscar('OS-2026-00037 · parcela 2/3'));
+      const baixa = await api(token).post(`/financeiro/titulos/${p2.id}/baixas`, { data: hoje, valor: p2.valor, contaId: fin().contas.bb }).expect(201);
+      const depois = (await api(token).get(`/financeiro/comissoes?competencia=${competencia}`).expect(200)).body;
+      expect(Number(depois.total) - Number(antes)).toBeCloseTo(Number(p2.valor) * 0.03, 2);
+      expect(depois.vendedores[0].vendedor.nome).toBe('Paulo Henrique Souza');
+      const baixaId = baixa.body.baixas[0].id;
+      await api(tokenOrcamentista).post(`/financeiro/titulos/${p2.id}/baixas/${baixaId}/estornar`, { motivo: 'Cheque devolvido' }).expect(403);
+      const e = await api(token).post(`/financeiro/titulos/${p2.id}/baixas/${baixaId}/estornar`, { motivo: 'Cheque devolvido' }).expect(200);
+      expect(e.body).toMatchObject({ status: 'ABERTO', valorPago: '0.00' });
+      expect(e.body.historico.at(-1)).toMatchObject({ evento: 'estorno', detalhe: expect.stringContaining('comissão estornada') });
+      expect((await api(token).get(`/financeiro/comissoes?competencia=${competencia}`).expect(200)).body.total).toBe(antes);
+    });
+
+    it('renegociação transforma o saldo em novas parcelas', async () => {
+      const [t] = await buscar('Recuperação de rosca do eixo');
+      const r = await api(token).post(`/financeiro/titulos/${t.id}/renegociar`, { condicao: '30/60', dataBase: hoje }).expect(200);
+      expect(r.body.status).toBe('RENEGOCIADO');
+      expect(r.body.renegociacao.map((x: { valor: string }) => x.valor)).toEqual(['320.00', '320.00']);
+      expect(r.body.renegociacao[0].origem).toMatchObject({ tipo: 'RENEGOCIACAO', numero: t.numero });
+      await api(token).post(`/financeiro/titulos/${t.id}/cancelar`, { motivo: 'x' }).expect(409);
+    });
+
+    it('entrega de OS e recebimento de compra viram títulos', async () => {
+      const os42 = await buscar('OS-2026-00042');
+      expect(os42).toEqual([expect.objectContaining({ valor: '835.02', origem: expect.objectContaining({ tipo: 'OS', numero: 'OS-2026-00042' }), centroCusto: expect.objectContaining({ nome: 'Receita de serviços' }) })]);
+      const os37 = await buscar('OS-2026-00037');
+      expect(os37.map((t: { parcela: string }) => t.parcela)).toEqual(['1/3', '2/3', '3/3']);
+      const compras = await buscar('NF 9001', 'PAGAR');
+      expect(compras.map((t: { valor: string }) => t.valor).sort()).toEqual(['200.00', '260.00']);
+      expect(compras[0]).toMatchObject({ origem: { tipo: 'RECEBIMENTO' }, centroCusto: { nome: 'Matéria-prima' } });
+      const pc2 = await buscar('PC-2026-00002', 'PAGAR');
+      expect(pc2[0]).toMatchObject({ valor: '730.00', pessoa: { tipo: 'FORNECEDOR' } });
+    });
+
+    it('recorrências geram o mês sem duplicar', async () => {
+      const r = await api(token).post('/financeiro/recorrencias/gerar', { competencia: '2027-01' }).expect(200);
+      expect(r.body.geradas).toBe(13);
+      expect((await api(token).post('/financeiro/recorrencias/gerar', { competencia: '2027-01' }).expect(200)).body.geradas).toBe(0);
+      const rec = await api(token).get('/financeiro/recorrencias').expect(200);
+      expect(rec.body.itens).toHaveLength(14);
+    });
+
+    it('fluxo de caixa projeta o saldo e aponta o menor saldo', async () => {
+      const f = await api(token).get(`/financeiro/fluxo?ate=${dia(60)}&agrupamento=semana`).expect(200);
+      expect(f.body.saldoAtual).toMatch(/^-?\d+\.\d{2}$/);
+      expect(f.body.pontos.length).toBeGreaterThan(8);
+      expect(new Date(`${f.body.pontos[1].inicio}T12:00:00Z`).getUTCDay()).toBe(1);
+      expect(f.body.realizado).toHaveLength(4);
+      const minimo = Math.min(...f.body.pontos.map((x: { saldoFinal: string }) => Number(x.saldoFinal)));
+      expect(Number(f.body.menorSaldo.valor)).toBe(minimo);
+      const contas = await api(token).get('/financeiro/contas').expect(200);
+      const total = contas.body.reduce((a: number, c: { saldoAtual: string }) => a + Number(c.saldoAtual), 0);
+      expect(Number(f.body.saldoAtual)).toBeCloseTo(total, 2);
+    });
+
+    it('DRE de um cenário controlado e custo fixo realizado contra a tabela', async () => {
+      const [titulo] = await buscar('OS-2026-00042');
+      await api(token).patch(`/financeiro/titulos/${titulo.id}`, { competencia: '2027-03' }).expect(200);
+      for (const valor of ['1000', '500']) {
+        await api(token).post('/financeiro/titulos', { tipo: 'PAGAR', pessoa: { nome: 'Imobiliária Centro' }, descricao: 'Aluguel extra', centroCustoId: fin().centrosCusto.aluguel, competencia: '2027-03', valor, vencimento: '2027-03-05' }).expect(201);
+      }
+      const d = await api(token).get('/financeiro/dre?competencia=2027-03').expect(200);
+      expect(d.body).toMatchObject({ receitaBruta: '835.02', custosVariaveis: '0.00', margemContribuicao: '835.02', custoFixo: '1500.00', resultado: '-664.98', comparativo: { competencia: '2027-02' } });
+      const oficina = await api(token).get('/financeiro/dre?competencia=2027-03&segmento=OFICINA').expect(200);
+      expect(oficina.body).toMatchObject({ receitaBruta: '0.00', custoFixo: '0.00' });
+
+      const cf = await api(token).get('/financeiro/custo-fixo-realizado?competencia=2026-10').expect(200);
+      expect(cf.body).toMatchObject({ realizado: '22000.00', tabela: { custoFixo: '22000' }, desvio: '0', acimaDaTolerancia: false });
+      expect((await api(token).post('/custo-fixo/importar-financeiro', { competencia: '2026-10' }).expect(409)).body.codigo).toBe('TABELA_VIGENTE');
+      const imp = await api(token).post('/custo-fixo/importar-financeiro', { competencia: '2027-03' }).expect(200);
+      expect(imp.body).toMatchObject({ total: '1500.00', lancamentos: [{ categoria: 'aluguel', valor: '1500' }] });
+      const hist = await api(token).get(`/centros-trabalho/${base.centros.torno}/historico-custos?meses=3`).expect(200);
+      expect(hist.body.meses).toHaveLength(3);
+      expect(hist.body.meses[2].insumos).toBe('142.50');
+    });
+
+    it('fechamento de comissões cria título a pagar e trava a competência', async () => {
+      const competencia = hoje.slice(0, 7);
+      await api(tokenOrcamentista).post('/financeiro/comissoes/fechar', { competencia }).expect(403);
+      const r = await api(token).post('/financeiro/comissoes/fechar', { competencia }).expect(200);
+      expect(r.body.fechada).toBe(true);
+      const titulos = await buscar(`Comissões ${competencia.slice(5, 7)}/${competencia.slice(0, 4)}`, 'PAGAR');
+      expect(titulos).toEqual([expect.objectContaining({ valor: r.body.vendedores[0].valor, pessoa: expect.objectContaining({ tipo: 'VENDEDOR', nome: 'Paulo Henrique Souza' }), centroCusto: expect.objectContaining({ nome: 'Comissões' }) })]);
+      expect((await api(token).post('/financeiro/comissoes/fechar', { competencia }).expect(409)).body.codigo).toBe('COMPETENCIA_FECHADA');
+    });
+
+    it('rotina bloqueia inadimplente e o gestor libera', async () => {
+      await api(token).post('/financeiro/titulos', { ...receber({ valor: '300', vencimento: dia(-40) }), pessoa: { clienteId: base.clientes.schroeder } }).expect(201);
+      const r = await api(token).post('/financeiro/rotina').expect(200);
+      expect(r.body.clientesBloqueados.map((c: { id: string }) => c.id)).toContain(base.clientes.schroeder);
+      expect((await api(token).get(`/clientes/${base.clientes.schroeder}`).expect(200)).body).toMatchObject({ status: 'BLOQUEADO', bloqueioAutomatico: true });
+      const piraba = await api(token).get(`/clientes/${base.clientes.pirabeiraba}`).expect(200);
+      expect(piraba.body).toMatchObject({ status: 'BLOQUEADO', bloqueioAutomatico: true });
+      await api(tokenOrcamentista).patch(`/clientes/${base.clientes.schroeder}`, { status: 'ATIVO' }).expect(403);
+      const liberado = await api(token).patch(`/clientes/${base.clientes.schroeder}`, { status: 'ATIVO' }).expect(200);
+      expect(liberado.body).toMatchObject({ status: 'ATIVO', bloqueioAutomatico: false, liberadoAte: dia(7) });
+      const de_novo = await api(token).post('/financeiro/rotina').expect(200);
+      expect(de_novo.body.clientesBloqueados.map((c: { id: string }) => c.id)).not.toContain(base.clientes.schroeder);
+    });
+
+    it('isola o financeiro entre empresas', async () => {
+      const [t] = await buscar('OS-2026-00037 · parcela 3/3');
+      await api(tokenOutra).get(`/financeiro/titulos/${t.id}`).expect(404);
+      const contaB = (await api(tokenOutra).get('/financeiro/contas').expect(200)).body[0].id;
+      await api(tokenOutra).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: '1', contaId: contaB }).expect(404);
+      await api(token).post(`/financeiro/titulos/${t.id}/baixas`, { data: hoje, valor: '1', contaId: contaB }).expect(404);
+      const lista = await api(tokenOutra).get('/financeiro/titulos').expect(200);
+      expect(lista.body.itens.some((x: { id: string }) => x.id === t.id)).toBe(false);
+    });
+  });
+
   it('painel resume a operação', async () => {
     const r = await api(token).get('/painel').expect(200);
     expect(r.body.usuario).toBe('Marina');
@@ -683,6 +849,8 @@ describe('API ProMEC (e2e)', () => {
     expect(r.body.ordens).toMatchObject({ emExecucao: 1, pausadas: 1, atrasadas: 1, emQualidade: 1 });
     expect(r.body.ordens.margemProjetadaMedia).toEqual(expect.any(String));
     expect(r.body.suprimentos).toMatchObject({ abaixoDoMinimo: expect.any(Number), valorEstoque: expect.any(String), pedidosAguardando: expect.any(Number) });
+    expect(r.body.financeiro).toMatchObject({ saldoContas: expect.any(String), receberVencido: expect.any(String), caixa30: expect.any(String), menorSaldo: expect.any(Object) });
+    expect(r.body.financeiro.clientesBloqueados).toBeGreaterThanOrEqual(1);
     expect(r.body.qualidade).toMatchObject({ ncsAbertas: expect.any(Number), garantiasAbertas: expect.any(Number), custoNaoQualidadeMes: expect.any(String) });
   });
 });

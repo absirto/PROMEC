@@ -7,6 +7,7 @@ import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada } fro
 import { formatarNumero } from '../orcamentos/numeracao';
 import { json, montarEntrada, resultadoDe } from '../tabelas-custos/entrada';
 import { semearAgenda } from './agenda';
+import { semearFinanceiro } from './financeiro';
 import { semearSuprimentos } from './suprimentos';
 import { semearOrdens } from './ordens';
 
@@ -25,7 +26,7 @@ const dataEm = (n: number) => {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 };
 
-const CUSTO_FIXO_OUTUBRO: [string, string, string][] = [
+export const CUSTO_FIXO_OUTUBRO: [string, string, string][] = [
   ['aluguel', 'Aluguel do galpão', '8000'],
   ['pessoalAdm', 'Assistente administrativo e encargos', '4800'],
   ['proLabore', 'Pró-labore da gestão', '3000'],
@@ -228,10 +229,14 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     eventos: Evento[];
     motivoRecusa?: string;
     prazoEm?: number;
+    comissao?: string;
+    condicao?: string;
     observacoes?: string;
   }[] = [
     {
       n: 124,
+      comissao: '0.03',
+      condicao: '28 dias',
       cliente: 'schroeder',
       titulo: 'Eixo de transmissão SAE 1045 retificado — lote de 20',
       lote: 20,
@@ -316,6 +321,8 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     },
     {
       n: 115,
+      comissao: '0.03',
+      condicao: '30/60/90',
       cliente: 'metalvale',
       titulo: 'Engrenagem de dentes retos módulo 2 — lote de 12',
       lote: 12,
@@ -401,7 +408,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
   const resultados: Record<number, string> = {};
   for (const orc of orcamentos) {
     const tabela = await db.tabelaCustos.findUniqueOrThrow({ where: { id: tabelas[orc.tabela].id } });
-    const p = { lote: orc.lote, impostos: '0.14', comissao: '0', margemAlvo: '0.20', margemMinima: '0.15', desconto: orc.desconto, metodo: 'divisor' as const };
+    const p = { lote: orc.lote, impostos: '0.14', comissao: orc.comissao ?? '0', margemAlvo: '0.20', margemMinima: '0.15', desconto: orc.desconto, metodo: 'divisor' as const };
     const { linhas, resultado } = calcular(orc.linhas, resultadoDe(tabela), p);
     const dataDe = (evento: string) => {
       const e = orc.eventos.find((x) => x[0] === evento);
@@ -429,7 +436,9 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
       aprovadoEm: dataDe('aprovado'),
       recusadoEm: dataDe('recusado'),
       criadoEm: dataDe('criado')!,
-      prazoPrometido: orc.prazoEm === undefined ? null : dataEm(orc.prazoEm)
+      prazoPrometido: orc.prazoEm === undefined ? null : dataEm(orc.prazoEm),
+      condicaoPagamento: orc.condicao ?? '',
+      vendedorId: id('usuario-paulo')
     };
     await db.orcamento.upsert({ where: { id: oid }, create: { id: oid, tenantId, ...dados }, update: dados });
     await db.orcamentoHistorico.deleteMany({ where: { orcamentoId: oid } });
@@ -457,6 +466,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
 
   const ordens = await semearOrdens(db, tenantId, id);
   const suprimentos = await semearSuprimentos(db, tenantId, id, { centroFresa: centro('fresa') });
+  const financeiro = await semearFinanceiro(db, tenantId, id, { centros: [centro('torno'), centro('fresa'), centro('cu')] });
   const agenda = await semearAgenda(db, tenantId, id, { box3, jonas, fresa: centro('fresa'), cliente: id('cliente-metalvale') });
 
   return {
@@ -472,6 +482,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     jonas,
     agenda,
     suprimentos,
+    financeiro,
     orcamentoProvisorioId: id('orcamento-122'),
     precos: resultados
   };

@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Financeiro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.tab{all:unset;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tab.on{background:#1E1B16;color:#fff}
+.ck{width:20px;height:20px;accent-color:#B8460A;cursor:pointer}
+.tgl{all:unset;box-sizing:border-box;width:46px;height:26px;border-radius:999px;position:relative;cursor:pointer;flex:none;transition:background-color .3s}
+.tgl span{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .3s cubic-bezier(.2,.8,.2,1)}
+.fld{display:flex;align-items:center;gap:8px;height:46px;padding:0 14px;border-radius:14px;background:#fff;border:1.5px solid var(--bd2)}
+.fld input{all:unset;flex:1;min-width:0;font:600 16px/1 'IBM Plex Mono',monospace}
+.btn:focus-visible,.ib:focus-visible,.tab:focus-visible,.tgl:focus-visible,.ck:focus-visible,.fld:focus-within{outline:3px solid var(--p);outline-offset:2px}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:26px;line-height:1.1;font-weight:700}
+.sub{font-size:13.5px;color:var(--t3)}
+.rt{width:100%;border-collapse:collapse;font-size:14.5px}
+.rt th{font-size:12.5px;font-weight:600;color:var(--t3);text-align:left;padding:12px;background:var(--s2);border-bottom:1px solid var(--bd);white-space:nowrap}
+.rt td{padding:12px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.rt tr.sel td{background:#FFF6EF}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fade{animation:fade .25s ease both}
+@keyframes growY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.gy{transform-box:fill-box;transform-origin:bottom;animation:growY .7s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.rv,.fade,.gy{animation:none}.tgl span{transition:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><span style="color: #1E1B16; font-weight: 600;" aria-current="page">Financeiro</span></nav>
+<span class="bdg b-neu" style="height: 34px; padding: 0 14px;">Outubro 2026</span>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--t2);"><span style="width: 30px; height: 30px; border-radius: 50%; background: #0F9D76; color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center;">SA</span>Simone Araújo</span>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 20px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: linear-gradient(135deg, #0F9D76 0%, #0B6E54 40%, #15395A 100%); color: #fff; padding: clamp(22px, 3vw, 32px);">
+<svg viewBox="0 0 420 200" aria-hidden="true" style="position: absolute; right: 16px; top: 8px; width: min(460px, 44%); height: auto;" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<path d="M20 180h380M50 180V120M100 180V90M150 180V110M200 180V70M250 180V95M300 180V50M350 180V80" stroke-width="16" stroke="rgba(255,255,255,.18)"/>
+<path d="M50 120 100 90 150 110 200 70 250 95 300 50 350 80" stroke="#FFD08A" stroke-width="3"/>
+<circle cx="360" cy="40" r="26"/><path d="M360 28v24M352 34h12a5 5 0 0 1 0 10h-8a5 5 0 0 0 0 10h12"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 620px;">
+<span style="font-size: 14px; font-weight: 600; color: #BFF0DC;">Financeiro</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.4vw, 54px); font-weight: 700; line-height: 1;">O dinheiro entrando, saindo e sobrando</h1>
+<p style="margin: 0; font-size: 16px; color: #DDF3E9;">Simone, hoje vence a parcela da Agro Pampa (R$ 6.800,00) e a Rio Negro está com 2 títulos atrasados. O caixa dos próximos 30 dias segue no azul.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Saldo em conta</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">R$ 48.210</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">A receber em 30 dias</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">R$ 62.840</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">A pagar em 30 dias</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">R$ 46.750</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Vencido a receber</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600; color: #FFD08A;">R$ 5.130</span></div>
+</div>
+</div>
+</section>
+
+<div class="rv" role="tablist" aria-label="Seções" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; border-radius: 999px; align-self: flex-start; max-width: 100%; background: var(--s3);">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="5"><button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg>{{t.label}}</button></sc-for>
+</div>
+
+<sc-if value="{{vRec}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+<section class="card rv" style="flex: 999 1 640px; min-width: 0; overflow: hidden;" aria-labelledby="h-rec">
+<div style="padding: 18px 20px 10px; display: flex; flex-direction: column; gap: 2px;"><h2 id="h-rec" class="h2">Contas a receber</h2><span class="sub">Selecione os títulos para dar baixa. Juros e multa dos atrasados entram sozinhos.</span></div>
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 760px;">
+<thead><tr><th scope="col" style="width: 44px;"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Selecionar</span></th><th scope="col">Cliente · origem</th><th scope="col">Parcela</th><th scope="col">Vencimento</th><th scope="col" style="text-align: right;">Em aberto</th><th scope="col">Situação</th></tr></thead>
+<tbody>
+<sc-for list="{{recs}}" as="r" hint-placeholder-count="6">
+<tr class="{{r.cls}}">
+<td><sc-if value="{{r.canSel}}" hint-placeholder-val="{{true}}"><input type="checkbox" class="ck" checked="{{r.checked}}" onChange="{{r.toggle}}" aria-label="Selecionar {{r.code}}"></sc-if></td>
+<td><span style="display: flex; flex-direction: column;"><span style="font-weight: 600;">{{r.cli}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">{{r.code}} · {{r.os}}</span></span></td>
+<td class="mono">{{r.parc}}</td>
+<td class="mono" style="color: {{r.vc}}; font-weight: {{r.vw}};">{{r.venc}}</td>
+<td class="mono" style="text-align: right; font-weight: 600;">{{r.val}}</td>
+<td><span class="bdg {{r.sc}}">{{r.st}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+<aside class="rv" aria-label="Baixa de títulos" style="flex: 1 1 320px; max-width: 400px; position: sticky; top: 84px; border-radius: 30px; padding: 10px; background: linear-gradient(150deg, #0F9D76 0%, #0B6E54 45%, #15395A 100%);">
+<div class="lg" style="border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+<h2 class="disp" style="margin: 0; font-size: 24px; font-weight: 700;">Dar baixa</h2>
+<sc-if value="{{noSel}}" hint-placeholder-val="{{true}}"><span style="font-size: 14px; color: var(--t2);">Marque um ou mais títulos ao lado. Pode ser baixa parcial também.</span></sc-if>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{false}}">
+<sc-for list="{{selRows}}" as="s" hint-placeholder-count="2"><div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 12px; border-radius: 14px; background: #fff; font-size: 13.5px;"><span style="font-weight: 600;">{{s.cli}}</span><span class="mono">{{s.base}}</span><span style="color: var(--t3);">{{s.extraTxt}}</span><span class="mono" style="color: {{s.ec}};">{{s.extra}}</span></div></sc-for>
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding-top: 4px;"><span style="color: var(--t2);">Total a receber</span><span class="mono" style="font-size: 26px; font-weight: 700;">{{selTotal}}</span></div>
+<label><span style="display: block; font-size: 13px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">Valor recebido agora</span><span class="fld"><span style="font-size: 13px; color: var(--t3);">R$</span><input value="{{paid}}" onChange="{{onPaid}}"></span></label>
+<span style="font-size: 13px; color: {{partialC}};">{{partialTxt}}</span>
+<button type="button" class="btn btn-p" style="height: 48px;" onClick="{{doBaixa}}">Confirmar baixa</button>
+</sc-if>
+<sc-if value="{{baixaOk}}" hint-placeholder-val="{{false}}"><span role="status" style="font-size: 14px; color: #0F7A55; font-weight: 600;">Baixa registrada. O fluxo de caixa já foi atualizado.</span></sc-if>
+</div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{vPag}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="overflow: hidden;" aria-labelledby="h-pag">
+<div style="padding: 18px 20px 10px; display: flex; flex-direction: column; gap: 2px;"><h2 id="h-pag" class="h2">Contas a pagar</h2><span class="sub">As duas chaves de cada linha dizem ao Motor de Custos para onde vai a despesa.</span></div>
+<sc-if value="{{flagChanged}}" hint-placeholder-val="{{false}}"><div role="status" class="fade" style="margin: 0 20px 10px; padding: 12px 16px; border-radius: 16px; background: #FCEFC7; font-size: 14px;">Com essa mudança, o custo fixo de outubro passa a <strong class="mono">{{cfTxt}}</strong> e a Tabela de Custos de novembro fica marcada como desatualizada. Nada muda nos orçamentos até a Marina publicar.</div></sc-if>
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 980px;">
+<thead><tr><th scope="col">Fornecedor · descrição</th><th scope="col">Categoria · centro de custo</th><th scope="col">Vencimento</th><th scope="col" style="text-align: right;">Valor</th><th scope="col" style="text-align: center;">Compõe custo fixo</th><th scope="col" style="text-align: center;">Custo direto de máquina</th><th scope="col">Situação</th></tr></thead>
+<tbody>
+<sc-for list="{{pags}}" as="p" hint-placeholder-count="6">
+<tr>
+<td><span style="display: flex; flex-direction: column;"><span style="font-weight: 600;">{{p.f}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">{{p.code}} · {{p.d}}</span></span></td>
+<td style="font-size: 13.5px;"><span style="display: block;">{{p.cat}}</span><span style="color: var(--t3);">{{p.cc}}</span></td>
+<td class="mono">{{p.venc}}</td>
+<td class="mono" style="text-align: right; font-weight: 600;">{{p.val}}</td>
+<td style="text-align: center;"><button type="button" class="tgl" role="switch" aria-checked="{{p.fx}}" aria-label="Compõe custo fixo: {{p.f}}" onClick="{{p.tFx}}" style="background: {{p.fxBg}};"><span style="left: {{p.fxL}};"></span></button></td>
+<td style="text-align: center;"><button type="button" class="tgl" role="switch" aria-checked="{{p.dr}}" aria-label="Custo direto de máquina: {{p.f}}" onClick="{{p.tDr}}" style="background: {{p.drBg}};"><span style="left: {{p.drL}};"></span></button><span style="display: block; font-size: 11.5px; color: var(--t3);">{{p.ct}}</span></td>
+<td><span class="bdg {{p.sc}}">{{p.st}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vCx}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;" aria-labelledby="h-cx">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-cx" class="h2">Fluxo de caixa · próximas 8 semanas</h2><span class="sub">Barras: entradas e saídas. Linha: saldo. A semana 42 já é realizada, o resto é previsto.</span></div>
+<div style="display: flex; gap: 14px; font-size: 13px; color: var(--t2); flex-wrap: wrap;"><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #0F9D76;"></span>Entradas</span><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #E35D14;"></span>Saídas</span><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 14px; height: 3px; background: #1D4E7A;"></span>Saldo</span><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; border: 2px dashed #6E6557;"></span>Previsto</span></div>
+</div>
+<svg viewBox="0 0 900 300" role="img" aria-label="{{cxAria}}" style="width: 100%; height: auto;">
+<line x1="40" x2="890" y1="260" y2="260" stroke="#CFC4B3"/><line x1="40" x2="890" y1="160" y2="160" stroke="#E2DACD"/><line x1="40" x2="890" y1="60" y2="60" stroke="#E2DACD"/>
+<text x="0" y="264" font-family="IBM Plex Mono" font-size="11" fill="#6E6557">0</text><text x="0" y="164" font-family="IBM Plex Mono" font-size="11" fill="#6E6557">30 mil</text><text x="0" y="64" font-family="IBM Plex Mono" font-size="11" fill="#6E6557">60 mil</text>
+<sc-for list="{{cx}}" as="c" hint-placeholder-count="8">
+<rect class="gy" x="{{c.x1}}" y="{{c.yi}}" width="34" height="{{c.hi}}" rx="5" fill="#0F9D76" opacity="{{c.op}}" stroke="#0F9D76" stroke-dasharray="{{c.dash}}"/>
+<rect class="gy" x="{{c.x2}}" y="{{c.yo}}" width="34" height="{{c.ho}}" rx="5" fill="#E35D14" opacity="{{c.op}}" stroke="#E35D14" stroke-dasharray="{{c.dash}}"/>
+<text x="{{c.xl}}" y="282" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#6E6557">{{c.l}}</text>
+</sc-for>
+<polyline points="{{saldoPts}}" fill="none" stroke="#1D4E7A" stroke-width="3" stroke-linejoin="round"/>
+<sc-for list="{{cx}}" as="c" hint-placeholder-count="8"><circle cx="{{c.xl}}" cy="{{c.ys}}" r="5" fill="#fff" stroke="#1D4E7A" stroke-width="2.5"/></sc-for>
+</svg>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+<div style="padding: 14px 16px; border-radius: 18px; background: #DDF3E9;"><span style="font-size: 13px; color: var(--t2);">Caixa previsto em 30 dias</span><span class="mono" style="display: block; font-size: 24px; font-weight: 700;">R$ 64.300</span></div>
+<div style="padding: 14px 16px; border-radius: 18px; background: #DDF3E9;"><span style="font-size: 13px; color: var(--t2);">em 60 dias</span><span class="mono" style="display: block; font-size: 24px; font-weight: 700;">R$ 81.900</span></div>
+<div style="padding: 14px 16px; border-radius: 18px; background: #FCEFC7;"><span style="font-size: 13px; color: var(--t2);">em 90 dias</span><span class="mono" style="display: block; font-size: 24px; font-weight: 700;">R$ 97.400</span><span style="font-size: 12.5px; color: #8A5300;">13º salário sai na S51</span></div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vCom}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="overflow: hidden;" aria-labelledby="h-com">
+<div style="padding: 18px 20px 10px; display: flex; flex-direction: column; gap: 2px;"><h2 id="h-com" class="h2">Comissões de outubro</h2><span class="sub">Calculadas sobre o que o cliente já pagou, não sobre o orçamento aprovado.</span></div>
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 760px;">
+<thead><tr><th scope="col">Vendedor</th><th scope="col" style="text-align: right;">Orçamentos convertidos</th><th scope="col" style="text-align: right;">Recebido dos clientes</th><th scope="col" style="text-align: right;">Comissão</th><th scope="col" style="text-align: right;">A pagar</th><th scope="col">Situação</th></tr></thead>
+<tbody>
+<tr><td style="font-weight: 600;">Paulo Henrique</td><td class="mono" style="text-align: right;">6</td><td class="mono" style="text-align: right;">R$ 41.200,00</td><td class="mono" style="text-align: right;">3,0%</td><td class="mono" style="text-align: right; font-weight: 700;">R$ 1.236,00</td><td><span class="bdg b-inf">Paga em 05/11</span></td></tr>
+<tr><td style="font-weight: 600;">Representante Oeste · Gilmar Kraus</td><td class="mono" style="text-align: right;">2</td><td class="mono" style="text-align: right;">R$ 18.600,00</td><td class="mono" style="text-align: right;">5,0%</td><td class="mono" style="text-align: right; font-weight: 700;">R$ 930,00</td><td><span class="bdg b-inf">Paga em 05/11</span></td></tr>
+<tr><td style="font-weight: 600;">Balcão da oficina</td><td class="mono" style="text-align: right;">31</td><td class="mono" style="text-align: right;">R$ 14.720,00</td><td class="mono" style="text-align: right;">0,0%</td><td class="mono" style="text-align: right; font-weight: 700;">—</td><td><span class="bdg b-neu">Sem comissão</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vDre}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="overflow: hidden;" aria-labelledby="h-dre">
+<div style="padding: 18px 20px 10px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;"><div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-dre" class="h2">DRE gerencial · outubro por segmento</h2><span class="sub">Custo fixo rateado pelas horas reais de cada segmento. Sem apuração fiscal: impostos só como percentual.</span></div><span class="bdg b-neu">Matriz · Joinville</span></div>
+<div style="overflow-x: auto;">
+<table class="rt" style="min-width: 820px;">
+<thead><tr><th scope="col"></th><th scope="col" style="text-align: right;">Usinagem</th><th scope="col" style="text-align: right;">Oficina</th><th scope="col" style="text-align: right;">Caldeiraria</th><th scope="col" style="text-align: right;">Total</th></tr></thead>
+<tbody>
+<sc-for list="{{dre}}" as="d" hint-placeholder-count="8"><tr style="background: {{d.bg}};"><td style="font-weight: {{d.fw}}; padding-left: {{d.pad}};">{{d.k}}</td><sc-for list="{{d.v}}" as="v" hint-placeholder-count="4"><td class="mono" style="text-align: right; font-weight: {{d.fw}}; color: {{v.c}};">{{v.t}}</td></sc-for></tr></sc-for>
+</tbody>
+</table>
+</div>
+<div style="margin: 10px 20px 20px; display: flex; flex-wrap: wrap; gap: 12px;">
+<div style="flex: 1 1 300px; padding: 14px 16px; border-radius: 18px; background: #FBE2DF; font-size: 14.5px;"><strong>A caldeiraria fechou outubro no vermelho.</strong> A margem de contribuição ficou em 13,9%, contra 27,4% da usinagem. Vale revisar o preço da hora de solda na Tabela de Custos.</div>
+<div style="flex: 1 1 260px; padding: 14px 16px; border-radius: 18px; background: #E3EDF7;"><span style="font-size: 13px; color: var(--t2);">Ponto de equilíbrio do mês</span><span class="mono" style="display: block; font-size: 24px; font-weight: 700;">R$ 114.525</span><span style="font-size: 12.5px; color: var(--t2);">batido no dia 23/10 · R$ 34.075 de receita acima dele</span></div>
+</div>
+</section>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { tab: 'rec', sel: {}, paid: '', baixaOk: false, flags: {}, paidRows: {} };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const f = (x) => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const n = (s) => parseFloat(String(s).replace(/\./g, '').replace(',', '.')) || 0;
+    const R = [
+      ['TIT-0915', 'Agro Pampa Implementos', 'OS-2026-00031', '1/3', '14/10', 6800, 0, 'hoje'],
+      ['TIT-0899', 'Transportes Rio Negro', 'OS-2026-00019', '2/2', '28/09', 3150, 16, 'late'],
+      ['TIT-0901', 'Transportes Rio Negro', 'OS-2026-00022', '1/1', '05/10', 1980, 9, 'late'],
+      ['TIT-0910', 'Estruturas Sul Ltda.', 'OS-2026-00027', '1/1', '10/10', 4420, 4, 'parcial'],
+      ['TIT-0912', 'Metalúrgica Vale do Itajaí', 'OS-2026-00012', '2/2', '21/10', 2430, 0, 'futuro'],
+      ['TIT-0908', 'Hidráulica Norte Ltda.', 'OS-2026-00025', '1/1', '08/10', 0, 0, 'pago']
+    ];
+    const extra = (r) => r[6] > 0 ? r[5] * 0.02 + r[5] * 0.01 / 30 * r[6] : 0;
+    const recs = R.map((r, i) => {
+      const paid = st.paidRows[i] || r[7] === 'pago';
+      const S = paid ? ['Pago', 'b-ok'] : { hoje: ['Vence hoje', 'b-wa'], late: ['Vencido há ' + r[6] + ' dias', 'b-bad'], parcial: ['Pago em parte · faltam', 'b-inf'], futuro: ['A vencer', 'b-neu'] }[r[7]];
+      const on = !!st.sel[i];
+      return {
+        code: r[0], cli: r[1], os: r[2], parc: r[3], venc: r[4] === '14/10' ? 'hoje' : r[4], vc: r[7] === 'late' ? '#C0352B' : r[7] === 'hoje' ? '#8A5300' : '#1E1B16', vw: r[7] === 'late' || r[7] === 'hoje' ? 700 : 400,
+        val: paid ? 'R$ 0,00' : 'R$ ' + f(r[5]), st: S[0], sc: S[1], canSel: !paid, checked: on, cls: on ? 'sel' : '',
+        toggle: () => { const s = Object.assign({}, st.sel); if (s[i]) delete s[i]; else s[i] = true; this.setState({ sel: s, paid: '', baixaOk: false }); }
+      };
+    });
+    const selIdx = Object.keys(st.sel).map(Number);
+    const selRows = selIdx.map((i) => { const r = R[i]; const e = extra(r); return { cli: r[1], base: 'R$ ' + f(r[5]), extraTxt: e ? 'multa 2% + juros ' + r[6] + ' dias' : 'sem acréscimo', extra: e ? '+ R$ ' + f(e) : '—', ec: e ? '#C0352B' : '#6E6557', tot: r[5] + e }; });
+    const total = selRows.reduce((a, b) => a + b.tot, 0);
+    const paidV = st.paid === '' ? total : n(st.paid);
+    const partial = paidV < total - 0.005;
+    const P = [
+      ['CP-1102', 'Contabilidade Fiscal Ltda.', 'honorários de outubro', 'Contabilidade', 'Administrativo', '10/10', 1100, true, false, '', 'Pago', 'b-ok'],
+      ['CP-1140', 'Pró-labore', 'Marina Costa', 'Pró-labore', 'Administrativo', '30/10', 5000, true, false, '', 'A vencer', 'b-neu'],
+      ['CP-1131', 'ProMEC', 'assinatura do sistema', 'Sistemas', 'Administrativo', '20/10', 690, true, false, '', 'A vencer', 'b-neu'],
+      ['CP-1145', 'Celesc', 'energia da área comum', 'Energia', 'Instalações', '22/10', 980, true, false, '', 'A vencer', 'b-neu'],
+      ['CP-1146', 'Celesc', 'energia das máquinas', 'Energia', 'Usinagem', '22/10', 4000, false, true, 'rateada nas máquinas', 'A vencer', 'b-neu'],
+      ['CP-1152', 'Spindle Service', 'troca do spindle · Usinagem 02', 'Manutenção', 'Usinagem 02', '30/10', 8600, false, true, 'Centro de usinagem 02', 'A vencer', 'b-neu'],
+      ['CP-1150', 'Aços Sul', 'PED-0311 · latão Ø25', 'Matéria-prima', 'vai para a OS', '12/11', 3024, false, false, '', 'A vencer', 'b-neu']
+    ];
+    let cf = 22000;
+    const pags = P.map((p, i) => {
+      const fl = st.flags[i] || {};
+      const fx = 'fx' in fl ? fl.fx : p[7];
+      const dr = 'dr' in fl ? fl.dr : p[8];
+      if (fx !== p[7]) cf += fx ? p[6] : -p[6];
+      return {
+        code: p[0], f: p[1], d: p[2], cat: p[3], cc: p[4], venc: p[5], val: 'R$ ' + f(p[6]), ct: dr ? (p[9] || 'escolher máquina') : '', st: p[10], sc: p[11],
+        fx: String(fx), dr: String(dr), fxBg: fx ? '#E35D14' : '#CFC4B3', drBg: dr ? '#1D6FB8' : '#CFC4B3', fxL: fx ? '23px' : '3px', drL: dr ? '23px' : '3px',
+        tFx: () => this.setState({ flags: Object.assign({}, st.flags, { [i]: Object.assign({}, fl, { fx: !fx, dr: !fx ? false : dr }) }) }),
+        tDr: () => this.setState({ flags: Object.assign({}, st.flags, { [i]: Object.assign({}, fl, { dr: !dr, fx: !dr ? false : fx }) }) })
+      };
+    });
+    const W = [['S42', 31.2, 22.4, true], ['S43', 18.6, 14.9], ['S44', 24.1, 19.8], ['S45', 20.3, 31.6], ['S46', 26.8, 12.2], ['S47', 15.4, 16.1], ['S48', 22.0, 13.4], ['S49', 19.7, 18.2]];
+    let saldo = 48.21;
+    const Y = (v) => 260 - v / 60 * 200;
+    const cx = W.map((w, k) => {
+      saldo += w[1] - w[2];
+      const x = 70 + k * 104;
+      return { l: w[0], x1: x, x2: x + 36, xl: x + 35, yi: Y(w[1]), hi: 260 - Y(w[1]), yo: Y(w[2]), ho: 260 - Y(w[2]), ys: Y(Math.min(saldo, 66)).toFixed(1), op: w[3] ? 1 : 0.55, dash: w[3] ? '0' : '4 3', s: saldo };
+    });
+    const saldoPts = cx.map((c) => c.xl + ',' + c.ys).join(' ');
+    const seg = [[92400, 54100, 0.6], [31800, 17300, 0.2], [24400, 17600, 0.2]];
+    const fixo = 29900;
+    const cols = seg.map((s) => { const imp = s[0] * 0.14, mc = s[0] - imp - s[1], fx = fixo * s[2]; return [s[0], -imp, s[0] - imp, -s[1], mc, mc / s[0], -fx, mc - fx]; });
+    const tot = cols[0].map((_, k) => k === 5 ? null : cols.reduce((a, c) => a + c[k], 0));
+    tot[5] = tot[4] / tot[0];
+    const money = (v) => ({ t: (v < 0 ? '− ' : '') + 'R$ ' + f(Math.abs(v)), c: v < 0 ? '#C0352B' : '#1E1B16' });
+    const pct = (v) => ({ t: (v * 100).toFixed(1).replace('.', ',') + '%', c: v < 0.15 ? '#C0352B' : '#0F7A55' });
+    const L = [['Receita bruta', 0, 700, '12px', ''], ['(−) Impostos sobre a venda · 14%', 1, 400, '28px', ''], ['Receita líquida', 2, 600, '12px', '#FBF8F3'], ['(−) Custos diretos: material, terceiros, horas de máquina', 3, 400, '28px', ''], ['Margem de contribuição', 4, 700, '12px', '#FBF8F3'], ['Margem de contribuição %', 5, 600, '28px', ''], ['(−) Custo fixo rateado + depreciação', 6, 400, '28px', ''], ['Resultado operacional', 7, 700, '12px', '#FDE8DA']];
+    const dre = L.map((l) => ({ k: l[0], fw: l[2], pad: l[3], bg: l[4] || 'transparent', v: cols.concat([tot]).map((c) => l[1] === 5 ? pct(c[5]) : money(c[l[1]])) }));
+    const T = [['rec', 'A receber', 'M12 19V5M5 12l7-7 7 7'], ['pag', 'A pagar', 'M12 5v14M19 12l-7 7-7-7'], ['cx', 'Fluxo de caixa', 'M3 17l6-6 4 4 8-8'], ['com', 'Comissões', 'M20 21a8 8 0 0 0-16 0M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z'], ['dre', 'DRE gerencial', 'M3 3h18v18H3zM3 9h18M3 15h18']];
+    const tabs = T.map((t) => ({ label: t[1], icon: t[2], cls: st.tab === t[0] ? 'on' : '', sel: st.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4', true],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      tabs, rail, recs, pags, cx, saldoPts, dre,
+      vRec: st.tab === 'rec', vPag: st.tab === 'pag', vCx: st.tab === 'cx', vCom: st.tab === 'com', vDre: st.tab === 'dre',
+      noSel: selIdx.length === 0 && !st.baixaOk, hasSel: selIdx.length > 0, selRows, selTotal: 'R$ ' + f(total),
+      paid: st.paid === '' ? f(total) : st.paid, onPaid: (e) => this.setState({ paid: e.target.value }),
+      partialTxt: partial ? 'Baixa parcial: ficam R$ ' + f(total - paidV) + ' em aberto, com o mesmo vencimento.' : 'Baixa total dos títulos selecionados.',
+      partialC: partial ? '#8A5300' : '#0F7A55',
+      doBaixa: () => { const pr = Object.assign({}, st.paidRows); if (!partial) selIdx.forEach((i) => { pr[i] = true; }); this.setState({ paidRows: pr, sel: {}, paid: '', baixaOk: true }); },
+      baixaOk: st.baixaOk, flagChanged: cf !== 22000, cfTxt: 'R$ ' + f(cf),
+      cxAria: 'Fluxo de caixa semanal: ' + cx.map((c) => c.l + ' saldo ' + c.s.toFixed(1).replace('.', ',') + ' mil').join(', '),
+      logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

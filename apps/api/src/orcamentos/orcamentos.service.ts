@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, Db, json, resultadoDe } from '../tabelas-custos/entrada';
 import { semVigente } from '../tabelas-custos/tabelas.service';
 import { promessaDoOrcamento } from '../planejamento/entrada';
+import { prazosDe } from '../financeiro/financeiro-core';
 import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada, Precificacao } from './calculo';
 import { proximoNumero } from './numeracao';
 import { OrcamentoDto, SimularDto } from './orcamentos.dto';
@@ -87,6 +88,11 @@ export class OrcamentosService {
     };
   }
 
+  private async conferirComercial(tenantId: string, dto: SimularDto) {
+    if (dto.condicaoPagamento?.trim()) prazosDe(dto.condicaoPagamento);
+    if (dto.vendedorId && !(await this.prisma.usuario.findFirst({ where: { id: dto.vendedorId, tenantId } }))) throw naoEncontrado('esse vendedor');
+  }
+
   private async conferirItens(tenantId: string, dto: SimularDto) {
     const ids = [...new Set(dto.linhas.map((l) => l.itemId).filter(Boolean) as string[])];
     if (ids.length && (await this.prisma.item.count({ where: { tenantId, id: { in: ids } } })) !== ids.length) {
@@ -103,6 +109,7 @@ export class OrcamentosService {
   async criar(s: Sessao, dto: OrcamentoDto) {
     await this.clienteApto(s.tenantId, dto.clienteId);
     await this.conferirItens(s.tenantId, dto);
+    await this.conferirComercial(s.tenantId, dto);
     const tabela = await this.tabelaPara(s.tenantId, dto.tabelaCustosId, true);
     const p = await this.precificacao(s.tenantId, dto);
     const { linhas, resultado } = calcular(dto.linhas as LinhaEntrada[], resultadoDe(tabela), p);
@@ -119,6 +126,8 @@ export class OrcamentosService {
           segmento: dto.segmento ?? 'USINAGEM',
           validade,
           prazoPrometido: dto.prazoPrometido ? new Date(`${dto.prazoPrometido.slice(0, 10)}T00:00:00.000Z`) : null,
+          condicaoPagamento: dto.condicaoPagamento?.trim() ?? '',
+          vendedorId: dto.vendedorId ?? s.id,
           observacoes: dto.observacoes ?? '',
           linhas: json(linhas),
           ...colunasDePrecificacao(p),
@@ -154,6 +163,7 @@ export class OrcamentosService {
     }
     if (dto.clienteId !== o.clienteId) await this.clienteApto(s.tenantId, dto.clienteId);
     await this.conferirItens(s.tenantId, dto);
+    await this.conferirComercial(s.tenantId, dto);
     const tabela = await this.tabelaPara(s.tenantId, o.tabelaCustosId, true);
     const p = await this.precificacao(s.tenantId, dto);
     const { linhas, resultado } = calcular(dto.linhas as LinhaEntrada[], resultadoDe(tabela), p);
@@ -176,6 +186,8 @@ export class OrcamentosService {
           justificativaLiberacao: null,
           liberadaPorId: null,
           custoDesatualizado: false,
+          ...(dto.condicaoPagamento !== undefined ? { condicaoPagamento: dto.condicaoPagamento.trim() } : {}),
+          ...(dto.vendedorId ? { vendedorId: dto.vendedorId } : {}),
           ...(novaVersao ? { versao: o.versao + 1 } : {})
         }
       });
@@ -366,6 +378,8 @@ function cabecalho(o: OrcamentoCompleto) {
     validade: dataIso(o.validade),
     prazoPrometido: o.prazoPrometido ? dataIso(o.prazoPrometido) : null,
     custoDesatualizado: o.custoDesatualizado,
+    condicaoPagamento: o.condicaoPagamento,
+    vendedorId: o.vendedorId,
     impostos: tt(o.impostos),
     comissao: tt(o.comissao),
     margemAlvo: tt(o.margemAlvo),

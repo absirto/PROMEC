@@ -10,6 +10,7 @@ import { ABERTOS, expirarVencidos } from '../orcamentos/orcamentos.service';
 import { OrdensService } from '../ordens/ordens.service';
 import { ParametrosService } from '../parametros/parametros.service';
 import { PlanejamentoService } from '../planejamento/planejamento.service';
+import { FinanceiroService } from '../financeiro/financeiro.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, resultadoDe } from '../tabelas-custos/entrada';
 
@@ -31,7 +32,8 @@ export class PainelService {
     private readonly prisma: PrismaService,
     private readonly parametros: ParametrosService,
     private readonly ordens: OrdensService,
-    private readonly planejamento: PlanejamentoService
+    private readonly planejamento: PlanejamentoService,
+    private readonly financeiro: FinanceiroService
   ) {}
 
   private async suprimentos(tenantId: string) {
@@ -65,6 +67,7 @@ export class PainelService {
   async painel(s: Sessao) {
     const tenantId = s.tenantId;
     await expirarVencidos(this.prisma, tenantId);
+    const financeiro = await this.financeiro.resumoPainel(tenantId);
     const [planejado, ordens, vigente, p, abertos, aprovadosMes, decididos, abaixo, defasados, rascunhos] = await Promise.all([
       this.planejamento.resumoPainel(tenantId),
       this.ordens.resumoPainel(tenantId),
@@ -113,7 +116,7 @@ export class PainelService {
         link: '/orcamentos?status=RASCUNHO'
       });
     }
-    alertas.push(...planejado.alertas);
+    alertas.push(...planejado.alertas, ...financeiro.alertas);
     const [suprimentos, qualidade, desatualizados] = await Promise.all([
       this.suprimentos(tenantId),
       this.qualidade(tenantId),
@@ -168,6 +171,7 @@ export class PainelService {
       ocupacao: planejado.ocupacao,
       suprimentos,
       qualidade,
+      financeiro: financeiro.resumo,
       centros: (resultado?.centros ?? []).map((c) => ({
         id: c.id,
         nome: c.nome,

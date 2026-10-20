@@ -111,6 +111,10 @@ export interface Cliente {
   status: StatusCliente;
   observacoes: string;
   resumo?: { orcamentos: number; aprovados: number; valorAprovado: string };
+  condicaoPagamento?: string | null;
+  limiteCredito?: string | null;
+  bloqueioAutomatico?: boolean;
+  liberadoAte?: string | null;
 }
 
 export type StatusOrcamento = 'RASCUNHO' | 'ENVIADO' | 'EM_NEGOCIACAO' | 'APROVADO' | 'RECUSADO' | 'EXPIRADO' | 'CONVERTIDO';
@@ -163,6 +167,9 @@ export interface Orcamento extends CabecalhoOrcamento {
   tabelaMaisNova: boolean;
   prazoPrometido?: string | null;
   custoDesatualizado?: boolean;
+  condicaoPagamento?: string | null;
+  vendedorId?: string | null;
+  vendedor?: { id: string; nome: string } | null;
   promessa?: Promessa | null;
   resultado: ResultadoOrcamento;
   historico: { versao: number; status: StatusOrcamento; precoFinalLote: string; data: string; evento?: string; detalhe?: string | null }[];
@@ -183,6 +190,7 @@ export interface Painel {
   alertas: { tipo: 'atencao' | 'perigo' | 'info' | 'ok'; mensagem: string; link?: string }[];
   ocupacao?: { centroId: string; nome: string; semanaAtual: string; proximaSemana: string }[];
   suprimentos?: { abaixoDoMinimo: number; valorEstoque: string; pedidosAguardando: number; recebimentosAtrasados: number };
+  financeiro?: { saldoContas: string; receberVencido: string; receberHoje: string; pagar7dias: string; caixa30: string; caixa60: string; caixa90: string; menorSaldo: { inicio: string; valor: string } | null; custoFixoDesvio: string | null; clientesBloqueados: number };
   qualidade?: { ncsAbertas: number; custoNaoQualidadeMes: string; garantiasAbertas: number };
   ordens?: { emExecucao: number; pausadas: number; atrasadas: number; emQualidade: number; margemProjetadaMedia: string | null };
 }
@@ -359,3 +367,31 @@ export interface Garantia {
   id: string; os: { id: string; numero: string; titulo?: string; cliente?: { nome: string } | string }; relato: string; status: string; procedente?: boolean | null; analise?: string | null;
   criadaEm?: string; osGarantia?: { id: string; numero: string } | null;
 }
+
+export type TipoTitulo = 'RECEBER' | 'PAGAR';
+export type StatusTitulo = 'ABERTO' | 'PARCIAL' | 'PAGO' | 'CANCELADO' | 'RENEGOCIADO';
+export interface Titulo {
+  id: string; numero: string; tipo: TipoTitulo; pessoa: { tipo: 'CLIENTE' | 'FORNECEDOR' | 'AVULSO' | string; id: string | null; nome: string } | null;
+  descricao: string; parcela: string | null; grupoId: string | null; centroCusto: { id: string; nome: string } | null; compoeCustoFixo: boolean;
+  custoDiretoCentro: { centroTrabalhoId: string; centroNome?: string; componente: string } | null; competencia: string; emissao: string; vencimento: string;
+  valor: string; valorPago: string; saldo: string; status: StatusTitulo; diasAtraso: number; origem: { tipo: string; id: string | null; numero: string | null } | null;
+  documentoFiscal: string | null; observacao?: string | null; encargosHoje?: { diasAtraso: number; multa: string; juros: string; total: string } | null;
+  baixas?: { id: string; data: string; valor: string; multa: string; juros: string; desconto: string; conta?: { id: string; nome: string } | null; contaId?: string; observacao?: string | null; estornada?: boolean; usuario?: { nome: string } | string | null }[];
+  historico?: { evento?: string; detalhe?: string | null; data: string; usuario?: { nome: string } | string | null }[];
+}
+export interface ListaTitulos extends Lista<Titulo> { totais: { aberto: string; vencido: string; pagoNoPeriodo: string } }
+export interface ContaFin { id: string; nome: string; tipo: 'BANCO' | 'CAIXA'; banco?: string | null; agencia?: string | null; numero?: string | null; saldoInicial: string; dataSaldoInicial: string; saldoAtual: string; ativa: boolean }
+export type ComponenteDireto = 'manutencao' | 'insumos' | 'energia' | 'outros';
+export interface CentroCusto { id: string; nome: string; tipo: 'FIXO' | 'VARIAVEL'; compoeCustoFixo: boolean; categoriaCustoFixo?: Categoria | null; custoDiretoCentro: { centroTrabalhoId: string; componente: ComponenteDireto } | null; ativo: boolean; papel?: string | null }
+export interface Recorrencia { id: string; descricao: string; fornecedorId?: string | null; fornecedor?: { id: string; nome: string } | null; centroCustoId: string; centroCusto?: { id: string; nome: string } | null; valor: string; diaVencimento: number; inicio: string; fim?: string | null; ativa: boolean; compoeCustoFixo?: boolean }
+export interface PontoCaixaApi { inicio: string; entradas: string; saidas: string; saldoFinal: string; entradasPrevistas: string; saidasPrevistas: string; negativo: boolean }
+export interface FluxoCaixa { saldoAtual: string; pontos: PontoCaixaApi[]; realizado: { inicio: string; entradas: string; saidas: string }[]; menorSaldo: { inicio: string; valor: string } | null }
+export interface LinhaDRE { chave: string; rotulo: string; valor: string; pct: string; nivel: number }
+export interface DRE {
+  receitaBruta: string; custosVariaveis: string; margemContribuicao: string; margemContribuicaoPct: string; custoFixo: string; resultado: string; resultadoPct: string;
+  pontoEquilibrio: string | null; linhas: LinhaDRE[]; competencia?: string;
+  comparativo?: { competencia?: string; receitaBruta?: string; resultado?: string; linhas?: LinhaDRE[] } | null;
+}
+export interface Comissoes { vendedores: { vendedor: { id: string; nome: string }; base: string; valor: string; itens: { tituloId?: string; tituloNumero?: string; cliente?: string; titulo?: { numero: string } | null; os?: { numero: string } | string | null; base: string; percentual: string; valor: string; data?: string; descricao?: string }[] }[]; total: string; fechada: boolean }
+export interface CustoFixoRealizado { competencia: string; realizado: string; porCategoria: Partial<Record<Categoria, string>> | { categoria: Categoria; valor: string }[]; tabela: { versao: number; custoFixo: string } | null; desvio: string | null; acimaDaTolerancia: boolean }
+export interface HistoricoCustos { meses: { competencia: string; componentes: Partial<Record<ComponenteDireto, string>>; total: string }[]; mediaProposta: Partial<Record<ComponenteDireto, string>> & { total?: string } }

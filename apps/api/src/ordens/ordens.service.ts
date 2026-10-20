@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, Db, json, resultadoDe } from '../tabelas-custos/entrada';
 import { semVigente } from '../tabelas-custos/tabelas.service';
 import { promessaDoOrcamento } from '../planejamento/entrada';
+import { gerarTitulosDaOs } from '../financeiro/financeiro-core';
 import { abrirNc, ItemPlano, planoDoSegmento, ultimaVersao } from '../qualidade/qualidade-core';
 import { criarRequisicao } from '../suprimentos/compras.service';
 import { baixarReserva, buscarItem, conferirSaida, liberarReservas, localPreferido, movimentar, reservarDoOrcamento } from '../suprimentos/estoque-core';
@@ -748,6 +749,7 @@ export class OrdensService {
         }
       });
       await this.registrar(tx, s.tenantId, id, 'ENTREGUE', 'entregue', s.id, `Recebido por ${dto.recebidoPor.trim()}`);
+      await gerarTitulosDaOs(tx, s.tenantId, id, s.id);
     });
     return this.detalhe(s.tenantId, id);
   }

@@ -10,6 +10,7 @@ import { OrdensModule } from './ordens/ordens.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { PainelModule } from './painel/painel.module';
 import { PlanejamentoModule } from './planejamento/planejamento.module';
+import { FinanceiroModule } from './financeiro/financeiro.module';
 import { QualidadeModule } from './qualidade/qualidade.module';
 import { SuprimentosModule } from './suprimentos/suprimentos.module';
 import { ParametrosModule } from './parametros/parametros.module';
@@ -33,6 +34,7 @@ import { TabelasModule } from './tabelas-custos/tabelas.module';
     AgendaModule,
     SuprimentosModule,
     QualidadeModule,
+    FinanceiroModule,
     PainelModule
   ]
 })

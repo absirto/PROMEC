@@ -32,6 +32,8 @@ npm run web                                     # em outro terminal: build e ser
 
 Login de desenvolvimento: `marina@usinagemjoinville.com.br` (gestora) ou `paulo@usinagemjoinville.com.br` (orçamentista), senha `SEED_SENHA` do `.env`.
 
+Para voltar os dados de demonstração ao estado original, rode o seed de novo (`npm run seed -w @promec/api`). Para apagar e recriar o banco de desenvolvimento inteiro: `npm run db:reset` (pede confirmação; nunca use em produção).
+
 ## Testes
 
 ```bash

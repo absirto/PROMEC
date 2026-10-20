@@ -450,3 +450,138 @@ O orçamento passa a aceitar `itemId` nas linhas `material`, `materialCorte` e `
   - 1 NC aberta;
   - 1 garantia em análise.
 - **Números que não podem mudar**: 117,78/h, bucha R$ 793,27, OS-41 com 4,35 h e 11,3%.
+
+## Financeiro (fase 1e)
+
+Sem emissão fiscal. Os cálculos usam o `@promec/motor`:
+
+- `interpretarCondicao` e `gerarParcelas` (parcelas em centavos exatos)
+- `encargosDeAtraso` (multa 2% e juros 1% ao mês pró-rata, configuráveis em `parametros`)
+- `projetarCaixa`
+- `calcularDRE`
+- `comissaoSobre`
+- `desvioCustoFixo`
+
+Os valores de título são sempre em centavos (`"264.43"`).
+
+### Cadastros de apoio
+
+- **Contas** — `GET|POST /financeiro/contas` · `PATCH /financeiro/contas/:id`.
+  - Campos: `{ id, nome, tipo: 'BANCO' | 'CAIXA', banco?, agencia?, numero?, saldoInicial, dataSaldoInicial, saldoAtual, ativa }`.
+  - O `saldoAtual` é calculado a partir do saldo inicial e das baixas e transferências.
+- **Transferência** — `POST /financeiro/transferencias { origemId, destinoId, valor, data, observacao }`.
+- **Centros de custo** — `GET|POST /financeiro/centros-custo` · `PATCH /:id`.
+  - Campos: `{ id, nome, tipo: 'FIXO' | 'VARIAVEL', compoeCustoFixo, categoriaCustoFixo?, custoDiretoCentro: { centroTrabalhoId, componente: 'manutencao' | 'insumos' | 'energia' | 'outros' } | null, ativo }`.
+  - `categoriaCustoFixo` usa as categorias do custo fixo.
+  - O seed cria os centros de custo equivalentes às categorias do custo fixo e um de manutenção por máquina.
+- **Parâmetros novos**:
+  - `multaAtraso` (0.02)
+  - `jurosMes` (0.01)
+  - `diasBloqueioInadimplencia` (30)
+  - `toleranciaCustoFixo` (0.1)
+  - `condicaoPadrao` ("à vista")
+- **Condição de pagamento**:
+  - O cliente ganha `condicaoPagamento` e `limiteCredito`.
+  - O orçamento ganha `condicaoPagamento` (texto livre validado por `interpretarCondicao`; inválido → 422 `CONDICAO_INVALIDA`) e `vendedorId` (padrão: quem criou).
+
+### Títulos
+
+Um só recurso para receber e pagar.
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/financeiro/titulos?tipo=RECEBER\|PAGAR&status=&vencimentoDe=&vencimentoAte=&competencia=&pessoaId=&q=` | `{ itens, total, totais: { aberto, vencido, pagoNoPeriodo } }` |
+| POST | `/financeiro/titulos` | lançamento manual `{ tipo, pessoa: { clienteId? \| fornecedorId? \| nome? }, descricao, centroCustoId, competencia, valor, condicao?, dataBase?, vencimento?, documentoFiscal?, observacao? }`. `centroCustoId` é obrigatório. Com `condicao`, gera as parcelas (um título por parcela, `parcela: "1/3"`, `grupoId` comum) |
+| GET | `/financeiro/titulos/:id` | detalhe com `baixas`, `historico`, `encargosHoje` (o que cobrar se baixar hoje) e a origem |
+| PATCH | `/financeiro/titulos/:id` | vencimento, competência, centro de custo, documento fiscal, observação; só em aberto |
+| POST | `/financeiro/titulos/:id/baixas` | `{ data, valor, contaId, multa?, juros?, desconto?, observacao? }`. Sem multa e juros informados, usa `encargosDeAtraso`. Valor menor que o devido deixa `PARCIAL`. Responde o título |
+| POST | `/financeiro/baixas-lote` | `{ tituloIds, data, contaId }`: baixa total de cada um, com encargos calculados |
+| POST | `/financeiro/titulos/:id/baixas/:baixaId/estornar` | `{ motivo }`; `GESTOR`/`ADMIN`; auditado; estorna também a comissão gerada |
+| POST | `/financeiro/titulos/:id/renegociar` | `{ condicao, dataBase, valor? }`: o título fica `RENEGOCIADO` e o saldo vira novas parcelas ligadas a ele |
+| POST | `/financeiro/titulos/:id/cancelar` | `{ motivo }`; só sem baixa |
+
+Item de título:
+
+```json
+{ "id": "…", "numero": "CR-2026-00012", "tipo": "RECEBER", "pessoa": { "tipo": "CLIENTE", "id": "…", "nome": "Metalúrgica Vale" },
+  "descricao": "OS-2026-00037 · parcela 1/3", "parcela": "1/3", "grupoId": "…",
+  "centroCusto": { "id": "…", "nome": "Receita de serviços" }, "compoeCustoFixo": false, "custoDiretoCentro": null,
+  "competencia": "2026-10", "emissao": "2026-10-20", "vencimento": "2026-11-19", "valor": "264.43", "valorPago": "0.00",
+  "saldo": "264.43", "status": "ABERTO", "diasAtraso": 0, "origem": { "tipo": "OS", "id": "…", "numero": "OS-2026-00037" },
+  "documentoFiscal": null }
+```
+
+- `status`: `ABERTO` · `PARCIAL` · `PAGO` · `CANCELADO` · `RENEGOCIADO`.
+- `vencido` é derivado (`diasAtraso > 0` e saldo > 0) e vale também como filtro.
+- `numero`: `CR-` para receber e `CP-` para pagar.
+
+### Geração automática
+
+- **Entrega da OS** → títulos a receber com a condição do orçamento (senão a do cliente, senão `condicaoPadrao`) sobre `precoFinalLote`, competência do mês da entrega, centro de custo "Receita de serviços".
+  - OS de garantia com preço 0 não gera título.
+  - Entrega de OS com cliente bloqueado continua permitida.
+- **Recebimento de compra** → título a pagar a partir do `contaPagar` (centro de custo pela categoria do item).
+  - Os `contaPagar` que já existem no seed viram títulos.
+- **Recorrências** — `GET|POST /financeiro/recorrencias` · `PATCH /:id`.
+  - Campos: `{ descricao, fornecedorId?, centroCustoId, valor, diaVencimento, inicio, fim?, ativa }`.
+  - `POST /financeiro/recorrencias/gerar { competencia }` cria os títulos do mês sem duplicar.
+  - Recorrência com `compoeCustoFixo` conta na competência mesmo antes do pagamento.
+- **Rotina diária** — `POST /financeiro/rotina` (idempotente; também roda na primeira leitura do painel no dia):
+  - gera as recorrências do mês corrente;
+  - bloqueia clientes com título vencido há mais de `diasBloqueioInadimplencia` (`status: 'BLOQUEADO'`, `bloqueioAutomatico: true`);
+  - devolve `{ recorrenciasGeradas, clientesBloqueados, alertas }`.
+  - A liberação pelo gerente é o `PATCH /clientes/:id { status: 'ATIVO' }`, que grava quem liberou e até quando: `{ liberadoAte }`, padrão 7 dias.
+
+### Comissões
+
+- **Geração**: a baixa de um título a receber com origem em OS gera `Comissao { vendedorId, tituloId, baixaId, base, percentual, valor }`, com o percentual de comissão do orçamento e `comissaoSobre`.
+- **Consulta**: `GET /financeiro/comissoes?competencia=2026-10` → `{ vendedores: [{ vendedor, base, valor, itens }], total, fechada }`.
+- **Fechamento**: `POST /financeiro/comissoes/fechar { competencia }` (`GESTOR`/`ADMIN`) cria um título a pagar por vendedor (centro de custo "Comissões") e trava a competência.
+
+### Fluxo de caixa, DRE e ponte com o custo
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/financeiro/fluxo?ate=2027-01-31&agrupamento=semana` | `projetarCaixa` com o saldo das contas e o previsto (veja a lista abaixo) → `{ saldoAtual, pontos: PontoCaixa[], realizado: [{ inicio, entradas, saidas }], menorSaldo: { inicio, valor } }` |
+| GET | `/financeiro/dre?competencia=2026-10&segmento=` | `calcularDRE` (veja a lista abaixo) → `ResultadoDRE` + `comparativo` com a competência anterior |
+| GET | `/financeiro/custo-fixo-realizado?competencia=` | `{ competencia, realizado, porCategoria, tabela: { versao, custoFixo }, desvio, acimaDaTolerancia }`. O realizado são os títulos a pagar com `compoeCustoFixo` da competência (pagos ou não) |
+| POST | `/custo-fixo/importar-financeiro` | `{ competencia }`: substitui os lançamentos do custo fixo da competência pelo realizado por categoria. Só para competência sem Tabela de Custos vigente, senão 409 `TABELA_VIGENTE`. Responde a competência |
+| GET | `/centros-trabalho/:id/historico-custos?meses=6` | gastos diretos (títulos com `custoDiretoCentro` + consumo de insumos do estoque) por mês e componente, com a média proposta |
+
+- **Previsto no fluxo** inclui:
+  - títulos em aberto (pelo saldo);
+  - orçamentos `APROVADO` e OS não entregues (parcelas projetadas a partir do prazo e da condição);
+  - recorrências futuras ainda não geradas.
+- **DRE**:
+  - Receita: títulos a receber de OS com competência no mês. A divisão entre serviços e peças segue a participação das peças de reposição no custo orçado da OS.
+  - Custos variáveis: das OS entregues no mês (material e terceiros reais, impostos e comissão pelo percentual do orçamento sobre o preço, não-qualidade).
+  - Custo fixo: o realizado da competência.
+  - O filtro `segmento` aplica-se a receita e variáveis; o custo fixo é rateado pela receita.
+
+### Painel
+
+`GET /painel` ganha:
+
+```json
+"financeiro": { "saldoContas": "…", "receberVencido": "…", "receberHoje": "…", "pagar7dias": "…",
+                "caixa30": "…", "caixa60": "…", "caixa90": "…", "menorSaldo": { "inicio": "…", "valor": "…" },
+                "custoFixoDesvio": "…", "clientesBloqueados": n }
+```
+
+Também ganha alertas de título vencido, de caixa negativo previsto e de custo fixo acima da tolerância.
+
+### Seed
+
+- **Contas**: Banco do Brasil e Caixa da oficina, com saldos coerentes.
+- **Centros de custo**: os das categorias do custo fixo, receita, comissões e matéria-prima.
+- **Recorrências** que somam o custo fixo de 2026-10 de R$ 22.000: aluguel, contabilidade, sistemas, seguros, pró-labore, pessoal administrativo e o resto.
+  - A Tabela de Custos não pode mudar.
+  - Os títulos de outubro devem ser gerados e quase todos pagos.
+- **OS-2026-00037** (entregue) com 3 parcelas (30/60/90):
+  - uma vencida há mais de 30 dias num cliente de teste, para mostrar o bloqueio automático; ou um título avulso vencido de outro cliente.
+- **Mais títulos**:
+  - recebimentos da semana;
+  - um título a pagar do PC-2 parcialmente recebido;
+  - pagamentos de setembro para a DRE e o comparativo;
+  - comissões de outubro de Paulo (3%).
+- **Números que não podem mudar**: 117,78/h, bucha R$ 793,27, OS-41 com 4,35 h e 11,3%.
