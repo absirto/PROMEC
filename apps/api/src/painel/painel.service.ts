@@ -6,6 +6,7 @@ import { Sessao } from '../comum/sessao';
 import { ABERTOS, expirarVencidos } from '../orcamentos/orcamentos.service';
 import { OrdensService } from '../ordens/ordens.service';
 import { ParametrosService } from '../parametros/parametros.service';
+import { PlanejamentoService } from '../planejamento/planejamento.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, resultadoDe } from '../tabelas-custos/entrada';
 
@@ -26,13 +27,15 @@ export class PainelService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly parametros: ParametrosService,
-    private readonly ordens: OrdensService
+    private readonly ordens: OrdensService,
+    private readonly planejamento: PlanejamentoService
   ) {}
 
   async painel(s: Sessao) {
     const tenantId = s.tenantId;
     await expirarVencidos(this.prisma, tenantId);
-    const [ordens, vigente, p, abertos, aprovadosMes, decididos, abaixo, defasados, rascunhos] = await Promise.all([
+    const [planejado, ordens, vigente, p, abertos, aprovadosMes, decididos, abaixo, defasados, rascunhos] = await Promise.all([
+      this.planejamento.resumoPainel(tenantId),
       this.ordens.resumoPainel(tenantId),
       buscarVigente(this.prisma, tenantId),
       this.parametros.carregar(tenantId),
@@ -79,6 +82,7 @@ export class PainelService {
         link: '/orcamentos?status=RASCUNHO'
       });
     }
+    alertas.push(...planejado.alertas);
     if (ordens.atrasadas) {
       alertas.push({
         tipo: 'perigo',
@@ -115,6 +119,7 @@ export class PainelService {
         abaixoDoMinimo: abaixo
       },
       ordens,
+      ocupacao: planejado.ocupacao,
       centros: (resultado?.centros ?? []).map((c) => ({
         id: c.id,
         nome: c.nome,

@@ -9,6 +9,7 @@ import { ParametrosService } from '../parametros/parametros.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, Db, json, resultadoDe } from '../tabelas-custos/entrada';
 import { semVigente } from '../tabelas-custos/tabelas.service';
+import { promessaDoOrcamento } from '../planejamento/entrada';
 import {
   custoRealDa,
   exigeJustificativa,
@@ -154,7 +155,9 @@ export class OrdensService {
       );
     }
     const { operacoes, custos } = roteiroDoOrcamento(o.linhas as unknown as LinhaOrcamento[], o.resultado as unknown as ResultadoOrcamento);
-    const prazoFinal = prazo ? data(prazo) : await this.prazoPadrao();
+    const prazoFinal = prazo
+      ? data(prazo)
+      : (o.prazoPrometido ?? (await promessaDoOrcamento(this.prisma, s.tenantId, o).then((p) => (p.fim ? data(p.fim) : null))) ?? (await this.prazoPadrao()));
     const id = await this.prisma.$transaction(async (tx) => {
       const os = await tx.ordemServico.create({
         data: {
@@ -271,7 +274,20 @@ export class OrdensService {
 
   async atualizar(s: Sessao, id: string, dto: AtualizarOsDto) {
     const os = await this.naoEncerrada(s.tenantId, id, 'editar');
-    await this.prisma.ordemServico.update({
+    const novoPrazo = dto.prazo ? data(dto.prazo) : null;
+    const atrasa = !!novoPrazo && novoPrazo > os.prazo;
+    const motivo = dto.motivoReprogramacao?.trim();
+    if (atrasa && !motivo) {
+      throw regra(
+        'MOTIVO_OBRIGATORIO',
+        `O novo prazo (${dataIso(novoPrazo!).split('-').reverse().join('/')}) é depois do combinado (${dataIso(os.prazo).split('-').reverse().join('/')}). Informe o motivo da reprogramação para avisar o vendedor e o cliente.`
+      );
+    }
+    await this.prisma.$transaction(async (tx) => {
+      if (atrasa) {
+        await this.registrar(tx, s.tenantId, id, os.status, 'reprogramada', s.id, `${dataIso(os.prazo)} → ${dataIso(novoPrazo!)}: ${motivo}`);
+      }
+      await tx.ordemServico.update({
       where: { id },
       data: {
         titulo: dto.titulo?.trim(),
@@ -280,6 +296,7 @@ export class OrdensService {
         observacoes: dto.observacoes,
         ...(dto.objeto ? { objeto: json(mesclarObjeto(os.objeto, dto.objeto)) } : {})
       }
+      });
     });
     return this.detalhe(s.tenantId, id);
   }
@@ -718,7 +735,7 @@ export class OrdensService {
         mensagem: `O prazo venceu em ${dataIso(os.prazo).split('-').reverse().join('/')}. Combine uma nova data com o cliente e atualize o prazo.`
       });
     }
-    if (os.status !== 'CANCELADA' && dec(r.margemProjetada).lt(tt(os.margemMinima))) {
+    if (os.status !== 'CANCELADA' && !os.precoFinalLote.isZero() && dec(r.margemProjetada).lt(tt(os.margemMinima))) {
       alertas.push({
         tipo: 'atencao',
         codigo: 'MARGEM_ABAIXO_MINIMO',

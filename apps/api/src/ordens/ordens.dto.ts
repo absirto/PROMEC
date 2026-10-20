@@ -107,6 +107,9 @@ export class AtualizarOsDto {
 
   @IsOptional() @IsString()
   observacoes?: string;
+
+  @IsOptional() @IsString()
+  motivoReprogramacao?: string;
 }
 
 export class IniciarDto {

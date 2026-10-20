@@ -23,14 +23,14 @@ import { useTitulo } from '../layout/titulo';
 
 const VAZIO: Form = {
   codigo: '', nome: '', tipo: 'maquina', status: 'ativo', horasExpediente: '220', eficiencia: '0.75', manutencao: '', insumos: '', outros: '',
-  valorAquisicao: '', valorResidual: '', vidaUtilMeses: '60', potenciaKw: '', fatorCarga: '0.6', tarifaKwh: '', pesoManual: '', areaM2: '', operadores: []
+  valorAquisicao: '', valorResidual: '', vidaUtilMeses: '60', potenciaKw: '', fatorCarga: '0.6', tarifaKwh: '', pesoManual: '', areaM2: '', operadores: [], diasSemana: [1, 2, 3, 4, 5]
 };
 
 const doCentro = (c: Centro): Form => ({
   codigo: c.codigo ?? '', nome: c.nome, tipo: c.tipo, status: c.status, horasExpediente: c.horasExpediente, eficiencia: c.eficiencia,
   manutencao: c.manutencao, insumos: c.insumos, outros: c.outros ?? '', valorAquisicao: c.valorAquisicao ?? '', valorResidual: c.valorResidual ?? '',
   vidaUtilMeses: String(c.vidaUtilMeses ?? ''), potenciaKw: c.potenciaKw ?? '', fatorCarga: c.fatorCarga ?? '', tarifaKwh: c.tarifaKwh ?? '',
-  pesoManual: c.pesoManual ?? '', areaM2: c.areaM2 ?? '', operadores: c.operadores.map((o) => ({ ...o }))
+  pesoManual: c.pesoManual ?? '', areaM2: c.areaM2 ?? '', operadores: c.operadores.map((o) => ({ ...o })), diasSemana: c.diasSemana ?? [1, 2, 3, 4, 5]
 });
 
 const z = (v: string) => (v === '' ? '0' : v);
@@ -60,7 +60,7 @@ export default function CentroForm() {
     horasExpediente: z(x.horasExpediente), eficiencia: z(x.eficiencia), manutencao: z(x.manutencao), insumos: z(x.insumos), outros: z(x.outros),
     valorAquisicao: z(x.valorAquisicao), valorResidual: z(x.valorResidual), vidaUtilMeses: Math.round(toNum(x.vidaUtilMeses)),
     potenciaKw: z(x.potenciaKw), fatorCarga: z(x.fatorCarga), tarifaKwh: z(x.tarifaKwh),
-    pesoManual: x.pesoManual === '' ? null : x.pesoManual, areaM2: x.areaM2 === '' ? null : x.areaM2,
+    pesoManual: x.pesoManual === '' ? null : x.pesoManual, areaM2: x.areaM2 === '' ? null : x.areaM2, diasSemana: [...x.diasSemana].sort(),
     operadores: x.operadores.filter((o) => o.colaboradorId).map((o) => ({ colaboradorId: o.colaboradorId, alocacao: z(o.alocacao) }))
   });
   const inval = [['centros-trabalho'], ['tabelas-custos'], ['colaboradores'], ['painel']];
@@ -112,7 +112,7 @@ export default function CentroForm() {
         iniciais={(f.nome || 'CT').split(' ').filter((w) => w.length > 2).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'CT'}
         cor={`linear-gradient(135deg, ${corTipoCentro[f.tipo]}, #15395A)`}
         titulo={novo ? 'Novo centro de trabalho' : f.nome || 'Centro de trabalho'}
-        lead="Mude qualquer número abaixo e o custo-hora ao lado recalcula na hora. Nada muda nos orçamentos até a tabela do mês ser publicada."
+        lead={<>Mude qualquer número abaixo e o custo-hora ao lado recalcula na hora. Nada muda nos orçamentos até a tabela do mês ser publicada.{q.data?.aviso && <span className="block mt-1 text-warn font-medium">Atenção: {q.data.aviso}.</span>}</>}
         pills={!novo && <><StatusCentroPill status={f.status} /><Pill tom="neutral">{TIPO_CENTRO[f.tipo]}</Pill>{f.codigo && <Pill tom="steel"><span className="mono">{f.codigo}</span></Pill>}</>}
         acoes={
           <>
@@ -193,6 +193,21 @@ export default function CentroForm() {
             </div>
             {criterio === 'manual' && <NumberField className={span(3)} label="Peso no rateio" percentual value={f.pesoManual} onChange={(v) => set('pesoManual', v)} hint="Os pesos de todos os centros precisam fechar 100%." />}
             {criterio === 'area' && <NumberField className={span(3)} label="Área ocupada" sufixo="m²" value={f.areaM2} onChange={(v) => set('areaM2', v)} />}
+            <div className={`${span(6)} flex flex-col gap-1.5`}>
+              <span className="text-[13.5px] font-medium text-ink-2" id="dias-lbl">Dias de trabalho</span>
+              <div role="group" aria-labelledby="dias-lbl" className="flex flex-wrap gap-2">
+                {['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'].map((d, i) => {
+                  const on = f.diasSemana.includes(i);
+                  return (
+                    <button key={d} type="button" aria-pressed={on} onClick={() => set('diasSemana', on ? f.diasSemana.filter((x) => x !== i) : [...f.diasSemana, i])}
+                      className={`h-10 min-w-[52px] px-3 rounded-full border text-[14px] font-medium transition ${on ? 'bg-ink-1 text-surface-1 border-ink-1' : 'bg-surface-2 text-ink-2 border-border-strong'}`}>
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className={`text-caption ${f.diasSemana.length ? 'text-ink-3' : 'text-bad font-medium'}`}>{f.diasSemana.length ? 'O planejamento e a agenda só usam estes dias. As horas do mês se dividem entre eles.' : 'Escolha pelo menos um dia, senão o centro nunca tem capacidade.'}</span>
+            </div>
             <p className={`${span(6)} m-0 text-caption text-ink-3`}>Rateio do custo fixo {CRITERIO[criterio]}.</p>
           </Secao>
         </form>

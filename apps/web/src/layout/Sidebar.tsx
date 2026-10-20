@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  BarChart3, Building2, Calculator, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
+  BarChart3, Building2, Calculator, CalendarClock, CalendarRange, ChevronDown, Cpu, Database, FileText, FlaskConical, Gauge, Hammer, Layers, LayoutDashboard,
   Package, PieChart, Receipt, Ruler, Settings2, ShoppingCart, Target, Timer, Users, Wallet, Wrench, X, type LucideIcon
 } from 'lucide-react';
 import { LogoProMEC } from '../components/Illustrations';
@@ -25,7 +25,8 @@ const GRUPOS: Grupo[] = [
     itens: [
       { rotulo: 'Ordens de Serviço', icone: Wrench, to: '/ordens-servico' },
       { rotulo: 'Modo Operador', icone: Timer, to: '/operador' },
-      { rotulo: 'Planejamento e Agenda', icone: CalendarRange },
+      { rotulo: 'Planejamento e Agenda', icone: CalendarRange, to: '/planejamento' },
+      { rotulo: 'Agenda da oficina', icone: CalendarClock, to: '/agenda' },
       { rotulo: 'Qualidade', icone: Ruler }
     ]
   },

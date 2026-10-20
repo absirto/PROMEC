@@ -67,6 +67,8 @@ export interface Centro {
   areaM2: string | null;
   operadores: Operador[];
   custoHoraVigente: string | null;
+  diasSemana?: number[];
+  aviso?: string | null;
 }
 
 export type Categoria =
@@ -159,6 +161,8 @@ export interface Orcamento extends CabecalhoOrcamento {
   linhas: LinhaApi[];
   tabelaCustos: { id: string; competencia: string; versao: number };
   tabelaMaisNova: boolean;
+  prazoPrometido?: string | null;
+  promessa?: Promessa | null;
   resultado: ResultadoOrcamento;
   historico: { versao: number; status: StatusOrcamento; precoFinalLote: string; data: string; evento?: string; detalhe?: string | null }[];
   exigeAprovacao?: boolean;
@@ -176,6 +180,7 @@ export interface Painel {
   orcamentos: { abertos: number; valorAberto: string; aprovadosMes: number; valorAprovadoMes: string; taxaConversao: string; abaixoDoMinimo: number };
   centros: { id: string; nome: string; tipo: TipoCentro; cheioHora: string; precoHora: string }[];
   alertas: { tipo: 'atencao' | 'perigo' | 'info' | 'ok'; mensagem: string; link?: string }[];
+  ocupacao?: { centroId: string; nome: string; semanaAtual: string; proximaSemana: string }[];
   ordens?: { emExecucao: number; pausadas: number; atrasadas: number; emQualidade: number; margemProjetadaMedia: string | null };
 }
 
@@ -244,4 +249,31 @@ export interface FilaOperador {
   os: { id: string; numero: string; titulo: string; prazo: string | null; prioridade: Prioridade; status: StatusOS; lote: number; atrasada?: boolean };
   operacao: OperacaoOS;
   apontamentoAberto: Apontamento | null;
+}
+
+export interface RefPlano { tipo: 'OS' | 'ORCAMENTO'; id: string; numero: string; titulo: string; cliente: { id: string; nome: string } | string | null; status: string; prioridade?: Prioridade; segmento?: Segmento }
+export interface OperacaoNoPlano { id: string; centroId: string; inicio: string | null; fim: string | null; horas: string; alocacao: { data: string; horas: string }[]; descricao: string; centroNome: string; sequencia?: number }
+export interface OrdemNoPlano {
+  id: string; posicao: number; inicio: string | null; fim: string | null; prazo: string | null; atrasoDias: number; atrasada: boolean; provisoria: boolean;
+  prioridade?: Prioridade; ref: RefPlano; operacoes: OperacaoNoPlano[];
+}
+export interface CentroNoPlano {
+  id: string; nome: string; tipo: TipoCentro;
+  semanas: { inicio: string; capacidade: string; carga: string; ocupacao: string; sobrecarga: boolean }[];
+  dias: { data: string; capacidade: string; carga: string }[];
+}
+export interface AlertaPlano { tipo: 'sobrecarga' | 'atraso'; centroId?: string; ordemId?: string; semana?: string; mensagem: string }
+export interface Plano {
+  hoje: string; ordens: OrdemNoPlano[]; centros: CentroNoPlano[];
+  semDestino: { ordemId: string; operacaoId: string; motivo: string }[]; alertas: AlertaPlano[]; filaManual: boolean;
+}
+export interface Feriado { id: string; data: string; descricao: string }
+export interface Parada { id: string; inicio: string; fim: string; motivo: string }
+export interface Promessa { fim: string | null; ocupacaoMaxima: string; sobrecarga: boolean; alertas?: AlertaPlano[] }
+
+export type StatusAgendamento = 'MARCADO' | 'CONFIRMADO' | 'CHEGOU' | 'NAO_VEIO' | 'CANCELADO';
+export interface Agendamento {
+  id: string; cliente: { id: string | null; nome: string } | null; nomeCliente?: string | null; telefone: string | null; placa: string | null; veiculo: string | null; servico: string;
+  centroId: string; centroNome: string; colaboradorId: string | null; colaboradorNome: string | null; inicio: string; duracaoHoras: string | number;
+  status: StatusAgendamento; osId: string | null; observacao: string | null;
 }

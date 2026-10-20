@@ -11,6 +11,9 @@ import { Button } from '../components/Button';
 import { useTitulo } from '../layout/titulo';
 import { useAuth } from '../lib/auth';
 import { saudacaoAgora } from './Login';
+import { tomOcupacao } from '../features/planejamento/plano';
+
+const BARRA_OCUP = { ok: 'bg-ok', warn: 'bg-signal', bad: 'bg-bad' };
 
 const hoje = () => new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
@@ -58,6 +61,23 @@ export default function Painel() {
 
       {p && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,380px),1fr))] gap-[18px]">
+          {p.ocupacao && p.ocupacao.length > 0 && (
+            <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-ocupacao">
+              <CardHeader id="h-ocupacao" titulo="Ocupação" sub="Esta semana e a próxima, pela fila de hoje" acao={<Link to="/planejamento" className="text-[13px] font-semibold">Planejamento</Link>} />
+              {p.ocupacao.map((c) => (
+                <div key={c.centroId} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 items-center">
+                  <span className="truncate text-[14px] font-medium">{c.nome}</span>
+                  <span className="mono text-[13px] whitespace-nowrap"><strong className={tomOcupacao(c.semanaAtual) === 'bad' ? 'text-bad' : ''}>{pct(c.semanaAtual, 0)}</strong> <span className="text-ink-3">→ {pct(c.proximaSemana, 0)}</span></span>
+                  {[c.semanaAtual, c.proximaSemana].map((v, i) => (
+                    <span key={i} className="col-span-2 h-2 rounded-full bg-surface-3 overflow-hidden" aria-hidden style={{ opacity: i ? 0.6 : 1 }}>
+                      <span className={`anim-crescer block h-full rounded-full ${BARRA_OCUP[tomOcupacao(v)]}`} style={{ width: `${Math.min(100, toNum(v) * 100)}%` }} />
+                    </span>
+                  ))}
+                </div>
+              ))}
+              <span className="text-caption text-ink-3">Barra cheia: esta semana · clara: próxima. Acima de 90% é sobrecarga.</span>
+            </Card>
+          )}
           {p.ordens && (
             <Card className="p-5 flex flex-col gap-3 anim-subir" aria-labelledby="h-ordens">
               <CardHeader id="h-ordens" titulo="Chão de fábrica agora" acao={<Link to="/ordens-servico" className="text-[13px] font-semibold">Ordens de Serviço</Link>} />

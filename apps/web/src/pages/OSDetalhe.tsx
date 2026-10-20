@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Ban, Check, ChevronDown, Trash2, ClipboardCheck, Cpu, ListChecks, PackageCheck, Pause, Play, Plus, Rocket, Timer, TriangleAlert, UserRound, X
+  Ban, CalendarClock, Check, ChevronDown, Trash2, ClipboardCheck, Cpu, ListChecks, PackageCheck, Pause, Play, Plus, Rocket, Timer, TriangleAlert, UserRound, X
 } from 'lucide-react';
 import { api, ApiError } from '../lib/api';
 import { podeLiberarMargem, useAuth } from '../lib/auth';
-import type { CustoOS, MotivoPausa, OrdemServico } from '../lib/types';
+import type { CustoOS, MotivoPausa, OrdemServico, Prioridade } from '../lib/types';
 import { brl, data, horas, num, pct, toNum } from '../lib/format';
 import { useAcao, useParametros } from '../lib/queries';
 import { SEGMENTO } from '../lib/rotulos';
@@ -147,7 +147,8 @@ export default function OSDetalhe() {
   useTitulo(o ? `${o.numero} · ${o.titulo}` : 'Ordem de Serviço');
   const abertos = (o?.apontamentos ?? []).filter((a) => !a.fim);
   const agora = useAgora(abertos.length > 0);
-  const [modal, setModal] = useState<null | 'pausa' | 'inspecao' | 'entregar' | 'cancelar'>(null);
+  const [modal, setModal] = useState<null | 'pausa' | 'inspecao' | 'entregar' | 'cancelar' | 'prazo'>(null);
+  const [edPrazo, setEdPrazo] = useState<{ prazo: string; prioridade: Prioridade; motivo: string; pedeMotivo: boolean }>({ prazo: '', prioridade: 'NORMAL', motivo: '', pedeMotivo: false });
   const [arvore, setArvore] = useState(false);
   const [novoCusto, setNovoCusto] = useState(false);
   const [motivo, setMotivo] = useState<MotivoPausa | ''>('');
@@ -168,11 +169,16 @@ export default function OSDetalhe() {
   const inspecao = post('inspecao', 'Inspeção registrada.');
   const entregar = post('entregar', 'Entregue! O custo real e o desvio ficaram gravados.');
   const cancelar = post('cancelar', 'OS cancelada. O que já foi apontado ficou como perda.');
+  const reprogramar = useAcao(
+    () => api<OrdemServico>(`/ordens-servico/${id}`, { method: 'PATCH', body: { prazo: edPrazo.prazo || null, prioridade: edPrazo.prioridade, ...(edPrazo.motivo.trim() ? { motivoReprogramacao: edPrazo.motivo.trim() } : {}) } }),
+    { invalida: [['ordens-servico'], ['planejamento'], ['painel']], sucesso: 'Prazo e prioridade atualizados. A fila já foi recalculada.', onSuccess: (os) => { if (os?.id) qc.setQueryData(['ordens-servico', id], os); setModal(null); } }
+  );
 
   if (q.isLoading) return <Card><Carregando /></Card>;
   if (q.isError || !o) return <Card><ErroEstado erro={q.error} tentar={() => q.refetch()} /></Card>;
 
   const r = o.resultado;
+  const atrasa = !!edPrazo.prazo && !!o.prazo && edPrazo.prazo > o.prazo.slice(0, 10);
   const horasVivas = abertos.reduce((a, x) => a + segundosDesde(x.inicio, agora) / 3600, 0);
   const opRes = new Map(r.operacoes.map((x) => [x.id, x]));
   const custoRes = new Map(r.custos.map((x) => [x.id, x]));
@@ -240,6 +246,7 @@ export default function OSDetalhe() {
         acoes={
           <>
             {o.status === 'EM_EXECUCAO' && <Button variante="vidro" icone={Pause} onClick={() => { setMotivo(''); setModal('pausa'); }}>Pausar</Button>}
+            {o.status !== 'ENTREGUE' && o.status !== 'CANCELADA' && <Button variante="vidro" icone={CalendarClock} onClick={() => { setEdPrazo({ prazo: (o.prazo ?? '').slice(0, 10), prioridade: o.prioridade ?? 'NORMAL', motivo: '', pedeMotivo: false }); setModal('prazo'); }}>Prazo e prioridade</Button>}
             {gestor && o.status !== 'ENTREGUE' && o.status !== 'CANCELADA' && <Button variante="vidro" icone={Ban} onClick={() => { setObs(''); setModal('cancelar'); }}>Cancelar OS</Button>}
             {principal}
           </>
@@ -425,6 +432,22 @@ export default function OSDetalhe() {
           {arvore && <div className="rounded-field bg-surface-1 p-2"><ExplainTree raiz={r.explicacao} rotulo="Conta da projeção" /></div>}
         </GlassPanel>
       </div>
+
+
+      <Modal aberto={modal === 'prazo'} onFechar={() => setModal(null)} titulo="Prazo e prioridade"
+        rodape={<><Button onClick={() => setModal(null)}>Voltar</Button><Button variante="primario" icone={Check} carregando={reprogramar.isPending}
+          disabled={(atrasa || edPrazo.pedeMotivo) && edPrazo.motivo.trim().length < 5}
+          onClick={() => reprogramar.mutate(undefined, { onError: (e) => e instanceof ApiError && e.codigo === 'MOTIVO_OBRIGATORIO' && setEdPrazo((x) => ({ ...x, pedeMotivo: true })) })}>Salvar</Button></>}>
+        <TextField label="Prazo" type="date" mono value={edPrazo.prazo} onChange={(v) => setEdPrazo({ ...edPrazo, prazo: v })} hint={o.prazo ? `Hoje está em ${data(o.prazo)}.` : undefined} />
+        <Segmented<Prioridade> label="Prioridade" tamanho="sm" value={edPrazo.prioridade} onChange={(v) => setEdPrazo({ ...edPrazo, prioridade: v })}
+          opcoes={[{ valor: 'BAIXA', rotulo: 'Baixa' }, { valor: 'NORMAL', rotulo: 'Normal' }, { valor: 'ALTA', rotulo: 'Alta' }, { valor: 'URGENTE', rotulo: 'Urgente' }]} />
+        {(atrasa || edPrazo.pedeMotivo) && (
+          <>
+            <p className="m-0 flex gap-2 p-3 rounded-field bg-warn-soft text-[14px]"><TriangleAlert className="size-4 text-warn mt-0.5 flex-none" aria-hidden />Empurrar o prazo para frente avisa o vendedor e fica no histórico. Conte o motivo.</p>
+            <TextArea label="Motivo da reprogramação" value={edPrazo.motivo} onChange={(v) => setEdPrazo({ ...edPrazo, motivo: v })} hint="Ex.: fornecedor atrasou o latão em 3 dias." />
+          </>
+        )}
+      </Modal>
 
       <Modal aberto={modal === 'pausa'} onFechar={() => setModal(null)} titulo="Por que parou?"
         rodape={<><Button onClick={() => setModal(null)}>Voltar</Button><Button variante="primario" icone={Pause} disabled={!motivo} carregando={pausar.isPending} onClick={() => pausar.mutate({ motivo, observacao: obs.trim() || undefined })}>Pausar a OS</Button></>}>

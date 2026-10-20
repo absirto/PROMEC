@@ -55,3 +55,20 @@ export function mascaraTelefone(v: string) {
   const corte = resto.length > 8 ? 5 : 4;
   return resto.length > corte ? `(${ddd}) ${resto.slice(0, corte)}-${resto.slice(corte)}` : `(${ddd}) ${resto}`;
 }
+
+/** Placa antiga (ABC1234) ou Mercosul (ABC1D23), sem traço. */
+export const limparPlaca = (v: string) => v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+export const placaValida = (v: string) => /^[A-Z]{3}\d[A-Z0-9]\d{2}$/.test(limparPlaca(v));
+export const placaMercosul = (v: string) => /^[A-Z]{3}\d[A-Z]\d{2}$/.test(limparPlaca(v));
+/** Máscara de digitação: três letras, e o formato antigo ganha o traço (ABC-1234). */
+export function mascaraPlaca(v: string) {
+  const p = limparPlaca(v);
+  let s = '';
+  for (let i = 0; i < p.length; i++) {
+    const c = p[i]!;
+    const ok = i < 3 ? /[A-Z]/.test(c) : i === 3 || i > 4 ? /\d/.test(c) : /[A-Z0-9]/.test(c);
+    if (!ok) break;
+    s += c;
+  }
+  return s.length > 4 && /\d/.test(s[4]!) ? `${s.slice(0, 3)}-${s.slice(3)}` : s;
+}

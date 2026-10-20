@@ -7,7 +7,9 @@ import { ColaboradoresModule } from './colaboradores/colaboradores.module';
 import { CustoFixoModule } from './custo-fixo/custo-fixo.module';
 import { OrcamentosModule } from './orcamentos/orcamentos.module';
 import { OrdensModule } from './ordens/ordens.module';
+import { AgendaModule } from './agenda/agenda.module';
 import { PainelModule } from './painel/painel.module';
+import { PlanejamentoModule } from './planejamento/planejamento.module';
 import { ParametrosModule } from './parametros/parametros.module';
 import { PrismaModule } from './prisma/prisma.service';
 import { TabelasModule } from './tabelas-custos/tabelas.module';
@@ -25,6 +27,8 @@ import { TabelasModule } from './tabelas-custos/tabelas.module';
     ClientesModule,
     OrcamentosModule,
     OrdensModule,
+    PlanejamentoModule,
+    AgendaModule,
     PainelModule
   ]
 })

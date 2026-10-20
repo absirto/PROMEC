@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Recepção da oficina</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:16px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.lg::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%);mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:26px;box-shadow:var(--sh1)}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:56px;padding:0 24px;border-radius:999px;font:600 16px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 8px 18px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.chip{all:unset;box-sizing:border-box;cursor:pointer;min-height:48px;padding:0 18px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:15px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
+.chip.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.st3{all:unset;box-sizing:border-box;cursor:pointer;flex:1;height:44px;border-radius:12px;display:grid;place-items:center;font-size:13.5px;font-weight:600;border:1.5px solid var(--bd2);background:#fff;color:var(--t2)}
+.fld{display:flex;align-items:center;gap:10px;height:60px;padding:0 18px;border-radius:18px;background:#fff;border:2px solid var(--bd2)}
+.fld input,.fld textarea{all:unset;flex:1;min-width:0;font:600 20px/1.3 'IBM Plex Sans',sans-serif}
+.step{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;font-size:14.5px;font-weight:500}
+.ck{width:26px;height:26px;accent-color:#B8460A;cursor:pointer}
+.btn:focus-visible,.chip:focus-visible,.st3:focus-visible,.fld:focus-within,.step:focus-visible,.ck:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+@keyframes fade{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.fade{animation:fade .35s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.fade{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; padding: 16px clamp(12px, 3vw, 32px) 60px; display: flex; flex-direction: column; gap: 18px;">
+
+<header class="lg" style="border-radius: 999px; padding: 8px 10px 8px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+<span style="width: 40px; height: 40px; border-radius: 12px; background: #E35D14; color: #fff; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M9 17h6M3 17V9l3-4h8l4 4h2a1 1 0 0 1 1 1v7h-2"/></svg></span>
+<span style="flex: 1 1 200px; display: flex; flex-direction: column; line-height: 1.2;"><span style="font-weight: 700;">Recepção da oficina</span><span style="font-size: 13px; color: var(--t3);">Oficina Centro · balcão</span></span>
+<a href="OS-Lista.dc.html" class="btn" style="height: 44px; font-size: 14px;">Sair sem salvar</a>
+</header>
+
+<ol aria-label="Etapas" style="list-style: none; margin: 0; padding: 6px; display: flex; gap: 4px; border-radius: 22px; background: var(--s3); overflow-x: auto;">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="6"><li style="flex: 1 0 auto;"><button type="button" class="step" onClick="{{s.pick}}" aria-current="{{s.cur}}" style="background: {{s.bg}}; color: {{s.fg}}; width: 100%;"><span class="mono" style="width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: {{s.nb}}; color: {{s.nf}}; font-size: 13px; font-weight: 700; flex: none;">{{s.n}}</span>{{s.l}}</button></li></sc-for>
+</ol>
+
+<div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start;">
+<main style="flex: 999 1 640px; min-width: 0;">
+
+<sc-if value="{{s0}}" hint-placeholder-val="{{true}}">
+<section class="card fade" style="padding: 28px; display: flex; flex-direction: column; gap: 20px;" aria-labelledby="h0">
+<h1 id="h0" class="disp" style="margin: 0; font-size: 40px; font-weight: 700; line-height: 1;">Qual a placa?</h1>
+<div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: center;">
+<div style="width: 300px; border-radius: 12px; overflow: hidden; border: 3px solid #1E1B16; background: #fff;"><div style="height: 28px; background: #1D4ED8; color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .25em; display: flex; align-items: center; justify-content: center;">BRASIL</div><label style="display: block;"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Placa</span><input class="mono" value="{{placa}}" onChange="{{onPlaca}}" style="all: unset; display: block; width: 100%; height: 72px; text-align: center; font: 700 44px/72px 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase;"></label></div>
+<sc-if value="{{found}}" hint-placeholder-val="{{true}}"><div style="flex: 1 1 280px; display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border-radius: 20px; background: #DDF3E9;"><span style="font-size: 13.5px; color: #0F7A55; font-weight: 600;">Já conhecemos essa moto</span><span style="font-weight: 700; font-size: 19px;">Honda CG 160 Titan 2022 · vermelha</span><span style="font-size: 14.5px;">Do <strong>Carlos Eduardo Ramos</strong> · última visita 02/06 com 15.010 km</span></div></sc-if>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+<label><span style="display: block; font-size: 14px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">Km no painel agora</span><span class="fld" style="border-color: {{kmBc}};"><input class="mono" value="{{km}}" onChange="{{onKm}}" inputmode="numeric"><span style="font-size: 15px; color: var(--t3);">km</span></span><span style="display: block; font-size: 13.5px; margin-top: 6px; color: {{kmC}};">{{kmMsg}}</span></label>
+<label><span style="display: block; font-size: 14px; font-weight: 500; color: var(--t2); margin-bottom: 6px;">WhatsApp para avisar</span><span class="fld"><input class="mono" value="(47) 99120-8833"></span></label>
+</div>
+<div><span style="display: block; font-size: 14px; font-weight: 500; color: var(--t2); margin-bottom: 8px;">O que o Carlos contou?</span><div style="display: flex; flex-wrap: wrap; gap: 8px;"><sc-for list="{{relatos}}" as="r" hint-placeholder-count="6"><button type="button" class="chip {{r.cls}}" aria-pressed="{{r.pressed}}" onClick="{{r.pick}}">{{r.l}}</button></sc-for></div></div>
+</section>
+</sc-if>
+
+<sc-if value="{{s1}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 28px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h1">
+<div><h1 id="h1" class="disp" style="margin: 0; font-size: 40px; font-weight: 700; line-height: 1;">Checklist de entrada</h1><span style="color: var(--t2);">Dê a volta na moto com o Carlos. Uma foto por item, sem pressa.</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+<sc-for list="{{checks}}" as="c" hint-placeholder-count="8">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 20px; background: {{c.bg}}; border: 1.5px solid {{c.bc}};">
+<div style="display: flex; gap: 12px; align-items: center;"><button type="button" aria-label="Fotografar: {{c.l}}" style="all: unset; cursor: pointer; width: 60px; height: 60px; border-radius: 14px; background: {{c.phBg}}; color: {{c.phFg}}; display: grid; place-items: center; flex: none;"><svg class="i" viewBox="0 0 24 24" style="width: 26px; height: 26px;" aria-hidden="true"><path d="{{c.phIcon}}"/></svg></button><span style="display: flex; flex-direction: column;"><span style="font-weight: 600;">{{c.l}}</span><span style="font-size: 13px; color: var(--t2);">{{c.note}}</span></span></div>
+<div style="display: flex; gap: 6px;" role="radiogroup" aria-label="Estado: {{c.l}}"><sc-for list="{{c.opts}}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{o.checked}}" class="st3" onClick="{{o.pick}}" style="background: {{o.bg}}; color: {{o.fg}}; border-color: {{o.bc}};">{{o.l}}</button></sc-for></div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 28px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h2">
+<div><h1 id="h2" class="disp" style="margin: 0; font-size: 40px; font-weight: 700; line-height: 1;">Diagnóstico</h1><span style="color: var(--t2);">O Diego olhou a moto. Revise e ajuste se precisar.</span></div>
+<label><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">Diagnóstico</span><span class="fld" style="height: auto; padding: 16px 18px; align-items: flex-start;"><textarea rows="4" style="font-weight: 500; font-size: 17px;" value="{{diag}}" onChange="{{onDiag}}"></textarea></span></label>
+<div style="display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 18px; background: #E3EDF7;"><span style="width: 44px; height: 44px; border-radius: 50%; background: #E35D14; color: #fff; display: grid; place-items: center; font-weight: 700;">DS</span><span style="flex: 1;"><strong>Diego Souza</strong> · Box 3 livre a partir das 14:10 · tempo estimado 2,00 h</span></div>
+</section>
+</sc-if>
+
+<sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 28px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="h3">
+<div><h1 id="h3" class="disp" style="margin: 0; font-size: 40px; font-weight: 700; line-height: 1;">O que fazer</h1><span style="color: var(--t2);">Marque com o Carlos. O total aparece ao lado na hora.</span></div>
+<sc-for list="{{itens}}" as="it" hint-placeholder-count="6">
+<label style="display: flex; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 18px; background: {{it.bg}}; border: 1.5px solid {{it.bc}}; cursor: pointer;"><input type="checkbox" class="ck" checked="{{it.on}}" onChange="{{it.toggle}}"><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-weight: 600;">{{it.t}}</span><span style="font-size: 13.5px; color: var(--t2);">{{it.s}}</span></span><span class="bdg" style="display: inline-flex; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; align-items: center; background: {{it.tagBg}}; color: {{it.tagFg}};">{{it.tag}}</span><span class="mono" style="font-size: 18px; font-weight: 700; width: 110px; text-align: right;">{{it.v}}</span></label>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{s4}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 28px; display: flex; flex-direction: column; gap: 16px;" aria-labelledby="h4">
+<h1 id="h4" class="disp" style="margin: 0; font-size: 40px; font-weight: 700; line-height: 1;">Resumo para o Carlos</h1>
+<sc-for list="{{chosen}}" as="c" hint-placeholder-count="5"><div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--bd); font-size: 17px;"><span>{{c.t}}</span><span class="mono" style="font-weight: 600;">{{c.v}}</span></div></sc-for>
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 18px; font-weight: 600;">Total</span><span class="mono" style="font-size: 44px; font-weight: 700; letter-spacing: -.03em;">{{total}}</span></div>
+<div style="padding: 16px 18px; border-radius: 18px; background: {{limBg}}; font-size: 15.5px;">{{limTxt}}</div>
+<span style="font-size: 14px; color: var(--t2);">Garantia de 90 dias em peças e serviço. Pronta hoje às 17:00.</span>
+</section>
+</sc-if>
+
+<sc-if value="{{s5}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 28px; display: flex; flex-direction: column; gap: 16px;" aria-labelledby="h5">
+<div><h1 id="h5" class="disp" style="margin: 0; font-size: 40px; font-weight: 700; line-height: 1;">Assinatura do Carlos</h1><span style="color: var(--t2);">Ele assina com o dedo aqui na tela. Vale para o checklist e para o valor de {{total}}.</span></div>
+<div style="position: relative; border-radius: 22px; border: 2px dashed var(--bd2); background: #fff; height: 220px; touch-action: none;">
+<svg viewBox="0 0 800 220" preserveAspectRatio="none" role="img" aria-label="{{sigAria}}" style="width: 100%; height: 100%; cursor: crosshair;" onPointerDown="{{sigDown}}" onPointerMove="{{sigMove}}" onPointerUp="{{sigUp}}" onPointerLeave="{{sigUp}}"><path d="M40 170h720" stroke="#CFC4B3" stroke-width="2" stroke-dasharray="6 6"/><path d="{{sig}}" fill="none" stroke="#15395A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<sc-if value="{{noSig}}" hint-placeholder-val="{{true}}"><span style="position: absolute; left: 0; right: 0; top: 80px; text-align: center; color: var(--t3); pointer-events: none;">Assine aqui</span></sc-if>
+</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap;"><button type="button" class="btn" onClick="{{clearSig}}" style="height: 48px;">Limpar</button><span style="flex: 1;"></span><span style="font-size: 13.5px; color: var(--t3); align-self: center;">Registramos nome, data, hora e o aparelho do balcão.</span></div>
+<sc-if value="{{done}}" hint-placeholder-val="{{false}}"><div role="status" class="fade" style="display: flex; gap: 14px; align-items: center; padding: 18px; border-radius: 20px; background: #DDF3E9;"><svg class="i" viewBox="0 0 24 24" style="width: 34px; height: 34px; color: #0F7A55;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span style="flex: 1; font-size: 16px;"><strong>OS-2026-00052 aberta.</strong> O Diego já recebeu no Box 3 e o Carlos vai ser avisado pelo WhatsApp quando a moto ficar pronta.</span><a href="OS-Detalhe.dc.html" class="btn btn-p" style="height: 48px;">Abrir a OS</a></div></sc-if>
+</section>
+</sc-if>
+
+</main>
+
+<aside aria-label="Resumo" aria-live="polite" style="flex: 1 1 320px; max-width: 400px; position: sticky; top: 16px; border-radius: 32px; padding: 10px; background: linear-gradient(150deg, #F08A3E 0%, #E35D14 35%, #1D4E7A 100%);">
+<div class="lg" style="border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+<div style="width: 100%; border-radius: 10px; overflow: hidden; border: 2.5px solid #1E1B16; background: #fff;"><div style="height: 18px; background: #1D4ED8; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .25em; display: flex; align-items: center; justify-content: center;">BRASIL</div><div class="mono" style="height: 50px; display: grid; place-items: center; font-size: 30px; font-weight: 700; letter-spacing: .08em;">{{placaUp}}</div></div>
+<span style="font-weight: 700; font-size: 18px;">Honda CG 160 Titan 2022</span>
+<span style="font-size: 14px; color: var(--t2);">Carlos Eduardo Ramos · <span class="mono">{{km}}</span> km</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap;"><span style="display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: #FCEFC7; color: #8A5300;">{{attn}} atenção</span><span style="display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: #FBE2DF; color: #C0352B;">{{prob}} problema</span></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding-top: 8px; border-top: 1px solid var(--bd);"><span style="color: var(--t2);">Total</span><span class="mono" style="font-size: 34px; font-weight: 700;">{{total}}</span></div>
+<div style="display: flex; gap: 10px;"><button type="button" class="btn" onClick="{{back}}" style="flex: 0 0 auto;" aria-label="Etapa anterior" disabled="{{isFirst}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><button type="button" class="btn btn-p" onClick="{{next}}" style="flex: 1;">{{nextLbl}}</button></div>
+</div>
+</aside>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { step: 0, placa: 'ABC1D23', km: '18.420', rel: { 0: true, 1: true }, ck: { 0: 'ok', 1: 'at', 2: 'ok', 3: 'at', 4: 'pr', 5: 'ok', 6: 'ok', 7: 'ok' }, diag: 'Kit relação no fim: folga de 45 mm na corrente. Óleo vencido há 1.200 km. Pneu traseiro com 70% de desgaste, aguenta mais uns 2.000 km. Freio traseiro ok.', it: { 0: true, 1: true, 2: true, 3: true, 4: true, 5: false }, sig: '', drawing: false, done: false };
+  }
+  renderVals() {
+    const st = this.state;
+    const n = (s) => parseFloat(String(s).replace(/\./g, '').replace(',', '.')) || 0;
+    const f = (x) => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const L = ['Veículo', 'Checklist', 'Diagnóstico', 'O que fazer', 'Resumo', 'Assinatura'];
+    const steps = L.map((l, i) => ({ l, n: i < st.step ? '✓' : i + 1, cur: i === st.step ? 'step' : 'false', bg: i === st.step ? '#fff' : 'transparent', fg: i <= st.step ? '#1E1B16' : '#6E6557', nb: i < st.step ? '#0F7A55' : i === st.step ? '#E35D14' : '#fff', nf: i <= st.step ? '#fff' : '#6E6557', pick: () => this.setState({ step: Math.min(i, st.step) }) }));
+    const km = n(st.km);
+    const kmBad = km < 15010;
+    const R = ['Barulho na corrente', 'Revisão de 18 mil', 'Freio fazendo barulho', 'Troca de óleo', 'Luz no painel', 'Outro'];
+    const relatos = R.map((l, i) => ({ l, cls: st.rel[i] ? 'on' : '', pressed: st.rel[i] ? 'true' : 'false', pick: () => this.setState({ rel: Object.assign({}, st.rel, { [i]: !st.rel[i] }) }) }));
+    const C = [['Painel e km', '18.420 km · sem luz acesa'], ['Tanque', 'risco leve do lado esquerdo'], ['Pneu dianteiro', '40% de desgaste'], ['Pneu traseiro', '70% de desgaste'], ['Corrente e relação', 'folga de 45 mm'], ['Freios', 'pastilhas ok'], ['Luzes e setas', 'todas funcionando'], ['Retrovisores', 'os dois firmes']];
+    const SS = { ok: ['OK', '#0F7A55', '#DDF3E9'], at: ['Atenção', '#8A5300', '#FCEFC7'], pr: ['Problema', '#C0352B', '#FBE2DF'] };
+    const cam = 'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3zM12 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z';
+    const checks = C.map((c, i) => {
+      const s = st.ck[i];
+      return { l: c[0], note: c[1], bg: s === 'ok' ? '#fff' : SS[s][2], bc: s === 'ok' ? 'var(--bd)' : SS[s][1], phBg: i < 6 ? '#1D4E7A' : 'var(--s3)', phFg: i < 6 ? '#fff' : '#6E6557', phIcon: i < 6 ? 'M3 3h18v18H3zM3 15l5-5 4 4 3-3 6 6' : cam,
+        opts: Object.keys(SS).map((k) => ({ l: SS[k][0], checked: s === k ? 'true' : 'false', bg: s === k ? SS[k][1] : '#fff', fg: s === k ? '#fff' : '#4E473D', bc: s === k ? SS[k][1] : 'var(--bd2)', pick: () => this.setState({ ck: Object.assign({}, st.ck, { [i]: k }) }) })) };
+    });
+    const attn = Object.values(st.ck).filter((v) => v === 'at').length, prob = Object.values(st.ck).filter((v) => v === 'pr').length;
+    const I = [['Kit relação DID com retentor', 'Corrente, coroa e pinhão', 189.90, 'Necessário', '#FBE2DF', '#C0352B'], ['Troca do kit relação', 'Mão de obra · 0,80 h', 108.00, 'Necessário', '#FBE2DF', '#C0352B'], ['Óleo 10W30 semissintético', '1 litro', 42.00, 'Revisão', '#E0EDFA', '#1A64A8'], ['Filtro de óleo', '', 28.50, 'Revisão', '#E0EDFA', '#1A64A8'], ['Revisão de 18 mil km', 'Mão de obra · 1,20 h', 162.00, 'Revisão', '#E0EDFA', '#1A64A8'], ['Pneu traseiro Pirelli 100/80-18', 'Pode esperar uns 2.000 km', 289.90, 'Recomendado', '#FCEFC7', '#8A5300']];
+    const itens = I.map((x, i) => ({ t: x[0], s: x[1], v: 'R$ ' + f(x[2]), tag: x[3], tagBg: x[4], tagFg: x[5], on: !!st.it[i], bg: st.it[i] ? '#FFF8F2' : '#fff', bc: st.it[i] ? '#E35D14' : 'var(--bd)', toggle: () => this.setState({ it: Object.assign({}, st.it, { [i]: !st.it[i] }) }) }));
+    const chosen = I.filter((_, i) => st.it[i]).map((x) => ({ t: x[0], v: 'R$ ' + f(x[2]) }));
+    const tot = I.reduce((a, x, i) => a + (st.it[i] ? x[2] : 0), 0);
+    const over = tot > 800;
+    const last = st.step === 5;
+    const pt = (e) => { const r = e.currentTarget.getBoundingClientRect(); return ((e.clientX - r.left) / r.width * 800).toFixed(0) + ' ' + ((e.clientY - r.top) / r.height * 220).toFixed(0); };
+    return {
+      steps, s0: st.step === 0, s1: st.step === 1, s2: st.step === 2, s3: st.step === 3, s4: st.step === 4, s5: st.step === 5,
+      placa: st.placa, placaUp: st.placa.toUpperCase(), onPlaca: (e) => this.setState({ placa: e.target.value.toUpperCase().slice(0, 7) }), found: st.placa.toUpperCase() === 'ABC1D23',
+      km: st.km, onKm: (e) => this.setState({ km: e.target.value }), kmBc: kmBad ? '#C0352B' : 'var(--bd2)', kmC: kmBad ? '#C0352B' : '#0F7A55',
+      kmMsg: kmBad ? 'O km não pode ser menor que o da última visita (15.010 km). Confere o painel?' : '+' + (km - 15010).toLocaleString('pt-BR') + ' km desde a última visita',
+      relatos, checks, attn, prob, diag: st.diag, onDiag: (e) => this.setState({ diag: e.target.value }),
+      itens, chosen, total: 'R$ ' + f(tot),
+      limBg: over ? '#FCEFC7' : '#DDF3E9',
+      limTxt: over ? 'Passa do limite de R$ 800,00 do serviço rápido. Vou gerar um orçamento formal e mandar para o WhatsApp do Carlos aprovar.' : 'Dentro do limite do serviço rápido (R$ 800,00): o aceite aqui no balcão já vale, sem orçamento formal.',
+      back: () => this.setState({ step: Math.max(0, st.step - 1) }), isFirst: st.step === 0,
+      next: () => { if (last) { if (st.sig) this.setState({ done: true }); return; } this.setState({ step: st.step + 1 }); },
+      nextLbl: last ? (st.done ? 'OS aberta' : 'Abrir a OS') : st.step === 4 ? 'Ir para a assinatura' : 'Continuar',
+      sig: st.sig, noSig: !st.sig, sigAria: st.sig ? 'Assinatura feita' : 'Área para assinar com o dedo',
+      sigDown: (e) => { this.setState({ drawing: true, sig: st.sig + ' M' + pt(e) }); }, sigMove: (e) => { if (!this.state.drawing) return; const p = pt(e); this.setState((s) => ({ sig: s.sig + ' L' + p })); },
+      sigUp: () => { if (this.state.drawing) this.setState({ drawing: false }); }, clearSig: () => this.setState({ sig: '', done: false }), done: st.done
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import { ParametrosService } from '../parametros/parametros.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, Db, json, resultadoDe } from '../tabelas-custos/entrada';
 import { semVigente } from '../tabelas-custos/tabelas.service';
+import { promessaDoOrcamento } from '../planejamento/entrada';
 import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada, Precificacao } from './calculo';
 import { proximoNumero } from './numeracao';
 import { OrcamentoDto, SimularDto } from './orcamentos.dto';
@@ -108,6 +109,7 @@ export class OrcamentosService {
           titulo: dto.titulo.trim(),
           segmento: dto.segmento ?? 'USINAGEM',
           validade,
+          prazoPrometido: dto.prazoPrometido ? new Date(`${dto.prazoPrometido.slice(0, 10)}T00:00:00.000Z`) : null,
           observacoes: dto.observacoes ?? '',
           linhas: json(linhas),
           ...colunasDePrecificacao(p),
@@ -123,9 +125,10 @@ export class OrcamentosService {
   async detalhe(tenantId: string, id: string) {
     await expirarVencidos(this.prisma, tenantId);
     const o = await this.buscar(tenantId, id);
-    const vigente = await buscarVigente(this.prisma, tenantId);
+    const [vigente, promessa] = await Promise.all([buscarVigente(this.prisma, tenantId), promessaDoOrcamento(this.prisma, tenantId, o)]);
     return {
       ...cabecalho(o),
+      promessa,
       linhas: o.linhas,
       tabelaCustos: o.tabelaCustos,
       tabelaMaisNova: !!vigente && vigente.id !== o.tabelaCustosId,
@@ -154,6 +157,7 @@ export class OrcamentosService {
           titulo: dto.titulo.trim(),
           segmento: dto.segmento ?? o.segmento,
           validade: dto.validade ? await this.validade(s.tenantId, dto.validade) : o.validade,
+          prazoPrometido: dto.prazoPrometido ? new Date(`${dto.prazoPrometido.slice(0, 10)}T00:00:00.000Z`) : dto.prazoPrometido === null ? null : undefined,
           observacoes: dto.observacoes ?? '',
           linhas: json(linhas),
           ...colunasDePrecificacao(p),
@@ -348,6 +352,7 @@ function cabecalho(o: OrcamentoCompleto) {
     segmento: o.segmento,
     lote: o.lote,
     validade: dataIso(o.validade),
+    prazoPrometido: o.prazoPrometido ? dataIso(o.prazoPrometido) : null,
     impostos: tt(o.impostos),
     comissao: tt(o.comissao),
     margemAlvo: tt(o.margemAlvo),

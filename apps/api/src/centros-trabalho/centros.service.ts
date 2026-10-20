@@ -120,7 +120,8 @@ function dados(dto: AtualizarCentroDto) {
     fatorCarga: pdOpc(dto.fatorCarga),
     tarifaKwh: pdOpc(dto.tarifaKwh),
     pesoManual: pdOpc(dto.pesoManual),
-    areaM2: pdOpc(dto.areaM2)
+    areaM2: pdOpc(dto.areaM2),
+    diasSemana: dto.diasSemana ? [...new Set(dto.diasSemana)].sort() : undefined
   };
 }
 
@@ -145,6 +146,11 @@ function saida(c: CentroCompleto, custos: Map<string, string>) {
     pesoManual: t(c.pesoManual),
     areaM2: t(c.areaM2),
     operadores: c.operadores.map((o) => ({ colaboradorId: o.colaboradorId, nome: o.colaborador.nome, alocacao: tt(o.alocacao) })),
-    custoHoraVigente: custos.get(c.id) ?? null
+    diasSemana: c.diasSemana,
+    custoHoraVigente: custos.get(c.id) ?? null,
+    aviso:
+      custos.size && !custos.has(c.id) && c.status !== 'desativado'
+        ? 'Este centro entra na próxima versão da Tabela de Custos; até lá não tem custo-hora vigente. A agenda e o planejamento já usam a capacidade dele.'
+        : null
   };
 }

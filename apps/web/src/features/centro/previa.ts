@@ -21,6 +21,7 @@ export interface CentroForm {
   pesoManual: string;
   areaM2: string;
   operadores: { colaboradorId: string; nome: string; alocacao: string }[];
+  diasSemana: number[];
 }
 
 const z = (v: string | null | undefined) => (v === '' || v === null || v === undefined || !Number.isFinite(Number(v)) ? '0' : v);

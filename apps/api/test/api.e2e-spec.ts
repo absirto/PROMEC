@@ -227,7 +227,9 @@ describe('API ProMEC (e2e)', () => {
 
     it('prévia dos centros calcula sem gravar', async () => {
       const r = await api(token).get('/centros-trabalho/previa?competencia=2026-10').expect(200);
-      expect(reais(r.body.centros[0].cheioHora)).toBe('117.78');
+      expect(r.body.centros.map((c: { id: string }) => c.id)).toContain(base.box3);
+      const box = await api(token).get(`/centros-trabalho/${base.box3}`).expect(200);
+      expect(box.body).toMatchObject({ custoHoraVigente: null, diasSemana: [1, 2, 3, 4, 5, 6], aviso: expect.stringContaining('próxima versão') });
     });
   });
 
@@ -386,6 +388,114 @@ describe('API ProMEC (e2e)', () => {
       expect(fila.body.codigo).toBe('NAO_ENCONTRADO');
       const abertos = await api(tokenOutra).get('/apontamentos/abertos').expect(200);
       expect(abertos.body.itens.some((a: { os: { id: string } }) => a.os.id.startsWith('e2e-a-'))).toBe(false);
+    });
+  });
+
+  describe('planejamento e agenda', () => {
+    const del = (t: string, url: string) => http().delete(`/api/v1${url}`).set('Authorization', `Bearer ${t}`);
+    type Centro = { id: string; tipo: string; dias: { data: string; capacidade: string }[]; semanas: { ocupacao: string; sobrecarga: boolean }[] };
+    const capacidade = (b: { centros: Centro[] }, centroId: string, data: string) => b.centros.find((c) => c.id === centroId)!.dias.find((d) => d.data === data)!.capacidade;
+
+    it('programa a fila com sobrecarga no torno e atraso', async () => {
+      const r = await api(token).get('/planejamento?horizonte=60').expect(200);
+      expect(r.body.hoje).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(r.body.filaManual).toBe(false);
+      const os40 = r.body.ordens.find((o: { id: string }) => o.id === base.ordens[40]);
+      expect(os40).toMatchObject({ atrasada: true, ref: { tipo: 'OS', numero: 'OS-2026-00040', prioridade: 'URGENTE' } });
+      expect(os40.operacoes[0]).toMatchObject({ descricao: 'Torneamento', centroNome: 'Torno CNC de entrada' });
+      const provisoria = r.body.ordens.find((o: { id: string }) => o.id === base.orcamentoProvisorioId);
+      expect(provisoria).toMatchObject({ provisoria: true, ref: { tipo: 'ORCAMENTO', numero: 'ORC-2026-00122' } });
+      expect(r.body.centros.find((c: Centro) => c.id === base.centros.torno).tipo).toBe('maquina');
+      expect(r.body.alertas).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ tipo: 'sobrecarga', centroId: base.centros.torno }),
+          expect.objectContaining({ tipo: 'atraso', ordemId: base.ordens[40] })
+        ])
+      );
+      const painel = await api(token).get('/painel').expect(200);
+      expect(painel.body.ocupacao.find((c: { centroId: string }) => c.centroId === base.centros.torno)).toMatchObject({ semanaAtual: expect.any(String), proximaSemana: expect.any(String) });
+    });
+
+    it('fila manual por PUT e volta ao automático por DELETE', async () => {
+      const r = await api(tokenOrcamentista).put('/planejamento/fila', { ordem: [base.ordens[41], base.ordens[39]] }).expect(200);
+      expect(r.body.filaManual).toBe(true);
+      expect(r.body.ordens.slice(0, 2).map((o: { id: string }) => o.id)).toEqual([base.ordens[41], base.ordens[39]]);
+      await api(tokenOutra).put('/planejamento/fila', { ordem: [base.ordens[41]] }).expect(404);
+      const auto = await del(token, '/planejamento/fila').expect(200);
+      expect(auto.body.filaManual).toBe(false);
+      expect(auto.body.ordens[0].id).not.toBe(base.ordens[41]);
+    });
+
+    it('promete prazo para um orçamento sem gravar', async () => {
+      const p = await api(token).post('/planejamento/promessa', { orcamentoId: base.orcamentoBuchaId }).expect(200);
+      expect(p.body).toMatchObject({ fim: expect.stringMatching(/^\d{4}-/), ocupacaoMaxima: expect.any(String), sobrecarga: expect.any(Boolean), alertas: expect.any(Array) });
+      const o = await api(token).get(`/orcamentos/${base.orcamentoBuchaId}`).expect(200);
+      expect(o.body.promessa).toEqual({ fim: p.body.fim, ocupacaoMaxima: p.body.ocupacaoMaxima, sobrecarga: p.body.sobrecarga });
+      const livre = await api(token).post('/planejamento/promessa', { operacoes: [{ centroId: base.centros.cu, horas: '2' }] }).expect(200);
+      expect(livre.body.fim).toEqual(expect.any(String));
+    });
+
+    it('feriado e parada zeram a capacidade do dia', async () => {
+      const antes = await api(token).get('/planejamento').expect(200);
+      const futuro = antes.body.centros.find((c: Centro) => c.id === base.centros.cu).dias.filter((d: { capacidade: string }) => d.capacidade !== '0')[10].data;
+      const f = await api(token).post('/feriados', { data: futuro, descricao: 'Aniversário da cidade' }).expect(201);
+      await api(token).post('/feriados', { data: futuro, descricao: 'De novo' }).expect(409);
+      let r = await api(token).get('/planejamento').expect(200);
+      expect(capacidade(r.body, base.centros.cu, futuro)).toBe('0');
+      expect(capacidade(r.body, base.centros.torno, futuro)).toBe('0');
+      await del(token, `/feriados/${f.body.id}`).expect(200);
+
+      const p = await api(token).post(`/centros-trabalho/${base.centros.cu}/paradas`, { inicio: futuro, fim: futuro, motivo: 'Troca do cabeçote' }).expect(201);
+      expect(p.body.sugestoes.map((c: { id: string }) => c.id)).toEqual(expect.arrayContaining([base.centros.torno, base.centros.fresa]));
+      r = await api(token).get('/planejamento').expect(200);
+      expect(capacidade(r.body, base.centros.cu, futuro)).toBe('0');
+      expect(capacidade(r.body, base.centros.torno, futuro)).not.toBe('0');
+      await api(tokenOutra).get(`/centros-trabalho/${base.centros.cu}/paradas`).expect(404);
+      await del(token, `/centros-trabalho/${base.centros.cu}/paradas/${p.body.id}`).expect(200);
+    });
+
+    it('atrasar o prazo da OS exige motivo e registra a reprogramação', async () => {
+      const id = base.ordens[39];
+      const os = await api(token).get(`/ordens-servico/${id}`).expect(200);
+      const depois = new Date(Date.parse(os.body.prazo) + 7 * 86_400_000).toISOString().slice(0, 10);
+      const r = await api(token).patch(`/ordens-servico/${id}`, { prazo: depois }).expect(422);
+      expect(r.body.codigo).toBe('MOTIVO_OBRIGATORIO');
+      const ok = await api(token).patch(`/ordens-servico/${id}`, { prazo: depois, motivoReprogramacao: 'Fornecedor atrasou a barra inox' }).expect(200);
+      expect(ok.body.prazo).toBe(depois);
+      expect(ok.body.historico.at(-1)).toMatchObject({ evento: 'reprogramada', detalhe: expect.stringContaining('Fornecedor atrasou') });
+      await api(token).patch(`/ordens-servico/${id}`, { prazo: os.body.prazo }).expect(200);
+    });
+
+    it('agenda valida conflito, habilitação e expediente; chegada abre OS de oficina', async () => {
+      const semana = await api(token).get('/agendamentos?de=2000-01-01&ate=2100-01-01').expect(200);
+      expect(semana.body.total).toBe(4);
+      const marcado = semana.body.itens[0];
+      expect(marcado).toMatchObject({ centroNome: 'Box 3 (elevador)', colaboradorNome: 'Jonas Ferreira' });
+
+      const base_ = { clienteId: base.clientes.metalvale, placa: 'mno-5p67', veiculo: 'Ford Ranger 2023', servico: 'Troca de óleo e filtros', centroId: base.box3, duracaoHoras: '1' };
+      const choque = await api(token).post('/agendamentos', { ...base_, inicio: marcado.inicio }).expect(409);
+      expect(choque.body.codigo).toBe('HORARIO_OCUPADO');
+      const nh = await api(token).post('/agendamentos', { ...base_, colaboradorId: base.colaboradores.ricardo, inicio: '2030-01-08T09:00' }).expect(422);
+      expect(nh.body.codigo).toBe('NAO_HABILITADO');
+      const tarde = await api(token).post('/agendamentos', { ...base_, inicio: '2030-01-08T17:30' }).expect(422);
+      expect(tarde.body.codigo).toBe('FORA_DO_EXPEDIENTE');
+      await api(token).post('/agendamentos', { ...base_, inicio: '2030-01-06T09:00' }).expect(422);
+
+      const novo = await api(token).post('/agendamentos', { ...base_, colaboradorId: base.jonas, inicio: '2030-01-08T09:00' }).expect(201);
+      expect(novo.body).toMatchObject({ status: 'MARCADO', placa: 'MNO5P67', cliente: { id: base.clientes.metalvale } });
+      await api(token).post('/agendamentos', { ...base_, inicio: '2030-01-08T09:30' }).expect(409);
+      await api(token).patch(`/agendamentos/${novo.body.id}`, { inicio: '2030-01-08T10:00' }).expect(200);
+      await api(token).post(`/agendamentos/${novo.body.id}/confirmar`).expect(200);
+      const chegou = await api(token).post(`/agendamentos/${novo.body.id}/chegou`, { abrirOs: true }).expect(200);
+      expect(chegou.body).toMatchObject({ status: 'CHEGOU', osId: expect.any(String) });
+      const os = await api(token).get(`/ordens-servico/${chegou.body.osId}`).expect(200);
+      expect(os.body).toMatchObject({ status: 'ABERTA', segmento: 'OFICINA', titulo: 'Troca de óleo e filtros', objeto: { placa: 'MNO5P67', veiculo: 'Ford Ranger 2023' } });
+      expect(os.body.operacoes[0]).toMatchObject({ centroId: base.box3, colaboradorNome: 'Jonas Ferreira', setupOrcadoHoras: '1' });
+      await api(token).post(`/agendamentos/${novo.body.id}/cancelar`).expect(409);
+
+      const outra = await api(tokenOutra).get('/agendamentos?de=2000-01-01&ate=2100-01-01').expect(200);
+      expect(outra.body.itens.some((a: { id: string }) => a.id.startsWith('e2e-a-'))).toBe(false);
+      await api(tokenOutra).post(`/agendamentos/${novo.body.id}/confirmar`).expect(404);
     });
   });
 

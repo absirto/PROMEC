@@ -103,7 +103,7 @@ export default function CentrosLista() {
               { chave: 'tipo', titulo: 'Tipo', render: (c) => TIPO_CENTRO[c.tipo] },
               { chave: 'op', titulo: 'Operador', render: (c) => (c.operadores.length ? c.operadores.map((o) => o.nome.split(' ')[0]).join(', ') : <span className="text-ink-3">ninguém alocado</span>) },
               { chave: 'h', titulo: 'Horas reais', alinhar: 'right', mono: true, render: (c) => horas(horasReais(c), 0) },
-              { chave: 'ch', titulo: 'Custo-hora cheio', alinhar: 'right', mono: true, render: (c) => (c.custoHoraVigente ? <strong>{brl(c.custoHoraVigente)}</strong> : <span className="text-ink-3">sem tabela</span>) },
+              { chave: 'ch', titulo: 'Custo-hora cheio', alinhar: 'right', mono: true, render: (c) => (c.custoHoraVigente ? <strong>{brl(c.custoHoraVigente)}</strong> : <span className="text-warn text-[13px] font-sans" title={c.aviso ?? undefined}>{c.aviso ?? 'sem tabela'}</span>) },
               { chave: 's', titulo: 'Situação', render: (c) => <StatusCentroPill status={c.status} /> }
             ]}
           />

@@ -77,6 +77,9 @@ model Empresa {
   ocorrencias   Ocorrencia[]
   inspecoes     Inspecao[]
   osHistoricos  OsHistorico[]
+  feriados      Feriado[]
+  paradas       ParadaCentro[]
+  agendamentos  Agendamento[]
 }
 
 model Usuario {
@@ -126,6 +129,7 @@ model Colaborador {
   alocacoes    CentroOperador[]
   operacoes    OsOperacao[]
   apontamentos Apontamento[]
+  agendamentos Agendamento[]
 
   @@index([tenantId])
 }
@@ -150,12 +154,15 @@ model CentroTrabalho {
   tarifaKwh       Decimal  @default(0) @db.Decimal(12, 6)
   pesoManual      Decimal? @db.Decimal(9, 6)
   areaM2          Decimal? @db.Decimal(12, 2)
+  diasSemana      Int[]    @default([1, 2, 3, 4, 5])
   criadoEm        DateTime @default(now())
   atualizadoEm    DateTime @updatedAt
 
-  empresa     Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  operadores  CentroOperador[]
-  osOperacoes OsOperacao[]
+  empresa      Empresa          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  operadores   CentroOperador[]
+  osOperacoes  OsOperacao[]
+  paradas      ParadaCentro[]
+  agendamentos Agendamento[]
 
   @@unique([tenantId, codigo])
 }
@@ -228,9 +235,10 @@ model Cliente {
   criadoEm     DateTime      @default(now())
   atualizadoEm DateTime      @updatedAt
 
-  empresa    Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  orcamentos Orcamento[]
-  ordens     OrdemServico[]
+  empresa      Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orcamentos   Orcamento[]
+  ordens       OrdemServico[]
+  agendamentos Agendamento[]
 
   @@unique([tenantId, documento])
 }
@@ -267,6 +275,7 @@ model Orcamento {
   enviadoEm              DateTime?
   aprovadoEm             DateTime?
   recusadoEm             DateTime?
+  prazoPrometido         DateTime?       @db.Date
   criadoEm               DateTime        @default(now())
   atualizadoEm           DateTime        @updatedAt
 
@@ -352,6 +361,7 @@ model OrdemServico {
   lote               Int
   prazo              DateTime   @db.Date
   prioridade         Prioridade @default(NORMAL)
+  posicaoFila        Int?
   objeto             Json
   observacoes        String     @default("")
   status             StatusOs   @default(ABERTA)
@@ -380,6 +390,7 @@ model OrdemServico {
   ocorrencias  Ocorrencia[]
   inspecoes    Inspecao[]
   historico    OsHistorico[]
+  agendamentos Agendamento[]
 
   @@unique([tenantId, numero])
   @@index([tenantId, status])
@@ -502,4 +513,67 @@ model OsHistorico {
   os      OrdemServico @relation(fields: [osId], references: [id], onDelete: Cascade)
 
   @@index([osId])
+}
+
+enum StatusAgendamento {
+  MARCADO
+  CONFIRMADO
+  CHEGOU
+  NAO_VEIO
+  CANCELADO
+}
+
+model Feriado {
+  id        String   @id @default(cuid())
+  tenantId  String
+  data      DateTime @db.Date
+  descricao String
+
+  empresa Empresa @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, data])
+}
+
+model ParadaCentro {
+  id       String   @id @default(cuid())
+  tenantId String
+  centroId String
+  inicio   DateTime @db.Date
+  fim      DateTime @db.Date
+  motivo   String
+  criadoEm DateTime @default(now())
+
+  empresa Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  centro  CentroTrabalho @relation(fields: [centroId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, centroId])
+}
+
+model Agendamento {
+  id            String            @id @default(cuid())
+  tenantId      String
+  clienteId     String?
+  nomeCliente   String?
+  telefone      String?
+  placa         String?
+  veiculo       String?
+  servico       String
+  centroId      String
+  colaboradorId String?
+  inicio        DateTime
+  duracaoHoras  Decimal           @db.Decimal(8, 2)
+  status        StatusAgendamento @default(MARCADO)
+  osId          String?
+  observacao    String?
+  criadoEm      DateTime          @default(now())
+  atualizadoEm  DateTime          @updatedAt
+
+  empresa     Empresa        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cliente     Cliente?       @relation(fields: [clienteId], references: [id])
+  centro      CentroTrabalho @relation(fields: [centroId], references: [id])
+  colaborador Colaborador?   @relation(fields: [colaboradorId], references: [id])
+  os          OrdemServico?  @relation(fields: [osId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, inicio])
+  @@index([tenantId, centroId])
 }

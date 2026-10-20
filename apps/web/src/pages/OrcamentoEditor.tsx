@@ -5,6 +5,7 @@ import {
   ChevronDown, Cpu, Handshake, Layers, Minus, Package, Plus, RefreshCw, Save, Send, ShieldCheck, ThumbsDown, ThumbsUp, Truck, UserRound, Wrench, type LucideIcon
 } from 'lucide-react';
 import { paraLinhaMotor, mapaCentros, useOrcamentoAoVivo, type PrecoForm } from '../features/orcamento/calculo';
+import { CartaoPrazo } from '../features/orcamento/Prazo';
 import { comId, LinhaEditor, novaLinha, type LinhaForm, type OpcaoCentro } from '../features/orcamento/LinhaEditor';
 import { api } from '../lib/api';
 import { podeLiberarMargem, useAuth } from '../lib/auth';
@@ -32,6 +33,7 @@ interface Form extends Omit<PrecoForm, 'linhas'> {
   segmento: Segmento;
   validade: string;
   observacoes: string;
+  prazoPrometido: string;
   linhas: LinhaForm[];
 }
 
@@ -63,6 +65,7 @@ const doOrcamento = (o: Orcamento): Form => ({
   desconto: o.desconto ?? '0',
   metodo: o.metodo ?? 'divisor',
   observacoes: o.observacoes ?? '',
+  prazoPrometido: (o.prazoPrometido ?? '').slice(0, 10),
   linhas: o.linhas.map(comId)
 });
 
@@ -122,7 +125,7 @@ export default function OrcamentoEditor() {
       setF({
         clienteId: sp.get('cliente') ?? '', titulo: '', segmento: 'USINAGEM', lote: '1', validade: hojeMais(p.validadeOrcamentoDias ?? 15),
         impostos: p.impostosPadrao, comissao: p.comissaoPadrao, margemAlvo: p.margemAlvo, margemMinima: p.margemMinima, desconto: '0',
-        metodo: p.metodoPreco ?? 'divisor', observacoes: '', linhas: [novaLinha('material'), novaLinha('operacao')]
+        metodo: p.metodoPreco ?? 'divisor', observacoes: '', prazoPrometido: '', linhas: [novaLinha('material'), novaLinha('operacao')]
       });
     }
   }, [novo, f, params.data, sp]);
@@ -142,7 +145,7 @@ export default function OrcamentoEditor() {
   const corpo = (x: Form) => ({
     clienteId: x.clienteId, titulo: x.titulo.trim(), segmento: x.segmento, lote: Math.floor(toNum(x.lote)), validade: x.validade,
     impostos: x.impostos || '0', comissao: x.comissao || '0', margemAlvo: x.margemAlvo || '0', margemMinima: x.margemMinima || '0', desconto: x.desconto || '0',
-    metodo: x.metodo, observacoes: x.observacoes,
+    metodo: x.metodo, observacoes: x.observacoes, prazoPrometido: x.prazoPrometido || null,
     linhas: x.linhas.map((l) => {
       const m = paraLinhaMotor(l, mapa) as Record<string, unknown>;
       if (l.tipo === 'operacao' || l.tipo === 'maoDeObra') {
@@ -395,6 +398,8 @@ export default function OrcamentoEditor() {
             />
             <TextArea label="Observações" value={f.observacoes} onChange={(v) => set('observacoes', v)} hint="Condição de pagamento, prazo de entrega, quem pediu." />
           </Card>
+
+          <CartaoPrazo linhas={f.linhas} lote={lote} promessaSalva={o?.promessa} usarSalva={!sujo} prazo={f.prazoPrometido} onPrazo={(d) => set('prazoPrometido', d)} editavel={editavel} />
 
           {o && o.historico?.length > 0 && (
             <Card className="p-5 flex flex-col gap-2" aria-labelledby="h-hist">

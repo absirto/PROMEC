@@ -202,3 +202,70 @@ A partir do ORC-2026-00124 (aprovado) e de um novo orçamento aprovado da bucha,
 - Uma OS entregue.
 
 Os operadores ficam alocados nos centros.
+
+## Planejamento, agenda e capacidade (fase 1c)
+
+Toda programação usa `planejar` e `prometerPrazo` do `@promec/motor`, que trabalham em capacidade finita, dia a dia. A capacidade de cada centro vem da **mesma base da Tabela de Custos vigente**: `horasExpediente` × `eficiencia` do centro, dividida pelos dias úteis do mês. Divergir essa base é proibido.
+
+### O que entra na fila
+
+- **OS** em `ABERTA`, `EM_FILA`, `EM_EXECUCAO` ou `PAUSADA`: entram as operações não concluídas.
+  - Horas restantes = `max(0, horasProjetadas − horasReais)` da operação, vindo de `calcularCustoReal`.
+- **Orçamentos `APROVADO`** ainda não convertidos entram como `provisoria: true`, reservando capacidade.
+  - O roteiro sai das linhas `operacao` (setup + ciclo × lote) e `maoDeObra` (tempo × fator, × lote quando `base: 'peca'`).
+- **Agendamentos** de oficina `MARCADO` ou `CONFIRMADO` entram como `ocupacaoFixa` no box (centro) e no dia.
+
+### Rotas
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/planejamento?horizonte=60` | `{ hoje, ordens: [{ …OrdemPlanejada, ref: { tipo: 'OS' \| 'ORCAMENTO', id, numero, titulo, cliente, status, prioridade, segmento }, operacoes: [{ …OperacaoPlanejada, descricao, centroNome }] }], centros: [{ …CentroPlanejado, tipo }], semDestino, alertas, filaManual: bool }` |
+| PUT | `/planejamento/fila` | `{ ordem: [osId, …] }` grava a posição manual das OS (arrastar e soltar); `GESTOR`/`ADMIN`/`ORCAMENTISTA` |
+| DELETE | `/planejamento/fila` | apaga as posições manuais; a fila volta ao automático (prazo, prioridade, atraso) |
+| POST | `/planejamento/promessa` | `{ orcamentoId }` ou `{ operacoes: [{ centroId, horas }] }` → `{ fim, ocupacaoMaxima, sobrecarga, alertas }`; não grava nada |
+| GET / POST | `/feriados` | `[{ id, data, descricao }]` / `{ data, descricao }` |
+| DELETE | `/feriados/:id` | |
+| GET / POST | `/centros-trabalho/:id/paradas` | `[{ id, inicio, fim, motivo }]` / `{ inicio, fim, motivo }`; parada nova sugere centros equivalentes (mesmo `tipo`) |
+| DELETE | `/centros-trabalho/:id/paradas/:paradaId` | |
+
+O centro de trabalho ganha `diasSemana` (padrão `[1,2,3,4,5]`), editável no `PATCH`.
+
+### Prazo prometido
+
+- O orçamento ganha `prazoPrometido` (opcional no `POST`/`PUT`).
+- `GET /orcamentos/:id` passa a trazer `promessa: { fim, ocupacaoMaxima, sobrecarga }`, calculada ao vivo.
+- Na conversão, o `prazo` da OS vem, em ordem, do corpo, do `prazoPrometido` ou do `fim` da promessa.
+- `PATCH /ordens-servico/:id` que atrase o `prazo` exige `motivoReprogramacao` → 422 `MOTIVO_OBRIGATORIO`. O motivo é registrado no histórico (evento `reprogramada`).
+
+### Agenda da oficina
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/agendamentos?de=2026-10-20&ate=2026-10-26&centroId=` | `{ itens: [{ id, cliente: { id, nome }, telefone, placa, veiculo, servico, centroId, centroNome, colaboradorId, colaboradorNome, inicio, duracaoHoras, status, osId, observacao }], total }` |
+| POST | `/agendamentos` | `{ clienteId?, nomeCliente?, telefone?, placa?, veiculo?, servico, centroId, colaboradorId?, inicio, duracaoHoras, observacao? }`. Conflito de horário no mesmo box ou com o mesmo mecânico → 409 `HORARIO_OCUPADO`. Mecânico não alocado no box → 422 `NAO_HABILITADO`. Fora do expediente do centro → 422 `FORA_DO_EXPEDIENTE` |
+| PATCH | `/agendamentos/:id` | reagendar ou editar, com as mesmas validações |
+| POST | `/agendamentos/:id/confirmar` · `/chegou` · `/nao-veio` · `/cancelar` | `chegou` com `{ abrirOs: true }` cria OS de oficina `ABERTA` com placa, veículo e serviço, e grava `osId` |
+
+- `status`: `MARCADO` · `CONFIRMADO` · `CHEGOU` · `NAO_VEIO` · `CANCELADO`.
+- Expediente da agenda: 08:00 às 18:00 nos `diasSemana` do centro, fora de feriados e paradas.
+
+### Painel
+
+`GET /painel` ganha `ocupacao: [{ centroId, nome, semanaAtual, proximaSemana }]` (frações) e os alertas de sobrecarga e de atraso do planejamento.
+
+### Seed
+
+- Cadastrar os feriados nacionais de 2026 restantes:
+  - 02/11
+  - 15/11
+  - 20/11
+  - 25/12
+- Cadastrar uma parada preventiva da Fresa CNC 01 na próxima semana.
+- Criar um centro de oficina **Box 3 (elevador)**, tipo `box`, com o mecânico **Jonas Ferreira** alocado em 100%.
+  - O Box 3 fica **fora** da Tabela de Custos 2026-10 v1, para não mudar o rateio dos números canônicos (117,78/h).
+  - Por isso ele aparece com `custoHoraVigente: null` e um aviso "entra na próxima versão da tabela". A agenda e o planejamento usam só a capacidade dele.
+- Criar 4 agendamentos na semana corrente:
+  - Honda CG 160 2022 · ABC1D23
+  - Fiat Toro 2021 · BRA2E19
+  - mais dois plausíveis
+- Algumas OS e orçamentos com prazos que gerem uma semana de sobrecarga no Torno CNC e um atraso.

@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateIf, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested } from 'class-validator';
 import { Dec } from '../comum/validadores';
 
 export const TIPOS_CENTRO = ['maquina', 'automatica', 'box', 'bancada', 'celulaSolda', 'movel', 'maoDeObra', 'externa'] as const;
@@ -56,6 +56,9 @@ export class CriarCentroDto {
 
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => OperadorCentroDto)
   operadores?: OperadorCentroDto[];
+
+  @IsOptional() @IsArray() @ArrayMaxSize(7) @IsInt({ each: true }) @Min(0, { each: true }) @Max(6, { each: true })
+  diasSemana?: number[];
 }
 
 export class AtualizarCentroDto extends PartialType(CriarCentroDto) {}

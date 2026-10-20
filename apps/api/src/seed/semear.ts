@@ -6,6 +6,7 @@ import { completarCnpj } from '../comum/documento';
 import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada } from '../orcamentos/calculo';
 import { formatarNumero } from '../orcamentos/numeracao';
 import { json, montarEntrada, resultadoDe } from '../tabelas-custos/entrada';
+import { semearAgenda } from './agenda';
 import { semearOrdens } from './ordens';
 
 export interface OpcoesSemente {
@@ -132,6 +133,32 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     });
   }
 
+  // Box 3 da oficina: fica fora das Tabelas de Custos semeadas para não mexer no rateio canônico (117,78/h).
+  const box3 = id('centro-box3');
+  const dadosBox = {
+    codigo: 'BOX-03',
+    nome: 'Box 3 (elevador)',
+    tipo: 'box',
+    status: 'ativo',
+    horasExpediente: pd('220'),
+    eficiencia: pd('0.8'),
+    manutencao: pd('250'),
+    insumos: pd('400'),
+    valorAquisicao: pd('38000'),
+    valorResidual: pd('4000'),
+    vidaUtilMeses: 120,
+    diasSemana: [1, 2, 3, 4, 5, 6]
+  };
+  await db.centroTrabalho.upsert({ where: { id: box3 }, create: { id: box3, tenantId, criadoEm: new Date(Date.UTC(2026, 9, 15, 9)), ...dadosBox }, update: dadosBox });
+  const jonas = id('colab-jonas');
+  const dadosJonas = { nome: 'Jonas Ferreira', funcao: 'Mecânico de manutenção', vinculo: 'CLT' as const, salario: pd('3900'), encargos: pd('2500'), beneficios: pd('450'), jornadaHoras: pd('220'), ativo: true };
+  await db.colaborador.upsert({ where: { id: jonas }, create: { id: jonas, tenantId, ...dadosJonas }, update: dadosJonas });
+  await db.centroOperador.upsert({
+    where: { centroId_colaboradorId: { centroId: box3, colaboradorId: jonas } },
+    create: { tenantId, centroId: box3, colaboradorId: jonas, alocacao: pd('1') },
+    update: { alocacao: pd('1') }
+  });
+
   for (const [competencia, itens] of [
     ['2026-09', CUSTO_FIXO_SETEMBRO],
     ['2026-10', CUSTO_FIXO_OUTUBRO]
@@ -152,7 +179,8 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
   };
   await db.tabelaCustos.updateMany({ where: { tenantId, status: 'VIGENTE', id: { not: tabelas.outubro.id } }, data: { status: 'ENCERRADA', encerradaEm: new Date() } });
   for (const t of Object.values(tabelas)) {
-    const entrada = await montarEntrada(db, tenantId, t.competencia);
+    const completa = await montarEntrada(db, tenantId, t.competencia);
+    const entrada = { ...completa, centros: completa.centros.filter((c) => c.id !== box3) };
     const dados = { status: t.status, desatualizada: false, entrada: json(entrada), resultado: json(calcularTabelaCustos(entrada)), publicadaEm: t.publicadaEm, encerradaEm: t.encerradaEm };
     await db.tabelaCustos.upsert({
       where: { id: t.id },
@@ -198,6 +226,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     linhas: LinhaEntrada[];
     eventos: Evento[];
     motivoRecusa?: string;
+    prazoEm?: number;
     observacoes?: string;
   }[] = [
     {
@@ -334,6 +363,23 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
       eventos: [['criado', 'RASCUNHO', 1, 14], ['enviado', 'ENVIADO', 1, 13], ['aprovado', 'APROVADO', 1, 10], ['convertido', 'CONVERTIDO', 1, 10, 'OS-2026-00040']]
     },
     {
+      n: 122,
+      cliente: 'schroeder',
+      titulo: 'Pino de articulação para escavadeira — lote de 100',
+      lote: 100,
+      desconto: '0',
+      tabela: 'outubro',
+      status: 'APROVADO',
+      validadeEm: 12,
+      prazoEm: 8,
+      linhas: [
+        { tipo: 'material', descricao: 'Barra SAE 4340 Ø30', base: 'peca', quantidade: '1', custoUnitario: '12.40' },
+        { tipo: 'operacao', descricao: 'Torneamento e rosca', centroId: centro('torno'), cicloHorasPorPeca: '0.25', setupHorasPorLote: '2' },
+        { tipo: 'terceiro', descricao: 'Nitretação', base: 'lote', custo: '450', markup: '0.1' }
+      ],
+      eventos: [['criado', 'RASCUNHO', 1, 5], ['enviado', 'ENVIADO', 1, 4], ['aprovado', 'APROVADO', 1, 1]]
+    },
+    {
       n: 121,
       cliente: 'metalvale',
       titulo: 'Bucha de latão com tolerância H7 — lote de 10 peças',
@@ -381,7 +427,8 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
       enviadoEm: dataDe('enviado'),
       aprovadoEm: dataDe('aprovado'),
       recusadoEm: dataDe('recusado'),
-      criadoEm: dataDe('criado')!
+      criadoEm: dataDe('criado')!,
+      prazoPrometido: orc.prazoEm === undefined ? null : dataEm(orc.prazoEm)
     };
     await db.orcamento.upsert({ where: { id: oid }, create: { id: oid, tenantId, ...dados }, update: dados });
     await db.orcamentoHistorico.deleteMany({ where: { orcamentoId: oid } });
@@ -408,6 +455,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
   }
 
   const ordens = await semearOrdens(db, tenantId, id);
+  const agenda = await semearAgenda(db, tenantId, id, { box3, jonas, fresa: centro('fresa'), cliente: id('cliente-metalvale') });
 
   return {
     tenantId,
@@ -418,6 +466,10 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     orcamentoBuchaId: id('orcamento-128'),
     colaboradores: { ricardo: id('colab-ricardo'), diego: id('colab-diego'), anderson: id('colab-anderson') },
     ordens,
+    box3,
+    jonas,
+    agenda,
+    orcamentoProvisorioId: id('orcamento-122'),
     precos: resultados
   };
 }

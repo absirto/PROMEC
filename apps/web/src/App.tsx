@@ -21,6 +21,8 @@ const OrcamentoEditor = lazy(() => import('./pages/OrcamentoEditor'));
 const OSLista = lazy(() => import('./pages/OSLista'));
 const OSNova = lazy(() => import('./pages/OSNova'));
 const OSDetalhe = lazy(() => import('./pages/OSDetalhe'));
+const Planejamento = lazy(() => import('./pages/Planejamento'));
+const Agenda = lazy(() => import('./pages/Agenda'));
 const ModoOperador = lazy(() => import('./pages/ModoOperador'));
 
 function TelaOperador() {
@@ -59,6 +61,8 @@ export function App() {
                 <Route path="ordens-servico" element={<OSLista />} />
                 <Route path="ordens-servico/nova" element={<OSNova />} />
                 <Route path="ordens-servico/:id" element={<OSDetalhe />} />
+                <Route path="planejamento" element={<Planejamento />} />
+                <Route path="agenda" element={<Agenda />} />
                 <Route path="*" element={<NaoEncontrado />} />
               </Routes>
             </Suspense>

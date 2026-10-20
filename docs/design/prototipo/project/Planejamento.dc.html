@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Planejamento e Agenda</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#B8460A}a:hover{color:#8A3305}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--t1);-webkit-font-smoothing:antialiased}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.t-claro{--canvas:#F2EEE7;--s1:#FFFFFF;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t1:#1E1B16;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--pft:#FFFFFF;--ps:#FDE8DA;--pt:#9A3A06;--steel:#1D4E7A;--steels:#E3EDF7;--ok:#0F7A55;--oks:#DDF3E9;--wa:#8A5300;--wai:#E0A100;--was:#FCEFC7;--bad:#C0352B;--bads:#FBE2DF;--inf:#1A64A8;--infs:#E0EDFA;--run:#5B3FB5;--runs:#ECE6FB;--grid:rgba(60,45,25,.06);--side:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));--lg-bg:rgba(255,255,255,.62);--lg-bd:rgba(255,255,255,.85);--lg-hl:inset 0 1px 0 rgba(255,255,255,.95);--lg-sh:0 14px 36px rgba(40,30,15,.16);--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06);--bw:1px}
+.stage{background-color:var(--canvas);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:var(--lg-bg);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid var(--lg-bd);box-shadow:var(--lg-hl),var(--lg-sh)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.side{position:relative;background:var(--side);backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28);color:#E7EEF6}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14) 100%);mix-blend-mode:soft-light}
+.card{background:var(--s1);border:var(--bw) solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:var(--ok);background:var(--oks)}.b-wa{color:var(--wa);background:var(--was)}.b-bad{color:var(--bad);background:var(--bads)}.b-inf{color:var(--inf);background:var(--infs)}.b-run{color:var(--run);background:var(--runs)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:var(--bw) solid var(--bd2);background:var(--s1);color:var(--t1);cursor:pointer;white-space:nowrap}
+.btn-p{background:var(--pf);border-color:transparent;color:var(--pft);box-shadow:0 6px 16px rgba(184,70,10,.3)}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.mv{all:unset;box-sizing:border-box;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--t2);background:var(--s3);cursor:pointer}
+.mv:disabled{opacity:.35;cursor:default}
+.tab{all:unset;box-sizing:border-box;height:40px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tab.on{background:var(--t1);color:var(--canvas)}
+.btn:focus-visible,.ib:focus-visible,.tab:focus-visible,.mv:focus-visible,.slot:focus-visible,.rng:focus-visible,.cc:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:26px;line-height:1.1;font-weight:700}
+.sub{font-size:13.5px;color:var(--t3)}
+.haz{background:repeating-linear-gradient(-45deg,rgba(224,161,0,.85) 0 10px,rgba(30,27,22,.85) 10px 20px)}
+.blk{position:absolute;top:8px;bottom:8px;border-radius:12px;padding:6px 10px;font-size:12.5px;line-height:1.25;overflow:hidden;display:flex;flex-direction:column;justify-content:center;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.slot{all:unset;box-sizing:border-box;position:absolute;left:6px;right:6px;border-radius:12px;padding:8px 10px;font-size:12.5px;line-height:1.3;cursor:pointer;overflow:hidden}
+.cc{all:unset;box-sizing:border-box;cursor:pointer;height:38px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bd2);background:var(--s1);font-size:13.5px;font-weight:500}
+.cc.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.rng{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;cursor:pointer}
+.rng::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--steel),var(--p))}
+.rng::-moz-range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,var(--steel),var(--p))}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.rng::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.mvrow{transition:transform .35s cubic-bezier(.2,.8,.2,1),background-color .4s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.grow{transform-origin:left;animation:grow .7s cubic-bezier(.2,.8,.2,1) both .15s}
+@media (prefers-reduced-motion:reduce){.rv,.grow{animation:none}.mvrow{transition:none}}
+</style>
+</helmet>
+<div class="pm stage t-claro" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9">
+<a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a>
+</sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">Operação</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: var(--t1); font-weight: 600;" aria-current="page">Planejamento e Agenda</span></nav>
+<span class="bdg b-inf" style="height: 34px; padding: 0 14px;">Semana 42 · 12 a 16/10</span>
+<button type="button" class="btn btn-sm" aria-label="Semana anterior"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+<button type="button" class="btn btn-sm" aria-label="Próxima semana"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 22px; max-width: 1280px; width: 100%;">
+
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: linear-gradient(135deg, #2A6AA3 0%, #1D4E7A 45%, #15395A 100%); color: #fff; padding: clamp(22px, 3vw, 32px);">
+<svg viewBox="0 0 600 220" aria-hidden="true" style="position: absolute; right: -10px; top: 0; width: min(560px, 50%); height: auto;" fill="none" stroke-linecap="round" stroke-width="2">
+<g stroke="rgba(255,255,255,.25)"><path d="M40 30h520M40 80h520M40 130h520M40 180h520M140 20v170M240 20v170M340 20v170M440 20v170"/></g>
+<rect x="60" y="40" width="160" height="30" rx="8" fill="rgba(255,255,255,.22)"/><rect x="250" y="40" width="120" height="30" rx="8" fill="rgba(255,154,77,.7)"/><rect x="150" y="90" width="210" height="30" rx="8" fill="rgba(255,255,255,.22)"/><rect x="380" y="90" width="140" height="30" rx="8" fill="rgba(255,255,255,.22)"/><rect x="60" y="140" width="260" height="30" rx="8" fill="rgba(255,255,255,.18)"/>
+<path d="M300 14v186" stroke="#FFC08F" stroke-width="3"/>
+</svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 8px; max-width: 620px;">
+<span style="font-size: 14px; font-weight: 600; color: #FFC08F;">Planejamento</span>
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.4vw, 54px); font-weight: 700; line-height: 1;">Quem faz o quê, e quando</h1>
+<p style="margin: 0; font-size: 16px; color: #D3E0EE;">A semana está puxada na <strong style="color: #fff;">solda</strong> (110% na S44) e uma OS do torno vai atrasar se nada mudar. O resto cabe com folga.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #D3E0EE;">Ocupação média</span><span class="mono" style="display: block; font-size: 30px; font-weight: 600;">81%</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #D3E0EE;">OS na fila</span><span class="mono" style="display: block; font-size: 30px; font-weight: 600;">23</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #D3E0EE;">Prazo em risco</span><span class="mono" style="display: block; font-size: 30px; font-weight: 600; color: #FFC08F;">{{riskN}}</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #D3E0EE;">Máquina parada</span><span style="display: block; font-size: 17px; font-weight: 600; margin-top: 6px;">Usinagem 02 · spindle</span></div>
+</div>
+</div>
+</section>
+
+<div class="rv" role="tablist" aria-label="Visões" style="display: flex; gap: 6px; overflow-x: auto; padding: 4px; border-radius: 999px; align-self: flex-start; max-width: 100%; background: var(--s3);">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" onClick="{{t.pick}}"><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px;" aria-hidden="true"><path d="{{t.icon}}"/></svg>{{t.label}}</button></sc-for>
+</div>
+
+<sc-if value="{{vCarga}}" hint-placeholder-val="{{true}}">
+<section class="card rv" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="h-carga">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-carga" class="h2">Carga × capacidade nas próximas 6 semanas</h2><span class="sub">Horas já prometidas ÷ horas reais disponíveis de cada máquina</span></div>
+<div style="display: flex; gap: 14px; font-size: 13px; color: var(--t2); flex-wrap: wrap;"><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #0F9D76;"></span>até 85%</span><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #E0A100;"></span>86 a 100%</span><span style="display: inline-flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 3px; background: #C0352B;"></span>acima de 100%</span><span style="display: inline-flex; align-items: center; gap: 6px;"><span class="haz" style="width: 12px; height: 12px; border-radius: 3px;"></span>parada</span></div>
+</div>
+<div style="overflow-x: auto;">
+<div style="min-width: 860px; display: grid; grid-template-columns: 220px repeat(6, minmax(0, 1fr)); gap: 6px;">
+<span></span>
+<sc-for list="{{weeks}}" as="w" hint-placeholder-count="6"><span style="text-align: center; font-size: 12.5px; font-weight: 600; color: var(--t3); padding: 6px 0;">{{w}}</span></sc-for>
+<sc-for list="{{heat}}" as="r" hint-placeholder-count="6">
+<span style="display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px;"><span style="width: 10px; height: 34px; border-radius: 4px; background: {{r.c}};"></span>{{r.n}}</span>
+<sc-for list="{{r.cells}}" as="c" hint-placeholder-count="6">
+<div class="{{c.cls}}" style="height: 54px; border-radius: 12px; background: {{c.bg}}; display: flex; flex-direction: column; justify-content: center; align-items: center; color: {{c.fg}};" title="{{c.title}}"><span class="mono" style="font-size: 16px; font-weight: 700;">{{c.v}}</span><span style="font-size: 11px; opacity: .9;">{{c.s}}</span></div>
+</sc-for>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section class="card rv" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="h-gantt">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-gantt" class="h2">Esta semana, máquina por máquina</h2><span class="sub">Arraste uma OS para outro dia ou máquina. A linha laranja é agora: quarta, 10:30.</span></div>
+<div style="overflow-x: auto;">
+<div style="min-width: 900px; display: grid; grid-template-columns: 220px minmax(0, 1fr); row-gap: 8px;">
+<span></span>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));"><sc-for list="{{days}}" as="d" hint-placeholder-count="5"><span style="font-size: 12.5px; font-weight: 600; color: {{d.c}}; padding: 4px 8px; border-left: 1px solid var(--bd);">{{d.l}}</span></sc-for></div>
+<sc-for list="{{lanes}}" as="l" hint-placeholder-count="5">
+<span style="display: flex; flex-direction: column; justify-content: center;"><span style="font-weight: 600; font-size: 14px;">{{l.n}}</span><span style="font-size: 12px; color: var(--t3);">{{l.s}}</span></span>
+<div style="position: relative; height: 64px; border-radius: 14px; background: var(--s2); border: 1px solid var(--bd); background-image: linear-gradient(90deg, var(--bd) 1px, transparent 1px); background-size: 20% 100%;">
+<sc-for list="{{l.blocks}}" as="b" hint-placeholder-count="2">
+<div class="blk {{b.cls}}" style="left: {{b.l}}; width: {{b.w}}; background: {{b.bg}}; color: {{b.fg}}; outline: {{b.ol}};" title="{{b.t}}"><span style="font-weight: 700;" class="mono">{{b.code}}</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{b.t}}</span></div>
+</sc-for>
+<span style="position: absolute; top: -4px; bottom: -4px; left: 47.5%; width: 3px; border-radius: 2px; background: #E35D14;" aria-hidden="true"></span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vFila}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start;">
+<section class="card rv" style="flex: 999 1 600px; min-width: 0; padding: 22px 24px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-fila">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-fila" class="h2">Fila do Torno CNC de entrada</h2><span class="sub">Mude a ordem e veja na hora quem entrega no prazo. 6 h livres hoje, 8 h por dia depois.</span></div>
+<sc-if value="{{hasLate}}" hint-placeholder-val="{{true}}"><span class="bdg b-bad">{{lateTxt}}</span></sc-if>
+<sc-if value="{{noLate}}" hint-placeholder-val="{{false}}"><span class="bdg b-ok">Tudo no prazo</span></sc-if>
+</div>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{queue}}" as="q" hint-placeholder-count="5">
+<li class="mvrow" style="display: grid; grid-template-columns: 36px 30px minmax(0, 1fr) 80px 120px 130px 84px; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 16px; background: {{q.bg}}; border: 1px solid var(--bd);">
+<span style="display: grid; place-items: center; color: var(--t3); cursor: grab;" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01"/></svg></span>
+<span class="mono" style="font-weight: 700; color: var(--t3);">{{q.pos}}</span>
+<span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{q.name}}</span><span style="font-size: 12.5px; color: var(--t3);"><span class="mono">{{q.code}}</span> · {{q.cli}}</span></span>
+<span class="mono" style="text-align: right; font-weight: 600;">{{q.h}}</span>
+<span style="display: flex; flex-direction: column; text-align: right; line-height: 1.25;"><span style="font-size: 12px; color: var(--t3);">termina</span><span style="font-weight: 600;">{{q.fin}}</span></span>
+<span style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><span style="font-size: 12px; color: var(--t3);">prazo {{q.due}}</span><span class="bdg {{q.cls}}">{{q.folga}}</span></span>
+<span style="display: flex; gap: 6px; justify-content: flex-end;"><button type="button" class="mv" onClick="{{q.up}}" disabled="{{q.first}}" aria-label="Subir {{q.code}} na fila"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button><button type="button" class="mv" onClick="{{q.down}}" disabled="{{q.last}}" aria-label="Descer {{q.code}} na fila"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></span>
+</li>
+</sc-for>
+</ol>
+</section>
+
+<aside class="rv" style="flex: 1 1 340px; max-width: 420px; position: sticky; top: 84px; border-radius: 30px; padding: 10px; background: linear-gradient(150deg, #F08A3E 0%, #E35D14 35%, #1D4E7A 100%);" aria-label="Prometer prazo">
+<div class="lg" style="border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+<h2 class="disp" style="margin: 0; font-size: 24px; font-weight: 700;">Cliente no telefone pedindo prazo?</h2>
+<span style="font-size: 14px; color: var(--t2);">Diga quantas horas de máquina o serviço leva. Eu encaixo depois da fila atual.</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;" role="radiogroup" aria-label="Máquina">
+<sc-for list="{{cts}}" as="c" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{c.checked}}" class="cc {{c.cls}}" onClick="{{c.pick}}">{{c.label}}</button></sc-for>
+</div>
+<div><div style="display: flex; justify-content: space-between;"><label for="ph" style="font-size: 14px; font-weight: 500;">Horas de máquina</label><span class="mono" style="font-weight: 700;">{{phTxt}}</span></div><input id="ph" class="rng" type="range" min="1" max="40" step="1" value="{{ph}}" onChange="{{onPh}}" onInput="{{onPh}}"></div>
+<div style="padding: 16px; border-radius: 18px; background: var(--s1); display: flex; flex-direction: column; gap: 4px;" aria-live="polite">
+<span style="font-size: 13.5px; color: var(--t2);">Pode prometer com segurança</span>
+<span class="disp" style="font-size: 34px; font-weight: 700; line-height: 1.05; color: var(--pt);">{{promise}}</span>
+<span style="font-size: 13px; color: var(--t3);">{{promiseNote}}</span>
+</div>
+<button type="button" class="btn btn-p" style="height: 48px;">Reservar esse horário</button>
+</div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{vBox}}" hint-placeholder-val="{{false}}">
+<section class="card rv" style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="h-box">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><h2 id="h-box" class="h2">Agenda dos boxes · quarta, 14/10</h2><span class="sub">Oficina · hora marcada por box e mecânico. Toque num horário livre para agendar.</span></div>
+<span class="bdg b-ok">2 encaixes livres hoje</span>
+</div>
+<div style="overflow-x: auto;">
+<div style="min-width: 820px; display: grid; grid-template-columns: 60px repeat(4, minmax(0, 1fr)); gap: 8px;">
+<span></span>
+<sc-for list="{{boxes}}" as="b" hint-placeholder-count="4"><span style="display: flex; flex-direction: column; padding: 8px 10px; border-radius: 14px; background: var(--steels);"><span style="font-weight: 700;">{{b.n}}</span><span style="font-size: 12.5px; color: var(--t2);">{{b.m}}</span></span></sc-for>
+<div style="position: relative; height: 600px;">
+<sc-for list="{{hours}}" as="h" hint-placeholder-count="10"><span class="mono" style="position: absolute; left: 0; top: {{h.top}}; font-size: 12px; color: var(--t3); transform: translateY(-50%);">{{h.l}}</span></sc-for>
+</div>
+<sc-for list="{{boxes}}" as="b" hint-placeholder-count="4">
+<div style="position: relative; height: 600px; border-radius: 16px; background: var(--s2); border: 1px solid var(--bd); background-image: linear-gradient(var(--bd) 1px, transparent 1px); background-size: 100% 60px;">
+<sc-for list="{{b.ev}}" as="e" hint-placeholder-count="2">
+<button type="button" class="slot" style="top: {{e.top}}; height: {{e.h}}; background: {{e.bg}}; color: {{e.fg}}; border: {{e.bd}};" aria-label="{{e.aria}}"><span style="display: block; font-weight: 700;">{{e.t}}</span><span style="display: block;">{{e.s}}</span><span class="mono" style="display: block; font-size: 11.5px; opacity: .85;">{{e.hr}}</span></button>
+</sc-for>
+<span style="position: absolute; left: 0; right: 0; top: 150px; height: 3px; background: #E35D14;" aria-hidden="true"></span>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { view: 'carga', order: [0, 1, 2, 3, 4], ct: 'Torno CNC', ph: 8 };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const T = [['carga', 'Carga × capacidade', 'M3 3v18h18M7 16V9M12 16V5M17 16v-4'], ['fila', 'Fila e prazos', 'M3 6h18M3 12h12M3 18h7'], ['box', 'Agenda dos boxes', 'M3 4h18v18H3zM3 10h18M8 2v4M16 2v4']];
+    const tabs = T.map((t) => ({ label: t[1], icon: t[2], cls: st.view === t[0] ? 'on' : '', sel: st.view === t[0] ? 'true' : 'false', pick: () => this.setState({ view: t[0] }) }));
+    const weeks = ['S42 · 12/10', 'S43 · 19/10', 'S44 · 26/10', 'S45 · 02/11', 'S46 · 09/11', 'S47 · 16/11'];
+    const cell = (v) => {
+      if (v === 'X') return { v: 'parada', s: 'spindle', bg: '', fg: '#fff', cls: 'haz', title: 'Máquina parada para manutenção' };
+      const bg = v > 100 ? '#C0352B' : v > 85 ? '#E0A100' : v > 0 ? 'rgba(15,157,118,' + (0.25 + v / 160).toFixed(2) + ')' : 'var(--s3)';
+      const fg = v > 100 ? '#fff' : v > 85 ? '#1E1B16' : v > 50 ? '#06281A' : 'var(--t2)';
+      return { v: v + '%', s: v > 100 ? 'acima' : v > 85 ? 'cheio' : 'folga', bg, fg, cls: '', title: v + '% da capacidade' };
+    };
+    const heat = [
+      ['Torno CNC de entrada', '#1D6FB8', [78, 92, 104, 71, 55, 30]],
+      ['Fresa CNC 01', '#0F9D76', [64, 88, 96, 82, 40, 22]],
+      ['Célula de solda MIG 01', '#E35D14', [85, 97, 110, 90, 60, 35]],
+      ['Centro de usinagem 02', '#7C5CC4', ['X', 'X', 50, 70, 45, 20]],
+      ['Box 3 (elevador)', '#5B6B7F', [70, 75, 60, 40, 20, 10]],
+      ['Box 4', '#5B6B7F', [55, 60, 72, 30, 15, 5]]
+    ].map((r) => ({ n: r[0], c: r[1], cells: r[2].map(cell) }));
+    const days = ['Seg 12', 'Ter 13', 'Qua 14 · hoje', 'Qui 15', 'Sex 16'].map((l, k) => ({ l, c: k === 2 ? 'var(--pt)' : 'var(--t3)' }));
+    const B = (l, w, code, t, kind) => {
+      const K = { done: ['#0F7A55', '#fff'], run: ['#5B3FB5', '#fff'], fila: ['#1A64A8', '#fff'], over: ['#C0352B', '#fff'], man: ['', '#fff'] }[kind];
+      return { l: l + '%', w: w + '%', code, t, bg: K[0], fg: K[1], cls: kind === 'man' ? 'haz' : '', ol: kind === 'over' ? '3px solid #FBE2DF' : 'none' };
+    };
+    const lanes = [
+      { n: 'Torno CNC de entrada', s: '78% · Ricardo', blocks: [B(0.5, 34, 'OS-00038', 'Pino guia Ø12 · concluída', 'done'), B(41, 29, 'OS-00041', 'Bucha H7 · em execução', 'run'), B(71, 28.5, 'OS-00044', 'Eixo Ø45 · em fila', 'fila')] },
+      { n: 'Fresa CNC 01', s: '64% · Luana', blocks: [B(0.5, 38, 'OS-00039', 'Base fresada · concluída', 'done'), B(42, 55, 'OS-00043', 'Placa de fixação · em execução', 'run')] },
+      { n: 'Célula de solda MIG 01', s: '85% · Marcos', blocks: [B(0.5, 58, 'OS-00040', 'Suporte soldado 3/16 · em execução', 'run'), B(60, 39.5, 'OS-00046', 'Estrutura de esteira · 4 h acima', 'over')] },
+      { n: 'Centro de usinagem 02', s: 'parado', blocks: [B(0.5, 99, 'MAN-0012', 'Troca do spindle · volta dia 26/10', 'man')] }
+    ];
+    const Q = [
+      ['OS-2026-00041', 'Bucha de latão H7 (resto do lote)', 'Metalúrgica Vale', 0.4, 4],
+      ['OS-2026-00044', 'Eixo de transmissão Ø45', 'Agro Pampa', 9.5, 2],
+      ['OS-2026-00047', 'Flange SAE 4"', 'Hidráulica Norte', 12, 7],
+      ['OS-2026-00049', 'Pino guia Ø12 · lote 50', 'Estruturas Sul', 6, 3],
+      ['OS-2026-00050', 'Bucha Ø30 em bronze', 'Metalúrgica Vale', 5, 3]
+    ];
+    const DL = ['qua 14/10', 'qui 15/10', 'sex 16/10', 'seg 19/10', 'ter 20/10', 'qua 21/10', 'qui 22/10', 'sex 23/10', 'seg 26/10', 'ter 27/10', 'qua 28/10', 'qui 29/10', 'sex 30/10'];
+    const dayOf = (cum) => cum <= 6 ? 0 : Math.ceil((cum - 6) / 8);
+    let cum = 0, late = 0;
+    const ord = st.order;
+    const move = (i, dir) => () => { const o = ord.slice(); const j = i + dir; if (j < 0 || j >= o.length) return; const t = o[i]; o[i] = o[j]; o[j] = t; this.setState({ order: o }); };
+    const queue = ord.map((qi, i) => {
+      const q = Q[qi];
+      cum += q[3];
+      const d = dayOf(cum), f = q[4] - d;
+      if (f < 0) late++;
+      return { pos: i + 1, code: q[0], name: q[1], cli: q[2], h: q[3].toFixed(1).replace('.', ',') + ' h', fin: DL[d], due: DL[q[4]].split(' ')[1], folga: f < 0 ? 'atrasa ' + (-f) + ' dia' + (f < -1 ? 's' : '') : f === 0 ? 'no limite' : f + ' dia' + (f > 1 ? 's' : '') + ' de folga', cls: f < 0 ? 'b-bad' : f === 0 ? 'b-wa' : 'b-ok', bg: f < 0 ? 'var(--bads)' : 'var(--s1)', up: move(i, -1), down: move(i, 1), first: i === 0, last: i === ord.length - 1 };
+    });
+    const QT = { 'Torno CNC': 32.9, 'Fresa CNC 01': 21.5, 'Solda MIG 01': 38 };
+    const cts = Object.keys(QT).map((label) => ({ label, cls: st.ct === label ? 'on' : '', checked: st.ct === label ? 'true' : 'false', pick: () => this.setState({ ct: label }) }));
+    const pd = dayOf(QT[st.ct] + st.ph) + 1;
+    const promise = (DL[Math.min(pd, DL.length - 1)] || '').replace('seg', 'segunda,').replace('ter', 'terça,').replace('qua', 'quarta,').replace('qui', 'quinta,').replace('sex', 'sexta,');
+    const boxes = [
+      { n: 'Box 1', m: 'Jonas · elevador', ev: [['Fiat Toro · BRA2E19', 'Revisão 40 mil km', 8, 10, 'run'], ['Yamaha Fazer 250', 'Troca de pastilhas', 10.5, 12, 'fila']] },
+      { n: 'Box 2', m: 'Jonas · rampa', ev: [['VW Saveiro · QHT4B21', 'Freios dianteiros', 13, 15.5, 'fila']] },
+      { n: 'Box 3', m: 'Diego · elevador', ev: [['Honda CG 160 · ABC1D23', 'Revisão + kit relação', 14.17, 16, 'run'], ['Encaixe livre', 'Toque para agendar', 16, 18, 'free']] },
+      { n: 'Box 4', m: 'sem mecânico fixo', ev: [['Encaixe livre', 'Diego ou Jonas', 15, 18, 'free']] }
+    ].map((b) => ({ n: b.n, m: b.m, ev: b.ev.map((e) => {
+      const S = { run: ['#5B3FB5', '#fff', 'none'], fila: ['#E0EDFA', '#15395A', '1.5px solid #1A64A8'], free: ['transparent', '#9A3A06', '2px dashed #E35D14'] }[e[4]];
+      const hh = (x) => String(Math.floor(x)).padStart(2, '0') + ':' + String(Math.round((x % 1) * 60)).padStart(2, '0');
+      return { t: e[0], s: e[1], hr: hh(e[2]) + '–' + hh(e[3]), top: ((e[2] - 8) * 60) + 'px', h: ((e[3] - e[2]) * 60 - 6) + 'px', bg: S[0], fg: S[1], bd: S[2], aria: e[0] + ', ' + e[1] + ', ' + hh(e[2]) + ' às ' + hh(e[3]) };
+    }) }));
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map((h) => ({ l: String(h).padStart(2, '0') + 'h', top: ((h - 8) * 60) + 'px' }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+      ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z', true],
+      ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'],
+      ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+      ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      tabs, vCarga: st.view === 'carga', vFila: st.view === 'fila', vBox: st.view === 'box',
+      weeks, heat, days, lanes, queue, hasLate: late > 0, noLate: late === 0, lateTxt: late + (late > 1 ? ' OS vão atrasar' : ' OS vai atrasar'), riskN: late,
+      cts, ph: st.ph, phTxt: st.ph + ' h', onPh: (e) => this.setState({ ph: parseInt(e.target.value, 10) }),
+      promise, promiseNote: 'Fila atual do ' + st.ct + ': ' + String(QT[st.ct]).replace('.', ',') + ' h. Já inclui 1 dia de segurança.',
+      boxes, hours, rail, logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>
