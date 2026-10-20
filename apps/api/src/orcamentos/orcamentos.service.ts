@@ -10,11 +10,18 @@ import { buscarVigente, Db, json, resultadoDe } from '../tabelas-custos/entrada'
 import { semVigente } from '../tabelas-custos/tabelas.service';
 import { promessaDoOrcamento } from '../planejamento/entrada';
 import { prazosDe } from '../financeiro/financeiro-core';
+import { conferirPerda } from '../crm/crm.service';
+import { Perda, ROTULO_MOTIVO, sincronizarOportunidade } from '../crm/crm-core';
+import { notificar } from '../notificacoes/notificacoes-core';
+import { mesclarObjeto } from '../ordens/custo';
+import { EtapaOportunidade } from '@prisma/client';
 import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada, Precificacao } from './calculo';
 import { proximoNumero } from './numeracao';
 import { OrcamentoDto, SimularDto } from './orcamentos.dto';
 
 export const STATUS_ORCAMENTO: StatusOrcamento[] = ['RASCUNHO', 'ENVIADO', 'EM_NEGOCIACAO', 'APROVADO', 'RECUSADO', 'EXPIRADO', 'CONVERTIDO'];
+const ETAPA_DO_STATUS: Partial<Record<StatusOrcamento, EtapaOportunidade>> = { ENVIADO: 'ORCAMENTO_ENVIADO', EM_NEGOCIACAO: 'NEGOCIACAO', APROVADO: 'GANHO', RECUSADO: 'PERDIDO' };
+
 export const ABERTOS: StatusOrcamento[] = ['RASCUNHO', 'ENVIADO', 'EM_NEGOCIACAO'];
 
 const ROTULO: Record<StatusOrcamento, string> = {
@@ -128,6 +135,7 @@ export class OrcamentosService {
           prazoPrometido: dto.prazoPrometido ? new Date(`${dto.prazoPrometido.slice(0, 10)}T00:00:00.000Z`) : null,
           condicaoPagamento: dto.condicaoPagamento?.trim() ?? '',
           vendedorId: dto.vendedorId ?? s.id,
+          objeto: dto.objeto ? json(mesclarObjeto({}, dto.objeto)) : undefined,
           observacoes: dto.observacoes ?? '',
           linhas: json(linhas),
           ...colunasDePrecificacao(p),
@@ -137,6 +145,7 @@ export class OrcamentosService {
       await this.registrar(tx, o, 'criado', s.id);
       return o.id;
     });
+    await this.avisarMargem(s.tenantId, id);
     return this.detalhe(s.tenantId, id);
   }
 
@@ -188,11 +197,13 @@ export class OrcamentosService {
           custoDesatualizado: false,
           ...(dto.condicaoPagamento !== undefined ? { condicaoPagamento: dto.condicaoPagamento.trim() } : {}),
           ...(dto.vendedorId ? { vendedorId: dto.vendedorId } : {}),
+          ...(dto.objeto ? { objeto: json(mesclarObjeto(o.objeto ?? {}, dto.objeto)) } : {}),
           ...(novaVersao ? { versao: o.versao + 1 } : {})
         }
       });
       if (novaVersao) await this.registrar(tx, atualizado, 'nova_versao', s.id, undefined, fotografia(o));
     });
+    await this.avisarMargem(s.tenantId, id);
     return this.detalhe(s.tenantId, id);
   }
 
@@ -233,9 +244,12 @@ export class OrcamentosService {
     return this.mudar(s, o, 'APROVADO', 'aprovado', { aprovadoEm: new Date() });
   }
 
-  async recusar(s: Sessao, id: string, motivo: string) {
+  async recusar(s: Sessao, id: string, dto: { motivo: string; concorrente?: string; precoAceito?: string; observacao?: string }) {
     const o = await this.emStatus(s.tenantId, id, ['ENVIADO', 'EM_NEGOCIACAO'], 'recusar');
-    return this.mudar(s, o, 'RECUSADO', 'recusado', { recusadoEm: new Date(), motivoRecusa: motivo.trim() }, motivo.trim());
+    const perda = { motivo: dto.motivo, concorrente: dto.concorrente, precoAceito: dto.precoAceito !== undefined ? String(dto.precoAceito) : undefined, observacao: dto.observacao };
+    conferirPerda(perda);
+    const texto = `${ROTULO_MOTIVO[dto.motivo] ?? dto.motivo}${dto.concorrente ? ` (${dto.concorrente})` : ''}${dto.observacao?.trim() ? `: ${dto.observacao.trim()}` : ''}`;
+    return this.mudar(s, o, 'RECUSADO', 'recusado', { recusadoEm: new Date(), motivoRecusa: texto }, texto, perda);
   }
 
   async atualizarCustos(s: Sessao, id: string) {
@@ -275,12 +289,27 @@ export class OrcamentosService {
     return this.detalhe(s.tenantId, id);
   }
 
-  private async mudar(s: Sessao, o: Orcamento, status: StatusOrcamento, evento: string, extra: Prisma.OrcamentoUpdateInput = {}, detalhe?: string) {
+  private async mudar(s: Sessao, o: Orcamento, status: StatusOrcamento, evento: string, extra: Prisma.OrcamentoUpdateInput = {}, detalhe?: string, perda?: Perda) {
     await this.prisma.$transaction(async (tx) => {
       const atualizado = await tx.orcamento.update({ where: { id: o.id }, data: { ...extra, status } });
       await this.registrar(tx, atualizado, evento, s.id, detalhe);
+      const etapa = ETAPA_DO_STATUS[status];
+      if (etapa) await sincronizarOportunidade(tx, atualizado, etapa, perda);
     });
     return this.detalhe(s.tenantId, o.id);
+  }
+
+  private async avisarMargem(tenantId: string, id: string) {
+    const o = await this.prisma.orcamento.findUniqueOrThrow({ where: { id } });
+    if (!o.exigeAprovacao || o.margemLiberada) return;
+    await notificar(this.prisma, tenantId, {
+      permissoes: ['orcamento.aprovar_desconto'],
+      tipo: 'ATENCAO',
+      titulo: `Margem a liberar no ${o.numero}`,
+      mensagem: `${o.titulo} ficou com margem de ${pct(tt(o.margemEfetiva))}, abaixo do mínimo de ${pct(tt(o.margemMinima))}. Libere ou peça ajuste antes do envio.`,
+      link: `/orcamentos/${o.id}`,
+      chave: `margem-${o.id}-v${o.versao}-${o.precoFinalLote.toFixed(2)}`
+    });
   }
 
   private registrar(db: Db, o: Orcamento, evento: string, usuarioId?: string, detalhe?: string, snapshot?: unknown) {
@@ -378,6 +407,7 @@ function cabecalho(o: OrcamentoCompleto) {
     validade: dataIso(o.validade),
     prazoPrometido: o.prazoPrometido ? dataIso(o.prazoPrometido) : null,
     custoDesatualizado: o.custoDesatualizado,
+    objeto: o.objeto ? mesclarObjeto(o.objeto) : null,
     condicaoPagamento: o.condicaoPagamento,
     vendedorId: o.vendedorId,
     impostos: tt(o.impostos),

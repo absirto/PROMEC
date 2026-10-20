@@ -11,6 +11,9 @@ import { buscarVigente, Db, json, resultadoDe } from '../tabelas-custos/entrada'
 import { semVigente } from '../tabelas-custos/tabelas.service';
 import { promessaDoOrcamento } from '../planejamento/entrada';
 import { gerarTitulosDaOs } from '../financeiro/financeiro-core';
+import { sincronizarOportunidade } from '../crm/crm-core';
+import { conferirColaboradorNoDia } from '../rh/rh-core';
+import { hojeLocal } from '../planejamento/calendario';
 import { abrirNc, ItemPlano, planoDoSegmento, ultimaVersao } from '../qualidade/qualidade-core';
 import { criarRequisicao } from '../suprimentos/compras.service';
 import { baixarReserva, buscarItem, conferirSaida, liberarReservas, localPreferido, movimentar, reservarDoOrcamento } from '../suprimentos/estoque-core';
@@ -207,7 +210,7 @@ export class OrdensService {
           segmento: o.segmento,
           lote: o.lote,
           prazo: prazoFinal,
-          objeto: json(mesclarObjeto({})),
+          objeto: json(mesclarObjeto(o.objeto ?? {})),
           observacoes: o.observacoes,
           status: 'EM_FILA',
           precoFinalLote: o.precoFinalLote,
@@ -228,6 +231,7 @@ export class OrdensService {
       });
       await reservarDoOrcamento(tx, s.tenantId, os.id, o.linhas as unknown as LinhaOrcamento[], o.lote);
       const convertido = await tx.orcamento.update({ where: { id: o.id }, data: { status: 'CONVERTIDO' } });
+      await sincronizarOportunidade(tx, convertido, 'GANHO');
       await tx.orcamentoHistorico.create({
         data: {
           tenantId: s.tenantId,
@@ -463,6 +467,7 @@ export class OrdensService {
     if (!colaborador) throw naoEncontrado('esse colaborador');
     if (!colaborador.ativo) throw regra('COLABORADOR_INATIVO', `${colaborador.nome} está inativo e não pode apontar horas. Reative o cadastro ou escolha outro operador.`);
     await this.habilitado(s.tenantId, op.centroId, colaborador.id);
+    await conferirColaboradorNoDia(this.prisma, s.tenantId, colaborador.id, op.centroId, hojeLocal());
     const aberto = await this.prisma.apontamento.findFirst({
       where: { tenantId: s.tenantId, colaboradorId: colaborador.id, fim: null },
       include: { os: { select: { id: true, numero: true } }, operacao: { select: { id: true, descricao: true } } }

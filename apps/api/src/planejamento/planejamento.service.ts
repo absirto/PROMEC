@@ -131,9 +131,10 @@ export class PlanejamentoService {
   }
 }
 
-const saidaParada = (p: { id: string; inicio: Date; fim: Date; motivo: string }) => ({
+const saidaParada = (p: { id: string; inicio: Date; fim: Date | null; motivo: string; ordemManutencaoId?: string | null }) => ({
   id: p.id,
   inicio: textoData(p.inicio),
-  fim: textoData(p.fim),
-  motivo: p.motivo
+  fim: p.fim ? textoData(p.fim) : null,
+  motivo: p.motivo,
+  ordemManutencaoId: p.ordemManutencaoId ?? null
 });

@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min, ValidateIf, ValidateNested } from 'class-validator';
 import { Dec } from '../comum/validadores';
 
 export class AlocacaoColaboradorDto {
@@ -21,11 +21,21 @@ export class CriarColaboradorDto {
   @IsOptional() @IsIn(['CLT', 'PJ', 'HORISTA', 'SOCIO'])
   vinculo?: 'CLT' | 'PJ' | 'HORISTA' | 'SOCIO';
 
-  @Dec({ naoNegativo: true })
-  salario: string;
+  @Dec({ naoNegativo: true, opcional: true })
+  salario?: string;
 
   @Dec({ naoNegativo: true, opcional: true })
   encargos?: string;
+
+  @ValidateIf((_, v) => v !== null && v !== undefined)
+  @Dec({ fracao: true })
+  encargosPercentual?: string | null;
+
+  @IsOptional() @IsString()
+  turno?: string | null;
+
+  @IsOptional() @IsArray() @ArrayMaxSize(7) @IsInt({ each: true }) @Min(0, { each: true }) @Max(6, { each: true })
+  diasSemana?: number[];
 
   @Dec({ naoNegativo: true, opcional: true })
   beneficios?: string;

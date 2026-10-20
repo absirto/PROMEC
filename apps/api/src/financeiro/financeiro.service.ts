@@ -15,6 +15,7 @@ import { conflito, invalido, naoEncontrado } from '../comum/erros';
 import { Sessao } from '../comum/sessao';
 import { custoRealDa, incluirOs } from '../ordens/custo';
 import { ParametrosService } from '../parametros/parametros.service';
+import { custoManutencaoPorMes } from '../manutencao/manutencao-core';
 import { dataBanco, hojeLocal, local, segundaDa, somarDias, textoData } from '../planejamento/calendario';
 import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, json } from '../tabelas-custos/entrada';
@@ -655,18 +656,21 @@ export class FinanceiroService {
     for (let c = hojeLocal().slice(0, 7), i = 0; i < meses; c = competenciaAnterior(c), i++) competencias.unshift(c);
     const [centrosCusto, movs] = await Promise.all([
       this.prisma.centroCusto.findMany({ where: { tenantId, custoDiretoCentro: { not: Prisma.DbNull } } }),
-      this.prisma.movimento.findMany({ where: { tenantId, centroId, tipo: 'SAIDA_CENTRO', data: { gte: inicioDaCompetencia(competencias[0]) } } })
+      this.prisma.movimento.findMany({ where: { tenantId, centroId, tipo: 'SAIDA_CENTRO', ordemManutencaoId: null, data: { gte: inicioDaCompetencia(competencias[0]) } } })
     ]);
+    const manutencao = await custoManutencaoPorMes(this.prisma, tenantId, centroId, competencias);
     const meus = centrosCusto.filter((c) => (c.custoDiretoCentro as CustoDireto).centroTrabalhoId === centroId);
     const titulos = await this.prisma.titulo.findMany({
       where: { tenantId, tipo: 'PAGAR', centroCustoId: { in: meus.map((c) => c.id) }, competencia: { in: competencias }, status: { notIn: ['CANCELADO', 'RENEGOCIADO'] } }
     });
+    const componenteDe = (t: Titulo) => (meus.find((c) => c.id === t.centroCustoId)!.custoDiretoCentro as CustoDireto).componente;
     const linhas = competencias.map((competencia) => {
       const v = Object.fromEntries(COMPONENTES.map((k) => [k, dec(0)])) as Record<(typeof COMPONENTES)[number], Dec>;
-      for (const t of titulos.filter((x) => x.competencia === competencia)) {
-        const comp = (meus.find((c) => c.id === t.centroCustoId)!.custoDiretoCentro as CustoDireto).componente;
+      for (const t of titulos.filter((x) => x.competencia === competencia && componenteDe(x) !== 'manutencao')) {
+        const comp = componenteDe(t);
         v[comp] = v[comp].plus(tt(t.valor));
       }
+      v.manutencao = v.manutencao.plus(manutencao.get(competencia)!);
       v.insumos = v.insumos.plus(soma(movs.filter((m) => local(m.data).data.slice(0, 7) === competencia).map((m) => dec(tt(m.valor)).neg())));
       return { competencia, ...Object.fromEntries(COMPONENTES.map((k) => [k, v[k].toFixed(2)])), total: soma(Object.values(v)).toFixed(2) };
     });
@@ -850,7 +854,7 @@ export class FinanceiroService {
   }
 
   private async buscarTitulo(tenantId: string, id: string) {
-    const t = await this.prisma.titulo.findFirst({ where: { id, tenantId }, include: { baixas: { orderBy: { data: 'asc' } } } });
+    const t = await this.prisma.titulo.findFirst({ where: { id, tenantId }, include: { baixas: { orderBy: [{ data: 'asc' }, { criadoEm: 'asc' }, { id: 'asc' }] } } });
     if (!t) throw naoEncontrado('esse título');
     return t;
   }

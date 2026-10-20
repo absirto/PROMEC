@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Aprovar desconto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.45;color:#1E1B16;-webkit-font-smoothing:antialiased;--t2:#4E473D;--t3:#6E6557;--bd:#E2DACD}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.66);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.88);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 -6px 26px rgba(40,30,15,.12)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.lg::before,.lgd::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%);mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;height:56px;border-radius:999px;font-weight:600;font-size:16px}
+.rng{-webkit-appearance:none;appearance:none;width:100%;height:34px;background:transparent;cursor:pointer}
+.rng::-webkit-slider-runnable-track{height:10px;border-radius:99px;background:linear-gradient(90deg,#0F7A55,#E0A100 60%,#C0352B)}
+.rng::-moz-range-track{height:10px;border-radius:99px;background:linear-gradient(90deg,#0F7A55,#E0A100 60%,#C0352B)}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;margin-top:-10px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.rng::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.btn:focus-visible,.rng:focus-visible{outline:3px solid #E35D14;outline-offset:2px}
+.eff{transition:color .4s}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08)}100%{transform:none;opacity:1}}
+.pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.eff{transition:none}}
+</style>
+</helmet>
+<div class="pm stage" style="width: 390px; min-height: 1500px; position: relative; display: flex; flex-direction: column;">
+
+<header style="position: relative; overflow: hidden; background: linear-gradient(150deg, #F08A3E 0%, #E35D14 40%, #1D4E7A 100%); color: #fff; padding: 18px 16px 22px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; justify-content: space-between; align-items: center;"><a href="Mobile-Painel.dc.html" class="lgd" aria-label="Voltar" style="width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></a><span class="mono" style="font-size: 12.5px; color: #FFE2C8;">ORC-2026-00133 · v2</span></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span style="font-size: 13.5px; font-weight: 600; color: #FFE2C8;">Paulo pede sua aprovação</span><h1 class="disp" style="margin: 0; font-size: 34px; font-weight: 700; line-height: 1.02;">12% de desconto para a Estruturas Sul</h1></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px; font-size: 14.5px; display: flex; gap: 12px;"><span style="width: 36px; height: 36px; border-radius: 50%; background: #F5B63D; color: #1E1B16; font-size: 12px; font-weight: 700; display: grid; place-items: center; flex: none;">PH</span><span>“Eles fecharam com outra caldeiraria a 12% menos no mês passado. Se a gente segurar esse cliente, vêm mais 3 esteiras até dezembro.”</span></div>
+</header>
+
+<main style="padding: 16px 14px 40px; display: flex; flex-direction: column; gap: 14px;">
+
+<sc-if value="{{pending}}" hint-placeholder-val="{{true}}">
+<section class="card" style="padding: 18px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="ap-r">
+<h2 id="ap-r" style="margin: 0; font-size: 16px; font-weight: 600;">Suporte soldado chapa 3/16 · 8 unidades</h2>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+<div style="padding: 12px; border-radius: 16px; background: #FBF8F3;"><span style="font-size: 12.5px; color: var(--t3);">Preço cheio</span><span class="mono" style="display: block; font-size: 19px; font-weight: 700;">{{p0}}</span></div>
+<div style="padding: 12px; border-radius: 16px; background: #FBF8F3;"><span style="font-size: 12.5px; color: var(--t3);">Custo do lote</span><span class="mono" style="display: block; font-size: 19px; font-weight: 700;">{{cost}}</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><label for="ap-d" style="font-size: 14.5px; font-weight: 500;">Desconto</label><span class="mono" style="font-size: 22px; font-weight: 700;">{{dTxt}}</span></div>
+<input id="ap-d" class="rng" type="range" min="0" max="15" step="0.5" value="{{d}}" onChange="{{onD}}" onInput="{{onD}}">
+<span style="font-size: 12.5px; color: var(--t3);">Arraste para fazer uma contraproposta</span>
+</div>
+<div aria-live="polite" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 18px; background: {{mBg}}; transition: background-color .4s;">
+<div style="display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 500;">Margem que sobra</span><span class="mono eff" style="font-size: 34px; font-weight: 700; color: {{mC}};">{{mTxt}}</span></div>
+<div style="position: relative; height: 10px; border-radius: 99px; background: linear-gradient(90deg, #C0352B 0 37.5%, #E0A100 37.5% 50%, #0F7A55 50%);"><span style="position: absolute; top: -6px; left: {{mPos}}; width: 6px; height: 22px; margin-left: -3px; border-radius: 3px; background: #1E1B16; box-shadow: 0 0 0 3px #fff; transition: left .3s cubic-bezier(.2,.8,.2,1);"></span></div>
+<span style="font-size: 14px;">Preço final <strong class="mono">{{p}}</strong> · {{mMsg}}</span>
+</div>
+<div style="padding: 12px 14px; border-radius: 16px; background: #E3EDF7; font-size: 13.5px;">Até <strong>8,0%</strong> de desconto a margem fica no mínimo de 15%. A caldeiraria já fechou outubro com 13,9%.</div>
+</section>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<button type="button" class="btn" onClick="{{approve}}" style="background: #0F7A55; color: #fff; box-shadow: 0 8px 20px rgba(15,122,85,.3);"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>{{approveLbl}}</button>
+<button type="button" class="btn" onClick="{{reject}}" style="background: #fff; border: 1.5px solid #CFC4B3; color: #C0352B;">Não aprovar</button>
+</div>
+</sc-if>
+
+<sc-if value="{{decided}}" hint-placeholder-val="{{false}}">
+<section class="card" style="padding: 26px 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;" role="status">
+<span class="pop" style="width: 84px; height: 84px; border-radius: 50%; background: {{resC}}; color: #fff; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" style="width: 42px; height: 42px; stroke-width: 2.5;" aria-hidden="true"><path d="{{resIcon}}"/></svg></span>
+<h2 class="disp" style="margin: 0; font-size: 30px; font-weight: 700; line-height: 1.05;">{{resT}}</h2>
+<p style="margin: 0; color: var(--t2);">{{resS}}</p>
+<span class="mono" style="font-size: 12px; color: var(--t3);">Registrado na trilha de auditoria · 14/10 10:42</span>
+<button type="button" class="btn" onClick="{{undo}}" style="width: 100%; border: 1.5px solid #CFC4B3;">Desfazer</button>
+</section>
+</sc-if>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { d: 12, res: null };
+  }
+  renderVals() {
+    const st = this.state;
+    const f = (x) => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const C = 4763.64, P0 = 6420 / 0.88;
+    const d = st.d / 100;
+    const P = P0 * (1 - d);
+    const m = 0.86 - C / P;
+    const tone = m >= 0.2 ? 'ok' : m >= 0.15 ? 'wa' : 'bad';
+    const T = { ok: ['#DDF3E9', '#0F7A55', 'margem no alvo'], wa: ['#FCEFC7', '#8A5300', 'abaixo do alvo, acima do mínimo'], bad: ['#FBE2DF', '#C0352B', 'abaixo do mínimo de 15%'] }[tone];
+    const counter = st.d !== 12;
+    const R = {
+      ok: ['#0F7A55', 'M20 6 9 17l-5-5', counter ? 'Contraproposta enviada' : 'Desconto aprovado', counter ? 'O Paulo recebeu sua contraproposta de ' + f(st.d).replace(',00', '') + '% e vai levar para a Patrícia.' : 'O Paulo já pode enviar o orçamento para a Estruturas Sul.'],
+      no: ['#C0352B', 'M18 6 6 18M6 6l12 12', 'Desconto não aprovado', 'O Paulo foi avisado e o orçamento volta para ele ajustar.']
+    }[st.res || 'ok'];
+    return {
+      pending: !st.res, decided: !!st.res,
+      p0: 'R$ ' + f(P0), cost: 'R$ ' + f(C), d: st.d, dTxt: f(st.d).replace(',00', ',0').replace(/(,\d)0$/, '$1') + '%', onD: (e) => this.setState({ d: parseFloat(e.target.value) }),
+      p: 'R$ ' + f(P), mTxt: (m * 100).toFixed(1).replace('.', ',') + '%', mBg: T[0], mC: T[1], mMsg: T[2], mPos: Math.max(0, Math.min(100, m / 0.4 * 100)).toFixed(1) + '%',
+      approveLbl: counter ? 'Contrapropor ' + f(st.d).replace(',00', '') + '%' : 'Aprovar 12%',
+      approve: () => this.setState({ res: 'ok' }), reject: () => this.setState({ res: 'no' }), undo: () => this.setState({ res: null }),
+      resC: R[0], resIcon: R[1], resT: R[2], resS: R[3]
+    };
+  }
+}
+</script>
+</body>
+</html>

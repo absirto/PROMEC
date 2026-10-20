@@ -2,13 +2,14 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { competenciaAtual, RE_COMPETENCIA } from '../comum/decimal';
 import { invalido } from '../comum/erros';
-import { Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Sessao, SessaoAtual } from '../comum/sessao';
 import { AtualizarLancamentoDto, CopiarDto, CriarLancamentoDto } from './custo-fixo.dto';
 import { CustoFixoService } from './custo-fixo.service';
 
 @ApiTags('custo-fixo')
 @ApiBearerAuth()
 @Controller('custo-fixo')
+@Modulo('custos')
 export class CustoFixoController {
   constructor(private readonly custoFixo: CustoFixoService) {}
 

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Configurações</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(184,70,10,.3)}
+.btn-p:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.nv{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;width:100%;height:44px;padding:0 14px;border-radius:14px;font-size:14.5px;font-weight:500;color:var(--t2)}
+.nv:hover{background:#fff}
+.nv.on{background:#1E1B16;color:#fff}
+.seg-card{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:22px;border:2px solid var(--bd);background:#fff;transition:border-color .25s,box-shadow .25s,transform .2s}
+.seg-card:hover{transform:translateY(-2px)}
+.seg-card.on{border-color:var(--p);box-shadow:0 0 0 4px var(--ps)}
+.fld{display:flex;align-items:center;gap:8px;height:46px;padding:0 14px;border-radius:14px;background:var(--s2);border:1.5px solid var(--bd2)}
+.fld input{all:unset;flex:1;min-width:0;font:600 15px/1 'IBM Plex Mono',monospace}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;min-height:40px;padding:0 14px;border-radius:999px;border:1.5px solid var(--bd2);background:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center}
+.opt.on{border-color:var(--p);background:var(--ps);color:var(--pt);font-weight:600}
+.tgl{all:unset;box-sizing:border-box;width:46px;height:26px;border-radius:999px;position:relative;cursor:pointer;flex:none;transition:background-color .3s}
+.tgl span{position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .3s cubic-bezier(.2,.8,.2,1)}
+.step{all:unset;box-sizing:border-box;cursor:pointer;flex:1;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;font-size:14px;font-weight:500}
+.btn:focus-visible,.ib:focus-visible,.nv:focus-visible,.seg-card:focus-visible,.fld:focus-within,.opt:focus-visible,.tgl:focus-visible,.step:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.h2{margin:0;font-family:'Barlow Semi Condensed',sans-serif;font-size:28px;line-height:1.1;font-weight:700}
+.sub{font-size:13.5px;color:var(--t3)}
+.lbl{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:6px}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fade{animation:fade .35s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.fade{animation:none}.tgl span{transition:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">Configurações</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600;" aria-current="page">{{secLabel}}</span></nav>
+<a href="Usuarios-Lista.dc.html" class="btn btn-sm">Usuários e perfis</a>
+</header>
+
+<div style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; max-width: 1300px;">
+
+<nav aria-label="Seções de configuração" style="flex: 0 0 240px; position: sticky; top: 84px; display: flex; flex-direction: column; gap: 4px; padding: 10px; border-radius: 24px; background: var(--s3);">
+<sc-for list="{{secs}}" as="s" hint-placeholder-count="6"><button type="button" class="nv {{s.cls}}" aria-current="{{s.cur}}" onClick="{{s.pick}}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{s.icon}}"/></svg>{{s.l}}</button></sc-for>
+</nav>
+
+<main style="flex: 999 1 640px; min-width: 0; display: flex; flex-direction: column; gap: 18px;">
+
+<sc-if value="{{vEmp}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h-emp">
+<div><h2 id="h-emp" class="h2">Empresa e filiais</h2><span class="sub">Dados que aparecem no orçamento, no laudo e no portal do cliente.</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+<label><span class="lbl">Nome que o cliente vê</span><span class="fld"><input value="Usinagem Joinville" style="font-family: 'IBM Plex Sans';"></span></label>
+<label><span class="lbl">CNPJ da matriz</span><span class="fld"><input value="98.765.432/0001-10"></span></label>
+</div>
+<div><span class="lbl">Regime tributário (só para sugerir o percentual de impostos no preço)</span><div style="display: flex; flex-wrap: wrap; gap: 8px;" role="radiogroup" aria-label="Regime tributário"><sc-for list="{{regimes}}" as="o" hint-placeholder-count="3"><button type="button" role="radio" aria-checked="{{o.checked}}" class="opt {{o.cls}}" onClick="{{o.pick}}">{{o.l}}</button></sc-for></div><span style="display: block; font-size: 13px; color: var(--t2); margin-top: 8px;">{{regimeTxt}}</span></div>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span class="lbl" style="margin: 0;">Filiais</span>
+<div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: var(--s2); border: 1px solid var(--bd);"><span style="width: 40px; height: 40px; border-radius: 12px; background: #1D4E7A; color: #fff; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18ZM10 6h4M10 10h4M10 14h4"/></svg></span><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-weight: 600;">Matriz · Joinville</span><span style="font-size: 13px; color: var(--t2);">Usinagem e caldeiraria · Rua das Indústrias, 900</span></span><span class="bdg b-ok">Ativa</span></div>
+<div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: var(--s2); border: 1px solid var(--bd);"><span style="width: 40px; height: 40px; border-radius: 12px; background: #E35D14; color: #fff; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M9 17h6M3 17V9l3-4h8l4 4h2a1 1 0 0 1 1 1v7h-2"/></svg></span><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-weight: 600;">Oficina Centro · Joinville</span><span style="font-size: 13px; color: var(--t2);">Motos e carros · Rua Princesa Isabel, 312</span></span><span class="bdg b-ok">Ativa</span></div>
+<button type="button" class="btn btn-sm" style="align-self: flex-start;">Adicionar filial</button>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vSeg}}" hint-placeholder-val="{{true}}">
+<section class="card fade" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h-seg">
+<div><h2 id="h-seg" class="h2">Perfil de segmento</h2><span class="sub">Decide quais campos, telas e modelos de OS aparecem. Antes de trocar, eu mostro o que muda.</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px;" role="radiogroup" aria-label="Perfil de segmento">
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="4">
+<button type="button" role="radio" aria-checked="{{s.checked}}" class="seg-card {{s.cls}}" onClick="{{s.pick}}">
+<span style="width: 46px; height: 46px; border-radius: 14px; background: {{s.c}}; color: #fff; display: grid; place-items: center;"><svg class="i" viewBox="0 0 24 24" style="width: 24px; height: 24px;" aria-hidden="true"><path d="{{s.icon}}"/></svg></span>
+<span class="disp" style="font-size: 24px; font-weight: 700; line-height: 1;">{{s.l}}</span>
+<span style="font-size: 13px; color: var(--t2);">{{s.d}}</span>
+<sc-if value="{{s.cur}}" hint-placeholder-val="{{false}}"><span class="bdg b-ok" style="align-self: flex-start;">Em uso</span></sc-if>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{segChange}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="border-radius: 22px; overflow: hidden; border: 2px solid #E0A100;">
+<div style="height: 8px; background: repeating-linear-gradient(-45deg, #E0A100 0 10px, #1E1B16 10px 20px);"></div>
+<div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; background: #FFFBF0;">
+<span class="disp" style="font-size: 24px; font-weight: 700;">Antes de trocar para {{segTo}}, veja o que muda</span>
+<sc-for list="{{impact}}" as="m" hint-placeholder-count="4"><div style="display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{m.c}}; color: #fff; display: grid; place-items: center; flex: none; margin-top: 1px;"><svg class="i" viewBox="0 0 24 24" style="width: 13px; height: 13px; stroke-width: 2.5;" aria-hidden="true"><path d="{{m.icon}}"/></svg></span><span>{{m.t}}</span></div></sc-for>
+<span style="font-size: 13.5px; color: var(--t2);">Nada é apagado: o que sair de cena fica arquivado e volta se você mudar de ideia.</span>
+<div style="display: flex; gap: 10px; flex-wrap: wrap;"><button type="button" class="btn" onClick="{{cancelSeg}}">Manter {{segFrom}}</button><button type="button" class="btn btn-p" onClick="{{applySeg}}">Trocar para {{segTo}}</button></div>
+</div>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{vPar}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h-par">
+<div><h2 id="h-par" class="h2">Parâmetros</h2><span class="sub">Os números que o sistema usa quando ninguém informa outro.</span></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+<sc-for list="{{pars}}" as="p" hint-placeholder-count="9"><label><span class="lbl">{{p.l}}</span><span class="fld"><span style="font-size: 13px; color: var(--t3);">{{p.pre}}</span><input value="{{p.v}}" onChange="{{p.change}}"><span style="font-size: 13px; color: var(--t3);">{{p.suf}}</span></span><span style="display: block; font-size: 12px; color: var(--t3); margin-top: 4px;">{{p.h}}</span></label></sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 20px; background: var(--s2); border: 1px solid var(--bd);">
+<span class="lbl" style="margin: 0;">Como formar o preço</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;" role="radiogroup" aria-label="Método de preço"><sc-for list="{{methods}}" as="o" hint-placeholder-count="2"><button type="button" role="radio" aria-checked="{{o.checked}}" class="opt {{o.cls}}" onClick="{{o.pick}}">{{o.l}}</button></sc-for></div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+<div style="padding: 14px; border-radius: 16px; background: #fff; border: 2px solid {{mDivB}};"><span style="font-size: 13px; color: var(--t2);">Divisor · como a planilha</span><span class="mono" style="display: block; font-size: 22px; font-weight: 700;">{{mDiv}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">custo R$ 100 ÷ (1 − {{mPct}})</span></div>
+<div style="padding: 14px; border-radius: 16px; background: #fff; border: 2px solid {{mMkB}};"><span style="font-size: 13px; color: var(--t2);">Markup · multiplicador</span><span class="mono" style="display: block; font-size: 22px; font-weight: 700;">{{mMk}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">custo R$ 100 × (1 + {{mPct}})</span></div>
+</div>
+<span style="font-size: 13.5px; color: var(--t2);">{{mNote}}</span>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vImp}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;" aria-labelledby="h-imp">
+<div><h2 id="h-imp" class="h2">Importar a planilha de precificação</h2><span class="sub">Traga a planilha que vocês já usam. Eu leio as abas, você confere e vira uma Tabela de Custos em rascunho.</span></div>
+<ol style="list-style: none; margin: 0; padding: 4px; display: flex; gap: 4px; border-radius: 20px; background: var(--s3); flex-wrap: wrap;">
+<sc-for list="{{isteps}}" as="s" hint-placeholder-count="4"><li style="flex: 1 1 160px; display: flex;"><button type="button" class="step" onClick="{{s.pick}}" aria-current="{{s.cur}}" style="background: {{s.bg}}; color: {{s.fg}};"><span class="mono" style="width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: {{s.nb}}; color: {{s.nf}}; font-size: 12px; font-weight: 700;">{{s.n}}</span>{{s.l}}</button></li></sc-for>
+</ol>
+<sc-if value="{{i1}}" hint-placeholder-val="{{true}}">
+<div class="fade" style="display: flex; flex-direction: column; gap: 14px;">
+<div style="border: 2px dashed var(--bd2); border-radius: 22px; padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; background: var(--s2);"><svg class="i" viewBox="0 0 24 24" style="width: 40px; height: 40px; color: #0F7A55;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM8 13h8M8 17h8M10 9h4"/></svg><span style="font-weight: 600;">PRECIFICAÇÃO EM USINAGEM.xlsx</span><span style="font-size: 13.5px; color: var(--t2);">Encontrei 4 abas: Custo fixo da fábrica · Custo específico da máquina · Custo final hora · Simulador de preços</span></div>
+<button type="button" class="btn btn-p" style="align-self: flex-end;" onClick="{{iNext}}">Mapear colunas</button>
+</div>
+</sc-if>
+<sc-if value="{{i2}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="display: flex; flex-direction: column; gap: 10px;">
+<sc-for list="{{maps}}" as="m" hint-placeholder-count="7"><div style="display: grid; grid-template-columns: minmax(0, 1.2fr) 30px minmax(0, 1.2fr) 120px; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 14px; background: var(--s2);"><span style="display: flex; flex-direction: column;"><span style="font-weight: 500;">{{m.a}}</span><span class="mono" style="font-size: 12px; color: var(--t3);">{{m.cell}} = {{m.val}}</span></span><svg class="i" viewBox="0 0 24 24" style="color: var(--t3);" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span style="font-weight: 600;">{{m.b}}</span><span class="bdg {{m.cls}}" style="justify-self: end;">{{m.conf}}</span></div></sc-for>
+<button type="button" class="btn btn-p" style="align-self: flex-end;" onClick="{{iNext}}">Ver prévia</button>
+</div>
+</sc-if>
+<sc-if value="{{i3}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="display: flex; flex-direction: column; gap: 12px;">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+<sc-for list="{{prev}}" as="p" hint-placeholder-count="4"><div style="padding: 16px; border-radius: 18px; background: #DDF3E9;"><span style="font-size: 13px; color: var(--t2);">{{p.l}}</span><span class="mono" style="display: block; font-size: 24px; font-weight: 700;">{{p.v}}</span><span style="font-size: 12.5px; color: #0F7A55; font-weight: 600;">igual à planilha</span></div></sc-for>
+</div>
+<span style="font-size: 14px; color: var(--t2);">Os quatro resultados batem com a planilha ao centavo. A energia estava zerada lá também; você pode completar depois em cada máquina.</span>
+<button type="button" class="btn btn-p" style="align-self: flex-end;" onClick="{{iNext}}">Criar a tabela</button>
+</div>
+</sc-if>
+<sc-if value="{{i4}}" hint-placeholder-val="{{false}}">
+<div class="fade" style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 26px; border-radius: 22px; background: #DDF3E9; text-align: center;">
+<svg class="i" viewBox="0 0 24 24" style="width: 44px; height: 44px; color: #0F7A55;" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+<span class="disp" style="font-size: 28px; font-weight: 700;">Pronto! A Tabela 2026-11 foi criada como rascunho</span>
+<span style="color: var(--t2);">3 máquinas, R$ 22.000,00 de custo fixo e 495 h reais. Nada vale nos orçamentos até você publicar.</span>
+<a href="Tabela-Custos.dc.html" class="btn btn-p">Abrir a Tabela de Custos</a>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{vInt}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;" aria-labelledby="h-int">
+<div><h2 id="h-int" class="h2">Integrações e webhooks</h2><span class="sub">Conecte o ProMEC ao que vocês já usam.</span></div>
+<sc-for list="{{ints}}" as="n" hint-placeholder-count="4"><div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: var(--s2); border: 1px solid var(--bd);"><span style="width: 42px; height: 42px; border-radius: 12px; background: {{n.c}}; color: #fff; display: grid; place-items: center; flex: none;"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{n.icon}}"/></svg></span><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-weight: 600;">{{n.t}}</span><span style="font-size: 13px; color: var(--t2);">{{n.s}}</span></span><button type="button" class="tgl" role="switch" aria-checked="{{n.on}}" aria-label="{{n.t}}" onClick="{{n.toggle}}" style="background: {{n.bg}};"><span style="left: {{n.left}};"></span></button></div></sc-for>
+<span class="lbl" style="margin: 8px 0 0;">Webhooks</span>
+<div style="border-radius: 18px; border: 1px solid var(--bd); overflow: hidden;">
+<sc-for list="{{hooks}}" as="h" hint-placeholder-count="3"><div style="display: grid; grid-template-columns: 200px minmax(0, 1fr) 120px; gap: 12px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--bd);"><span class="mono" style="font-size: 13px; font-weight: 600;">{{h.e}}</span><span class="mono" style="font-size: 12.5px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{h.u}}</span><span class="bdg {{h.cls}}" style="justify-self: end;">{{h.s}}</span></div></sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 16px; background: var(--s2);"><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-weight: 600; font-size: 14px;">Chave da API</span><span class="mono" style="font-size: 13px; color: var(--t2);">pm_live_••••••••••••••••3f9a</span></span><button type="button" class="btn btn-sm">Gerar nova chave</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{vAud}}" hint-placeholder-val="{{false}}">
+<section class="card fade" style="padding: 24px; display: flex; flex-direction: column; gap: 14px;" aria-labelledby="h-aud">
+<div><h2 id="h-aud" class="h2">Trilha de auditoria</h2><span class="sub">Quem mudou o quê, quando, e como estava antes.</span></div>
+<sc-for list="{{audit}}" as="a" hint-placeholder-count="5">
+<div style="display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 14px 0; border-top: 1px solid var(--bd);">
+<span style="width: 34px; height: 34px; border-radius: 50%; background: {{a.c}}; color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center;">{{a.ini}}</span>
+<span style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 14.5px;"><strong>{{a.who}}</strong> {{a.what}} <span class="mono" style="font-size: 12px; color: var(--t3);">· {{a.when}}</span></span>
+<span style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;"><span class="mono" style="font-size: 13px; padding: 4px 10px; border-radius: 8px; background: #FBE2DF; color: #C0352B; text-decoration: line-through;">{{a.from}}</span><svg class="i" viewBox="0 0 24 24" style="width: 16px; height: 16px; color: var(--t3);" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span class="mono" style="font-size: 13px; padding: 4px 10px; border-radius: 8px; background: #DDF3E9; color: #0F7A55; font-weight: 600;">{{a.to}}</span></span>
+</span>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+</main>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { sec: 'seg', seg: 'MISTO', pend: null, regime: 'Lucro Presumido', imp: 34, met: 'Divisor', istep: 0, ints: { 0: true, 1: true, 2: false, 3: true }, par: {} };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const f = (x) => x.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const S = [['emp', 'Empresa e filiais', 'M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18ZM10 6h4M10 10h4M10 14h4'], ['seg', 'Perfil de segmento', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'], ['par', 'Parâmetros', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6'], ['imp', 'Importar planilha', 'M12 3v12M7 10l5 5 5-5M5 21h14'], ['int', 'Integrações', 'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7'], ['aud', 'Auditoria', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 6v6l4 2']];
+    const secs = S.map((s) => ({ l: s[1], icon: s[2], cls: st.sec === s[0] ? 'on' : '', cur: st.sec === s[0] ? 'page' : 'false', pick: () => this.setState({ sec: s[0] }) }));
+    const SEG = [['OFICINA', 'Motos e carros: placa, km, checklist com fotos, boxes', '#E35D14', 'M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M9 17h6M3 17V9l3-4h8l4 4h2a1 1 0 0 1 1 1v7h-2'], ['USINAGEM', 'Peças e lotes: desenho, revisão, setup × ciclo, inspeção', '#1D6FB8', 'M4 4h16v16H4zM9 9h6v6H9z'], ['CALDEIRARIA', 'Estruturas: aço por kg, etapas de corte a pintura, solda', '#7C5CC4', 'M13 2 3 14h9l-1 8 10-12h-9l1-8Z'], ['MISTO', 'Tudo junto: o modelo da OS escolhe os campos', '#0F9D76', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z']];
+    const sel = st.pend || st.seg;
+    const segs = SEG.map((s) => ({ l: s[0].charAt(0) + s[0].slice(1).toLowerCase(), d: s[1], c: s[2], icon: s[3], cls: sel === s[0] ? 'on' : '', checked: sel === s[0] ? 'true' : 'false', cur: st.seg === s[0], pick: () => this.setState({ pend: s[0] === st.seg ? null : s[0] }) }));
+    const ok = 'M20 6 9 17l-5-5', wn = 'M12 8v5M12 17h.01';
+    const IMP = {
+      OFICINA: [['212 veículos e a agenda dos boxes continuam como estão', ok, '#0F7A55'], ['O template de usinagem sai do orçamento: 14 orçamentos abertos de usinagem ficam só para consulta', wn, '#E0A100'], ['Desenho, revisão e inspeção dimensional somem das telas', wn, '#E0A100'], ['Torno, fresa e solda saem do rateio: o custo-hora dos boxes sobe para R$ 168,20', wn, '#C0352B']],
+      USINAGEM: [['Desenho, lote e inspeção dimensional continuam como estão', ok, '#0F7A55'], ['212 veículos ficam arquivados e a agenda dos boxes some do menu', wn, '#E0A100'], ['31 OS de oficina deste mês continuam abertas até serem entregues', ok, '#0F7A55'], ['Box 1 e Box 3 saem do rateio: o custo-hora do torno sobe de R$ 117,78 para R$ 126,41', wn, '#C0352B']],
+      CALDEIRARIA: [['Etapas de corte, dobra, solda e pintura passam a ser o modelo padrão', ok, '#0F7A55'], ['Veículos e agenda de boxes ficam arquivados', wn, '#E0A100'], ['Torno e fresa saem do rateio: o custo-hora da solda sobe para R$ 141,30', wn, '#C0352B']],
+      MISTO: [['Todos os campos voltam a aparecer, conforme o tipo de OS', ok, '#0F7A55'], ['Os 3 modelos de orçamento ficam disponíveis', ok, '#0F7A55']]
+    };
+    const impact = st.pend ? IMP[st.pend].map((m) => ({ t: m[0], icon: m[1], c: m[2] })) : [];
+    const cap = (s) => s.charAt(0) + s.slice(1).toLowerCase();
+    const regimes = ['Simples Nacional', 'Lucro Presumido', 'Lucro Real'].map((l) => ({ l, cls: st.regime === l ? 'on' : '', checked: st.regime === l ? 'true' : 'false', pick: () => this.setState({ regime: l }) }));
+    const regimeTxt = { 'Simples Nacional': 'Sugestão: 8,0% em serviços e peças. Ajuste pela faixa do seu contador.', 'Lucro Presumido': 'Sugestão: 14,0% em serviços e 18,0% em peças. Você pode mudar em cada orçamento.', 'Lucro Real': 'Sugestão: 16,5% em serviços e 21,0% em peças. Confirme com o contador.' }[st.regime];
+    const P = [['exp', 'Horas de expediente', '220', '', 'h/mês', '22 dias × 10 h'], ['ef', 'Eficiência padrão', '75,0', '', '%', 'usada em máquina nova'], ['mmin', 'Margem mínima', '15,0', '', '%', 'abaixo disso pede aprovação'], ['malvo', 'Margem alvo', '20,0', '', '%', 'sugerida em todo orçamento'], ['imp', 'Impostos padrão', '14,0', '', '%', 'serviços'], ['com', 'Comissão padrão', '0,0', '', '%', 'vendedor interno'], ['tol', 'Tolerância orçado × real', '5,0', '', '%', 'acima disso fica amarelo'], ['rap', 'Limite do serviço rápido', '800,00', 'R$', '', 'acima disso pede orçamento'], ['val', 'Validade do orçamento', '14', '', 'dias', 'lembrete 2 dias antes']];
+    const pars = P.map((p) => ({ l: p[1], v: p[0] in st.par ? st.par[p[0]] : p[2], pre: p[3], suf: p[4], h: p[5], change: (e) => this.setState({ par: Object.assign({}, st.par, { [p[0]]: e.target.value }) }) }));
+    const num = (s) => parseFloat(String(s).replace(/\./g, '').replace(',', '.')) || 0;
+    const ip = num(st.par.imp != null ? st.par.imp : '14,0'), ma = num(st.par.malvo != null ? st.par.malvo : '20,0'), cm = num(st.par.com != null ? st.par.com : '0,0');
+    const tot = (ip + ma + cm) / 100;
+    const div = tot < 1 ? 100 / (1 - tot) : 0, mk = 100 * (1 + tot);
+    const methods = ['Divisor', 'Markup'].map((l) => ({ l: l === 'Divisor' ? 'Divisor (recomendado)' : 'Markup', cls: st.met === l ? 'on' : '', checked: st.met === l ? 'true' : 'false', pick: () => this.setState({ met: l }) }));
+    const realM = (p) => (1 - tot + ma / 100 - 100 / p * 1) ;
+    const mkMargin = 1 - (ip + cm) / 100 - 100 / mk;
+    const IS = ['Enviar a planilha', 'Mapear colunas', 'Conferir a prévia', 'Criar a tabela'];
+    const isteps = IS.map((l, i) => ({ l, n: i < st.istep ? '✓' : i + 1, cur: i === st.istep ? 'step' : 'false', bg: i === st.istep ? '#fff' : 'transparent', fg: i <= st.istep ? '#1E1B16' : '#6E6557', nb: i < st.istep ? '#0F7A55' : i === st.istep ? '#E35D14' : '#fff', nf: i <= st.istep ? '#fff' : '#6E6557', pick: () => this.setState({ istep: Math.min(i, st.istep) }) }));
+    const maps = [['Custo fixo total (aba 1)', 'B22', 'R$ 22.000,00', 'Custo fixo mensal', 'certeza', 'b-ok'], ['Nº de máquinas produtivas', 'B24', '3', 'Centros no rateio', 'certeza', 'b-ok'], ['Horas de expediente', 'B25', '220', 'Expediente por centro', 'certeza', 'b-ok'], ['Eficiência', 'B26', '75%', 'Eficiência por centro', 'certeza', 'b-ok'], ['Salário bruto do operador (aba 2)', 'C5', 'R$ 5.000,00', 'Mão de obra · Torno CNC', 'confira', 'b-wa'], ['Depreciação (valor ÷ 60)', 'C9', 'R$ 2.500,00', 'Aquisição R$ 150.000 · 60 meses', 'certeza', 'b-ok'], ['Energia elétrica', 'C10', 'R$ 0,00', 'Energia · deixar para depois', 'vazio na planilha', 'b-neu']].map((m) => ({ a: m[0], cell: m[1], val: m[2], b: m[3], conf: m[4], cls: m[5] }));
+    const prev = [['Taxa de rateio', 'R$ 44,44/h'], ['Custo específico', 'R$ 73,33/h'], ['Custo-hora cheio', 'R$ 117,78/h'], ['Preço da hora (34%)', 'R$ 178,45']].map((p) => ({ l: p[0], v: p[1] }));
+    const I = [['WhatsApp do cliente', 'Envia orçamento, avisos de OS e lembretes de revisão', '#0F9D76', 'M7.9 20A9 9 0 1 0 4 16.1L2 22Z'], ['E-mail', 'Orçamentos, laudos e boletos saem por noreply@usinagemjoinville.com.br', '#1D6FB8', 'M4 4h16v16H4zM4 6l8 7 8-7'], ['Exportar para a contabilidade', 'Arquivo mensal de contas a pagar e receber (sem apuração fiscal)', '#7C5CC4', 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8ZM8 13h8M8 17h8'], ['Banco: conciliação por extrato', 'Lê o OFX e sugere as baixas do contas a receber', '#E0A100', 'M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6']];
+    const ints = I.map((n, i) => { const on = !!st.ints[i]; return { t: n[0], s: n[1], c: n[2], icon: n[3], on: String(on), bg: on ? '#0F7A55' : '#CFC4B3', left: on ? '23px' : '3px', toggle: () => this.setState({ ints: Object.assign({}, st.ints, { [i]: !on }) }) }; });
+    const hooks = [['orcamento.aprovado', 'https://hooks.usinagemjoinville.com.br/crm/aprovado', 'Funcionando', 'b-ok'], ['os.concluida', 'https://hooks.usinagemjoinville.com.br/expedicao', 'Funcionando', 'b-ok'], ['estoque.minimo', 'https://hooks.usinagemjoinville.com.br/compras', 'Falhou 2 vezes', 'b-bad']].map((h) => ({ e: h[0], u: h[1], s: h[2], cls: h[3] }));
+    const audit = [['MC', '#E35D14', 'Marina Costa', 'mudou a eficiência do Torno CNC de entrada', 'hoje 08:12', '75,0%', '71,2%'], ['SA', '#0F9D76', 'Simone Araújo', 'reclassificou a energia das máquinas', 'ontem 17:40', 'compõe custo fixo', 'custo direto de máquina'], ['PH', '#E0A100', 'Paulo Henrique', 'mudou o desconto do ORC-2026-00128', 'ontem 15:02', '0,0%', '5,0%'], ['MC', '#E35D14', 'Marina Costa', 'publicou a Tabela de Custos', '01/10 09:30', '2026-09 vigente', '2026-10 vigente'], ['MC', '#E35D14', 'Marina Costa', 'mudou o perfil do Diego Souza', '28/09 11:15', 'Recepção', 'Produção / Técnico']].map((a) => ({ ini: a[0], c: a[1], who: a[2], what: a[3], when: a[4], from: a[5], to: a[6] }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['BI', 'M3 3v18h18M18 17V9M13 17V5M8 17v-3'], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', true]
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      secs, secLabel: S.find((s) => s[0] === st.sec)[1], rail,
+      vEmp: st.sec === 'emp', vSeg: st.sec === 'seg', vPar: st.sec === 'par', vImp: st.sec === 'imp', vInt: st.sec === 'int', vAud: st.sec === 'aud',
+      segs, segChange: !!st.pend, impact, segTo: st.pend ? cap(st.pend) : '', segFrom: cap(st.seg),
+      cancelSeg: () => this.setState({ pend: null }), applySeg: () => this.setState({ seg: st.pend, pend: null }),
+      regimes, regimeTxt, pars, methods,
+      mPct: f(tot * 100).replace(',00', '') + '%', mDiv: tot < 1 ? 'R$ ' + f(div) : '—', mMk: 'R$ ' + f(mk),
+      mDivB: st.met === 'Divisor' ? '#E35D14' : 'transparent', mMkB: st.met === 'Markup' ? '#E35D14' : 'transparent',
+      mNote: st.met === 'Divisor' ? 'Com o divisor, impostos e margem saem de dentro do preço: sobra exatamente a margem que você pediu.' : 'Cuidado: com markup, a margem real fica em ' + f(mkMargin * 100) + '%, não nos ' + f(ma) + '% que parece. É por isso que a planilha usa o divisor.',
+      isteps, i1: st.istep === 0, i2: st.istep === 1, i3: st.istep === 2, i4: st.istep === 3, iNext: () => this.setState({ istep: Math.min(3, st.istep + 1) }),
+      maps, prev, ints, hooks, audit, logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

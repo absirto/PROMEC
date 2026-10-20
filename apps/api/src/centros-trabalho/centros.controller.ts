@@ -2,13 +2,14 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RE_COMPETENCIA } from '../comum/decimal';
 import { invalido } from '../comum/erros';
-import { Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Sessao, SessaoAtual } from '../comum/sessao';
 import { AtualizarCentroDto, CriarCentroDto } from './centros.dto';
 import { CentrosService } from './centros.service';
 
 @ApiTags('centros-trabalho')
 @ApiBearerAuth()
 @Controller('centros-trabalho')
+@Modulo('cadastros')
 export class CentrosController {
   constructor(private readonly centros: CentrosService) {}
 

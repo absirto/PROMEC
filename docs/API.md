@@ -585,3 +585,334 @@ Também ganha alertas de título vencido, de caixa negativo previsto e de custo 
   - pagamentos de setembro para a DRE e o comparativo;
   - comissões de outubro de Paulo (3%).
 - **Números que não podem mudar**: 117,78/h, bucha R$ 793,27, OS-41 com 4,35 h e 11,3%.
+
+## Usuários e permissões, CRM e portal do cliente (fase 1g)
+
+### Usuários, perfis e permissões
+
+O controle de acesso passa a ser por perfil e permissão, sem papel fixo. Toda checagem é feita no backend.
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/usuarios?q=&ativo=` | `{ itens: [{ id, nome, email, perfil: { id, nome }, ativo, ultimoAcesso, colaboradorId }], total }` |
+| POST | `/usuarios` | `{ nome, email, perfilId, colaboradorId? }`. Gera uma senha provisória mostrada uma única vez (`senhaProvisoria`). No primeiro login, `trocarSenha: true` |
+| GET | `/usuarios/:id` | detalhe |
+| PATCH | `/usuarios/:id` | `{ nome?, perfilId?, ativo? }` |
+| POST | `/usuarios/:id/redefinir-senha` | nova senha provisória |
+| GET | `/usuarios/opcoes` | `[{ id, nome }]` de usuários ativos, sem exigir permissão de administração (para vendedor, responsável de NC etc.) |
+| POST | `/auth/trocar-senha` | `{ senhaAtual, novaSenha }`. Mínimo 10 caracteres, com número, maiúscula e minúscula → 422 `SENHA_FRACA` |
+| GET | `/perfis` | `[{ id, nome, padrao, permissoes: string[], usuarios: n }]` |
+| POST | `/perfis` | cria perfil |
+| PATCH | `/perfis/:id` | perfis padrão não mudam de nome |
+| GET | `/permissoes` | catálogo `[{ chave, modulo, descricao, sensivel }]` |
+
+- **Formato das chaves**: `<modulo>.visualizar` e `<modulo>.gerenciar`. Gerenciar inclui visualizar.
+- **Módulos**:
+  - `painel`
+  - `orcamentos`
+  - `os`
+  - `planejamento`
+  - `agenda`
+  - `operador`
+  - `custos`
+  - `cadastros`
+  - `estoque`
+  - `compras`
+  - `qualidade`
+  - `financeiro`
+  - `crm`
+  - `usuarios`
+  - `configuracoes`
+- **Permissões sensíveis**:
+  - `custo.ver_custo_hora`
+  - `orcamento.editar_margem`
+  - `orcamento.aprovar_desconto`
+  - `custo.publicar_tabela`
+  - `os.cancelar`
+  - `financeiro.estornar`
+  - `compras.aprovar_pedido`
+- **Perfis padrão do seed**:
+  - Administrador (tudo)
+  - Gerente (tudo menos `usuarios.gerenciar`)
+  - Orçamentista
+  - Produção/Técnico
+  - Compras
+  - Financeiro
+  - Recepção
+- **Migração dos papéis antigos**: `ADMIN` vira Administrador, `GESTOR` vira Gerente, `ORCAMENTISTA` vira Orçamentista e `OPERADOR` vira Produção/Técnico.
+- **Retrocompatibilidade**: `GET /auth/me` passa a trazer `perfil` e `permissoes`. Mantém `papel`, derivado do perfil.
+- **Respostas**:
+  - Sem permissão → 403 `SEM_PERMISSAO`, com `detalhes.permissao`.
+  - Sem `custo.ver_custo_hora`, os campos de custo-hora vêm `null` e a resposta traz `mascarado: true`. Isso vale para tabelas de custos, `custoHoraVigente` dos centros, `custoHora` e `rateioHora` das linhas e operações e a `explicacao` de custo-hora. Preço e margem do orçamento continuam visíveis para quem tem `orcamentos.visualizar`.
+- **Auditoria**: `GET /auditoria?entidade=&entidadeId=&usuarioId=&de=&ate=` → `{ itens: [{ data, usuario, entidade, entidadeId, acao, antes, depois }], total }`.
+  - Registra criar, alterar, excluir e ações de estado em custos, orçamentos, OS, estoque, financeiro, usuários e perfis.
+  - Pode reaproveitar os históricos que já existem.
+- **Notificações in-app**:
+  - `GET /notificacoes?naoLidas=true` → `{ itens: [{ id, tipo: 'INFO' | 'ATENCAO' | 'ERRO' | 'SUCESSO', titulo, mensagem, link, lida, data }], naoLidas }`.
+  - `POST /notificacoes/:id/ler`.
+  - `POST /notificacoes/ler-todas`.
+  - Geradas pelos eventos:
+    - orçamento aprovado no portal
+    - OS parada há mais de 4 h
+    - estouro de horas
+    - estoque abaixo do mínimo
+    - título vencido
+    - Tabela de Custos desatualizada
+    - pedido de ajuste no portal
+    - margem a liberar
+  - O alvo são os usuários com permissão no módulo.
+
+### CRM
+
+**Oportunidades**
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/crm/oportunidades?etapa=&responsavelId=&q=` | `{ itens: [{ id, titulo, cliente: { id, nome } \| null, contato, origem, etapa, valorEstimado, responsavel, orcamentoId, proximaAtividade, atualizadoEm }], total, funil: { LEAD: { quantidade, valor }, … } }` |
+| POST | `/crm/oportunidades` | cria |
+| PATCH | `/crm/oportunidades/:id` | edita |
+| POST | `/crm/oportunidades/:id/mover` | `{ etapa }` |
+| POST | `/crm/oportunidades/:id/perder` | `{ motivo, concorrente?, precoAceito?, observacao? }` |
+
+- `etapa`: `LEAD` · `CONTATO` · `ORCAMENTO_ENVIADO` · `NEGOCIACAO` · `GANHO` · `PERDIDO`.
+- `origem`: `INDICACAO` · `SITE` · `WHATSAPP` · `TELEFONE` · `VISITA` · `RECORRENTE` · `OUTRO`.
+- `motivo`: `PRECO` · `PRAZO` · `CONCORRENTE` · `DESISTENCIA` · `OUTRO`. Quando for `PRECO`, `precoAceito` é obrigatório → 422 `PRECO_ACEITO_OBRIGATORIO`.
+- **Integração com o orçamento**:
+  - Enviar o orçamento cria a oportunidade (ou atualiza a que já existe para aquele cliente e orçamento) na etapa `ORCAMENTO_ENVIADO`.
+  - Negociar move para `NEGOCIACAO`.
+  - Aprovar move para `GANHO`.
+  - Recusar move para `PERDIDO`. O `POST /orcamentos/:id/recusar` passa a aceitar `{ motivo, concorrente?, precoAceito?, observacao }`, com as mesmas regras.
+
+**Atividades**
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/crm/atividades?responsavelId=&de=&ate=&pendentes=true` | lista |
+| POST | `/crm/atividades` | `{ tipo: 'LIGACAO' \| 'VISITA' \| 'MENSAGEM' \| 'EMAIL' \| 'TAREFA', assunto, data, clienteId?, oportunidadeId?, orcamentoId?, responsavelId, observacao? }` |
+| PATCH | `/crm/atividades/:id` | edita |
+| POST | `/crm/atividades/:id/concluir` | `{ resultado, proximoPasso?: { tipo, data, assunto } }` cria a próxima atividade |
+
+**Automação**: a rotina diária cria uma atividade de follow-up para o vendedor em dois casos:
+- orçamento `ENVIADO` sem resposta há 3 dias;
+- orçamento que vence em 2 dias.
+
+Não duplica atividades.
+
+**Ficha 360°** — `GET /clientes/:id/ficha` → `{ cliente, resumo: { orcamentos, taxaConversao, valorAprovado12m, margemMedia, ticketMedio, ultimaInteracao }, orcamentos, os, titulos: { abertos, vencidos }, veiculos (placas das OS de oficina), ncs, garantias, atividades, oportunidades, mensagens }`.
+
+**Indicadores**: `GET /crm/indicadores?meses=6` → taxa de conversão por vendedor e por segmento, motivos de perda (quantidade e valor), média de `precoAceito` ÷ preço ofertado, ciclo médio em dias.
+
+### Portal do cliente
+
+O portal fica em rotas públicas, sem login, sob `/portal`. O acesso é por token assinado com expiração (padrão: validade do orçamento + 30 dias; OS: até 90 dias depois da entrega).
+- O token só dá acesso ao recurso a que se refere.
+- Há rate limit por IP: 30 req/min → 429 `MUITAS_TENTATIVAS`.
+- Token inválido ou vencido → 401 `LINK_INVALIDO`, com mensagem para pedir um novo link.
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| POST | `/orcamentos/:id/link-portal` | interno; gera ou renova o link → `{ url, expiraEm, whatsapp: "https://wa.me/55…?text=…", email: { assunto, corpo } }` com texto na voz do produto. Grava a mensagem no histórico do cliente |
+| POST | `/ordens-servico/:id/link-portal` | interno; idem para acompanhar a OS |
+| GET | `/portal/orcamento/:token` | ver o orçamento |
+| POST | `/portal/orcamento/:token/aprovar` | aceite digital |
+| POST | `/portal/orcamento/:token/ajuste` | pedido de ajuste |
+| GET | `/portal/os/:token` | acompanhar a OS |
+| POST | `/portal/os/:token/avaliacao` | NPS |
+
+**`GET /portal/orcamento/:token`** traz só o que o cliente pode ver:
+- empresa (nome, logo, telefone);
+- número e título;
+- cliente e contato;
+- objeto (desenho e revisão, material, ou placa e veículo);
+- lote;
+- `precoFinalLote`, `precoFinalUnitario`, desconto em R$ e %;
+- resumo da composição em 3 grupos com valores de venda proporcionais ao preço final: material e peças, mão de obra e máquina (operações, mão de obra e setup), terceiros e frete;
+- curva de lote (10/50/100, com o mesmo desconto);
+- prazo prometido, condição de pagamento, validade e dias restantes;
+- vendedor (nome e telefone);
+- status.
+
+Nunca expõe custo, custo-hora, margem, impostos ou a explicação interna.
+
+**`POST /portal/orcamento/:token/aprovar`** recebe `{ nome, aceite: true }` e grava o aceite: nome, IP, user-agent e data/hora.
+- Depois aprova o orçamento: reserva capacidade, converte em OS automaticamente e notifica o vendedor.
+- Responde `{ os: { numero, prazo }, aceite }`.
+- Orçamento vencido → 409 `ORCAMENTO_VENCIDO`.
+- Orçamento já aprovado → 409 `JA_APROVADO`, com os dados do aceite.
+- Margem que exige liberação e não foi liberada → o envio já é bloqueado; aqui nunca acontece.
+
+**`POST /portal/orcamento/:token/ajuste`** recebe `{ nome, mensagem }`.
+- Move o orçamento para `EM_NEGOCIACAO`.
+- Cria uma atividade para o vendedor.
+- Gera uma notificação.
+
+**`GET /portal/os/:token`** traz:
+- status em linguagem simples;
+- etapas (aprovado → material separado → na máquina → inspeção → pronto / entregue), com datas;
+- peças prontas / lote;
+- prazo e se está no prazo;
+- responsável (primeiro nome e função);
+- títulos da OS (número, vencimento, valor, status), sem dados bancários;
+- laudo disponível quando entregue.
+
+**`POST /portal/os/:token/avaliacao`** recebe `{ nota: 0..10, comentario? }`. Só depois da entrega, uma vez por OS.
+
+**NPS** aparece na ficha do cliente e em `GET /crm/indicadores` (`nps`: promotores − detratores, em %).
+
+### Seed
+
+- **Perfis padrão** e usuários:
+  - Marina (Gerente)
+  - Paulo (Orçamentista)
+  - **Carla Mendes** (Financeiro), `carla@usinagemjoinville.com.br`
+  - **Ricardo Lima** (Produção/Técnico, ligado ao colaborador)
+
+  Todos com a senha `SEED_SENHA`.
+- **Oportunidades** em todas as etapas, incluindo:
+  - 2 perdidas, uma por preço com `precoAceito`;
+  - atividades pendentes para Paulo.
+- **Links de portal** válidos:
+  - para o ORC-2026-00128;
+  - para a OS-2026-00041;
+  - uma avaliação NPS na OS-37.
+- **Notificações** variadas, não lidas, para Marina.
+- **Números que não podem mudar**: 117,78/h, bucha R$ 793,27, OS-41 com 4,35 h e 11,3%.
+
+## Manutenção de ativos e RH operacional (fase 1h)
+
+Os cálculos usam o `@promec/motor`: `mediaMovel`, `indicadoresManutencao`, `situacaoPreventiva`, `compararSubstituicao`, `disponibilidadeNoMes`, `custoColaborador`, `produtividade`, `fatorPresenca`, e o `planejar`, que ganhou `reducoes` por dia no calendário do centro.
+
+Princípios do módulo:
+- Custo de manutenção é sempre custo direto do centro, nunca custo fixo.
+- Planejamento e Motor de Custos leem a mesma disponibilidade.
+
+### Manutenção
+
+**Planos** — `GET|POST /manutencao/planos` · `PATCH /manutencao/planos/:id`.
+
+```json
+{ "id": "…", "centroId": "…", "centroNome": "Torno CNC de entrada", "nome": "Preventiva 500 h — lubrificação e folgas",
+  "tipo": "HORAS", "intervaloHoras": "500", "intervaloDias": null, "duracaoHoras": "4",
+  "checklist": ["Trocar óleo do cabeçote", "Verificar folga do carro", "Limpar barramento"],
+  "ultimaExecucao": "2026-08-12", "horasDesdeUltima": "352.5", "ativo": true,
+  "situacao": { "situacao": "ok", "falta": "147.5", "proximaData": null, "progresso": "0.705" } }
+```
+
+- `tipo` é `HORAS` ou `CALENDARIO`.
+- `horasDesdeUltima` é a soma das horas apontadas nas OS do centro desde a última execução. É o contador de uso, e zera quando o plano é executado.
+
+**Ordens de manutenção**
+
+| Método | Rota | Observação |
+| --- | --- | --- |
+| GET | `/manutencao/ordens?status=&centroId=&tipo=` | lista |
+| POST | `/manutencao/ordens` | cria |
+| GET | `/manutencao/ordens/:id` | detalhe |
+| PATCH | `/manutencao/ordens/:id` | altera |
+| POST | `/manutencao/ordens/:id/iniciar` | |
+| POST | `/manutencao/ordens/:id/concluir` | `{ checklist: [{ item, ok }], observacao, horasParado }` |
+| POST | `/manutencao/ordens/:id/cancelar` | `{ motivo }` |
+
+```json
+{ "id": "…", "numero": "OM-2026-00007", "centroId": "…", "tipo": "PREVENTIVA", "origem": "PLANO", "planoId": "…",
+  "execucao": "INTERNA", "fornecedorId": null, "descricao": "…", "prevista": "2026-10-27", "inicio": null, "fim": null,
+  "status": "ABERTA", "bloqueiaAgenda": true,
+  "custos": [{ "id": "…", "tipo": "PECA", "descricao": "…", "itemId": "…", "quantidade": "1", "valor": "180.00" },
+             { "tipo": "MAO_DE_OBRA", "colaboradorId": "…", "horas": "4", "valor": "149.09" },
+             { "tipo": "TERCEIRO", "fornecedorId": "…", "valor": "650.00" }],
+  "custoTotal": "979.09", "horasParado": null, "osAfetadas": [{ "id": "…", "numero": "OS-2026-00041" }] }
+```
+
+- **Valores aceitos**:
+  - `tipo`: `PREVENTIVA` · `CORRETIVA`
+  - `execucao`: `INTERNA` · `EXTERNA`
+  - `status`: `ABERTA` · `EM_EXECUCAO` · `CONCLUIDA` · `CANCELADA`
+- **Custos da ordem** — `POST /manutencao/ordens/:id/custos` · `DELETE /manutencao/ordens/:id/custos/:custoId`.
+  - `PECA` baixa do estoque ao custo médio (`SAIDA_CENTRO`).
+  - `MAO_DE_OBRA` usa o custo-hora do colaborador (`custoColaborador`).
+  - `TERCEIRO` com fornecedor gera título a pagar.
+  - Todos lançam custo direto do centro no componente `manutencao`, e aparecem em `/centros-trabalho/:id/historico-custos`.
+- **Corretiva** (quebra) — `POST /manutencao/quebras { centroId, descricao, inicio }` cria a ordem corretiva já `EM_EXECUCAO` e uma `ParadaCentro` aberta desde `inicio`. Também registra uma ocorrência `QUEBRA` nas OS com apontamento aberto ou operação em andamento naquele centro: pausa a OS com motivo `QUEBRA`, notifica e lista em `osAfetadas`. Ao concluir, a parada fecha em `fim` e `horasParado` é gravado.
+- **Preventiva**: a ordem `bloqueiaAgenda` cria a `ParadaCentro` do dia previsto.
+  - A rotina diária gera a ordem quando o plano fica `proxima` ou `vencida`, sem duplicar a ordem aberta.
+  - A data `prevista` é sugerida com `planejar`: o dia útil de menor carga do centro nos próximos 10 dias.
+  - Concluir uma ordem de plano grava `ultimaExecucao` e zera o contador.
+
+**Indicadores** — `GET /manutencao/indicadores?centroId=&meses=6` devolve, por centro:
+- `indicadoresManutencao` (MTBF, MTTR, disponibilidade, custo por hora produzida);
+- custo de manutenção por mês;
+- `mediaMovel` de 6 e 12 meses;
+- valor no cadastro do centro e diferença;
+- alerta quando o custo médio passa em mais de 30% a média da categoria (mesmo `tipo`), com `compararSubstituicao` contra um ativo novo de mesmo valor.
+
+**Proposta ao Motor de Custos** — `GET /manutencao/proposta?competencia=` devolve, por centro, a manutenção média proposta e as horas disponíveis reais (veja RH).
+- `POST /manutencao/proposta/aceitar { centros: [{ centroId, manutencao?, horasExpediente? }] }`: atualiza o cadastro do centro, o que já marca a Tabela vigente como desatualizada.
+- Exige `custos.gerenciar`.
+
+### RH operacional
+
+**Colaborador** — passa a ter:
+- `encargosPercentual` (opcional), `jornadaHoras`, `turno`, `diasSemana`;
+- `custoMensal` e `custoHora` calculados por `custoColaborador` com as horas disponíveis do mês corrente;
+- `parametros.encargosPorVinculo` com padrão `{ "CLT": "0.64", "HORISTA": "0.64", "PJ": "0", "SOCIO": "0" }`, usado quando `encargos` não vem em valor.
+- O seed mantém 5.000 + 3.200 nos operadores. Os números canônicos não mudam.
+
+**Ausências** — `GET /rh/ausencias?colaboradorId=&de=&ate=` · `POST /rh/ausencias` · `PATCH|DELETE /rh/ausencias/:id`.
+- Campos: `{ colaboradorId, tipo: 'FERIAS' | 'AFASTAMENTO' | 'TREINAMENTO' | 'FALTA' | 'FOLGA', inicio, fim, observacao }`.
+- Sobreposição com outra ausência do mesmo colaborador → 409 `AUSENCIA_SOBREPOSTA`.
+- **Efeito no planejamento e na agenda**: nos dias úteis ausentes, cada centro em que o colaborador está alocado recebe `reducoes` com `fatorPresenca` (alocação dos presentes ÷ total).
+  - A agenda da oficina recusa o mecânico ausente → 422 `COLABORADOR_AUSENTE`.
+  - O apontamento recusa operador ausente no dia → 422 `COLABORADOR_AUSENTE`.
+
+**Habilitações** — `GET /rh/habilitacoes?vencendo=30` · `POST /rh/habilitacoes` · `PATCH|DELETE /rh/habilitacoes/:id`.
+- Campos: `{ colaboradorId, centroId, descricao: "Certificação de solda MIG", emissao, validade, documento? }`.
+- Matriz: `GET /rh/habilitacoes/matriz` → `{ colaboradores, centros, celulas: [{ colaboradorId, centroId, alocacao, habilitacao: { validade, situacao: 'ok' | 'vencendo' | 'vencida' } | null }] }`.
+- **Regras**:
+  - Alocação num centro exige habilitação válida no centro → senão 422 `SEM_HABILITACAO`.
+  - Quando a habilitação vence, o apontamento e a agenda recusam o colaborador → 422 `HABILITACAO_VENCIDA`.
+  - Para não quebrar os dados atuais, o seed cria habilitações válidas para todos os pares já alocados.
+
+**Disponibilidade** — `GET /rh/disponibilidade?competencia=2026-11`.
+- Por colaborador: `{ jornada, diasUteis, diasAusente, horasDisponiveis, ausencias }`, de `disponibilidadeNoMes` com os feriados do tenant.
+- Por centro: `{ horasExpedienteCadastro, horasDisponiveisReais }`. As horas reais são a soma das horas dos operadores × alocação; centros sem operador usam o cadastro.
+
+**Produtividade** — `GET /rh/produtividade?meses=3`, por colaborador e por centro:
+- horas apontadas, horas disponíveis, `produtividade` (fração por mês e `recalibrar`);
+- refugo e retrabalho do período.
+- Quando `recalibrar`, notifica `custos.gerenciar`.
+
+**Comissões e variáveis**: a ficha do colaborador ligado a um usuário vendedor mostra as comissões do Financeiro (somente leitura).
+
+### Permissões
+
+- Módulos novos: `manutencao` e `rh`.
+- Sensível nova: `rh.ver_salario`. Sem ela, salário, encargos, benefícios e custo do colaborador vêm `null` com `mascarado: true`.
+- Perfis padrão:
+  - Gerente e Administrador: tudo.
+  - Produção/Técnico: `manutencao.gerenciar` e `rh.visualizar`, sem salário.
+  - Financeiro: `rh.visualizar` + `rh.ver_salario`.
+
+### Painel
+
+`GET /painel` ganha `manutencao: { preventivasProximas, ordensAbertas, centrosParados, disponibilidadeMedia }` e `rh: { ausentesHoje, habilitacoesVencendo }`, com alertas.
+
+### Seed
+
+**Manutenção**:
+- Planos:
+  - Torno: preventiva de 500 h, em 352,5 h.
+  - Fresa: calendário de 90 dias, `proxima`.
+  - Box 3: elevador, inspeção a cada 30 dias.
+- Uma ordem preventiva aberta para a Fresa.
+- Uma corretiva concluída no Torno em setembro: R$ 979,09, com 6 h paradas.
+- Histórico de custos de 6 meses, coerente com 700/mês no Torno.
+
+**RH**:
+- Férias do Anderson (CU-02) na segunda semana de novembro. O planejamento mostra a queda de capacidade.
+- Um treinamento do Jonas.
+- Habilitações:
+  - para todos os pares alocados;
+  - a "Certificação NR-12" do Diego vencendo em 20 dias;
+  - uma vencida de um colaborador sem alocação.
+
+**Números que não podem mudar**: 117,78/h, bucha R$ 793,27, OS-41 com 4,35 h e 11,3%.

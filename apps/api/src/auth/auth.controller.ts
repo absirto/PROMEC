@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Publico, Sessao, SessaoAtual } from '../comum/sessao';
+import { Publico, SemPermissao, Sessao, SessaoAtual } from '../comum/sessao';
 import { LoginDto } from './auth.dto';
 import { AuthService } from './auth.service';
 
@@ -17,6 +17,7 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
+  @SemPermissao()
   @Get('me')
   me(@SessaoAtual() s: Sessao) {
     return this.auth.me(s.id);

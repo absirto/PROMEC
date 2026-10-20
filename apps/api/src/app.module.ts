@@ -11,6 +11,13 @@ import { AgendaModule } from './agenda/agenda.module';
 import { PainelModule } from './painel/painel.module';
 import { PlanejamentoModule } from './planejamento/planejamento.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
+import { AcessoModule } from './acesso/acesso.module';
+import { AuditoriaModule } from './auditoria/auditoria.controller';
+import { CrmModule } from './crm/crm.controller';
+import { NotificacoesModule } from './notificacoes/notificacoes.controller';
+import { PortalModule } from './portal/portal.controller';
+import { ManutencaoModule } from './manutencao/manutencao.controller';
+import { RhModule } from './rh/rh.controller';
 import { QualidadeModule } from './qualidade/qualidade.module';
 import { SuprimentosModule } from './suprimentos/suprimentos.module';
 import { ParametrosModule } from './parametros/parametros.module';
@@ -35,6 +42,13 @@ import { TabelasModule } from './tabelas-custos/tabelas.module';
     SuprimentosModule,
     QualidadeModule,
     FinanceiroModule,
+    AcessoModule,
+    AuditoriaModule,
+    NotificacoesModule,
+    CrmModule,
+    PortalModule,
+    ManutencaoModule,
+    RhModule,
     PainelModule
   ]
 })

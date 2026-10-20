@@ -6,6 +6,9 @@ import { regra } from '../comum/erros';
 import { proximoNumero } from '../orcamentos/numeracao';
 import { dataBanco, hojeLocal, local, somarDias, textoData } from '../planejamento/calendario';
 import { Db } from '../tabelas-custos/entrada';
+import { criarFollowUps } from '../crm/crm-core';
+import { notificacoesDaRotina, notificar } from '../notificacoes/notificacoes-core';
+import { gerarPreventivas } from '../manutencao/manutencao-core';
 
 export const ABERTOS = ['ABERTO', 'PARCIAL'] as const;
 export const reaisTxt = (v: Prisma.Decimal | string | number) => dec(typeof v === 'object' ? tt(v) : v).toFixed(2);
@@ -326,8 +329,26 @@ export async function rotinaDiaria(db: Db, tenantId: string) {
     where: { tenantId, id: { in: ids }, status: 'ATIVO', OR: [{ liberadoAte: null }, { liberadoAte: { lt: dataBanco(hoje) } }] }
   });
   for (const c of bloquear) await db.cliente.update({ where: { id: c.id }, data: { status: 'BLOQUEADO', bloqueioAutomatico: true } });
+  const followUps = await criarFollowUps(db, tenantId);
+  const preventivas = await gerarPreventivas(db, tenantId);
+  const vencendo = await db.habilitacao.findMany({ where: { tenantId, validade: { gte: dataBanco(hoje), lte: dataBanco(somarDias(hoje, 30)) } } });
+  for (const h of vencendo) {
+    const c = await db.colaborador.findUnique({ where: { id: h.colaboradorId }, select: { nome: true } });
+    await notificar(db, tenantId, {
+      permissoes: ['rh.visualizar'],
+      tipo: 'ATENCAO',
+      titulo: `Habilitação vencendo: ${c?.nome ?? 'colaborador'}`,
+      mensagem: `${h.descricao} vence em ${textoData(h.validade).split('-').reverse().join('/')}. Agende a renovação para não travar o apontamento.`,
+      link: '/rh/habilitacoes?vencendo=30',
+      chave: `habilitacao-${h.id}-${textoData(h.validade)}`
+    });
+  }
+  const notificacoes = await notificacoesDaRotina(db, tenantId);
   await db.parametros.update({ where: { tenantId }, data: { rotinaExecutadaEm: dataBanco(hoje) } });
   return {
+    followUps,
+    preventivas,
+    notificacoes,
     recorrenciasGeradas,
     clientesBloqueados: bloquear.map((c) => ({ id: c.id, nome: c.nome })),
     alertas: bloquear.map((c) => ({

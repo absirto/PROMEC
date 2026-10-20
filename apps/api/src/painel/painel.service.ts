@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { dec, precoDaHora, reais, soma, txt } from '@promec/motor';
 import { tt } from '../comum/decimal';
 import { custoRealDa, incluirOs } from '../ordens/custo';
-import { hojeLocal, dataBanco } from '../planejamento/calendario';
+import { hojeLocal, dataBanco, somarDias } from '../planejamento/calendario';
 import { saldosDosItens } from '../suprimentos/itens.service';
 import { Sessao } from '../comum/sessao';
 import { ABERTOS, expirarVencidos } from '../orcamentos/orcamentos.service';
@@ -11,6 +11,7 @@ import { OrdensService } from '../ordens/ordens.service';
 import { ParametrosService } from '../parametros/parametros.service';
 import { PlanejamentoService } from '../planejamento/planejamento.service';
 import { FinanceiroService } from '../financeiro/financeiro.service';
+import { ManutencaoService } from '../manutencao/manutencao.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { buscarVigente, resultadoDe } from '../tabelas-custos/entrada';
 
@@ -33,7 +34,8 @@ export class PainelService {
     private readonly parametros: ParametrosService,
     private readonly ordens: OrdensService,
     private readonly planejamento: PlanejamentoService,
-    private readonly financeiro: FinanceiroService
+    private readonly financeiro: FinanceiroService,
+    private readonly manutencao: ManutencaoService
   ) {}
 
   private async suprimentos(tenantId: string) {
@@ -61,6 +63,18 @@ export class PainelService {
       ncsAbertas,
       custoNaoQualidadeMes: reais(txt(soma(ordens.map((o) => dec(custoRealDa(o).custoNaoQualidade))))),
       garantiasAbertas
+    };
+  }
+
+  private async rh(tenantId: string) {
+    const hoje = dataBanco(hojeLocal());
+    const [ausentes, vencendo] = await Promise.all([
+      this.prisma.ausencia.findMany({ where: { tenantId, inicio: { lte: hoje }, fim: { gte: hoje } }, distinct: ['colaboradorId'], select: { colaboradorId: true } }),
+      this.prisma.habilitacao.count({ where: { tenantId, validade: { gte: hoje, lte: dataBanco(somarDias(hojeLocal(), 30)) } } })
+    ]);
+    return {
+      resumo: { ausentesHoje: ausentes.length, habilitacoesVencendo: vencendo },
+      alertas: vencendo ? [{ tipo: 'atencao' as const, mensagem: `${vencendo} habilitação(ões) vencem nos próximos 30 dias. Agende as renovações.`, link: '/rh/habilitacoes?vencendo=30' }] : []
     };
   }
 
@@ -116,7 +130,8 @@ export class PainelService {
         link: '/orcamentos?status=RASCUNHO'
       });
     }
-    alertas.push(...planejado.alertas, ...financeiro.alertas);
+    const [manutencao, rh] = await Promise.all([this.manutencao.resumoPainel(tenantId), this.rh(tenantId)]);
+    alertas.push(...planejado.alertas, ...financeiro.alertas, ...manutencao.alertas, ...rh.alertas);
     const [suprimentos, qualidade, desatualizados] = await Promise.all([
       this.suprimentos(tenantId),
       this.qualidade(tenantId),
@@ -172,6 +187,8 @@ export class PainelService {
       suprimentos,
       qualidade,
       financeiro: financeiro.resumo,
+      manutencao: manutencao.resumo,
+      rh: rh.resumo,
       centros: (resultado?.centros ?? []).map((c) => ({
         id: c.id,
         nome: c.nome,

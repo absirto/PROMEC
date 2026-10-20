@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, MinLength, ValidateNested } from 'class-validator';
+import { IsArray, IsDateString, IsObject, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, MinLength, ValidateNested } from 'class-validator';
 import { Dec } from '../comum/validadores';
 import { TIPOS_LINHA } from './calculo';
 
@@ -78,6 +78,9 @@ export class SimularDto {
   @IsOptional() @IsString()
   vendedorId?: string;
 
+  @IsOptional() @IsObject()
+  objeto?: Record<string, unknown>;
+
   @IsArray() @ValidateNested({ each: true }) @Type(() => LinhaDto)
   linhas: LinhaDto[];
 }
@@ -96,6 +99,15 @@ export class LiberarMargemDto {
 }
 
 export class RecusarDto {
-  @IsString() @IsNotEmpty()
-  motivo: string;
+  @IsIn(['PRECO', 'PRAZO', 'CONCORRENTE', 'DESISTENCIA', 'OUTRO'])
+  motivo: 'PRECO' | 'PRAZO' | 'CONCORRENTE' | 'DESISTENCIA' | 'OUTRO';
+
+  @IsOptional() @IsString()
+  concorrente?: string;
+
+  @Dec({ naoNegativo: true, opcional: true })
+  precoAceito?: string;
+
+  @IsOptional() @IsString()
+  observacao?: string;
 }

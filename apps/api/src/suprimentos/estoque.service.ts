@@ -235,7 +235,7 @@ export class EstoqueService {
     const ate = new Date(`${mes === 12 ? ano + 1 : ano}-${String(mes === 12 ? 1 : mes + 1).padStart(2, '0')}-01T00:00:00-03:00`);
     const [centros, g] = await Promise.all([
       this.prisma.centroTrabalho.findMany({ where: { tenantId, status: { not: 'desativado' } }, orderBy: [{ criadoEm: 'asc' }, { codigo: 'asc' }] }),
-      this.prisma.movimento.groupBy({ by: ['centroId'], where: { tenantId, tipo: 'SAIDA_CENTRO', data: { gte: de, lt: ate } }, _sum: { valor: true } })
+      this.prisma.movimento.groupBy({ by: ['centroId'], where: { tenantId, tipo: 'SAIDA_CENTRO', ordemManutencaoId: null, data: { gte: de, lt: ate } }, _sum: { valor: true } })
     ]);
     return centros.map((c) => {
       const consumido = D(g.find((x) => x.centroId === c.id)?._sum.valor).neg();

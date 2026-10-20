@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Papeis, Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Permissao, Sessao, SessaoAtual } from '../comum/sessao';
 import { ConsumoDto } from '../suprimentos/estoque.dto';
 import {
   AtualizarCustoDto,
@@ -22,6 +22,7 @@ import { OrdensService } from './ordens.service';
 @ApiTags('ordens-servico')
 @ApiBearerAuth()
 @Controller('ordens-servico')
+@Modulo('os')
 export class OrdensController {
   constructor(private readonly ordens: OrdensService) {}
 
@@ -66,12 +67,14 @@ export class OrdensController {
     return this.ordens.removerOperacao(s, id, opId);
   }
 
+  @Permissao('os.gerenciar', 'operador.gerenciar')
   @Post(':id/operacoes/:opId/iniciar')
   @HttpCode(200)
   iniciar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Param('opId') opId: string, @Body() dto: IniciarDto) {
     return this.ordens.iniciar(s, id, opId, dto);
   }
 
+  @Permissao('os.gerenciar', 'operador.gerenciar')
   @Post(':id/operacoes/:opId/parar')
   @HttpCode(200)
   parar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Param('opId') opId: string, @Body() dto: PararDto) {
@@ -93,28 +96,33 @@ export class OrdensController {
     return this.ordens.removerCusto(s, id, custoId);
   }
 
+  @Permissao('os.gerenciar', 'estoque.gerenciar', 'operador.gerenciar')
   @Post(':id/consumos')
   consumir(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: ConsumoDto) {
     return this.ordens.consumir(s, id, dto);
   }
 
+  @Permissao('os.gerenciar', 'estoque.gerenciar')
   @Delete(':id/consumos/:movimentoId')
   estornarConsumo(@SessaoAtual() s: Sessao, @Param('id') id: string, @Param('movimentoId') movimentoId: string) {
     return this.ordens.estornarConsumo(s, id, movimentoId);
   }
 
+  @Permissao('os.gerenciar', 'operador.gerenciar')
   @Post(':id/pausar')
   @HttpCode(200)
   pausar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: PausarDto) {
     return this.ordens.pausar(s, id, dto);
   }
 
+  @Permissao('os.gerenciar', 'operador.gerenciar')
   @Post(':id/retomar')
   @HttpCode(200)
   retomar(@SessaoAtual() s: Sessao, @Param('id') id: string) {
     return this.ordens.retomar(s, id);
   }
 
+  @Permissao('os.gerenciar', 'qualidade.gerenciar')
   @Post(':id/inspecao')
   @HttpCode(200)
   inspecao(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: InspecaoDto) {
@@ -127,7 +135,7 @@ export class OrdensController {
     return this.ordens.entregar(s, id, dto);
   }
 
-  @Papeis('GESTOR', 'ADMIN')
+  @Permissao('os.cancelar')
   @Post(':id/cancelar')
   @HttpCode(200)
   cancelar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: CancelarDto) {
@@ -141,16 +149,19 @@ export class OrdensController {
 export class ChaoDeFabricaController {
   constructor(private readonly ordens: OrdensService) {}
 
+  @Permissao('orcamentos.gerenciar')
   @Post('orcamentos/:id/converter')
   converter(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: ConverterDto) {
     return this.ordens.converter(s, id, dto.prazo);
   }
 
+  @Permissao('operador.visualizar', 'os.visualizar')
   @Get('apontamentos/abertos')
   abertos(@SessaoAtual() s: Sessao, @Query('colaboradorId') colaboradorId?: string) {
     return this.ordens.apontamentosAbertos(s.tenantId, colaboradorId);
   }
 
+  @Permissao('operador.visualizar', 'os.visualizar')
   @Get('operador/fila')
   fila(@SessaoAtual() s: Sessao, @Query('colaboradorId') colaboradorId?: string) {
     return this.ordens.fila(s.tenantId, colaboradorId);

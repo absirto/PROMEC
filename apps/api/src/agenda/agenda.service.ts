@@ -7,6 +7,7 @@ import { conflito, invalido, naoEncontrado, regra } from '../comum/erros';
 import { Sessao } from '../comum/sessao';
 import { proximoNumero } from '../orcamentos/numeracao';
 import { mesclarObjeto } from '../ordens/custo';
+import { conferirColaboradorNoDia } from '../rh/rh-core';
 import { planoDoSegmento } from '../qualidade/qualidade-core';
 import { ParametrosService } from '../parametros/parametros.service';
 import { dataBanco, diaDaSemana, hojeLocal, inicioDoDia, lerHorario, local, somarDias } from '../planejamento/calendario';
@@ -214,10 +215,11 @@ export class AgendaService {
     if (!centro.diasSemana.includes(diaDaSemana(ini.data))) throw fora(`${centro.nome} não trabalha em ${dataBr(ini.data)}.`);
     const [feriado, parada] = await Promise.all([
       this.prisma.feriado.findFirst({ where: { tenantId, data: dataBanco(ini.data) } }),
-      this.prisma.paradaCentro.findFirst({ where: { tenantId, centroId: centro.id, inicio: { lte: dataBanco(ini.data) }, fim: { gte: dataBanco(ini.data) } } })
+      this.prisma.paradaCentro.findFirst({ where: { tenantId, centroId: centro.id, inicio: { lte: dataBanco(ini.data) }, OR: [{ fim: null }, { fim: { gte: dataBanco(ini.data) } }] } })
     ]);
     if (feriado) throw fora(`${dataBr(ini.data)} é feriado (${feriado.descricao}).`);
     if (parada) throw fora(`${centro.nome} está parado em ${dataBr(ini.data)} (${parada.motivo}).`);
+    if (a.colaboradorId) await conferirColaboradorNoDia(this.prisma, tenantId, a.colaboradorId, centro.id, ini.data);
 
     const candidatos = await this.prisma.agendamento.findMany({
       where: {

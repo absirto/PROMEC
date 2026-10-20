@@ -6,3 +6,4 @@ export * from './custo-real.js';
 export * from './planejamento.js';
 export * from './suprimentos.js';
 export * from './financeiro.js';
+export * from './manutencao-rh.js';

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ProMEC · Manutenção e RH</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9A3A06}a:hover{color:#6E2804}
+.pm{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:#1E1B16;-webkit-font-smoothing:antialiased;--s2:#FBF8F3;--s3:#F1ECE4;--bd:#E2DACD;--bd2:#CFC4B3;--t2:#4E473D;--t3:#6E6557;--p:#E35D14;--pf:#B8460A;--ps:#FDE8DA;--pt:#9A3A06;--sh1:0 1px 2px rgba(40,30,15,.06),0 4px 14px rgba(40,30,15,.06)}
+.pm *{box-sizing:border-box}
+.disp{font-family:'Barlow Semi Condensed','IBM Plex Sans',sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.stage{background-color:#F2EEE7;background-image:linear-gradient(rgba(60,45,25,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(60,45,25,.06) 1px,transparent 1px);background-size:24px 24px}
+.lg{position:relative;background:rgba(255,255,255,.62);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border:1px solid rgba(255,255,255,.85);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 36px rgba(40,30,15,.14)}
+.lgd{position:relative;background:rgba(255,255,255,.14);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);border:1px solid rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.side{position:relative;background:linear-gradient(180deg,rgba(35,92,143,.9),rgba(21,57,90,.94));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 16px 40px rgba(15,35,60,.28)}
+.lg::before,.lgd::before,.side::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(155deg,rgba(255,255,255,.45),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 75%,rgba(255,255,255,.14));mix-blend-mode:soft-light}
+.card{background:#fff;border:1px solid var(--bd);border-radius:22px;box-shadow:var(--sh1)}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bdg{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1}
+.b-ok{color:#0F7A55;background:#DDF3E9}.b-wa{color:#8A5300;background:#FCEFC7}.b-bad{color:#C0352B;background:#FBE2DF}.b-inf{color:#1A64A8;background:#E0EDFA}.b-run{color:#5B3FB5;background:#ECE6FB}.b-neu{color:#6B6458;background:#ECE7DF}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:999px;font:600 14px/1 'IBM Plex Sans',sans-serif;border:1px solid var(--bd2);background:#fff;color:#1E1B16;cursor:pointer;white-space:nowrap;text-decoration:none}
+.btn:hover{color:#1E1B16;box-shadow:var(--sh1)}
+.btn-p{background:var(--pf);border-color:transparent;color:#fff}
+.btn-p:hover{color:#fff}
+.btn-sm{height:34px;font-size:13px;padding:0 14px}
+.ib{all:unset;box-sizing:border-box;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#C7D5E4;cursor:pointer}
+.tab{all:unset;box-sizing:border-box;height:44px;padding:0 20px;border-radius:999px;font-size:15px;font-weight:500;color:var(--t2);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+.tab.on{background:#1E1B16;color:#fff}
+.btn:focus-visible,.ib:focus-visible,.tab:focus-visible{outline:3px solid var(--p);outline-offset:2px}
+.h3{margin:0;font-size:17px;font-weight:600}
+.sub{font-size:13px;color:var(--t3)}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.rv{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.grow{transform-origin:left;animation:grow .8s cubic-bezier(.2,.8,.2,1) both .1s}
+@keyframes growY{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.gy{transform-box:fill-box;transform-origin:bottom;animation:growY .7s cubic-bezier(.2,.8,.2,1) both}
+@media (prefers-reduced-motion:reduce){.rv,.grow,.gy{animation:none}}
+</style>
+</helmet>
+<div class="pm stage" style="min-height: 100vh; display: flex; flex-wrap: wrap; align-items: flex-start;">
+
+<div style="flex: 0 0 92px; padding: 12px 0 12px 12px;">
+<nav class="side" aria-label="Navegação principal (recolhida)" style="border-radius: 26px; min-height: calc(100vh - 24px); padding: 14px 0; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #E35D14; color: #fff; margin-bottom: 14px;"><svg class="i" viewBox="0 0 24 24" style="width: 22px; height: 22px;" aria-hidden="true"><path d="{{logoGear}}"/><circle cx="12" cy="12" r="3"/></svg></div>
+<sc-for list="{{rail}}" as="r" hint-placeholder-count="9"><a href="#" class="ib" aria-label="{{r.label}}" title="{{r.label}}" aria-current="{{r.cur}}" style="background: {{r.bg}}; color: {{r.fg}};"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"/></svg></a></sc-for>
+</nav>
+</div>
+
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column;">
+<header class="lg" style="position: sticky; top: 12px; z-index: 5; margin: 12px clamp(12px, 2vw, 20px) 0; border-radius: 999px; padding: 6px 8px 6px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+<nav aria-label="Trilha" style="display: flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--t3); flex: 1 1 240px;"><a href="#" style="color: var(--t3); text-decoration: none;">Ativos e Pessoas</a><svg class="i" viewBox="0 0 24 24" style="width: 14px; height: 14px;" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span style="color: #1E1B16; font-weight: 600;" aria-current="page">{{crumb}}</span></nav>
+<div role="tablist" aria-label="Área" style="display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--s3);"><sc-for list="{{tabs}}" as="t" hint-placeholder-count="2"><button type="button" role="tab" aria-selected="{{t.sel}}" class="tab {{t.cls}}" onClick="{{t.pick}}" style="height: 36px; font-size: 14px;">{{t.l}}</button></sc-for></div>
+</header>
+
+<main style="padding: 20px clamp(12px, 2vw, 20px) 72px; display: flex; flex-direction: column; gap: 18px; max-width: 1300px; width: 100%;">
+
+<sc-if value="{{vMan}}" hint-placeholder-val="{{true}}">
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: linear-gradient(135deg, #0F9D76 0%, #0B6E54 40%, #15395A 100%); color: #fff; padding: clamp(22px, 3vw, 30px);">
+<svg viewBox="0 0 300 200" aria-hidden="true" style="position: absolute; right: 20px; top: 10px; width: min(360px, 36%); height: auto;" fill="none" stroke="rgba(255,255,255,.32)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="{{gearM}}"/><circle cx="110" cy="100" r="22"/><path d="M190 160l60-60a14 14 0 1 1 20 20l-60 60M184 166l-10 10" stroke="#FFD08A"/></svg>
+<div style="position: relative; display: flex; flex-direction: column; gap: 14px; max-width: 760px;">
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.2vw, 52px); font-weight: 700; line-height: 1;">Máquina boa é máquina cuidada</h1>
+<p style="margin: 0; font-size: 16px; color: #DDF3E9;">O torno chega a 500 h na semana que vem e pede troca de óleo do cabeçote. O spindle da Usinagem 02 volta dia 26/10.</p>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Preventivas no prazo</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">92%</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">MTBF do torno</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">410 h</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">MTTR médio</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">3,2 h</span></div>
+<div class="lgd" style="border-radius: 20px; padding: 14px 16px;"><span style="font-size: 13px; color: #DDF3E9;">Gasto em outubro</span><span class="mono" style="display: block; font-size: 28px; font-weight: 600;">R$ 10.940</span></div>
+</div>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 18px;">
+<section class="card rv" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-plan">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><h2 id="h-plan" class="h3">Planos preventivos</h2><button type="button" class="btn btn-sm">Novo plano</button></div>
+<sc-for list="{{plans}}" as="p" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 16px; background: var(--s2); border: 1px solid var(--bd);">
+<span style="display: flex; justify-content: space-between; gap: 8px; align-items: center;"><span style="display: flex; flex-direction: column;"><span style="font-weight: 600;">{{p.t}}</span><span style="font-size: 12.5px; color: var(--t3);">{{p.ct}} · {{p.base}}</span></span><span class="bdg {{p.cls}}">{{p.st}}</span></span>
+<span style="height: 10px; border-radius: 99px; background: var(--s3); overflow: hidden;"><span class="grow" style="display: block; height: 100%; width: {{p.w}}; background: {{p.c}}; border-radius: 99px;"></span></span>
+<span class="mono" style="font-size: 12.5px; color: var(--t2);">{{p.prog}}</span>
+</div>
+</sc-for>
+</section>
+
+<section class="card rv" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px;" aria-labelledby="h-cost">
+<div style="display: flex; flex-direction: column;"><h2 id="h-cost" class="h3">Custo de manutenção · Torno CNC</h2><span class="sub">Barras: gasto real de cada mês. Linha: média móvel de 6 meses.</span></div>
+<svg viewBox="0 0 460 200" role="img" aria-label="Gastos de manutenção do torno de maio a outubro com média móvel subindo para 812 reais" style="width: 100%; height: auto;">
+<line x1="40" x2="450" y1="170" y2="170" stroke="#CFC4B3"/><line x1="40" x2="450" y1="100" y2="100" stroke="#E2DACD"/><line x1="40" x2="450" y1="30" y2="30" stroke="#E2DACD"/>
+<text x="0" y="174" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">0</text><text x="0" y="104" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">700</text><text x="0" y="34" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">1.400</text>
+<line x1="40" x2="450" y1="100" y2="100" stroke="#A3AEC0" stroke-width="2" stroke-dasharray="6 4"/><text x="448" y="94" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">tabelado R$ 700</text>
+<sc-for list="{{mcost}}" as="m" hint-placeholder-count="6"><rect class="gy" x="{{m.x}}" y="{{m.y}}" width="40" height="{{m.h}}" rx="6" fill="#0F9D76" opacity=".8"/><text x="{{m.xm}}" y="188" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#6E6557">{{m.l}}</text></sc-for>
+<polyline points="{{mavg}}" fill="none" stroke="#E35D14" stroke-width="3" stroke-linejoin="round"/>
+</svg>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 14px 16px; border-radius: 16px; background: #FDE8DA;">
+<span style="flex: 1 1 240px; font-size: 14px;">A média real é <strong class="mono">R$ 812,00</strong> por mês, R$ 112,00 acima do tabelado. Mandar a proposta para o rascunho de novembro?</span>
+<sc-if value="{{notSent}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-sm btn-p" onClick="{{send}}">Propor ao Motor de Custos</button></sc-if>
+<sc-if value="{{sent}}" hint-placeholder-val="{{false}}"><span class="bdg b-ok">Enviado para a Marina aprovar</span></sc-if>
+</div>
+</section>
+</div>
+
+<section class="card rv" style="overflow: hidden;" aria-labelledby="h-om">
+<div style="padding: 18px 20px 8px;"><h2 id="h-om" class="h3">Ordens de manutenção</h2></div>
+<div style="overflow-x: auto;">
+<table style="width: 100%; min-width: 860px; border-collapse: collapse; font-size: 14.5px;">
+<thead><tr style="text-align: left; font-size: 12.5px; color: var(--t3); background: var(--s2);"><th scope="col" style="padding: 12px;">Ordem</th><th scope="col" style="padding: 12px;">Máquina</th><th scope="col" style="padding: 12px;">Tipo</th><th scope="col" style="padding: 12px;">O quê</th><th scope="col" style="padding: 12px; text-align: right;">Parada</th><th scope="col" style="padding: 12px; text-align: right;">Custo</th><th scope="col" style="padding: 12px;">Situação</th></tr></thead>
+<tbody><sc-for list="{{oms}}" as="o" hint-placeholder-count="5"><tr style="border-top: 1px solid var(--bd);"><td class="mono" style="padding: 12px; font-weight: 700;">{{o.c}}</td><td style="padding: 12px;">{{o.m}}</td><td style="padding: 12px;"><span class="bdg {{o.tc}}">{{o.t}}</span></td><td style="padding: 12px; font-size: 13.5px; color: var(--t2);">{{o.d}}</td><td class="mono" style="padding: 12px; text-align: right;">{{o.h}}</td><td class="mono" style="padding: 12px; text-align: right; font-weight: 600;">{{o.v}}</td><td style="padding: 12px;"><span class="bdg {{o.sc}}">{{o.s}}</span></td></tr></sc-for></tbody>
+</table>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{vRh}}" hint-placeholder-val="{{false}}">
+<section class="rv" style="position: relative; overflow: hidden; border-radius: 30px; background: linear-gradient(135deg, #2A6AA3 0%, #1D4E7A 45%, #15395A 100%); color: #fff; padding: clamp(22px, 3vw, 30px);">
+<div style="position: relative; display: flex; flex-direction: column; gap: 14px; max-width: 760px;">
+<h1 class="disp" style="margin: 0; font-size: clamp(38px, 4.2vw, 52px); font-weight: 700; line-height: 1;">A equipe de hoje</h1>
+<p style="margin: 0; font-size: 16px; color: #D3E0EE;">12 pessoas na fábrica, o Jonas de férias até domingo e uma habilitação vencida que impede o Marcos de soldar estrutura.</p>
+</div>
+</section>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 18px;">
+<section class="card rv" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px;" aria-labelledby="h-hab">
+<h2 id="h-hab" class="h3">Habilitações</h2>
+<sc-for list="{{habs}}" as="h" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; background: {{h.bg}};"><span style="width: 34px; height: 34px; border-radius: 50%; background: {{h.c}}; color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center;">{{h.ini}}</span><span style="display: flex; flex-direction: column; min-width: 0;"><span style="font-weight: 600;">{{h.n}} · {{h.hab}}</span><span class="mono" style="font-size: 12.5px; color: var(--t2);">{{h.val}}</span></span><sc-if value="{{h.act}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-sm">Agendar curso</button></sc-if><sc-if value="{{h.okv}}" hint-placeholder-val="{{true}}"><span class="bdg b-ok">Em dia</span></sc-if></div></sc-for>
+</section>
+<section class="card rv" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px;" aria-labelledby="h-prod">
+<div style="display: flex; flex-direction: column;"><h2 id="h-prod" class="h3">Produtividade · últimos 30 dias</h2><span class="sub">Horas apontadas ÷ horas disponíveis, e quanto do tempo padrão cada um usou</span></div>
+<sc-for list="{{prod}}" as="p" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 70px 90px; gap: 12px; align-items: center; font-size: 14px;"><span>{{p.n}}</span><span style="height: 12px; border-radius: 99px; background: var(--s3); overflow: hidden;"><span class="grow" style="display: block; height: 100%; width: {{p.w}}; background: #1D6FB8; border-radius: 99px;"></span></span><span class="mono" style="text-align: right; font-weight: 700;">{{p.a}}</span><span class="mono" style="text-align: right; color: {{p.tc}}; font-size: 13px;">{{p.t}}</span></div></sc-for>
+<span style="font-size: 12.5px; color: var(--t3);">Abaixo de 100% do tempo padrão = mais rápido que o orçado.</span>
+</section>
+<section class="card rv" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px;" aria-labelledby="h-aus">
+<h2 id="h-aus" class="h3">Ausências e escala</h2>
+<sc-for list="{{aus}}" as="a" hint-placeholder-count="4"><div style="display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; background: var(--s2);"><span class="bdg {{a.cls}}">{{a.t}}</span><span style="flex: 1; font-size: 14px;"><strong>{{a.n}}</strong> · {{a.d}}</span><span style="font-size: 12.5px; color: var(--t3);">{{a.imp}}</span></div></sc-for>
+</section>
+</div>
+</sc-if>
+
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { tab: 'man', sent: false };
+  }
+  gear(cx, cy, R, n, h) {
+    const st = 2 * Math.PI / n;
+    let d = '';
+    for (let k = 0; k < n; k++) {
+      const a = k * st;
+      [[R - h, a], [R, a + st * 0.18], [R, a + st * 0.42], [R - h, a + st * 0.6]].forEach((q, j) => {
+        d += (k === 0 && j === 0 ? 'M' : 'L') + (cx + q[0] * Math.cos(q[1])).toFixed(1) + ' ' + (cy + q[0] * Math.sin(q[1])).toFixed(1);
+      });
+    }
+    return d + 'Z';
+  }
+  renderVals() {
+    const st = this.state;
+    const plans = [
+      ['Troca de óleo do cabeçote', 'Torno CNC de entrada', 'a cada 500 h apontadas', 412, 500, 'h', '#E0A100', 'Na semana que vem', 'b-wa'],
+      ['Lubrificação dos barramentos', 'Fresa CNC 01', 'a cada 30 dias', 24, 30, 'dias', '#0F9D76', 'Em dia', 'b-ok'],
+      ['Limpeza da tocha e bico', 'Célula de solda MIG 01', 'toda semana', 6, 7, 'dias', '#E0A100', 'Amanhã', 'b-wa'],
+      ['Revisão do elevador', 'Box 3 (elevador)', 'a cada 90 dias', 31, 90, 'dias', '#0F9D76', 'Em dia', 'b-ok']
+    ].map((p) => ({ t: p[0], ct: p[1], base: p[2], prog: p[3] + ' de ' + p[4] + ' ' + p[5], w: (p[3] / p[4] * 100).toFixed(1) + '%', c: p[6], st: p[7], cls: p[8] }));
+    const M = [['mai', 540], ['jun', 690], ['jul', 1180], ['ago', 640], ['set', 780], ['out', 1042]];
+    const Y = (v) => 170 - v / 1400 * 140;
+    const mcost = M.map((m, i) => { const x = 60 + i * 66; return { l: m[0], x, xm: x + 20, y: Y(m[1]).toFixed(1), h: (170 - Y(m[1])).toFixed(1) }; });
+    const avg = [610, 640, 720, 735, 760, 812];
+    const mavg = avg.map((v, i) => (80 + i * 66) + ',' + Y(v).toFixed(1)).join(' ');
+    const oms = [
+      ['MAN-0012', 'Centro de usinagem 02', 'Corretiva', 'b-bad', 'Troca do spindle · rolamento travado', '88 h', 'R$ 8.600,00', 'Em andamento', 'b-run'],
+      ['MAN-0011', 'Torno CNC de entrada', 'Preventiva', 'b-inf', 'Troca de óleo do cabeçote (400 h)', '2,5 h', 'R$ 342,00', 'Concluída', 'b-ok'],
+      ['MAN-0010', 'Célula de solda MIG 01', 'Corretiva', 'b-bad', 'Troca do cabo terra', '1,0 h', 'R$ 186,00', 'Concluída', 'b-ok'],
+      ['MAN-0009', 'Box 3 (elevador)', 'Preventiva', 'b-inf', 'Revisão hidráulica', '3,0 h', 'R$ 420,00', 'Concluída', 'b-ok'],
+      ['MAN-0013', 'Torno CNC de entrada', 'Preventiva', 'b-inf', 'Troca de óleo do cabeçote (500 h)', '—', 'R$ 340,00 previsto', 'Agendada 21/10', 'b-neu']
+    ].map((o) => ({ c: o[0], m: o[1], t: o[2], tc: o[3], d: o[4], h: o[5], v: o[6], s: o[7], sc: o[8] }));
+    const habs = [
+      ['MP', '#C0352B', 'Marcos Pereira', 'Soldador estrutural', 'venceu em 02/10/2026', true, '#FBE2DF'],
+      ['DS', '#E35D14', 'Diego Souza', 'Elevador automotivo NR-12', 'vence em 10/11/2026 · 27 dias', true, '#FCEFC7'],
+      ['RA', '#1D4E7A', 'Ricardo Alves', 'Torno CNC · NR-12', 'até 30/06/2027', false, 'transparent'],
+      ['LP', '#0F9D76', 'Luana Prado', 'Fresa CNC · NR-12', 'até 01/02/2027', false, 'transparent'],
+      ['CM', '#1A64A8', 'Carla Mendes', 'Metrologia dimensional', 'até 15/03/2027', false, 'transparent']
+    ].map((h) => ({ ini: h[0], c: h[1], n: h[2], hab: h[3], val: h[4], act: h[5], okv: !h[5], bg: h[6] }));
+    const prod = [['Ricardo Alves', 78, 96], ['Luana Prado', 82, 91], ['Marcos Pereira', 71, 108], ['Diego Souza', 74, 93], ['Jonas Batista', 69, 101]].map((p) => ({ n: p[0], w: p[1] + '%', a: p[1] + '%', t: p[2] + '% padrão', tc: p[2] > 100 ? '#C0352B' : '#0F7A55' }));
+    const aus = [['Férias', 'b-inf', 'Jonas Batista', 'até domingo, 18/10', 'Box 1 coberto pelo Diego à tarde'], ['Atestado', 'b-wa', 'Sérgio Lima', 'hoje', 'sem impacto em OS'], ['Turno', 'b-neu', 'Manhã', '07:00 às 16:48 · 9 pessoas', ''], ['Turno', 'b-neu', 'Tarde', '13:00 às 22:00 · 3 pessoas', 'só solda e oficina']].map((a) => ({ t: a[0], cls: a[1], n: a[2], d: a[3], imp: a[4] }));
+    const tabs = [['man', 'Manutenção'], ['rh', 'RH']].map((t) => ({ l: t[1], cls: st.tab === t[0] ? 'on' : '', sel: st.tab === t[0] ? 'true' : 'false', pick: () => this.setState({ tab: t[0] }) }));
+    const rail = [
+      ['Painel', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'], ['Comercial', 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v4a2 2 0 0 0 2 2h4M16 13H8M16 17H8'],
+      ['Operação', 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'], ['Custos', 'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5'],
+      ['Suprimentos', 'm7.5 4.27 9 5.15M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16ZM3.3 7l8.7 5 8.7-5M12 22V12'], ['Financeiro', 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4'],
+      ['Ativos e Pessoas', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', true], ['Cadastros', 'M3 5a9 3 0 1 0 18 0 9 3 0 1 0-18 0M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0'],
+      ['Configurações', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6']
+    ].map((r) => ({ label: r[0], icon: r[1], cur: r[2] ? 'page' : 'false', bg: r[2] ? '#FFFFFF' : 'transparent', fg: r[2] ? '#15395A' : '#C7D5E4' }));
+    return {
+      tabs, rail, crumb: st.tab === 'man' ? 'Manutenção' : 'RH', vMan: st.tab === 'man', vRh: st.tab === 'rh',
+      plans, mcost, mavg, oms, habs, prod, aus, sent: st.sent, notSent: !st.sent, send: () => this.setState({ sent: true }),
+      gearM: this.gear(110, 100, 70, 14, 12), logoGear: this.gear(12, 12, 10, 8, 2.5)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,12 +1,13 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Sessao, SessaoAtual } from '../comum/sessao';
 import { AgendamentoDto, AtualizarAgendamentoDto, ChegouDto } from './agenda.dto';
 import { AgendaService } from './agenda.service';
 
 @ApiTags('agendamentos')
 @ApiBearerAuth()
 @Controller('agendamentos')
+@Modulo('agenda')
 export class AgendaController {
   constructor(private readonly agenda: AgendaService) {}
 

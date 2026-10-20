@@ -1,12 +1,13 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Permissao, Sessao, SessaoAtual } from '../comum/sessao';
 import { AtualizarPlanoDto, DecidirGarantiaDto, EncerrarNcDto, GarantiaDto, NcDto, PlanoDto, TratarNcDto } from './qualidade.dto';
 import { QualidadeService } from './qualidade.service';
 
 @ApiTags('qualidade')
 @ApiBearerAuth()
 @Controller()
+@Modulo('qualidade')
 export class QualidadeController {
   constructor(private readonly qualidade: QualidadeService) {}
 
@@ -77,6 +78,7 @@ export class QualidadeController {
     return this.qualidade.decidirGarantia(s, id, dto);
   }
 
+  @Permissao('os.visualizar', 'qualidade.visualizar')
   @Get('ordens-servico/:id/laudo')
   laudo(@SessaoAtual() s: Sessao, @Param('id') id: string) {
     return this.qualidade.laudo(s.tenantId, id);

@@ -1,4 +1,4 @@
-import { Papel, PrismaClient, StatusOrcamento } from '@prisma/client';
+import { Papel, Prisma, PrismaClient, StatusOrcamento } from '@prisma/client';
 import { calcularTabelaCustos } from '@promec/motor';
 import * as bcrypt from 'bcryptjs';
 import { pd } from '../comum/decimal';
@@ -7,6 +7,10 @@ import { calcular, colunasDePrecificacao, colunasDoResultado, LinhaEntrada } fro
 import { formatarNumero } from '../orcamentos/numeracao';
 import { json, montarEntrada, resultadoDe } from '../tabelas-custos/entrada';
 import { semearAgenda } from './agenda';
+import { semearCrm } from './crm';
+import { semearManutencao } from './manutencao';
+import { garantirPerfis } from '../acesso/permissoes';
+import { mesclarObjeto } from '../ordens/custo';
 import { semearFinanceiro } from './financeiro';
 import { semearSuprimentos } from './suprimentos';
 import { semearOrdens } from './ordens';
@@ -51,7 +55,9 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
   const id = (s: string) => `${o.prefixo}-${s}`;
   const tenantId = id('empresa');
 
-  await db.empresa.upsert({ where: { id: tenantId }, create: { id: tenantId, nome: o.nome }, update: { nome: o.nome } });
+  await db.empresa.upsert({ where: { id: tenantId }, create: { id: tenantId, nome: o.nome, telefone: '4734320000' }, update: { nome: o.nome, telefone: '4734320000' } });
+  const perfis = await garantirPerfis(db, tenantId, true);
+  const perfil = (nome: string) => perfis.find((p) => p.nome === nome)!.id;
   const parametros = {
     criterioRateio: 'horas',
     metodoPreco: 'divisor',
@@ -64,9 +70,11 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
   await db.parametros.upsert({ where: { tenantId }, create: { tenantId, ...parametros }, update: parametros });
 
   const senhaHash = await bcrypt.hash(o.senha, 10);
-  const usuarios: Record<string, { nome: string; papel: Papel }> = {
-    marina: { nome: 'Marina Kowalski', papel: 'GESTOR' },
-    paulo: { nome: 'Paulo Henrique Souza', papel: 'ORCAMENTISTA' }
+  const usuarios: Record<string, { nome: string; papel: Papel; perfilId: string; telefone: string; trocarSenha: boolean }> = {
+    marina: { nome: 'Marina Kowalski', papel: 'ADMIN', perfilId: perfil('Administrador'), telefone: '47991114455', trocarSenha: false },
+    paulo: { nome: 'Paulo Henrique Souza', papel: 'ORCAMENTISTA', perfilId: perfil('Orçamentista'), telefone: '47991112233', trocarSenha: false },
+    carla: { nome: 'Carla Mendes', papel: 'GESTOR', perfilId: perfil('Financeiro'), telefone: '47991117788', trocarSenha: false },
+    ricardo: { nome: 'Ricardo Lima', papel: 'OPERADOR', perfilId: perfil('Produção/Técnico'), telefone: '47991119900', trocarSenha: false }
   };
   for (const [login, u] of Object.entries(usuarios)) {
     const email = `${login}@${o.dominio}`;
@@ -114,6 +122,10 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     });
   }
   await db.colaborador.deleteMany({ where: { id: id('colab-paulo'), apontamentos: { none: {} }, operacoes: { none: {} } } });
+  await db.colaborador.upsert({ where: { id: id('colab-ricardo') }, create: { id: id('colab-ricardo'), tenantId, nome: 'Ricardo Lima' }, update: {} });
+  await db.usuario.update({ where: { email: `ricardo@${o.dominio}` }, data: { colaboradorId: id('colab-ricardo') } });
+  const marcelo = { nome: 'Marcelo Antunes', funcao: 'Soldador', vinculo: 'CLT' as const, salario: pd('4300'), encargos: pd('2750'), beneficios: pd('0'), jornadaHoras: pd('220'), ativo: true };
+  await db.colaborador.upsert({ where: { id: id('colab-marcelo') }, create: { id: id('colab-marcelo'), tenantId, ...marcelo }, update: marcelo });
   for (const op of operadores) {
     const dados = {
       nome: op.nome,
@@ -231,6 +243,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     prazoEm?: number;
     comissao?: string;
     condicao?: string;
+    objeto?: Record<string, string>;
     observacoes?: string;
   }[] = [
     {
@@ -306,6 +319,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     },
     {
       n: 128,
+      objeto: { desenho: 'BUC-H7-020', revisao: 'C', material: 'Latão C360 Ø25' },
       cliente: 'metalvale',
       titulo: 'Bucha de latão com tolerância H7 — lote piloto de 10 peças',
       lote: 10,
@@ -389,6 +403,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     },
     {
       n: 121,
+      objeto: { desenho: 'BUC-H7-020', revisao: 'C', material: 'Latão C360 Ø25' },
       cliente: 'metalvale',
       titulo: 'Bucha de latão com tolerância H7 — lote de 10 peças',
       lote: 10,
@@ -437,6 +452,7 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
       recusadoEm: dataDe('recusado'),
       criadoEm: dataDe('criado')!,
       prazoPrometido: orc.prazoEm === undefined ? null : dataEm(orc.prazoEm),
+      objeto: orc.objeto ? json(mesclarObjeto({}, orc.objeto)) : Prisma.DbNull,
       condicaoPagamento: orc.condicao ?? '',
       vendedorId: id('usuario-paulo')
     };
@@ -466,12 +482,14 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
 
   const ordens = await semearOrdens(db, tenantId, id);
   const suprimentos = await semearSuprimentos(db, tenantId, id, { centroFresa: centro('fresa') });
+  const manutencao = await semearManutencao(db, tenantId, id, { centros: { torno: centro('torno'), fresa: centro('fresa'), cu: centro('cu') }, box3 });
   const financeiro = await semearFinanceiro(db, tenantId, id, { centros: [centro('torno'), centro('fresa'), centro('cu')] });
+  const crm = await semearCrm(db, tenantId, id);
   const agenda = await semearAgenda(db, tenantId, id, { box3, jonas, fresa: centro('fresa'), cliente: id('cliente-metalvale') });
 
   return {
     tenantId,
-    emails: { gestor: `marina@${o.dominio}`, orcamentista: `paulo@${o.dominio}` },
+    emails: { gestor: `marina@${o.dominio}`, orcamentista: `paulo@${o.dominio}`, financeiro: `carla@${o.dominio}`, producao: `ricardo@${o.dominio}` },
     tabelaVigenteId: tabelas.outubro.id,
     centros: { torno: centro('torno'), fresa: centro('fresa'), cu: centro('cu') },
     clientes: Object.fromEntries(clientes.map((c) => [c.chave, id(`cliente-${c.chave}`)])) as Record<string, string>,
@@ -483,6 +501,8 @@ export async function semearEmpresa(db: PrismaClient, o: OpcoesSemente) {
     agenda,
     suprimentos,
     financeiro,
+    crm,
+    manutencao,
     orcamentoProvisorioId: id('orcamento-122'),
     precos: resultados
   };

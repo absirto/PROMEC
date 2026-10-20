@@ -5,6 +5,7 @@ import { regra } from '../comum/erros';
 import { PrismaService } from '../prisma/prisma.service';
 import { marcarDesatualizada } from '../tabelas-custos/entrada';
 import { prazosDe } from '../financeiro/financeiro-core';
+import { ENCARGOS_PADRAO } from '../rh/rh-core';
 import { ParametrosDto } from './parametros.dto';
 
 @Injectable()
@@ -32,6 +33,10 @@ export class ParametrosService {
       );
     }
     if (dto.condicaoPadrao) prazosDe(dto.condicaoPadrao);
+    const encargos = dto.encargosPorVinculo ? { ...ENCARGOS_PADRAO, ...(atual.encargosPorVinculo as Record<string, string>), ...dto.encargosPorVinculo } : undefined;
+    if (encargos && Object.entries(encargos).some(([k, v]) => !['CLT', 'PJ', 'HORISTA', 'SOCIO'].includes(k) || !/^\d+(\.\d+)?$/.test(String(v)) || Number(v) > 1)) {
+      throw regra('ENCARGOS_INVALIDOS', 'Informe os encargos por vínculo (CLT, PJ, HORISTA, SOCIO) como fração de 0 a 1, por exemplo 0.64.');
+    }
     const [p, empresa] = await this.prisma.$transaction(async (tx) => {
       const p = await tx.parametros.update({
         where: { tenantId },
@@ -50,7 +55,8 @@ export class ParametrosService {
           jurosMes: pdOpc(dto.jurosMes),
           toleranciaCustoFixo: pdOpc(dto.toleranciaCustoFixo),
           diasBloqueioInadimplencia: dto.diasBloqueioInadimplencia,
-          condicaoPadrao: dto.condicaoPadrao?.trim()
+          condicaoPadrao: dto.condicaoPadrao?.trim(),
+          ...(encargos ? { encargosPorVinculo: Object.fromEntries(Object.entries(encargos).map(([k, v]) => [k, String(v)])) } : {})
         }
       });
       const empresa = dto.nomeEmpresa
@@ -79,7 +85,8 @@ export class ParametrosService {
       jurosMes: tt(p.jurosMes),
       diasBloqueioInadimplencia: p.diasBloqueioInadimplencia,
       toleranciaCustoFixo: tt(p.toleranciaCustoFixo),
-      condicaoPadrao: p.condicaoPadrao
+      condicaoPadrao: p.condicaoPadrao,
+      encargosPorVinculo: { ...ENCARGOS_PADRAO, ...((p.encargosPorVinculo as Record<string, string>) ?? {}) }
     };
   }
 }

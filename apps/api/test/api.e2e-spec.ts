@@ -7,6 +7,8 @@ import { AppModule } from '../src/app.module';
 import { completarCnpj } from '../src/comum/documento';
 import { configurar } from '../src/configurar';
 import { semearEmpresa } from '../src/seed/semear';
+import { limparLimitePortal } from '../src/portal/limite.guard';
+import * as bcrypt from 'bcryptjs';
 
 const SENHA = 'senha-de-teste';
 const sufixo = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -19,6 +21,9 @@ describe('API ProMEC (e2e)', () => {
   let token: string;
   let tokenOrcamentista: string;
   let tokenOutra: string;
+  let tokenAdmin: string;
+  let tokenCarla: string;
+  let tokenRicardo: string;
 
   const http = () => request(app.getHttpServer());
   const api = (t: string) => ({
@@ -55,6 +60,13 @@ describe('API ProMEC (e2e)', () => {
     token = await login(base.emails.gestor);
     tokenOrcamentista = await login(base.emails.orcamentista);
     tokenOutra = await login(outra.emails.gestor);
+    tokenCarla = await login(base.emails.financeiro);
+    tokenRicardo = await login(base.emails.producao);
+    const admin = await db.perfil.findFirstOrThrow({ where: { tenantId: base.tenantId, nome: 'Administrador' } });
+    await db.usuario.create({
+      data: { tenantId: base.tenantId, nome: 'Admin Teste', email: `admin@a-${sufixo}.test`, senhaHash: await bcrypt.hash(SENHA, 10), papel: 'ADMIN', perfilId: admin.id }
+    });
+    tokenAdmin = await login(`admin@a-${sufixo}.test`);
   });
 
   afterAll(async () => {
@@ -70,7 +82,7 @@ describe('API ProMEC (e2e)', () => {
     it('entra e devolve o usuário', async () => {
       const r = await http().post('/api/v1/auth/login').send({ email: base.emails.gestor, senha: SENHA }).expect(200);
       expect(r.body.token).toEqual(expect.any(String));
-      expect(r.body.usuario).toMatchObject({ nome: 'Marina Kowalski', papel: 'GESTOR', email: base.emails.gestor });
+      expect(r.body.usuario).toMatchObject({ nome: 'Marina Kowalski', papel: 'ADMIN', perfil: expect.objectContaining({ nome: 'Administrador' }), email: base.emails.gestor });
     });
 
     it('recusa senha errada com CREDENCIAIS', async () => {
@@ -275,9 +287,11 @@ describe('API ProMEC (e2e)', () => {
       const nh = await api(token).post(`/ordens-servico/${id}/operacoes/${opId}/iniciar`, { colaboradorId: base.colaboradores.diego, tipo: 'SETUP' }).expect(422);
       expect(nh.body.codigo).toBe('NAO_HABILITADO');
 
-      const marcos = await api(token)
-        .post('/colaboradores', { nome: 'Marcos Teixeira', salario: '4200', encargos: '2700', alocacoes: [{ centroId: base.centros.torno, alocacao: '1' }] })
-        .expect(201);
+      const marcos = await api(token).post('/colaboradores', { nome: 'Marcos Teixeira', salario: '4200', encargos: '2700' }).expect(201);
+      const semHab = await api(token).patch(`/colaboradores/${marcos.body.id}`, { alocacoes: [{ centroId: base.centros.torno, alocacao: '1' }] }).expect(422);
+      expect(semHab.body.codigo).toBe('SEM_HABILITACAO');
+      await api(token).post('/rh/habilitacoes', { colaboradorId: marcos.body.id, centroId: base.centros.torno, descricao: 'Operação de torno CNC', emissao: '2026-01-05', validade: '2030-12-31' }).expect(201);
+      await api(token).patch(`/colaboradores/${marcos.body.id}`, { alocacoes: [{ centroId: base.centros.torno, alocacao: '1' }] }).expect(200);
       const quem = { colaboradorId: marcos.body.id };
       const url = (acao: string) => `/ordens-servico/${id}/operacoes/${opId}/${acao}`;
 
@@ -629,7 +643,7 @@ describe('API ProMEC (e2e)', () => {
     });
 
     it('pedido acima da alçada, aprovação e recebimento parcial com divergência', async () => {
-      const p = await api(tokenOrcamentista).post('/compras/pedidos', { fornecedorId: sup().fornecedores.acos, itens: [{ itemId: sup().itens.aco1045, quantidade: '600', precoUnitario: '9.80' }] }).expect(201);
+      const p = await api(token).post('/compras/pedidos', { fornecedorId: sup().fornecedores.acos, itens: [{ itemId: sup().itens.aco1045, quantidade: '600', precoUnitario: '9.80' }] }).expect(201);
       expect(p.body).toMatchObject({ status: 'AGUARDANDO_APROVACAO', total: '5880' });
       const recebimento = { localId: sup().locais.mp, notaFiscal: '7711', itens: [{ itemId: sup().itens.aco1045, quantidade: '300', precoUnitario: '10.10', lote: { codigo: 'L-1045-1020', certificado: { numero: 'CQ-A1045-3402', corrida: 'A1045-3402', norma: 'SAE J403' } } }] };
       expect((await api(token).post(`/compras/pedidos/${p.body.id}/recebimentos`, recebimento).expect(409)).body.codigo).toBe('PEDIDO_NAO_APROVADO');
@@ -841,6 +855,371 @@ describe('API ProMEC (e2e)', () => {
     });
   });
 
+  describe('acesso, auditoria, notificações, CRM e portal', () => {
+    const pub = () => ({
+      get: (url: string) => http().get(`/api/v1/portal${url}`),
+      post: (url: string, body: object = {}) => http().post(`/api/v1/portal${url}`).set('User-Agent', 'e2e-navegador/1.0').send(body)
+    });
+    const tokenDoLink = (url: string) => url.split('/').pop()!;
+    const enviado = async (titulo: string) => {
+      const o = await api(token).post('/orcamentos', { ...bucha(), titulo }).expect(201);
+      await api(token).post(`/orcamentos/${o.body.id}/enviar`).expect(200);
+      return o.body;
+    };
+    beforeAll(() => limparLimitePortal());
+
+    it('perfil sem permissão recebe 403 e /auth/me traz perfil e permissões', async () => {
+      const me = await api(tokenRicardo).get('/auth/me').expect(200);
+      expect(me.body).toMatchObject({ papel: 'OPERADOR', perfil: { nome: 'Produção/Técnico' }, colaboradorId: base.colaboradores.ricardo });
+      expect(me.body.permissoes).toContain('operador.gerenciar');
+      const r = await api(tokenRicardo).post('/orcamentos', bucha()).expect(403);
+      expect(r.body).toMatchObject({ codigo: 'SEM_PERMISSAO', detalhes: { permissao: 'orcamentos.gerenciar' } });
+      await api(tokenCarla).get('/financeiro/titulos').expect(200);
+      expect((await api(tokenCarla).post('/tabelas-custos', { competencia: '2027-06' }).expect(403)).body.detalhes.permissao).toBe('custos.gerenciar');
+      await api(tokenCarla).post('/usuarios', { nome: 'X', email: `x@a-${sufixo}.test`, perfilId: 'x' }).expect(403);
+      await api(token).get('/usuarios').expect(200);
+      expect((await api(tokenRicardo).get('/usuarios/opcoes').expect(200)).body.length).toBeGreaterThan(3);
+    });
+
+    it('Produção/Técnico vê a OS sem custo-hora', async () => {
+      const os = await api(tokenRicardo).get(`/ordens-servico/${base.ordens[41]}`).expect(200);
+      expect(os.body).toMatchObject({ mascarado: true, operacoes: [expect.objectContaining({ custoHora: null, descricao: 'Torneamento CNC' })] });
+      expect(os.body.resultado.horasProjetadas).toBe('4.35');
+      const centros = await api(tokenRicardo).get('/centros-trabalho').expect(200);
+      expect(centros.body.mascarado).toBe(true);
+      expect(centros.body.itens.every((c: { custoHoraVigente: unknown }) => c.custoHoraVigente === null)).toBe(true);
+      const painel = await api(tokenRicardo).get('/painel').expect(200);
+      expect(painel.body.centros[0]).toMatchObject({ cheioHora: null, precoHora: null });
+      expect((await api(token).get(`/ordens-servico/${base.ordens[41]}`).expect(200)).body.operacoes[0].custoHora).toBe('117.7777777778');
+    });
+
+    it('usuário novo troca a senha provisória; senha fraca é recusada; redefinir gera outra', async () => {
+      const perfis = await api(tokenAdmin).get('/perfis').expect(200);
+      expect(perfis.body.map((p: { nome: string }) => p.nome)).toEqual(expect.arrayContaining(['Administrador', 'Gerente', 'Orçamentista', 'Produção/Técnico', 'Compras', 'Financeiro', 'Recepção']));
+      const recepcao = perfis.body.find((p: { nome: string }) => p.nome === 'Recepção');
+      expect((await api(tokenAdmin).patch(`/perfis/${recepcao.id}`, { nome: 'Balcão' }).expect(422)).body.codigo).toBe('PERFIL_PADRAO');
+      const catalogo = await api(tokenAdmin).get('/permissoes').expect(200);
+      expect(catalogo.body.find((p: { chave: string }) => p.chave === 'custo.ver_custo_hora')).toMatchObject({ sensivel: true });
+
+      const novo = await api(tokenAdmin).post('/usuarios', { nome: 'Joana Recepção', email: `joana@a-${sufixo}.test`, perfilId: recepcao.id }).expect(201);
+      expect(novo.body.senhaProvisoria).toMatch(/^[A-Za-z0-9]{12}$/);
+      const l1 = await http().post('/api/v1/auth/login').send({ email: `joana@a-${sufixo}.test`, senha: novo.body.senhaProvisoria }).expect(200);
+      expect(l1.body.trocarSenha).toBe(true);
+      const fraca = await api(l1.body.token).post('/auth/trocar-senha', { senhaAtual: novo.body.senhaProvisoria, novaSenha: 'curta123' }).expect(422);
+      expect(fraca.body.codigo).toBe('SENHA_FRACA');
+      await api(l1.body.token).post('/auth/trocar-senha', { senhaAtual: novo.body.senhaProvisoria, novaSenha: 'Oficina2026Forte' }).expect(200);
+      expect((await http().post('/api/v1/auth/login').send({ email: `joana@a-${sufixo}.test`, senha: 'Oficina2026Forte' }).expect(200)).body.trocarSenha).toBe(false);
+      const redef = await api(tokenAdmin).post(`/usuarios/${novo.body.id}/redefinir-senha`).expect(200);
+      await http().post('/api/v1/auth/login').send({ email: `joana@a-${sufixo}.test`, senha: 'Oficina2026Forte' }).expect(401);
+      expect((await http().post('/api/v1/auth/login').send({ email: `joana@a-${sufixo}.test`, senha: redef.body.senhaProvisoria }).expect(200)).body.trocarSenha).toBe(true);
+      await api(tokenAdmin).patch(`/usuarios/${novo.body.id}`, { ativo: false }).expect(200);
+      await http().post('/api/v1/auth/login').send({ email: `joana@a-${sufixo}.test`, senha: redef.body.senhaProvisoria }).expect(401);
+    });
+
+    it('auditoria registra a publicação da tabela e a alteração do orçamento', async () => {
+      const t = await api(tokenOutra).post('/tabelas-custos', { competencia: '2026-10' }).expect(201);
+      await api(tokenOutra).post(`/tabelas-custos/${t.body.id}/publicar`).expect(200);
+      const trilha = await api(tokenOutra).get(`/auditoria?entidade=TabelaCustos&entidadeId=${t.body.id}`).expect(200);
+      expect(trilha.body.itens.map((i: { acao: string }) => i.acao)).toEqual(['publicar', 'criar']);
+      expect(trilha.body.itens[0]).toMatchObject({ antes: { status: 'RASCUNHO' }, depois: { status: 'VIGENTE' }, usuario: { nome: 'Marina Kowalski' } });
+
+      const o = await api(token).post('/orcamentos', { ...bucha(), titulo: 'Bucha auditada' }).expect(201);
+      await api(token).put(`/orcamentos/${o.body.id}`, { ...bucha(), titulo: 'Bucha auditada — revisão' }).expect(200);
+      const log = await api(token).get(`/auditoria?entidade=orcamentos&entidadeId=${o.body.id}`).expect(200);
+      expect(log.body.itens[0]).toMatchObject({ acao: 'alterar', antes: { titulo: 'Bucha auditada' }, depois: { titulo: 'Bucha auditada — revisão' } });
+      await api(tokenRicardo).get('/auditoria').expect(403);
+    });
+
+    it('o ciclo do orçamento move a oportunidade no funil; perda por preço exige o preço aceito', async () => {
+      const a = await enviado('Funil — perdido por preço');
+      const op = async (titulo: string) => (await api(token).get(`/crm/oportunidades?q=${encodeURIComponent(titulo)}`).expect(200)).body.itens[0];
+      expect(await op('Funil — perdido por preço')).toMatchObject({ etapa: 'ORCAMENTO_ENVIADO', orcamentoId: a.id, valorEstimado: '835.02', responsavel: { nome: 'Marina Kowalski' } });
+      await api(token).post(`/orcamentos/${a.id}/negociar`).expect(200);
+      expect((await op('Funil — perdido por preço')).etapa).toBe('NEGOCIACAO');
+      expect((await api(token).post(`/orcamentos/${a.id}/recusar`, { motivo: 'PRECO' }).expect(422)).body.codigo).toBe('PRECO_ACEITO_OBRIGATORIO');
+      await api(token).post(`/orcamentos/${a.id}/recusar`, { motivo: 'PRECO', precoAceito: '700', concorrente: 'Usinagem Pomerode' }).expect(200);
+      expect(await op('Funil — perdido por preço')).toMatchObject({ etapa: 'PERDIDO', motivoPerda: 'PRECO', precoAceito: '700.00' });
+
+      const g = await enviado('Funil — ganho');
+      await api(token).post(`/orcamentos/${g.id}/aprovar`).expect(200);
+      expect((await op('Funil — ganho')).etapa).toBe('GANHO');
+      const lista = await api(token).get('/crm/oportunidades').expect(200);
+      expect(lista.body.funil.PERDIDO.quantidade).toBeGreaterThanOrEqual(3);
+      const manual = await api(token).post('/crm/oportunidades', { titulo: 'Lead de teste', contato: 'Fulano', origem: 'SITE', valorEstimado: '1000' }).expect(201);
+      expect((await api(token).post(`/crm/oportunidades/${manual.body.id}/perder`, { motivo: 'PRECO' }).expect(422)).body.codigo).toBe('PRECO_ACEITO_OBRIGATORIO');
+      await api(token).post(`/crm/oportunidades/${manual.body.id}/mover`, { etapa: 'CONTATO' }).expect(200);
+      const ind = await api(token).get('/crm/indicadores?meses=6').expect(200);
+      expect(ind.body.motivosPerda.find((m: { motivo: string }) => m.motivo === 'PRECO').quantidade).toBeGreaterThanOrEqual(2);
+      expect(ind.body.precoAceitoSobreOfertado).not.toBeNull();
+    });
+
+    it('rotina cria follow-up de orçamento sem resposta, sem duplicar; concluir cria o próximo passo', async () => {
+      const o = await enviado('Follow-up de teste');
+      await db.orcamento.update({ where: { id: o.id }, data: { enviadoEm: new Date(Date.now() - 4 * 86_400_000) } });
+      const r1 = await api(token).post('/financeiro/rotina').expect(200);
+      expect(r1.body.followUps).toBeGreaterThanOrEqual(1);
+      await api(token).post('/financeiro/rotina').expect(200);
+      const pend = (await api(token).get('/crm/atividades?pendentes=true').expect(200)).body.itens.filter((a: { orcamento: { id: string } | null }) => a.orcamento?.id === o.id);
+      expect(pend).toHaveLength(1);
+      expect(pend[0]).toMatchObject({ tipo: 'LIGACAO', automatica: true });
+      const c = await api(token)
+        .post(`/crm/atividades/${pend[0].id}/concluir`, { resultado: 'Cliente pediu mais 2 dias', proximoPasso: { tipo: 'LIGACAO', data: new Date(Date.now() + 2 * 86_400_000).toISOString(), assunto: 'Ligar de novo' } })
+        .expect(200);
+      expect(c.body).toMatchObject({ concluida: true, proximaAtividade: { assunto: 'Ligar de novo', orcamento: { id: o.id } } });
+    });
+
+    it('portal: link inválido, nada de custo ou margem, ajuste, aprovação com OS e notificação', async () => {
+      expect((await pub().get('/orcamento/nao-existe.abc').expect(401)).body.codigo).toBe('LINK_INVALIDO');
+      const tokenOrc = base.crm.tokenOrcamento128;
+      const v = await pub().get(`/orcamento/${tokenOrc}`).expect(200);
+      expect(v.body).toMatchObject({ numero: 'ORC-2026-00128', precoFinalLote: '793.27', lote: 10, status: 'ENVIADO', objeto: { desenho: 'BUC-H7-020' }, vendedor: { nome: 'Paulo Henrique Souza' } });
+      const json = JSON.stringify(v.body);
+      for (const proibido of ['custoHora', 'cheioHora', 'margem', 'custoLote', 'explicacao', '117.78', 'imposto', 'custo']) expect(json).not.toContain(proibido);
+      expect(v.body.composicao.reduce((a: number, g: { valor: string }) => a + Number(g.valor), 0).toFixed(2)).toBe('793.27');
+      expect(v.body.curvaLote.map((p: { quantidade: number }) => p.quantidade)).toEqual([10, 50, 100]);
+
+      const aj = await pub().post(`/orcamento/${tokenOrc}/ajuste`, { nome: 'Carlos Weber', mensagem: 'Conseguem entregar em 10 dias?' }).expect(200);
+      expect(aj.body.status).toBe('EM_NEGOCIACAO');
+      expect((await api(token).get(`/orcamentos/${base.orcamentoBuchaId}`).expect(200)).body.status).toBe('EM_NEGOCIACAO');
+      const tarefas = (await api(tokenOrcamentista).get('/crm/atividades?pendentes=true').expect(200)).body.itens;
+      expect(tarefas.some((a: { assunto: string }) => a.assunto.includes('Ajuste pedido no portal para o ORC-2026-00128'))).toBe(true);
+
+      const extra = await api(token).post('/crm/oportunidades', { titulo: 'Bucha H7 — segunda oportunidade ligada', clienteId: base.clientes.metalvale, orcamentoId: base.orcamentoBuchaId }).expect(201);
+      const ap = await pub().post(`/orcamento/${tokenOrc}/aprovar`, { nome: 'Carlos Weber', aceite: true }).expect(200);
+      expect((await api(token).get(`/crm/oportunidades/${extra.body.id}`).expect(200)).body.etapa).toBe('GANHO');
+      const depois = await pub().get(`/orcamento/${tokenOrc}`).expect(200);
+      expect(depois.body.os).toMatchObject({ numero: ap.body.os.numero, prazo: expect.stringMatching(/^\d{4}-/), linkAcompanhamento: expect.stringContaining('/portal/os/') });
+      expect(ap.body.os.linkAcompanhamento).toBe(depois.body.os.linkAcompanhamento);
+      const acompanhar = await pub().get(`/os/${depois.body.os.linkAcompanhamento.split('/').pop()}`).expect(200);
+      expect(acompanhar.body).toMatchObject({ numero: ap.body.os.numero, status: 'EM_FILA' });
+      expect(ap.body).toMatchObject({ os: { numero: expect.stringMatching(/^OS-2026-/) }, aceite: { nome: 'Carlos Weber', userAgent: 'e2e-navegador/1.0', ip: expect.any(String) } });
+      expect((await api(token).get(`/orcamentos/${base.orcamentoBuchaId}`).expect(200)).body.status).toBe('CONVERTIDO');
+      const dup = await pub().post(`/orcamento/${tokenOrc}/aprovar`, { nome: 'Carlos Weber', aceite: true }).expect(409);
+      expect(dup.body).toMatchObject({ codigo: 'JA_APROVADO', detalhes: { aceite: { nome: 'Carlos Weber' } } });
+      const notas = await api(token).get('/notificacoes?naoLidas=true').expect(200);
+      expect(notas.body.itens.some((n: { titulo: string; tipo: string }) => n.titulo === 'ORC-2026-00128 aprovado pelo cliente' && n.tipo === 'SUCESSO')).toBe(true);
+      expect((await api(token).post('/notificacoes/ler-todas').expect(200)).body.naoLidas).toBe(0);
+      expect((await api(token).get('/crm/oportunidades?q=Bucha de latão H7 — lote piloto').expect(200)).body.itens[0].etapa).toBe('GANHO');
+      const trilha = await api(token).get(`/auditoria?entidade=Orcamento&entidadeId=${base.orcamentoBuchaId}`).expect(200);
+      expect(trilha.body.itens[0]).toMatchObject({ acao: 'aprovado_no_portal', usuario: { nome: 'Portal do cliente / sistema' } });
+    });
+
+    it('portal: orçamento vencido não é aprovado e o link interno traz WhatsApp e e-mail', async () => {
+      const o = await enviado('Orçamento que vai vencer');
+      const link = await api(token).post(`/orcamentos/${o.id}/link-portal`).expect(200);
+      expect(link.body).toMatchObject({ url: expect.stringContaining('/portal/orcamento/'), whatsapp: expect.stringMatching(/^https:\/\/wa\.me\/55\d+\?text=/), email: { assunto: expect.stringContaining(o.numero) } });
+      await db.orcamento.update({ where: { id: o.id }, data: { validade: new Date(Date.now() - 2 * 86_400_000) } });
+      const r = await pub().post(`/orcamento/${tokenDoLink(link.body.url)}/aprovar`, { nome: 'Fulano', aceite: true }).expect(409);
+      expect(r.body.codigo).toBe('ORCAMENTO_VENCIDO');
+      const novo = await api(token).post(`/orcamentos/${o.id}/link-portal`).expect(200);
+      await pub().get(`/orcamento/${tokenDoLink(link.body.url)}`).expect(401);
+      await pub().get(`/orcamento/${tokenDoLink(novo.body.url)}`).expect(200);
+      const ficha = await api(token).get(`/clientes/${base.clientes.metalvale}/ficha`).expect(200);
+      expect(ficha.body.mensagens.some((m: { canal: string }) => m.canal === 'LINK_PORTAL')).toBe(true);
+      expect(ficha.body.resumo).toMatchObject({ orcamentos: expect.any(Number), taxaConversao: expect.any(String) });
+    });
+
+    it('portal: acompanhar a OS e avaliar uma vez depois da entrega', async () => {
+      const os41 = await pub().get(`/os/${base.crm.tokenOs41}`).expect(200);
+      expect(os41.body).toMatchObject({ numero: 'OS-2026-00041', status: 'EM_EXECUCAO', pecas: { prontas: 4, lote: 10 }, responsavel: { nome: 'Ricardo' } });
+      expect(os41.body.etapas.map((e: { etapa: string }) => e.etapa)).toEqual(['APROVADO', 'MATERIAL_SEPARADO', 'NA_MAQUINA', 'INSPECAO', 'PRONTO']);
+      for (const proibido of ['custoHora', 'margem', 'custoLote', 'explicacao', '117.78', 'custo']) expect(JSON.stringify(os41.body)).not.toContain(proibido);
+      expect((await pub().post(`/os/${base.crm.tokenOs41}/avaliacao`, { nota: 10 }).expect(409)).body.codigo).toBe('OS_NAO_ENTREGUE');
+      const [entregue] = (await api(token).get('/ordens-servico?q=OS-2026-00042').expect(200)).body.itens;
+      const link = await api(token).post(`/ordens-servico/${entregue.id}/link-portal`).expect(200);
+      const tk = tokenDoLink(link.body.url);
+      const vista = await pub().get(`/os/${tk}`).expect(200);
+      expect(vista.body).toMatchObject({ status: 'ENTREGUE', laudo: { disponivel: true }, podeAvaliar: true });
+      await pub().post(`/os/${tk}/avaliacao`, { nota: 10, comentario: 'Perfeito' }).expect(201);
+      expect((await pub().post(`/os/${tk}/avaliacao`, { nota: 3 }).expect(409)).body.codigo).toBe('JA_AVALIADA');
+      expect((await api(token).get('/crm/indicadores').expect(200)).body.nps).not.toBeNull();
+    });
+
+    it('isola CRM, notificações e links entre empresas', async () => {
+      const ops = await api(tokenOutra).get('/crm/oportunidades').expect(200);
+      expect(ops.body.itens.some((o: { id: string }) => o.id.startsWith('e2e-a-'))).toBe(false);
+      await api(tokenOutra).get(`/clientes/${base.clientes.metalvale}/ficha`).expect(404);
+      await api(tokenOutra).post(`/orcamentos/${base.orcamentoProvisorioId}/link-portal`).expect(404);
+      await api(tokenOutra).get(`/auditoria?entidadeId=${base.orcamentoBuchaId}`).expect(200).expect((r) => expect(r.body.total).toBe(0));
+      await api(tokenOutra).post(`/crm/oportunidades/${'e2e-a-' + sufixo + '-op-lead'}/mover`, { etapa: 'CONTATO' }).expect(404);
+    });
+
+    it('portal limita 30 requisições por minuto por IP', async () => {
+      limparLimitePortal();
+      for (let i = 0; i < 30; i++) await pub().get('/orcamento/x.y').expect(401);
+      expect((await pub().get('/orcamento/x.y').expect(429)).body.codigo).toBe('MUITAS_TENTATIVAS');
+      limparLimitePortal();
+    });
+  });
+
+  describe('manutenção e RH operacional', () => {
+    const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+    const dia = (n: number) => new Date(Date.parse(`${hoje}T12:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+    const del = (t: string, url: string) => http().delete(`/api/v1${url}`).set('Authorization', `Bearer ${t}`);
+    const colab = (chave: string) => `e2e-a-${sufixo}-colab-${chave}`;
+    const sup = () => base.suprimentos;
+
+    it('preventiva por horas: situação, rotina sem duplicar e concluir zera o contador', async () => {
+      const plano = await api(token)
+        .post('/manutencao/planos', { centroId: base.centros.cu, nome: 'Preventiva 8 h de teste', tipo: 'HORAS', intervaloHoras: '8', duracaoHoras: '2', checklist: ['Limpar'], ultimaExecucao: dia(-60) })
+        .expect(201);
+      expect(plano.body).toMatchObject({ horasDesdeUltima: '7.5', situacao: { situacao: 'proxima', falta: '0.5' } });
+      expect((await api(token).post('/financeiro/rotina').expect(200)).body.preventivas).toBeGreaterThanOrEqual(1);
+      await api(token).post('/financeiro/rotina').expect(200);
+      const abertas = (await api(token).get(`/manutencao/ordens?centroId=${base.centros.cu}&tipo=PREVENTIVA&status=ABERTA`).expect(200)).body.itens.filter((o: { planoId: string }) => o.planoId === plano.body.id);
+      expect(abertas).toHaveLength(1);
+      const om = abertas[0];
+      expect(om).toMatchObject({ origem: 'PLANO', bloqueiaAgenda: true, numero: expect.stringMatching(/^OM-2026-/) });
+      expect(om.prevista > hoje && om.prevista <= dia(10)).toBe(true);
+      const paradas = await api(token).get(`/centros-trabalho/${base.centros.cu}/paradas`).expect(200);
+      expect(paradas.body.find((p: { ordemManutencaoId: string }) => p.ordemManutencaoId === om.id)).toMatchObject({ inicio: om.prevista });
+      await api(token).post(`/manutencao/ordens/${om.id}/iniciar`).expect(200);
+      const c = await api(token).post(`/manutencao/ordens/${om.id}/concluir`, { checklist: [{ item: 'Limpar', ok: true }], observacao: 'Ok' }).expect(200);
+      expect(c.body.status).toBe('CONCLUIDA');
+      const p2 = (await api(token).get(`/manutencao/planos?centroId=${base.centros.cu}`).expect(200)).body.itens.find((x: { id: string }) => x.id === plano.body.id);
+      expect(p2).toMatchObject({ horasDesdeUltima: '0', ultimaExecucao: hoje, situacao: { situacao: 'ok' } });
+    });
+
+    it('quebra pausa a OS em execução e abre parada; concluir fecha com as horas paradas', async () => {
+      const inicio = new Date(Date.now() - 2 * 3_600_000).toISOString();
+      const q = await api(tokenOutra).post('/manutencao/quebras', { centroId: outra.centros.torno, descricao: 'Barramento travado', inicio }).expect(201);
+      expect(q.body).toMatchObject({ tipo: 'CORRETIVA', status: 'EM_EXECUCAO', origem: 'QUEBRA', osAfetadas: [expect.objectContaining({ numero: 'OS-2026-00041' })] });
+      const os = await api(tokenOutra).get(`/ordens-servico/${outra.ordens[41]}`).expect(200);
+      expect(os.body.status).toBe('PAUSADA');
+      expect(os.body.ocorrencias.at(-1)).toMatchObject({ tipo: 'PAUSA', motivo: 'QUEBRA', fim: null });
+      const abertas = (await api(tokenOutra).get(`/centros-trabalho/${outra.centros.torno}/paradas`).expect(200)).body.filter((p: { ordemManutencaoId: string }) => p.ordemManutencaoId === q.body.id);
+      expect(abertas).toEqual([expect.objectContaining({ fim: null })]);
+      const fim = await api(tokenOutra).post(`/manutencao/ordens/${q.body.id}/concluir`, { checklist: [], observacao: 'Guia limpa e lubrificada' }).expect(200);
+      expect(Number(fim.body.horasParado)).toBeGreaterThan(1.9);
+      expect(Number(fim.body.horasParado)).toBeLessThan(2.2);
+      const fechada = (await api(tokenOutra).get(`/centros-trabalho/${outra.centros.torno}/paradas`).expect(200)).body.find((p: { ordemManutencaoId: string }) => p.ordemManutencaoId === q.body.id);
+      expect(fechada.fim).toBe(hoje);
+    });
+
+    it('custos: peça sai do estoque, mão de obra pelo custo do colaborador e terceiro vira título', async () => {
+      const om = await api(token).post('/manutencao/ordens', { centroId: base.centros.fresa, tipo: 'CORRETIVA', descricao: 'Troca da correia do fuso' }).expect(201);
+      const antes = (await api(token).get(`/itens/${sup().itens.oleo}`).expect(200)).body.saldo.fisico;
+      let r = await api(token).post(`/manutencao/ordens/${om.body.id}/custos`, { tipo: 'PECA', itemId: sup().itens.oleo, quantidade: '2' }).expect(201);
+      expect(r.body.custos[0]).toMatchObject({ tipo: 'PECA', valor: '57.00' });
+      expect(Number((await api(token).get(`/itens/${sup().itens.oleo}`).expect(200)).body.saldo.fisico)).toBe(Number(antes) - 2);
+      r = await api(token).post(`/manutencao/ordens/${om.body.id}/custos`, { tipo: 'MAO_DE_OBRA', colaboradorId: colab('diego'), horas: '4' }).expect(201);
+      expect(r.body.custos[1]).toMatchObject({ valor: '149.09', horas: '4' });
+      r = await api(token).post(`/manutencao/ordens/${om.body.id}/custos`, { tipo: 'TERCEIRO', fornecedorId: sup().fornecedores.metais, valor: '650', descricao: 'Usinagem da polia' }).expect(201);
+      expect(r.body.custoTotal).toBe('856.09');
+      const titulo = (await api(token).get(`/financeiro/titulos?tipo=PAGAR&q=${om.body.numero}`).expect(200)).body.itens;
+      expect(titulo).toEqual([expect.objectContaining({ valor: '650.00', origem: expect.objectContaining({ tipo: 'MANUTENCAO' }), centroCusto: expect.objectContaining({ nome: 'Manutenção — Fresa CNC 01' }) })]);
+      const hist = await api(token).get(`/centros-trabalho/${base.centros.fresa}/historico-custos?meses=1`).expect(200);
+      expect(Number(hist.body.meses[0].manutencao)).toBeGreaterThanOrEqual(856.09);
+      expect(hist.body.meses[0].insumos).toBe('0.00');
+      const consumo = await api(token).get('/estoque/consumo-centros').expect(200);
+      expect(Number(consumo.body.find((c: { centroId: string }) => c.centroId === base.centros.fresa).consumido)).toBe(0);
+      await del(token, `/manutencao/ordens/${om.body.id}/custos/${r.body.custos[0].id}`).expect(200);
+      expect(Number((await api(token).get(`/itens/${sup().itens.oleo}`).expect(200)).body.saldo.fisico)).toBe(Number(antes));
+    });
+
+    it('indicadores do torno: MTBF, MTTR e histórico de 6 meses', async () => {
+      const r = await api(token).get(`/manutencao/indicadores?centroId=${base.centros.torno}&meses=6`).expect(200);
+      const t = r.body.centros[0];
+      expect(t.indicadores).toMatchObject({ quebras: 1, mttr: '6' });
+      expect(Number(t.indicadores.mtbf)).toBeGreaterThan(0);
+      expect(t.custoPorMes).toHaveLength(6);
+      expect(t).toMatchObject({ cadastro: '700', media12: expect.any(String) });
+    });
+
+    it('férias derrubam a capacidade do centro e o apontamento recusa o operador ausente', async () => {
+      const antes = await api(token).get('/planejamento').expect(200);
+      const op40 = antes.body.ordens.find((o: { id: string }) => o.id === base.ordens[40]).operacoes[0];
+      const operadores = (await api(token).get(`/centros-trabalho/${base.centros.torno}`).expect(200)).body.operadores.map((o: { colaboradorId: string }) => o.colaboradorId);
+      expect(operadores).toContain(colab('ricardo'));
+      const ausencias = [];
+      for (const colaboradorId of operadores) ausencias.push((await api(token).post('/rh/ausencias', { colaboradorId, tipo: 'FERIAS', inicio: dia(0), fim: dia(3) }).expect(201)).body.id);
+      const depois = await api(token).get('/planejamento').expect(200);
+      const torno = depois.body.centros.find((c: { id: string }) => c.id === base.centros.torno);
+      for (const d of torno.dias.filter((x: { data: string }) => x.data <= dia(3))) expect(d.capacidade).toBe('0');
+      const novo = depois.body.ordens.find((o: { id: string }) => o.id === base.ordens[40]).operacoes[0];
+      expect(novo.inicio > dia(3)).toBe(true);
+      expect(novo.inicio >= op40.inicio).toBe(true);
+      const os41 = await api(token).get(`/ordens-servico/${base.ordens[41]}`).expect(200);
+      const r = await api(token).post(`/ordens-servico/${base.ordens[41]}/operacoes/${os41.body.operacoes[0].id}/iniciar`, { colaboradorId: colab('ricardo'), tipo: 'PRODUCAO' }).expect(422);
+      expect(r.body.codigo).toBe('COLABORADOR_AUSENTE');
+      for (const id of ausencias) await del(token, `/rh/ausencias/${id}`).expect(200);
+    });
+
+    it('ausência sobreposta, mecânico ausente ou com habilitação vencida, alocação sem habilitação', async () => {
+      const a = await api(token).post('/rh/ausencias', { colaboradorId: colab('diego'), tipo: 'FOLGA', inicio: '2031-01-13', fim: '2031-01-15' }).expect(201);
+      expect((await api(token).post('/rh/ausencias', { colaboradorId: colab('diego'), tipo: 'FALTA', inicio: '2031-01-14', fim: '2031-01-16' }).expect(409)).body.codigo).toBe('AUSENCIA_SOBREPOSTA');
+      await del(token, `/rh/ausencias/${a.body.id}`).expect(200);
+
+      const agenda = (inicio: string) => ({ clienteId: base.clientes.metalvale, servico: 'Revisão', centroId: base.box3, colaboradorId: base.jonas, inicio, duracaoHoras: '1' });
+      const aus = await api(token).post('/agendamentos', agenda(`${base.manutencao.treinamentoJonas}T09:00`)).expect(422);
+      expect(aus.body.codigo).toBe('COLABORADOR_AUSENTE');
+
+      const sem = await api(token).patch(`/colaboradores/${colab('marcelo')}`, { alocacoes: [{ centroId: base.centros.fresa, alocacao: '0.5' }] }).expect(422);
+      expect(sem.body.codigo).toBe('SEM_HABILITACAO');
+
+      const habs = (await api(token).get('/rh/habilitacoes').expect(200)).body.itens;
+      const jonasBox = habs.find((h: { colaboradorId: string; centroId: string }) => h.colaboradorId === base.jonas && h.centroId === base.box3);
+      await api(token).patch(`/rh/habilitacoes/${jonasBox.id}`, { validade: dia(-1) }).expect(200);
+      expect((await api(token).post('/agendamentos', agenda('2030-02-05T09:00')).expect(422)).body.codigo).toBe('HABILITACAO_VENCIDA');
+      await api(token).patch(`/rh/habilitacoes/${jonasBox.id}`, { validade: '2030-12-31' }).expect(200);
+
+      const vencendo = (await api(token).get('/rh/habilitacoes?vencendo=30').expect(200)).body.itens;
+      expect(vencendo.some((h: { descricao: string; situacao: string }) => h.descricao === 'Certificação NR-12' && h.situacao === 'vencendo')).toBe(true);
+      const matriz = await api(token).get('/rh/habilitacoes/matriz').expect(200);
+      expect(matriz.body.celulas.find((c: { colaboradorId: string }) => c.colaboradorId === colab('marcelo'))).toMatchObject({ alocacao: null, habilitacao: { situacao: 'vencida' } });
+    });
+
+    it('disponibilidade de novembro desconta as férias do Anderson', async () => {
+      const r = await api(token).get('/rh/disponibilidade?competencia=2026-11').expect(200);
+      expect(r.body.colaboradores.find((c: { colaborador: { id: string } }) => c.colaborador.id === colab('anderson'))).toMatchObject({ diasUteis: 19, diasAusente: 5, horasDisponiveis: '162.1052631579' });
+      expect(r.body.centros.find((c: { centroId: string }) => c.centroId === base.centros.cu)).toMatchObject({ horasExpedienteCadastro: '220', horasDisponiveisReais: '162.1052631579' });
+      expect(r.body.centros.find((c: { centroId: string }) => c.centroId === base.centros.fresa).horasDisponiveisReais).toBe('220');
+    });
+
+    it('produtividade abaixo da eficiência pede recalibração e avisa custos', async () => {
+      const r = await api(token).get('/rh/produtividade?meses=3').expect(200);
+      expect(r.body.centros.find((c: { centro: { id: string } }) => c.centro.id === base.centros.torno)).toMatchObject({ recalibrar: true, eficienciaTabela: '0.75' });
+      const notas = await api(token).get('/notificacoes?naoLidas=true').expect(200);
+      expect(notas.body.itens.some((n: { titulo: string }) => n.titulo === 'Recalibrar a eficiência do Torno CNC de entrada')).toBe(true);
+    });
+
+    it('proposta ao Motor de Custos e aceite marcam a tabela desatualizada', async () => {
+      const p = await api(tokenOutra).get('/manutencao/proposta?competencia=2026-10').expect(200);
+      expect(p.body.centros.find((c: { centroId: string }) => c.centroId === outra.centros.torno)).toMatchObject({ manutencaoCadastro: '700', manutencaoProposta: '699.85', horasDisponiveisReais: '220' });
+      await api(tokenRicardo).post('/manutencao/proposta/aceitar', { centros: [{ centroId: base.centros.cu, manutencao: '720' }] }).expect(403);
+      const a = await api(tokenOutra).post('/manutencao/proposta/aceitar', { centros: [{ centroId: outra.centros.cu, manutencao: '720' }] }).expect(200);
+      expect(a.body).toMatchObject({ tabelaDesatualizada: true, centros: [expect.objectContaining({ manutencaoCadastro: '720' })] });
+      expect((await api(tokenOutra).get('/tabelas-custos/vigente').expect(200)).body.desatualizada).toBe(true);
+    });
+
+    it('salário só aparece com rh.ver_salario', async () => {
+      const semSalario = await api(tokenRicardo).get('/colaboradores').expect(200);
+      const r = semSalario.body.itens.find((c: { id: string }) => c.id === colab('ricardo'));
+      expect(semSalario.body.mascarado).toBe(true);
+      expect(r).toMatchObject({ salario: null, encargos: null, custoMensal: null, custoHora: null, nome: 'Ricardo Lima' });
+      const comSalario = (await api(tokenCarla).get('/colaboradores').expect(200)).body.itens.find((c: { id: string }) => c.id === colab('ricardo'));
+      expect(comSalario).toMatchObject({ salario: '5000', custoMensal: '8200', custoHora: '37.2727272727' });
+
+      const proibido = await api(tokenOrcamentista).post('/colaboradores', { nome: 'Temporário', salario: '9999' }).expect(403);
+      expect(proibido.body).toMatchObject({ codigo: 'SEM_PERMISSAO', detalhes: { permissao: 'rh.ver_salario', campos: ['salario'] } });
+      const semSalarioNovo = await api(tokenOrcamentista).post('/colaboradores', { nome: 'Temporário', funcao: 'Ajudante' }).expect(201);
+      expect(semSalarioNovo.body).toMatchObject({ nome: 'Temporário', salario: null, mascarado: true });
+      await api(tokenOrcamentista).patch(`/colaboradores/${colab('ricardo')}`, { salario: '1', encargos: '1', beneficios: '1', funcao: 'Operador de torno CNC sênior' }).expect(200);
+      const intacto = await api(token).get(`/colaboradores/${colab('ricardo')}`).expect(200);
+      expect(intacto.body).toMatchObject({ salario: '5000', encargos: '3200', beneficios: '0', funcao: 'Operador de torno CNC sênior' });
+      await api(token).patch(`/colaboradores/${colab('ricardo')}`, { funcao: 'Operador de torno CNC' }).expect(200);
+    });
+
+    it('isola manutenção e RH entre empresas', async () => {
+      await api(tokenOutra).get(`/manutencao/ordens/${base.manutencao.ordemCorretiva}`).expect(404);
+      await api(tokenOutra).post(`/manutencao/ordens/${base.manutencao.ordemCorretiva}/custos`, { tipo: 'TERCEIRO', valor: '1' }).expect(404);
+      expect((await api(tokenOutra).get(`/manutencao/planos?centroId=${base.centros.torno}`).expect(200)).body.itens).toEqual([]);
+      const aus = await api(tokenOutra).get('/rh/ausencias').expect(200);
+      expect(aus.body.itens.some((a: { id: string }) => a.id.startsWith('e2e-a-'))).toBe(false);
+      await api(tokenOutra).patch(`/rh/habilitacoes/e2e-a-${sufixo}-hab-ricardo-torno`, { validade: '2031-01-01' }).expect(404);
+    });
+  });
+
   it('painel resume a operação', async () => {
     const r = await api(token).get('/painel').expect(200);
     expect(r.body.usuario).toBe('Marina');
@@ -849,6 +1228,8 @@ describe('API ProMEC (e2e)', () => {
     expect(r.body.ordens).toMatchObject({ emExecucao: 1, pausadas: 1, atrasadas: 1, emQualidade: 1 });
     expect(r.body.ordens.margemProjetadaMedia).toEqual(expect.any(String));
     expect(r.body.suprimentos).toMatchObject({ abaixoDoMinimo: expect.any(Number), valorEstoque: expect.any(String), pedidosAguardando: expect.any(Number) });
+    expect(r.body.manutencao).toMatchObject({ preventivasProximas: expect.any(Number), ordensAbertas: expect.any(Number), centrosParados: expect.any(Number) });
+    expect(r.body.rh).toMatchObject({ ausentesHoje: expect.any(Number), habilitacoesVencendo: expect.any(Number) });
     expect(r.body.financeiro).toMatchObject({ saldoContas: expect.any(String), receberVencido: expect.any(String), caixa30: expect.any(String), menorSaldo: expect.any(Object) });
     expect(r.body.financeiro.clientesBloqueados).toBeGreaterThanOrEqual(1);
     expect(r.body.qualidade).toMatchObject({ ncsAbertas: expect.any(Number), garantiasAbertas: expect.any(Number), custoNaoQualidadeMes: expect.any(String) });

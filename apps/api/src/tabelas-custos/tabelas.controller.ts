@@ -1,12 +1,13 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Papeis, Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Permissao, Sessao, SessaoAtual } from '../comum/sessao';
 import { CriarTabelaDto } from './tabelas.dto';
 import { TabelasService } from './tabelas.service';
 
 @ApiTags('tabelas-custos')
 @ApiBearerAuth()
 @Controller('tabelas-custos')
+@Modulo('custos')
 export class TabelasController {
   constructor(private readonly tabelas: TabelasService) {}
 
@@ -36,7 +37,7 @@ export class TabelasController {
     return this.tabelas.recalcular(s.tenantId, id);
   }
 
-  @Papeis('GESTOR', 'ADMIN')
+  @Permissao('custo.publicar_tabela')
   @Post(':id/publicar')
   @HttpCode(200)
   publicar(@SessaoAtual() s: Sessao, @Param('id') id: string) {

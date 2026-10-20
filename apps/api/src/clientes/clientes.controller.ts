@@ -1,12 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Sessao, SessaoAtual } from '../comum/sessao';
 import { AtualizarClienteDto, CriarClienteDto } from './clientes.dto';
 import { ClientesService } from './clientes.service';
 
 @ApiTags('clientes')
 @ApiBearerAuth()
 @Controller('clientes')
+@Modulo('cadastros')
 export class ClientesController {
   constructor(private readonly clientes: ClientesService) {}
 

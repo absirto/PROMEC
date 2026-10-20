@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { competenciaAtual } from '../comum/decimal';
-import { Papeis, Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Permissao, Sessao, SessaoAtual } from '../comum/sessao';
 import { AtualizarFornecedorDto, AtualizarItemDto, FornecedorDto, ItemDto } from './cadastros.dto';
 import { CotacaoDto, EscolherDto, PedidoDto, RecebimentoDto, RequisicaoDto, RespostaDto } from './compras.dto';
 import { ComprasService } from './compras.service';
@@ -13,6 +13,7 @@ import { ItensService } from './itens.service';
 @ApiTags('itens')
 @ApiBearerAuth()
 @Controller('itens')
+@Modulo('cadastros', 'compras', 'estoque')
 export class ItensController {
   constructor(private readonly itens: ItensService) {}
 
@@ -45,6 +46,7 @@ export class ItensController {
 @ApiTags('fornecedores')
 @ApiBearerAuth()
 @Controller('fornecedores')
+@Modulo('cadastros', 'compras')
 export class FornecedoresController {
   constructor(private readonly fornecedores: FornecedoresService) {}
 
@@ -77,6 +79,7 @@ export class FornecedoresController {
 @ApiTags('estoque')
 @ApiBearerAuth()
 @Controller('estoque')
+@Modulo('estoque')
 export class EstoqueController {
   constructor(private readonly estoque: EstoqueService) {}
 
@@ -141,6 +144,7 @@ export class EstoqueController {
 @ApiTags('compras')
 @ApiBearerAuth()
 @Controller('compras')
+@Modulo('compras')
 export class ComprasController {
   constructor(private readonly compras: ComprasService) {}
 
@@ -199,7 +203,7 @@ export class ComprasController {
     return this.compras.pedido(s.tenantId, id);
   }
 
-  @Papeis('GESTOR', 'ADMIN')
+  @Permissao('compras.aprovar_pedido')
   @Post('pedidos/:id/aprovar')
   @HttpCode(200)
   aprovar(@SessaoAtual() s: Sessao, @Param('id') id: string) {

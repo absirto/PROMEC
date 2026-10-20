@@ -5,6 +5,7 @@ import { cnpjValido, cpfValido, somenteDigitos } from '../comum/documento';
 import { conflito, invalido, naoEncontrado } from '../comum/erros';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErroApi } from '../comum/erros';
+import { temPermissao } from '../acesso/permissoes';
 import { Sessao } from '../comum/sessao';
 import { prazosDe } from '../financeiro/financeiro-core';
 import { dataBanco, hojeLocal, somarDias, textoData } from '../planejamento/calendario';
@@ -59,8 +60,8 @@ export class ClientesService {
     const atual = await this.buscar(tenantId, id);
     if (dto.condicaoPagamento) prazosDe(dto.condicaoPagamento);
     const liberando = atual.status === 'BLOQUEADO' && dto.status === 'ATIVO';
-    if (liberando && s.papel !== 'GESTOR' && s.papel !== 'ADMIN') {
-      throw new ErroApi(403, 'SEM_PERMISSAO', 'Liberar um cliente bloqueado é decisão de um gestor. Peça a um gestor da empresa para fazer a liberação.');
+    if (liberando && !temPermissao(s.permissoes, 'financeiro.gerenciar')) {
+      throw new ErroApi(403, 'SEM_PERMISSAO', 'Liberar um cliente bloqueado é decisão de um gestor. Peça a um gestor da empresa para fazer a liberação.', { permissao: 'financeiro.gerenciar' });
     }
     const liberacao = liberando
       ? { bloqueioAutomatico: false, liberadoPorId: s.id, liberadoAte: dataBanco(dto.liberadoAte?.slice(0, 10) ?? somarDias(hojeLocal(), 7)) }

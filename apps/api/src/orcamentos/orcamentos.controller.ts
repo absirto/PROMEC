@@ -1,12 +1,13 @@
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Papeis, Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Permissao, Sessao, SessaoAtual } from '../comum/sessao';
 import { LiberarMargemDto, OrcamentoDto, RecusarDto, SimularDto } from './orcamentos.dto';
 import { OrcamentosService } from './orcamentos.service';
 
 @ApiTags('orcamentos')
 @ApiBearerAuth()
 @Controller('orcamentos')
+@Modulo('orcamentos')
 export class OrcamentosController {
   constructor(private readonly orcamentos: OrcamentosService) {}
 
@@ -42,7 +43,7 @@ export class OrcamentosController {
     return this.orcamentos.enviar(s, id);
   }
 
-  @Papeis('GESTOR', 'ADMIN')
+  @Permissao('orcamento.aprovar_desconto')
   @Post(':id/liberar-margem')
   @HttpCode(200)
   liberarMargem(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: LiberarMargemDto) {
@@ -64,7 +65,7 @@ export class OrcamentosController {
   @Post(':id/recusar')
   @HttpCode(200)
   recusar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: RecusarDto) {
-    return this.orcamentos.recusar(s, id, dto.motivo);
+    return this.orcamentos.recusar(s, id, dto);
   }
 
   @Post(':id/atualizar-custos')

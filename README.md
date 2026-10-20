@@ -32,6 +32,8 @@ npm run web                                     # em outro terminal: build e ser
 
 Login de desenvolvimento: `marina@usinagemjoinville.com.br` (gestora) ou `paulo@usinagemjoinville.com.br` (orçamentista), senha `SEED_SENHA` do `.env`.
 
+O seed é idempotente e devolve a empresa de demonstração (Usinagem Joinville) ao estado canônico: refaz financeiro, CRM, portal, manutenção e RH, remove orçamentos, OS e usuários criados em testes e reinicia as numerações. A trilha de auditoria não é apagada.
+
 Para voltar os dados de demonstração ao estado original, rode o seed de novo (`npm run seed -w @promec/api`). Para apagar e recriar o banco de desenvolvimento inteiro: `npm run db:reset` (pede confirmação; nunca use em produção).
 
 ## Testes

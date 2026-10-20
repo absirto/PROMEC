@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { hojeLocal } from '../planejamento/calendario';
-import { Papeis, Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Permissao, Sessao, SessaoAtual } from '../comum/sessao';
 import {
   AtualizarCentroCustoDto,
   AtualizarContaDto,
@@ -23,6 +23,7 @@ import { competenciaValida, FinanceiroService } from './financeiro.service';
 @ApiTags('financeiro')
 @ApiBearerAuth()
 @Controller()
+@Modulo('financeiro')
 export class FinanceiroController {
   constructor(private readonly fin: FinanceiroService) {}
 
@@ -100,7 +101,7 @@ export class FinanceiroController {
     return this.fin.baixarLote(s, dto);
   }
 
-  @Papeis('GESTOR', 'ADMIN')
+  @Permissao('financeiro.estornar')
   @Post('financeiro/titulos/:id/baixas/:baixaId/estornar')
   @HttpCode(200)
   estornar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Param('baixaId') baixaId: string, @Body() dto: MotivoDto) {
@@ -151,7 +152,6 @@ export class FinanceiroController {
     return this.fin.comissoes(s.tenantId, competenciaValida(competencia ?? hojeLocal().slice(0, 7)));
   }
 
-  @Papeis('GESTOR', 'ADMIN')
   @Post('financeiro/comissoes/fechar')
   @HttpCode(200)
   fecharComissoes(@SessaoAtual() s: Sessao, @Body() dto: CompetenciaDto) {
@@ -174,12 +174,14 @@ export class FinanceiroController {
     return this.fin.custoFixoRealizado(s.tenantId, competenciaValida(competencia ?? hojeLocal().slice(0, 7)));
   }
 
+  @Permissao('custos.gerenciar')
   @Post('custo-fixo/importar-financeiro')
   @HttpCode(200)
   importar(@SessaoAtual() s: Sessao, @Body() dto: CompetenciaDto) {
     return this.fin.importarParaCustoFixo(s, dto.competencia);
   }
 
+  @Permissao('custos.visualizar')
   @Get('centros-trabalho/:id/historico-custos')
   historicoCustos(@SessaoAtual() s: Sessao, @Param('id') id: string, @Query('meses') meses?: string) {
     return this.fin.historicoCustos(s.tenantId, id, Math.min(24, Math.max(1, Number(meses) || 6)));

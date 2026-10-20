@@ -5,6 +5,7 @@ import { competenciaAtual, pd, pdOpc, t, tt } from '../comum/decimal';
 import { conflito, invalido, naoEncontrado } from '../comum/erros';
 import { PrismaService } from '../prisma/prisma.service';
 import { conferirAlocacao, semRepetidos } from '../colaboradores/alocacao';
+import { conferirHabilitacao } from '../rh/rh-core';
 import { buscarVigente, Db, marcarDesatualizada, montarEntrada, resultadoDe } from '../tabelas-custos/entrada';
 import { AtualizarCentroDto, CriarCentroDto, OperadorCentroDto } from './centros.dto';
 
@@ -81,6 +82,7 @@ export class CentrosService {
     for (const o of operadores) {
       const nome = colaboradores.find((c) => c.id === o.colaboradorId)!.nome;
       await conferirAlocacao(tx, tenantId, o.colaboradorId, nome, pd(o.alocacao), centroId);
+      if (pd(o.alocacao).gt(0)) await conferirHabilitacao(tx, tenantId, { id: o.colaboradorId, nome }, centroId);
     }
     await tx.centroOperador.deleteMany({ where: { tenantId, centroId } });
     await tx.centroOperador.createMany({

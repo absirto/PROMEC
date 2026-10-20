@@ -1,12 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Sessao, SessaoAtual } from '../comum/sessao';
 import { AtualizarColaboradorDto, CriarColaboradorDto } from './colaboradores.dto';
 import { ColaboradoresService } from './colaboradores.service';
 
 @ApiTags('colaboradores')
 @ApiBearerAuth()
 @Controller('colaboradores')
+@Modulo('cadastros', 'rh')
 export class ColaboradoresController {
   constructor(private readonly colaboradores: ColaboradoresService) {}
 
@@ -17,7 +18,7 @@ export class ColaboradoresController {
 
   @Post()
   criar(@SessaoAtual() s: Sessao, @Body() dto: CriarColaboradorDto) {
-    return this.colaboradores.criar(s.tenantId, dto);
+    return this.colaboradores.criar(s, dto);
   }
 
   @Get(':id')
@@ -27,7 +28,7 @@ export class ColaboradoresController {
 
   @Patch(':id')
   atualizar(@SessaoAtual() s: Sessao, @Param('id') id: string, @Body() dto: AtualizarColaboradorDto) {
-    return this.colaboradores.atualizar(s.tenantId, id, dto);
+    return this.colaboradores.atualizar(s, id, dto);
   }
 
   @Delete(':id')

@@ -1,6 +1,7 @@
 import { Prioridade } from '@prisma/client';
 import {
   dec,
+  fatorPresenca,
   prometerPrazo,
   txt,
   type CalendarioCentro,
@@ -12,7 +13,7 @@ import {
 import { tt } from '../comum/decimal';
 import { custoRealDa, incluirOs } from '../ordens/custo';
 import { Db } from '../tabelas-custos/entrada';
-import { hojeLocal, local, textoData } from './calendario';
+import { dataBanco, hojeLocal, local, somarDias, textoData } from './calendario';
 
 export const STATUS_PLANEJAVEIS = ['ABERTA', 'EM_FILA', 'EM_EXECUCAO', 'PAUSADA'] as const;
 export const LIMITE_SOBRECARGA = '0.9';
@@ -51,7 +52,7 @@ export async function montarPlanejamento(db: Db, tenantId: string, opcoes: { hor
     db.feriado.findMany({ where: { tenantId }, orderBy: { data: 'asc' } }),
     db.centroTrabalho.findMany({
       where: { tenantId, status: { not: 'desativado' } },
-      include: { paradas: true },
+      include: { paradas: true, operadores: { where: { colaborador: { ativo: true } } } },
       orderBy: [{ criadoEm: 'asc' }, { codigo: 'asc' }]
     }),
     db.ordemServico.findMany({ where: { tenantId, status: { in: [...STATUS_PLANEJAVEIS] } }, include: incluirOs }),
@@ -61,6 +62,8 @@ export async function montarPlanejamento(db: Db, tenantId: string, opcoes: { hor
     }),
     db.agendamento.findMany({ where: { tenantId, status: { in: ['MARCADO', 'CONFIRMADO'] }, inicio: { gte: new Date(Date.now() - 86_400_000) } } })
   ]);
+  const horizonte = opcoes.horizonte ?? 60;
+  const ausencias = await db.ausencia.findMany({ where: { tenantId, fim: { gte: dataBanco(hoje) }, inicio: { lte: dataBanco(somarDias(hoje, horizonte)) } } });
 
   const referencias = new Map<string, Referencia>();
   const operacoes = new Map<string, { descricao: string; centroNome: string }>();
@@ -124,12 +127,13 @@ export async function montarPlanejamento(db: Db, tenantId: string, opcoes: { hor
     horasExpedienteMes: tt(c.horasExpediente),
     eficiencia: tt(c.eficiencia),
     diasSemana: c.diasSemana,
-    bloqueios: c.paradas.map((p) => ({ inicio: textoData(p.inicio), fim: textoData(p.fim), motivo: p.motivo }))
+    bloqueios: c.paradas.map((p) => ({ inicio: textoData(p.inicio), fim: p.fim ? textoData(p.fim) : '9999-12-31', motivo: p.motivo })),
+    reducoes: reducoesDoCentro(c.operadores, ausencias, hoje, horizonte)
   }));
 
   const entrada: EntradaPlanejamento = {
     hoje,
-    horizonteDias: opcoes.horizonte ?? 60,
+    horizonteDias: horizonte,
     feriados: feriados.map((f) => textoData(f.data)),
     centros: calendario,
     ordens: planejaveis,
@@ -137,6 +141,26 @@ export async function montarPlanejamento(db: Db, tenantId: string, opcoes: { hor
     limiteSobrecarga: LIMITE_SOBRECARGA
   };
   return { entrada, referencias, operacoes, centros };
+}
+
+/** Nos dias com operador ausente, a capacidade do centro cai pela fração de alocação dos presentes (`fatorPresenca`). */
+export function reducoesDoCentro(
+  operadores: { colaboradorId: string; alocacao: { toFixed(): string } }[],
+  ausencias: { colaboradorId: string; inicio: Date; fim: Date }[],
+  hoje: string,
+  horizonte: number
+) {
+  const ids = new Set(operadores.map((o) => o.colaboradorId));
+  const minhas = ausencias.filter((a) => ids.has(a.colaboradorId));
+  if (!minhas.length) return [];
+  const reducoes: { data: string; fator: string }[] = [];
+  for (let i = 0; i <= horizonte; i++) {
+    const d = somarDias(hoje, i);
+    const fora = new Set(minhas.filter((a) => textoData(a.inicio) <= d && textoData(a.fim) >= d).map((a) => a.colaboradorId));
+    if (!fora.size) continue;
+    reducoes.push({ data: d, fator: fatorPresenca(operadores.map((o) => ({ alocacao: o.alocacao.toFixed(), ausente: fora.has(o.colaboradorId) }))) });
+  }
+  return reducoes;
 }
 
 /** Data mais cedo para um roteiro novo no fim da fila atual; não grava nada. */

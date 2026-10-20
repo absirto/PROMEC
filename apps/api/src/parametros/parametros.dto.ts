@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Dec } from '../comum/validadores';
 
 export const CRITERIOS = ['horas', 'valorAtivo', 'area', 'faturamento', 'manual'] as const;
@@ -47,4 +47,7 @@ export class ParametrosDto {
 
   @IsOptional() @IsString() @IsNotEmpty()
   condicaoPadrao?: string;
+
+  @IsOptional() @IsObject()
+  encargosPorVinculo?: Record<string, string>;
 }

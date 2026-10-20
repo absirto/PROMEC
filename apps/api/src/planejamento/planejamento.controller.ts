@@ -1,12 +1,13 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Papeis, Sessao, SessaoAtual } from '../comum/sessao';
+import { Modulo, Sessao, SessaoAtual } from '../comum/sessao';
 import { FeriadoDto, FilaDto, ParadaDto, PromessaDto } from './planejamento.dto';
 import { PlanejamentoService } from './planejamento.service';
 
 @ApiTags('planejamento')
 @ApiBearerAuth()
 @Controller()
+@Modulo('planejamento')
 export class PlanejamentoController {
   constructor(private readonly planejamento: PlanejamentoService) {}
 
@@ -16,13 +17,11 @@ export class PlanejamentoController {
     return this.planejamento.planejamento(s.tenantId, h);
   }
 
-  @Papeis('GESTOR', 'ADMIN', 'ORCAMENTISTA')
   @Put('planejamento/fila')
   definirFila(@SessaoAtual() s: Sessao, @Body() dto: FilaDto) {
     return this.planejamento.definirFila(s.tenantId, dto.ordem);
   }
 
-  @Papeis('GESTOR', 'ADMIN', 'ORCAMENTISTA')
   @Delete('planejamento/fila')
   filaAutomatica(@SessaoAtual() s: Sessao) {
     return this.planejamento.filaAutomatica(s.tenantId);

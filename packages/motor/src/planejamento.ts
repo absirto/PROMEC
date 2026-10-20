@@ -12,6 +12,8 @@ export interface CalendarioCentro {
   diasSemana?: number[];
   /** Paradas (manutenção etc.), datas inclusivas AAAA-MM-DD. */
   bloqueios?: { inicio: string; fim: string; motivo?: string }[];
+  /** Dias com capacidade parcial (ex.: operador de férias): multiplica a capacidade do dia (0 a 1). */
+  reducoes?: { data: string; fator: Num }[];
 }
 
 export interface OperacaoPlanejavel {
@@ -123,7 +125,10 @@ function capacidadeDoDia(c: CalendarioCentro, data: string, feriados: Set<string
     }
     diasUteisMes.set(chave, n);
   }
-  return n === 0 ? ZERO : dec(c.horasExpedienteMes).times(dec(c.eficiencia)).div(n);
+  if (n === 0) return ZERO;
+  const base = dec(c.horasExpedienteMes).times(dec(c.eficiencia)).div(n);
+  const reducao = c.reducoes?.find((r) => r.data === data);
+  return reducao ? base.times(dec(reducao.fator)) : base;
 }
 
 export function ordenarFila(ordens: OrdemPlanejavel[], hoje: string): OrdemPlanejavel[] {
