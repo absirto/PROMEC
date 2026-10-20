@@ -10,6 +10,8 @@ import { Db } from '../tabelas-custos/entrada';
 import { disponibilidadeDo, situacaoHabilitacao } from './rh-core';
 import { AtualizarAusenciaDto, AtualizarHabilitacaoDto, AusenciaDto, HabilitacaoDto } from './rh.dto';
 
+const ROTULO_TIPO: Record<string, string> = { FERIAS: 'férias', AFASTAMENTO: 'afastamento', TREINAMENTO: 'treinamento', FALTA: 'falta', FOLGA: 'folga' };
+
 const anterior = (c: string) => {
   const [a, m] = c.split('-').map(Number);
   return m === 1 ? `${a - 1}-12` : `${a}-${String(m - 1).padStart(2, '0')}`;
@@ -221,7 +223,7 @@ export class RhService {
     if (outra) {
       throw conflito(
         'AUSENCIA_SOBREPOSTA',
-        `Já existe uma ausência (${outra.tipo.toLowerCase()}) de ${textoData(outra.inicio).split('-').reverse().join('/')} a ${textoData(outra.fim).split('-').reverse().join('/')} nesse período. Ajuste as datas ou edite a ausência existente.`,
+        `Já existe uma ausência (${ROTULO_TIPO[outra.tipo] ?? outra.tipo.toLowerCase()}) de ${textoData(outra.inicio).split('-').reverse().join('/')} a ${textoData(outra.fim).split('-').reverse().join('/')} nesse período. Ajuste as datas ou edite a ausência existente.`,
         { ausenciaId: outra.id }
       );
     }

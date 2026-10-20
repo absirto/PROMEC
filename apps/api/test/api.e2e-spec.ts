@@ -1124,6 +1124,11 @@ describe('API ProMEC (e2e)', () => {
       expect(Number(t.indicadores.mtbf)).toBeGreaterThan(0);
       expect(t.custoPorMes).toHaveLength(6);
       expect(t).toMatchObject({ cadastro: '700', media12: expect.any(String) });
+      if (hoje.slice(0, 7) <= '2026-10') expect(t.media12).toBe(t.media6);
+      const ausente = await api(token).post('/rh/ausencias', { colaboradorId: `e2e-a-${sufixo}-colab-diego`, tipo: 'FERIAS', inicio: '2032-02-02', fim: '2032-02-06' }).expect(201);
+      const sobre = await api(token).post('/rh/ausencias', { colaboradorId: `e2e-a-${sufixo}-colab-diego`, tipo: 'FOLGA', inicio: '2032-02-05', fim: '2032-02-05' }).expect(409);
+      expect(sobre.body.mensagem).toContain('(férias)');
+      await http().delete(`/api/v1/rh/ausencias/${ausente.body.id}`).set('Authorization', `Bearer ${token}`).expect(200);
     });
 
     it('férias derrubam a capacidade do centro e o apontamento recusa o operador ausente', async () => {

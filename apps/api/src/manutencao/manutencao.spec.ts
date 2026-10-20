@@ -1,4 +1,5 @@
 import { reducoesDoCentro } from '../planejamento/entrada';
+import { mesesDesde } from './manutencao.service';
 import { mascarar, mascararSalario } from '../acesso/mascara.interceptor';
 
 const d = (s: string) => new Date(`${s}T00:00:00.000Z`);
@@ -20,5 +21,11 @@ describe('manutenção e RH', () => {
     const colaborador = { nome: 'Ricardo', salario: '5000', encargos: '3200', custoHora: '37.27', alocacoes: [] };
     expect(mascararSalario({ itens: [colaborador] }).valor).toEqual({ itens: [{ nome: 'Ricardo', salario: null, encargos: null, custoHora: null, alocacoes: [] }] });
     expect(mascarar({ itens: [colaborador], operacoes: [{ custoHora: '117.78' }] }).valor).toEqual({ itens: [colaborador], operacoes: [{ custoHora: null }] });
+  });
+
+  it('média móvel só considera os meses desde o início do histórico do centro', () => {
+    const doze = ['2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'];
+    expect(mesesDesde(doze, '2026-05')).toEqual(['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10']);
+    expect(mesesDesde(doze, null)).toEqual([]);
   });
 });

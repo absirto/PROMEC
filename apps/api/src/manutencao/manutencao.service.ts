@@ -19,6 +19,9 @@ import { AceitarPropostaDto, AtualizarOrdemDto, AtualizarPlanoDto, ConcluirOrdem
 
 const LIMITE_CATEGORIA = '1.3';
 
+/** Meses da janela a partir do início do histórico; sem histórico, nenhum (a média fica zero, sem meses inventados). */
+export const mesesDesde = (competencias: string[], inicio: string | null) => (inicio ? competencias.filter((c) => c >= inicio) : []);
+
 @Injectable()
 export class ManutencaoService {
   constructor(
@@ -314,7 +317,7 @@ export class ManutencaoService {
     const base = await Promise.all(
       centros.map(async (c) => {
         const serie = await custoManutencaoPorMes(this.prisma, tenantId, c.id, doze);
-        const valores = doze.map((x) => serie.get(x)!.toFixed(2));
+        const valores = mesesDesde(doze, await this.inicioDoHistorico(tenantId, c)).map((x) => serie.get(x)!.toFixed(2));
         return { c, serie, media6: mediaMovel(valores, 6), media12: mediaMovel(valores, 12) };
       })
     );
@@ -371,7 +374,7 @@ export class ManutencaoService {
     const itens = await Promise.all(
       centros.map(async (c) => {
         const serie = await custoManutencaoPorMes(this.prisma, tenantId, c.id, comps);
-        const proposta = mediaMovel(comps.map((x) => serie.get(x)!.toFixed(2)), 6);
+        const proposta = mediaMovel(mesesDesde(comps, await this.inicioDoHistorico(tenantId, c)).map((x) => serie.get(x)!.toFixed(2)), 6);
         const horasReais = await horasReaisDoCentro(this.prisma, tenantId, c, competencia);
         return {
           centroId: c.id,
@@ -410,7 +413,7 @@ export class ManutencaoService {
     const [planos, ordensAbertas, parados, ind] = await Promise.all([
       this.prisma.planoManutencao.findMany({ where: { tenantId, ativo: true } }),
       this.prisma.ordemManutencao.count({ where: { tenantId, status: { in: ABERTAS } } }),
-      this.prisma.paradaCentro.findMany({ where: { tenantId, inicio: { lte: hoje }, OR: [{ fim: null }, { fim: { gte: hoje } }] }, distinct: ['centroId'], select: { centroId: true } }),
+      this.prisma.paradaCentro.findMany({ where: { tenantId, inicio: { lte: hoje }, OR: [{ fim: null }, { fim: { gt: hoje } }] }, distinct: ['centroId'], select: { centroId: true } }),
       this.indicadores(tenantId, undefined, 6)
     ]);
     const situacoes = await Promise.all(planos.map(async (p) => ({ p, s: (await situacaoDoPlano(this.prisma, p)).situacao })));
@@ -430,6 +433,15 @@ export class ManutencaoService {
         ...(parados.length ? [{ tipo: 'perigo' as const, mensagem: `${parados.length} centro(s) parado(s) hoje por manutenção.`, link: '/manutencao/ordens?status=EM_EXECUCAO' }] : [])
       ]
     };
+  }
+
+  /** Primeiro mês com histórico: o primeiro custo de manutenção ou a criação do centro, o que vier depois. */
+  private async inicioDoHistorico(tenantId: string, c: { id: string; criadoEm: Date }) {
+    const primeiro = await this.prisma.custoManutencao.findFirst({ where: { tenantId, ordem: { centroId: c.id } }, orderBy: { data: 'asc' }, select: { data: true } });
+    const criacao = local(c.criadoEm).data.slice(0, 7);
+    if (!primeiro) return null;
+    const desde = local(primeiro.data).data.slice(0, 7);
+    return desde > criacao ? desde : criacao;
   }
 
   private async centroCustoManutencao(db: Db, tenantId: string, centroId: string) {
